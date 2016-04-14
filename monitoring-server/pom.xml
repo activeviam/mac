@@ -6,7 +6,7 @@
 	<groupId>quartetfs.biz.pivot</groupId>
 	<artifactId>monitoring-server</artifactId>
 	<name>Monitoring Web Application</name>
-	<version>5.4.0</version>
+	<version>5.4.1-SNAPSHOT</version>
 	<packaging>war</packaging>
 
 	<dependencyManagement>
@@ -14,7 +14,7 @@
 			<dependency>
 				<groupId>quartetfs.biz.pivot</groupId>
 				<artifactId>activepivot-server</artifactId>
-				<version>5.4.0</version>
+				<version>5.4.1-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

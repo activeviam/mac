@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import com.qfs.jmx.JmxOperation;
-import com.qfs.monitoring.offheap.DatastoreFeederVisitor;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
 import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
 import com.qfs.pivot.monitoring.impl.MonitoringStatisticSerializerUtil;
 import com.qfs.rest.client.impl.ClientPool;
