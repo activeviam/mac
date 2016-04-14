@@ -269,8 +269,8 @@
         <xs:element ref="tns:subCubeProperties"/>
         <xs:element ref="tns:asOfEpoch"/>
         <xs:element ref="tns:mdxContext"/>
-        <xs:element ref="tns:queriesTimeLimit"/>
         <xs:element ref="tns:missedPrefetchBehavior"/>
+        <xs:element ref="tns:queriesTimeLimit"/>
         <xs:element ref="tns:drillthroughProperties"/>
         <xs:element ref="tns:flatContextValues"/>
         <xs:element ref="tns:distributedQueriesTimeLimit"/>
@@ -532,21 +532,21 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="queriesTimeLimit">
-    <xs:complexContent>
-      <xs:extension base="tns:aContextValue">
-        <xs:sequence/>
-        <xs:attribute name="seconds" type="xs:int" use="required"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
   <xs:complexType name="missedPrefetchBehavior">
     <xs:complexContent>
       <xs:extension base="tns:aContextValue">
         <xs:sequence>
           <xs:element name="behavior" type="tns:behavior" minOccurs="0"/>
         </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="queriesTimeLimit">
+    <xs:complexContent>
+      <xs:extension base="tns:aContextValue">
+        <xs:sequence/>
+        <xs:attribute name="seconds" type="xs:int" use="required"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -1111,8 +1111,8 @@
             <xs:element ref="tns:subCubeProperties"/>
             <xs:element ref="tns:asOfEpoch"/>
             <xs:element ref="tns:mdxContext"/>
-            <xs:element ref="tns:queriesTimeLimit"/>
             <xs:element ref="tns:missedPrefetchBehavior"/>
+            <xs:element ref="tns:queriesTimeLimit"/>
             <xs:element ref="tns:drillthroughProperties"/>
             <xs:element ref="tns:flatContextValues"/>
             <xs:element ref="tns:distributedQueriesTimeLimit"/>

@@ -27,22 +27,7 @@ import org.springframework.web.WebApplicationInitializer;
 import com.qfs.monitoring.cfg.impl.WebAppInitializer;
 
 /**
- * <b>JettyServer</b>
- *
- * Launches a server on port 9090<br/>
- * For client testing, point client to:<br/>
- * <code>http://localhost:9090/xmla</code><br/>
- *
- * <p>
- * The actual configuration of the ActivePivot Sandbox
- * web application is contained in the WEB-INF/web.xml resource file.
- * <p>
- * The Sandbox application is pre-configured to run in distributed
- * mode, all you have to do is launch the Jetty Server several times
- * with each time a different listening port.
- *
  * @author Quartet Financial Systems
- *
  */
 public class MonitoringServer {
 
