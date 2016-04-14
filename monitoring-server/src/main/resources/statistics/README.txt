@@ -1,0 +1,1 @@
+Drag & drop statistic file (.json) in this folder

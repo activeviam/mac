@@ -1,0 +1,381 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Data Viewer</title>
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+<link rel="stylesheet" type="text/css" href="css/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="css/main.css">
+<link rel="stylesheet" type="text/css" href="css/easyui.css">
+
+<style>
+.attribute_input{
+  width: 70%;
+  min-width: 40px;
+}
+/*
+.l-btn-icon.icon-search {
+  padding-left: 33px;
+}
+*/
+#search {
+  padding-left: 6px;
+}
+#search .l-btn-text{
+  padding-left: 6px;
+}
+</style>
+
+<script type="text/javascript" src="scripts/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="scripts/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="scripts/easyui/jquery.edatagrid.js"></script>
+<script type="text/javascript" src="scripts/easyui/jquery.textbox.js"></script>
+<script type="text/javascript" src="scripts/easyui/jquery.combobox.js"></script>
+<script type="text/javascript" src="scripts/easyui/jquery.combo.js"></script>
+<script type="text/javascript">
+  
+  var storeToFocusOn;
+  var columns = [];
+  var currentBranch = "";
+
+$(function(){
+
+  setResizable();
+    
+  //document loaded
+  retrieveStores();
+});
+
+  function setResizable(){
+   $('#top-table').resizable({
+     maxWidth:1800,
+     maxHeight:700,
+     onStopResize:function(){
+      $('#dg').datagrid('resize');
+    }      
+  }); 
+ }
+
+/**
+ *Get the list of available stores.
+ */
+ function retrieveStores() {
+   $.ajax({
+    url: 'webservices/rest-ext/dsviewer/stores',
+    type: "GET",
+    dataType: "json",
+    success: populateStores
+  })
+  .fail(function() { alert("can not retrieve stores"); })
+  .done(function() { loadAttributes(); });
+ }
+
+/**
+ * Fill the list box with the name of the stores.
+ */
+ function populateStores(data) {
+   if (data.length == 0){
+    alert("the received data is empty.");
+  }
+
+  $.each(data, function(index, dataEntry) {
+    if(dataEntry === "Forex"){
+      $('#storeName').append('<option selected=\"selected\" value='+dataEntry+'>'+dataEntry+'</option>')
+    } else{
+      $('#storeName').append('<option value='+dataEntry+'>'+dataEntry+'</option>')
+    }
+  });
+}
+
+/**
+ * Render the content of the selected store.
+ */
+function loadAttributes(){
+  storeToFocusOn = $('#storeName').find(":selected").text();
+  if (storeToFocusOn.length == 0){
+    alert("can not get the store name.");
+  }
+  renderTopAttributes();
+  retrieveColumns();
+}
+
+
+function renderTopAttributes() {
+   $('#top-attributes').find('#demo-info').remove();//reset
+   $('#top-attributes').append('<div id="demo-info" class="demo-info" style="margin-bottom:10px">');
+   $('#top-attributes').append('</div>');
+ }
+
+/**
+ * Get the list of available columns of a given store.
+ */
+function retrieveColumns() {
+   $.ajax({
+    url: 'webservices/rest-ext/dsviewer/stores/' + storeToFocusOn,
+    type: "GET",
+    dataType: "json",
+    success: renderAttibutes
+  })
+  .fail(function() { alert("can not retrieve columns for the store "+storeToFocusOn+"."); })
+  .done(function() {
+	  showHide();
+	  //setupForm();
+	  clearTemplate();
+	  setupGrid();
+  });
+ }
+
+
+function renderAttibutes(data) {
+  	//reset and recreate the attributes div
+  	$('#attributes').remove();
+  	$('#form').append('<div id="attributes">');
+
+  	$('#attributes').append('<div id="attributes-Col" style="overflow:auto;"  />');
+  	//Display the attributes in 3 columns
+  	var columns = new Array();
+  	columns[0]='<table style="width:100%">';
+  	columns[1]=0;
+
+  	$.each(data, function(index, attribute) {
+      if(attribute != "key"){
+	    var mod = columns[1]%3;
+		if (mod == 0)
+			columns[0]=columns[0].concat('<tr>');
+
+        columns[0]=columns[0].concat('<td class="attribute">' + attribute +':</td><td><input name='+attribute+' type="text" class="attribute_input"></input></td>');
+
+		if (mod == 2)
+			columns[0]=columns[0].concat('</tr>');
+
+		++columns[1];
+      }
+    });
+
+	if (columns[1]%3 < 2)
+			columns[0]=columns[0].concat('</tr>');
+  	columns[0]=columns[0].concat('</table>');
+
+   var columnsDiv = $('#attributes-Col');
+   columnsDiv.append(columns[0]);
+
+   // Submit form when enter is pressed on an input field
+	var keyHandler = function(event) {
+		var keyCode = event.which;
+		if (13 == keyCode) {
+			console.log(
+			    event.type + " :  (" + keyCode + ")"
+			);
+
+			 event.preventDefault();
+			 $("#form").submit();
+		}
+	};
+	$(".attribute_input").on("keyup", keyHandler);
+
+   //Add the submit button
+   var buttonsDiv = $('#button-Sbtn');
+   buttonsDiv.append('<input type="submit" value="Search" class="easyui-linkbutton"></input>');
+
+   populateColumns(data);
+   console.log(data);
+   setupForm();
+}
+
+function setupForm(){
+ storeToFocusOn = $('#storeName').find(":selected").text();
+ console.log('Submit template for the store: '+storeToFocusOn);
+ $('#form').form({
+  	  	url:'webservices/rest-ext/dsviewer/template',//submit form entries
+        success:function(){
+        setupGrid();
+       }
+     });
+}
+
+function clearTemplate() {
+ console.log('Clear template');
+   $.ajax({
+    url: 'webservices/rest-ext/dsviewer/clear',
+    type: "POST",
+    dataType: "json"
+     });
+ }
+
+function populateColumns(data) {
+ var innerArray = [];
+ $.each(data, function(index, dataEntry) {
+  var oneCol;
+  if(dataEntry == "key"){
+   // oneCol = {field: dataEntry,title: dataEntry,width: 50, sortable:false};
+ }else{
+   oneCol = {field: dataEntry,title: dataEntry,width: 50, sortable:false, editor:{type:'validatebox',options:{required:true}}};
+   innerArray.push(oneCol);
+ }
+
+});
+	columns = [];//clear the array
+	columns.push(innerArray);
+}
+
+ function renderTopGrid(){
+   $('#main').find('#top-table').remove();//reset
+   $('#main').append('<div id="top-table" style="height:300px;position:relative" ></div>');
+   $('#top-table').append('<table id="dg" toolbar="#toolbar" pagination="true" idField="key" fit="true" fitColumns="true" singleSelect="true"  style="position: absolute;"/>');
+   $('#top-table').append('<div id="toolbar">');
+   $('#top-table').find('#toolbar').append('<a href="#" class="easyui-linkbutton l-btn l-btn-plain" iconcls="icon-add" plain="true" onclick="javascript:$(\'#dg\').edatagrid(\'addRow\')" group="" id=""><span class="l-btn-left"><span class="l-btn-text icon-add l-btn-icon-left">New</span></span></a>');
+   $('#top-table').find('#toolbar').append('<a href="#" class="easyui-linkbutton l-btn l-btn-plain" iconcls="icon-remove" plain="true" onclick="javascript:$(\'#dg\').edatagrid(\'destroyRow\')" group="" id=""><span class="l-btn-left"><span class="l-btn-text icon-remove l-btn-icon-left">Destroy</span></span></a>');
+   $('#top-table').find('#toolbar').append('<a href="#" class="easyui-linkbutton l-btn l-btn-plain" iconcls="icon-save" plain="true" onclick="javascript:$(\'#dg\').edatagrid(\'saveRow\')" group="" id=""><span class="l-btn-left"><span class="l-btn-text icon-save l-btn-icon-left">Save</span></span></a>');
+   $('#top-table').find('#toolbar').append('<a href="#" class="easyui-linkbutton l-btn l-btn-plain" iconcls="icon-undo" plain="true" onclick="javascript:$(\'#dg\').edatagrid(\'cancelRow\')" group="" id=""><span class="l-btn-left"><span class="l-btn-text icon-undo l-btn-icon-left">Cancel</span></span></a>');
+   $('#top-table').find('#toolbar').append('</div>');
+
+   setResizable();
+ }
+
+ function renderDataGrid(){
+   $('#dg').edatagrid({
+     columns:columns,
+     rownumbers: true,
+     autoSave:true,
+     pagination:false,
+     url: 'webservices/rest-ext/dsviewer/read/'+storeToFocusOn+'/'+currentBranch,/*read*/
+     saveUrl: 'webservices/rest-ext/dsviewer/updateOrCreate/'+storeToFocusOn+'/'+currentBranch,/*add*/
+     updateUrl: 'webservices/rest-ext/dsviewer/updateOrCreate/'+storeToFocusOn+'/'+currentBranch,/*add and remove*/
+     destroyUrl: 'webservices/rest-ext/dsviewer/delete/'+storeToFocusOn+'/'+currentBranch,/*delete*/
+			//reload after new or update in order to generate the key
+			onAfterEdit: function(rowIndex, rowData, changes){
+				$('#dg').edatagrid('reload');
+			}
+		});
+ }
+
+ function setupGrid(){
+  console.log("Setup Grid");
+  renderTopGrid();
+  renderDataGrid();
+}
+
+function changeBranch(branch){
+	currentBranch = branch;
+	renderDataGrid();
+}
+
+
+$(document).ready(function(){
+    $("#hide").click(function(){
+        hide();
+    });
+    $("#showHideButton").click(function(){
+        isShown = !isShown;
+        showHide();
+    });
+    $("#search").click(function() {
+       $("#form").submit();
+    });
+    $('#storeName').change(function(){
+        loadAttributes();
+    });
+});
+
+function hide(){
+	 $("#top-attributes").hide();
+     $("#attributes-Col").hide();
+}
+
+function show(){
+     $("#top-attributes").show();
+     $("#attributes-Col").show();
+}
+
+var isShown = false;
+function showHide(){
+	if(isShown){
+    	show();
+    	$("#showHideButton").find("span.l-btn-text").text("Hide attributes");
+    } else{
+     	hide();
+    	$("#showHideButton").find("span.l-btn-text").text("Show attributes");
+    }
+}
+
+// Load the branches and put them in the combobox
+$(function () {
+	$.ajax({
+		url: 'webservices/rest-ext/dsviewer/branches',
+		type: "GET",
+		dataType: "json",
+		success: function(data) {
+			var myBranches = [];
+			data.forEach(function(branch) {
+				myBranches.push({"id": branch});
+			});
+			$('#Region').combobox({
+				width: 100,
+				panelHeight: 'auto',
+				selectOnNavigation: false,
+				valueField: 'id',
+				textField: 'id',
+				editable: true,
+				required: false,
+				onLoadSuccess: function(){
+					$('#Region').combobox('select', data[0]);
+				},
+				onSelect : function(e){
+					changeBranch(e.id);
+				},
+				data: myBranches,
+				keyHandler: {
+					up: function(e){},
+					down: function(e){},
+					left: function(e){},
+					right: function(e){},
+					enter: function(e){
+						var newBranch = $('#Region').combobox('getText');
+						myBranches.push({"id": newBranch});
+						//console.log(newBranch);
+						$('#Region').combobox('loadData', myBranches);
+						$('#Region').combobox('select', newBranch);
+						$('#Region').combobox('hidePanel');
+						$('#Region').combobox('validate');
+					},
+					query: function(q,e){}
+				}
+			});
+		}
+	}).fail(function() { alert("Can not retrieve branches"); });
+});
+</script>
+
+</head>
+<body>
+	<div class="center">
+		<div style="margin-top: 10px; margin-bottom: 10px; text-align: left; color: #6C6C6C">
+			<div style="margin-right: 20px; margin-bottom: 10px;">
+
+				<label id="RegionLabel">What-if scenario:</label>
+				<input class="easyui-combobox" id="Region" name="Region"/>
+
+				<span style="margin-left: 20px; margin-right:5px;">Store:</span>
+				<select id="storeName" style="margin-right:20px;"></select>
+
+				<a href="javascript:void(0)" id="showHideButton" class="easyui-linkbutton">Show attributes</a>
+				<a href="javascript:void(0)" id="search" class="easyui-linkbutton" iconCls="icon-search">Search</a>
+			</div>
+
+			<form id="form" method="post" style="margin-bottom: 5px;">
+				<div id="attributes"></div>
+			</form>
+		</div>
+
+
+		<div id="top-attributes" style="margin-bottom: 10px; color: #6C6C6C;"></div>
+
+		<div id="main">
+			<div id="top-table"></div>
+		</div>
+
+		<div><p>Only 100 rows are displayed</p></div>
+
+	</div>
+</body>
+
+</html>

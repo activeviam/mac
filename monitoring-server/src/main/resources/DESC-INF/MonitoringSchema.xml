@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<schemaDescription xmlns="http://www.quartetfs.com"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.quartetfs.com ../activepivot-types.xsd">
+
+	<!-- Selection of fields from the datastore -->
+	<datastoreSelection baseStore="Chunk">
+		<fields>
+			<!--  Base store -->
+			<field name="chunkId" />
+			<field name="date"/> 
+			<field name="storeName"/>
+			<field name="partitionId"/>
+			<field name="chunkType"/>
+			<field name="fields" /> 
+			<field name="offHeapMemorySize" /> 
+			<field name="onHeapMemorySize" /> 
+			<field name ="class" />
+			
+			<!-- ChunkSet store -->
+			<field name="chunkSetClass" expression="chunkToChunkSet/class"/>
+			<field name="physicalChunkSize" expression="chunkToChunkSet/physicalChunkSize"/>
+			<field name="freeRows" expression="chunkToChunkSet/freeRows"/>
+			
+			<!-- ReferencesStore -->
+			<field expression="chunkToReferences/referenceName" name="referenceName"/>
+
+			<!-- IndicesStore -->
+			<field expression="chunkToIndices/class" name="indexClass"/> 
+
+			<!-- dictionary store -->
+			<field expression="chunkToDic/size" name="dictionarySize"/>
+			<field expression="chunkToDic/order" name="dictionaryOrder"/>
+			<field expression="chunkToDic/class" name="dictionaryClass"/> 
+		</fields>
+	</datastoreSelection>
+
+	<!-- List of the ActivePivot instances within that ActivePivot Schema -->
+	<activePivots>
+
+		<activePivot id="MonitoringCube">
+			<pivotDescription resource="DESC-INF/MonitoringCube.xml" />
+		</activePivot>
+
+	</activePivots>
+
+</schemaDescription>

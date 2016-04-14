@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<measures xmlns="http://www.quartetfs.com"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.quartetfs.com ../activepivot-types.xsd">
+	
+	<nativeMeasure name="contributors.COUNT" alias="Count" formatter="INT[#,###]" />
+	<nativeMeasure name="update.TIMESTAMP" alias="Timestamp" formatter="DATE[HH:mm:ss]" />
+	
+	<measure name="OffHeapConsumption.SUM" field="offHeapMemorySize" aggregation="SUM" formatter="ByteFormatter"/>
+	<measure name="OnHeapConsumption.SUM" field="onHeapMemorySize" aggregation="SUM" formatter="ByteFormatter"/>
+
+	<measure name="ChunkSetFreeRows.SUM" field="freeRows" aggregation="SUM" />
+	<measure name="ChunkSetPhysicalChunkSize.SUM" field="physicalChunkSize" aggregation="SUM" />
+	
+	<measure name="ChunkSetFreeRows.AVG" field="freeRows" aggregation="AVG" />
+	<measure name="ChunkSetPhysicalChunkSize.AVG" field="physicalChunkSize" aggregation="AVG" />
+
+</measures>
