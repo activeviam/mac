@@ -6,54 +6,75 @@
 
 	<dimension name="Chunks">
 		<hierarchy name="Chunks">
-			<level name="chunkType" />
-			<level name="class" />
-			<level name="chunkId" />
+			<level name="Type" formatter="TypeChunkFormatter">
+				<properties>
+					<entry key="description" value="What is chunks for" />
+				</properties>
+			</level>
+			<level name="Class" formatter="ClassFormatter">
+				<properties>
+					<entry key="description" value="Class of the chunks" />
+				</properties>
+			</level>
+			<level name="ChunkId" property="chunkId"/>
 		</hierarchy>
 	</dimension>
 
-	<dimension name="date">
-		<hierarchy name="date" allMember="false">
-			<level name="date" type="TIME">
+	<dimension name="Date">
+		<hierarchy name="Date" allMember="false">
+			<level name="Date" type="TIME">
 				<comparator pluginKey="ReverseOrder" />
+				<properties>
+					<entry key="description" value="Date at which statistics were retrieved" />
+				</properties>
 			</level>
 		</hierarchy>
 	</dimension>
 
 	<dimension name="Store">
 		<hierarchy name="Store">
-			<level name="storeName" />
-			<level name="partitionId" />
+			<level name="Store"/>
+			<level name="Partition"/>
 		</hierarchy>
 	</dimension>
 
-	<dimension name="chunkSet">
-		<hierarchy name="chunkSet">
-			<level name="chunkSetClass" />
+	<dimension name="Chunk Set">
+		<hierarchy name="Chunk Set">
+			<level name="Class" property="chunkSetClass" formatter="ClassFormatter"/>
+			<level name="Id" property="chunkSetId"/>
 		</hierarchy>
-	</dimension> 
+	</dimension>
 
-	<dimension name="Field">
-		<hierarchy name="Field">
-			<level name="fields" />
+	<dimension name="Fields">
+		<hierarchy name="Fields">
+			<level name="Fields"/>
 		</hierarchy>
-	</dimension> 
+	</dimension>
 
-	<dimension name="ReferencesAndIndices">
+	<dimension name="References and Indices">
 		<hierarchy name="References">
-			<level name="referenceName" />
+			<level name="Name" property="referenceName" />
 		</hierarchy>
 		<hierarchy name="Indices">
-			<level name="indexClass" />
+			<level name="Type" property="indexClass" formatter="IndexFormatter">
+				<comparator pluginKey="Custom">
+					<order name="firstObjects">
+						<value>com.qfs.store.impl.MultiVersionCompositePrimaryRecordIndex</value>
+						<value>com.qfs.store.impl.MultiVersionCompositeSecondaryRecordIndex</value>
+						<value>com.qfs.store.impl.MultiVersionPrimaryRecordIndex</value>
+						<value>com.qfs.store.impl.MultiVersionSecondaryRecordIndex</value>
+					</order>
+				</comparator>
+			</level>
 		</hierarchy>
 	</dimension>
 
 	<dimension name="Dictionary">
 		<hierarchy name="Dictionary">
-			<level name="dictionaryClass" />
-			<level name="dictionaryOrder" />
-			<level name="dictionarySize" />
+			<level name="Class" property="dictionaryClass" formatter="ClassFormatter" />
+			<level name="Order" property="dictionaryOrder" />
+			<level name="Size" property="dictionarySize" />
 		</hierarchy>
-	</dimension> 
+	</dimension>
 
 </dimensions>

@@ -14,10 +14,7 @@ import javax.servlet.DispatcherType;
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.annotations.ClassInheritanceHandler;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.eclipse.jetty.webapp.Configuration;
@@ -35,27 +32,32 @@ public class MonitoringServer {
 	public static final int DEFAULT_PORT = 9092;
 
 	public static Server createServer(int port) {
-
 		final WebAppContext root = new WebAppContext();
 		root.setConfigurations(new Configuration[] { new JettyAnnotationConfiguration() });
 		root.setContextPath("/");
 		root.setParentLoaderPriority(true);
+		root.setResourceBase("src/main/webapp");
 
 		// Enable GZIP compression
 		final FilterHolder gzipFilter = new FilterHolder(org.eclipse.jetty.servlets.GzipFilter.class);
-		gzipFilter.setInitParameter("mimeTypes", "text/xml,application/x-java-serialized-object");
+		gzipFilter.setInitParameter(
+				"mimeTypes",
+				"text/html,"
+						+ "text/xml,"
+						+ "text/javascript,"
+						+ "text/css,"
+						+ "application/x-java-serialized-object,"
+						+ "application/json,"
+						+ "application/javascript,"
+						+ "image/png,"
+						+ "image/svg+xml"
+						+ "image/jpeg");
 		gzipFilter.setInitParameter("methods", HttpMethod.GET.asString() + "," + HttpMethod.POST.asString());
 		root.addFilter(gzipFilter, "/*", EnumSet.of(DispatcherType.REQUEST));
 
-		ResourceHandler staticResources = new ResourceHandler();
-		staticResources.setDirectoriesListed(true);
-		staticResources.setResourceBase("src/main/webapp");
-
 		// Create server and configure it
 		final Server server = new Server(port);
-		HandlerList handlers = new HandlerList();
-		handlers.setHandlers(new Handler[] { staticResources, root });
-		server.setHandler(handlers);
+		server.setHandler(root);
 
 		return server;
 	}

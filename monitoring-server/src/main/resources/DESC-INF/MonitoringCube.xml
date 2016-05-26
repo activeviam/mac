@@ -10,7 +10,7 @@
 		</properties>
 
 		<partialProvider pluginKey="BITMAP">
-			<hierarchy name="date" />
+			<hierarchy name="Date" />
 		</partialProvider>
 	</aggregateProvider>
 
@@ -53,7 +53,7 @@
 			</hiddenColumns>
 			<calculatedColumns>
 				<calculatedColumn pluginKey="FieldsColumn" name="Field names"
-					underlyingFields="fields" />
+					underlyingFields="Fields" />
 			</calculatedColumns>
 		</drillthroughProperties>
 	</sharedContexts>

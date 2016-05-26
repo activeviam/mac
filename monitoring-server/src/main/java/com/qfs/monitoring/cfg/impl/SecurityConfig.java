@@ -61,7 +61,7 @@ public class SecurityConfig extends ASecurityConfig {
 	 * Separated from {@link ActivePivotSecurityConfigurer} to skip the {@link ContextValueFilter}.
 	 */
 	@Configuration
-	@Order(1)
+	@Order(2)
 	// Must be done before ActivePivotSecurityConfigurer (because they match common URLs)
 	public static class JwtSecurityConfigurer extends AJwtSecurityConfigurer {}
 
@@ -73,7 +73,7 @@ public class SecurityConfig extends ASecurityConfig {
 	 * @see LocalContentServiceConfig
 	 */
 	@Configuration
-	@Order(2)
+	@Order(3)
 	// Must be done before ActivePivotSecurityConfigurer (because they match common URLs)
 	public static class ContentServerSecurityConfigurer extends AWebSecurityConfigurer {
 
@@ -91,6 +91,31 @@ public class SecurityConfig extends ASecurityConfig {
 									+ "/**").permitAll()
 					.antMatchers(url + "/**").hasAuthority(ROLE_USER)
 					.and().httpBasic();
+		}
+
+	}
+
+	/**
+	 * To expose the login page of Live 4.
+	 */
+	@Configuration
+	@Order(1)
+	// Must be done before ActivePivotSecurityConfigurer (because they match common URLs)
+	public static class LiveSecurityConfigurer extends AWebSecurityConfigurer {
+
+		@Override
+		protected void doConfigure(HttpSecurity http) throws Exception {
+			final String url = "/live/**";
+			http
+					// Only theses URLs must by handled by this HttpSecurity
+					.antMatcher(url)
+					.authorizeRequests()
+					// The order of the matchers matters
+					.antMatchers(HttpMethod.OPTIONS, url).permitAll()
+					.antMatchers(HttpMethod.GET, url).permitAll();
+
+			// Authorizing pages to be embedded in iframes to have ActivePivot Live in Sentinel UI
+			http.headers().frameOptions().disable();
 		}
 
 	}

@@ -61,7 +61,9 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 
 		MonitoringSourceConfig.class,
 
-		ActivePivotRestServicesConfig.class,
+		ActivePivotRestServicesConfig.class,// for live 4
+
+		LiveResourceServerConfig.class,
 
 		JwtConfig.class,
 		SecurityConfig.class,
@@ -69,9 +71,10 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 		LocalContentServiceConfig.class,
 
 		ActivePivotServicesConfig.class,
-		ActivePivotRemotingServicesConfig.class, // for live
+		ActivePivotRemotingServicesConfig.class, // for live 3
 
 		MonitoringConnectorConfig.class,
+
 })
 public class MonitoringServerConfig {
 

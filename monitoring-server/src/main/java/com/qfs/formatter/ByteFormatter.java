@@ -15,6 +15,9 @@ import com.quartetfs.fwk.format.IFormatter;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
 public class ByteFormatter implements IFormatter {
 
+	private static final long serialVersionUID = 4778274710157958593L;
+
+	/** Plugin key */
 	public static final String KEY = "ByteFormatter";
 
 	/** 1 GiB */
@@ -42,6 +45,8 @@ public class ByteFormatter implements IFormatter {
 	 * @return data size as text
 	 */
 	public static String printDataSize(long byteCount) {
+		if (byteCount == 0)
+			return null;
 		final long gb = byteCount / GB;
 		final long mb = (byteCount % GB) / MB;
 		final long kb = (byteCount % MB) / KB;
@@ -59,4 +64,5 @@ public class ByteFormatter implements IFormatter {
 	private static String pnz(long value, String suffix) {
 		return value != 0 ? value + " " + suffix + " " : "";
 	}
+
 }

@@ -8,16 +8,17 @@
 		<fields>
 			<!--  Base store -->
 			<field name="chunkId" />
-			<field name="date"/> 
-			<field name="storeName"/>
-			<field name="partitionId"/>
-			<field name="chunkType"/>
-			<field name="fields" /> 
+			<field name="Date" expression="date"/> 
+			<field name="Store" expression="storeName"/>
+			<field name="Partition" expression="partitionId"/>
+			<field name="Type" expression="chunkType"/>
+			<field name="Fields" expression="fields"/> 
 			<field name="offHeapMemorySize" /> 
 			<field name="onHeapMemorySize" /> 
-			<field name ="class" />
+			<field name="Class" expression ="class" />
 			
 			<!-- ChunkSet store -->
+			<field name="chunkSetId" expression="chunkToChunkSet/chunkSetId"/>
 			<field name="chunkSetClass" expression="chunkToChunkSet/class"/>
 			<field name="physicalChunkSize" expression="chunkToChunkSet/physicalChunkSize"/>
 			<field name="freeRows" expression="chunkToChunkSet/freeRows"/>

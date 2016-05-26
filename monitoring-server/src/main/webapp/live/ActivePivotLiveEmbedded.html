@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<!--
+
+============================================================================================================================
+============================================================================================================================
+   _____          __  .__            __________.__             __      _________                  .______.
+  /  _  \   _____/  |_|__|__  __ ____\______   \__|__  _______/  |_   /   _____/____    ____    __| _/\_ |__   _______  ___
+ /  /_\  \_/ ___\   __\  \  \/ // __ \|     ___/  \  \/ /  _ \   __\  \_____  \\__  \  /    \  / __ |  | __ \ /  _ \  \/  /
+/    |    \  \___|  | |  |\   /\  ___/|    |   |  |\   (  <_> )  |    /        \/ __ \|   |  \/ /_/ |  | \_\ (  <_> >    <
+\____|__  /\___  >__| |__| \_/  \___  >____|   |__| \_/ \____/|__|   /_______  (____  /___|  /\____ |  |___  /\____/__/\_ \
+        \/     \/                   \/                                       \/     \/     \/      \/      \/            \/
+
+============================================================================================================================
+============================================================================================================================
+
+IMPORTANT DISCLAIMER:
+=====================
+
+This page was developed to offer a similar feature as the one provided by ActivePivot Live 3.x to embed MDX views in
+an external page, using the new ActivePivot Live 4.x.
+
+This represents the only intent of the following code and is not meant to serve as an example.
+
+In this page, some code reproduce the URL parsing of ActivePivot Live 3.x to support the same syntax.
+If such a feature should be developed in ActivePivot Live, it would not be done the same way.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+This page will only be maintained in the sandbox project until Sentinel UI is incorporated directly into a
+single web application.
+
+As soon as this application exist, this page will be deleted from ActivePivot sandbox project.
+
+Its integration is known to have some issues but is here to illustrate the new capabilities of ActivePivot Live.
+
+==============================================================================================================================
+
+ -->
+<head>
+  <meta charset="utf-8">
+  <title>ActivePivot Live - Embedded version</title>
+  <style type="text/css">
+body {
+  font-family: Sans-Serif;
+}
+
+.pivotTable {
+  height: 600px;
+}
+
+.chart {
+  float: left;
+  width: 500px;
+  height: 400px;
+}
+
+.debug {
+  float: left;
+  overflow: auto;
+  width: 400px;
+  height: 500px;
+  font-size:0.7em;
+}
+
+@font-face {
+  font-family: "arsenal";
+  src: url('./fonts/arsenal-regular-webfont.woff') format('truetype');
+}
+
+@font-face {
+  font-family: "arsenal";
+  src: url('./fonts/arsenal-bold-webfont.woff') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: "arsenal";
+  src: url('./fonts/arsenal-italic-webfont.woff') format('truetype');
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "arsenal";
+  src: url('./fonts/arsenal-bolditalic-webfont.woff') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
+body {
+  margin: 0;
+  overflow:hidden;
+}
+
+#pivotTable {
+  margin: 10px;
+  width: 100vw;
+  height: 100vh;
+  font-family: arsenal, verdana, sans-serif;
+}
+  </style>
+  <script>
+function getUrlVars() {
+  var query = window.location.href.substring(window.location.href.indexOf('?') + 1);
+  var pattern = /:([a-z]{1,2}):"([^:]+)"/g;
+  var config = { raw: query };
+  var match;
+  while ((match = pattern.exec(query)) !== null) {
+    config[match[1]] = decodeURIComponent(match[2]);
+  }
+
+  if (config.hasOwnProperty('cv') && config.cv.length > 2) {
+    var cvs = config.cv.substring(1, config.cv.length - 1).split(';');
+    var context = {};
+    for (var i in cvs) {
+      var match = cvs[i].split('=');
+      context[match[0]] = match[1];
+    }
+    config.cv = context;
+  } else {
+    config.cv = {};
+  }
+
+  return config;
+}
+
+function handleLoad() {
+  ActivePivotLive.cfg.override('logging/Logger.js', 'logging/ErrorsLogger.js');
+
+  var servers = ActivePivotLive.api.queries.serversPool;
+  var sandboxServer = servers.addActivePivotServer({url: window.location.href.split('/live')[0]});
+
+  var config = getUrlVars();
+  if (config.hasOwnProperty('q')) {
+    var query = sandboxServer.createSelectQuery(config.q, config.cv).start();
+
+    // Create pivot table & attach to DOM
+    ActivePivotLive.api.widgets.createPivotTable()
+      .withActions([])
+      .withQuery(query)
+      .withConfiguration({
+        tabular: {
+          columnsGroups: [
+            {
+              captionProducer: {
+                key: 'columnMerge',
+                args: {}
+              },
+              selector: {
+                key: 'member',
+                args: {}
+              },
+              cellFactory: {
+                key: 'treeCells',
+                args: {
+                  automaticExpansion: true
+                }
+              }
+            },
+            {
+              captionProducer: {
+                key: 'columnMerge',
+                args: {}
+              },
+              selector: {
+                key: 'kpi-status',
+                args: {}
+              },
+              cellFactory: {
+                key: 'kpi-status',
+                args: {}
+              }
+            },
+            {
+              captionProducer: {
+                key: 'columnMerge',
+                args: {}
+              },
+              selector: {
+                key: 'lookup',
+                args: {}
+              },
+              cellFactory: {
+                key: 'lookup',
+                args: {}
+              }
+            },
+            {
+              captionProducer: {
+                key: 'expiry',
+                args: {}
+              },
+              selector: {
+                key: 'kpi-expiry',
+                args: {}
+              },
+              cellFactory: {
+                key: 'expiry',
+                args: {}
+              }
+            }
+          ],
+          pinnedHeaderSelector: 'member',
+          hideAddButton: true
+        }
+      })
+      .within('pivotTable');
+  } else {
+    document.getElementById('pivotTable').innerHTML = '<p>Invalid query received: <b>' + config.raw + '</b></p>';
+  }
+}
+  </script>
+</head>
+<body>
+  <div id="pivotTable" class="pivotTable"></div>
+
+  <!-- On Chrome, document.write seems not to support writing inline script tags in the body. -->
+  <!-- Thus, Live needs to be loaded asynchronously and use the onload handler to execute the snippet script. -->
+  <script type="text/javascript" src="./app.min.js" onload="handleLoad(event)" async></script>
+</body>
+</html>
