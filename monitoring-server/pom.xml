@@ -6,7 +6,7 @@
 	<groupId>com.activeviam.activepivot</groupId>
 	<artifactId>monitoring-server</artifactId>
 	<name>Monitoring Web Application</name>
-	<version>5.5.1-SNAPSHOT</version>
+	<version>5.5.0</version>
 	<packaging>war</packaging>
 
 	<dependencyManagement>
@@ -14,7 +14,7 @@
 			<dependency>
 				<groupId>com.activeviam.activepivot</groupId>
 				<artifactId>activepivot-server</artifactId>
-				<version>5.5.1-SNAPSHOT</version>
+				<version>5.5.0</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
