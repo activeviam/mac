@@ -13,6 +13,10 @@
 		<maven>3.0</maven>
 	</prerequisites>
 
+	<modules>
+		<module>monitoring-server</module>
+	</modules>
+
 	<dependencyManagement>
 		<dependencies>
 			
@@ -35,20 +39,16 @@
 		</dependencies>
 	</dependencyManagement>
 
-	<modules>
-		<module>monitoring-server</module>
-	</modules>
-
 	<build>
 		<plugins>
 			<plugin>
-				<!-- JDK 7 is required for the Sandbox Application -->
+				<!-- JDK 8 is required for the Sandbox Application -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
@@ -68,16 +68,9 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>2.4</version>
+				<version>2.6</version>
 				<configuration>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<argLine>-XX:MaxPermSize=128M</argLine>
 				</configuration>
 			</plugin>
 		</plugins>
