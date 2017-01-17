@@ -3,20 +3,6 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.quartetfs.com ../activepivot-types.xsd">
 
-	<!-- Selection of the aggregate provider -->
-	<aggregateProvider pluginKey="JUST_IN_TIME">
-		<properties>
-			<entry key="rangeSharing" value="true" />
-		</properties>
-
-		<partialProvider pluginKey="BITMAP">
-			<hierarchy name="Date" />
-		</partialProvider>
-	</aggregateProvider>
-
-	<!-- Cache the most recently accessed {location, measure} pairs -->
-	<aggregatesCacheSize>-1</aggregatesCacheSize>
-
 	<!-- Definition of the dimensions -->
 	<dimensions>
 		<import resource="DESC-INF/Dimensions.xml" />
@@ -25,8 +11,7 @@
 	<!-- Definition of the Epoch dimension -->
 	<!-- Its content depends on the Epoch Management Policy (see DatastoreConfig.datastore). -->
 	<!-- This dimension can be disabled for some users with to the Mdx context. -->
-	<epochDimension levelComparator="REVERSE_EPOCH"
-		formatter="EPOCH[HH:mm:ss]" />
+	<epochDimension levelComparator="REVERSE_EPOCH" formatter="EPOCH[HH:mm:ss]" />
 
 	<!-- Definition of the measures -->
 	<measures defaultMeasures="contributors.COUNT">
@@ -52,8 +37,7 @@
 				<column>fields</column>
 			</hiddenColumns>
 			<calculatedColumns>
-				<calculatedColumn pluginKey="FieldsColumn" name="Field names"
-					underlyingFields="Fields" />
+				<calculatedColumn pluginKey="FieldsColumn" name="Field names" underlyingFields="Fields" />
 			</calculatedColumns>
 		</drillthroughProperties>
 	</sharedContexts>

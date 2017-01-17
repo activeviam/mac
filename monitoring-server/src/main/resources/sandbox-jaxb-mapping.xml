@@ -1,7 +1,0 @@
-<?xml version = "1.0" encoding = "UTF-8"?>
-<jaxb-intros xmlns="http://www.jboss.org/xsd/jaxb/intros">
-
-	<!-- Namespace declaration -->
-	<XmlSchema namespace="http://www.quartetfs.com" elementFormDefault="QUALIFIED" />
-
-</jaxb-intros>

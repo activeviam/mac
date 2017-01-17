@@ -18,9 +18,10 @@ import org.springframework.core.env.Environment;
 
 import com.qfs.logging.MessagesDatastore;
 import com.qfs.msg.csv.ICSVTopic;
+import com.qfs.msg.csv.ICsvDataProvider;
 import com.qfs.msg.csv.IFileEvent;
 import com.qfs.msg.csv.IFileListener;
-import com.qfs.msg.csv.impl.DirectoryCSVTopic;
+import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
 import com.qfs.msg.impl.WatcherService;
 import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -53,15 +54,16 @@ public class MonitoringSourceConfig {
 				FileSystems.getDefault().getPathMatcher("glob:**.json"),
 				new WatcherService());
 
-		topic.listen(new IFileListener() {
+		topic.listen(new IFileListener<Path>() {
 
 			@Override
-			public void onEvent(ICSVTopic topic, IFileEvent event) {
+			public void onEvent(ICSVTopic<Path> topic, IFileEvent<Path> event) {
 				if (event != null && event.created() != null) {
 					// Load stat
-					Collection<Path> paths = event.created();
+					Collection<? extends ICsvDataProvider<Path>> providers = event.created();
 
-					for (Path path : paths) {
+					for (ICsvDataProvider<Path> provider : providers) {
+						Path path = provider.getFileInfo().getIdentifier();
 						File file = path.toFile();
 						try {
 							String message = connectorConfig.feedDatastore(MemoryMonitoringService.loadDumpedStatistic(file));
@@ -73,6 +75,7 @@ public class MonitoringSourceConfig {
 				}
 			}
 		});
+
 		return null;
 	}
 }

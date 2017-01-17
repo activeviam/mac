@@ -6,6 +6,9 @@
  */
 package com.qfs.sandbox.server;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,15 +31,25 @@ import com.qfs.monitoring.cfg.impl.WebAppInitializer;
  */
 public class MonitoringServer {
 
-	/** Jetty server default port (9090) */
+	/** Root of the web application files, defined relatively to the project root */
+	protected static final String WEBAPP = "src/main/webapp";
+
+	/** Jetty server default port (9092) */
 	public static final int DEFAULT_PORT = 9092;
 
 	public static Server createServer(int port) {
+		// We check that the correct folder is setup as current working directory when starting the Sandbox. Some IDEs like
+		// IntelliJ will not use the correct one as default (PIVOT-3106).
+		if (!containsFolder(WEBAPP)) {
+			System.err.println("The current working directory is incorrect, it should be the parent of the folder " + WEBAPP + ", please change your run configuration.");
+			System.exit(1);
+		}
+
 		final WebAppContext root = new WebAppContext();
 		root.setConfigurations(new Configuration[] { new JettyAnnotationConfiguration() });
 		root.setContextPath("/");
 		root.setParentLoaderPriority(true);
-		root.setResourceBase("src/main/webapp");
+		root.setResourceBase(WEBAPP);
 
 		// Enable GZIP compression
 		final FilterHolder gzipFilter = new FilterHolder(org.eclipse.jetty.servlets.GzipFilter.class);
@@ -106,6 +119,11 @@ public class MonitoringServer {
 			_classInheritanceHandler = new ClassInheritanceHandler(map);
 		}
 
+	}
+
+	public static boolean containsFolder(String fileName) {
+		Path path = Paths.get(fileName);
+		return Files.exists(path);
 	}
 
 }

@@ -3,10 +3,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>quartetfs.biz.pivot.sandbox</groupId>
+	<groupId>com.activeviam.sandbox</groupId>
 	<artifactId>monitoring</artifactId>
 	<packaging>pom</packaging>
-	<version>5.4.2-SNAPSHOT</version>
+	<version>5.5.1-SNAPSHOT</version>
 	<name>ActivePivot Monitoring</name>
 
 	<prerequisites>
@@ -15,21 +15,24 @@
 
 	<dependencyManagement>
 		<dependencies>
-		 <!-- import AP Sentinel core dependencies management specifications -->
-
 			
 			 <!-- import AP Server core dependencies management specifications -->
 			 <!-- Projects using sentinel do not need it, as sentinel already imports AP server core dependencies -->
 			<dependency>
-				<groupId>quartetfs.biz.pivot</groupId>
+				<groupId>com.activeviam.activepivot</groupId>
 				<artifactId>activepivot-server</artifactId>
 				<version>${project.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency> 
-		</dependencies>
 		
-			
+			<dependency>
+				<groupId>com.activeviam.activeui</groupId>
+				<artifactId>activeui</artifactId>
+				<version>4.1.0-m3</version>
+			</dependency>
+		
+		</dependencies>
 	</dependencyManagement>
 
 	<modules>

@@ -26,11 +26,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 
+import com.qfs.QfsWebUtils;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.pivot.servlet.impl.ContextValueFilter;
 import com.qfs.server.cfg.IActivePivotConfig;
-import com.quartetfs.biz.pivot.security.IUserDetailsService;
-import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
 
 /**
  * Spring configuration fragment for security.
@@ -42,18 +41,6 @@ import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
 public class SecurityConfig extends ASecurityConfig {
 
 	public static final String COOKIE_NAME = "AP_JSESSIONID";
-
-	/**
-	 * User details service wrapped into a Quartet interface.
-	 * <p>
-	 * This bean is used by {@link SentinelAPExtensionServiceConfiguration}
-	 *
-	 * @return a user details service
-	 */
-	@Bean
-	public IUserDetailsService qfsUserDetailsService() {
-		return new UserDetailsServiceWrapper(userDetailsService());
-	}
 
 	/**
 	 * Only required if the content service is exposed.
@@ -81,22 +68,24 @@ public class SecurityConfig extends ASecurityConfig {
 		protected void doConfigure(HttpSecurity http) throws Exception {
 			final String url = ContentServerRestServicesConfig.NAMESPACE;
 			http
-					// Only theses URLs must by handled by this HttpSecurity
+					// Only theses URLs must be handled by this HttpSecurity
 					.antMatcher(url + "/**")
 					.authorizeRequests()
 					// The order of the matchers matters
 					.antMatchers(
 							HttpMethod.OPTIONS,
-							ContentServerRestServicesConfig.REST_API_URL_PREFIX
-									+ "/**").permitAll()
-					.antMatchers(url + "/**").hasAuthority(ROLE_USER)
-					.and().httpBasic();
+							QfsWebUtils.url(ContentServerRestServicesConfig.REST_API_URL_PREFIX + "**"))
+					.permitAll()
+					.antMatchers(url + "/**")
+					.hasAuthority(ROLE_USER)
+					.and()
+					.httpBasic();
 		}
 
 	}
 
 	/**
-	 * To expose the login page of Live 4.
+	 *Configuration for ActiveUI.
 	 */
 	@Configuration
 	@Order(1)
@@ -105,16 +94,19 @@ public class SecurityConfig extends ASecurityConfig {
 
 		@Override
 		protected void doConfigure(HttpSecurity http) throws Exception {
-			final String url = "/live/**";
+			// Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
+			final String pattern = "^(.{0}|\\/|\\/" + ActiveUIResourceServerConfig.NAMESPACE + "(\\/.*)?)$";
 			http
-					// Only theses URLs must by handled by this HttpSecurity
-					.antMatcher(url)
+					// Only theses URLs must be handled by this HttpSecurity
+					.regexMatcher(pattern)
 					.authorizeRequests()
 					// The order of the matchers matters
-					.antMatchers(HttpMethod.OPTIONS, url).permitAll()
-					.antMatchers(HttpMethod.GET, url).permitAll();
+					.regexMatchers(HttpMethod.OPTIONS, pattern)
+					.permitAll()
+					.regexMatchers(HttpMethod.GET, pattern)
+					.permitAll();
 
-			// Authorizing pages to be embedded in iframes to have ActivePivot Live in Sentinel UI
+			// Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
 			http.headers().frameOptions().disable();
 		}
 

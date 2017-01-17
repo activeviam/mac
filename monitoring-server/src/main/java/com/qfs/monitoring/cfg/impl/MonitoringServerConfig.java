@@ -20,10 +20,11 @@ import com.qfs.server.cfg.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
 import com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotRestServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotXmlaConfig;
+import com.qfs.server.cfg.impl.ActivePivotWebServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
+import com.qfs.server.cfg.impl.QfsRestServicesConfig;
 import com.quartetfs.biz.pivot.monitoring.impl.JMXEnabler;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
@@ -57,13 +58,13 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 		ActivePivotConfig.class,
 		MonitoringDatastoreConfig.class,
 		MonitoringCorsFilterConfig.class,
-		ActivePivotXmlaConfig.class, // for excel
+		ActivePivotXmlaServletConfig.class,
 
 		MonitoringSourceConfig.class,
 
-		ActivePivotRestServicesConfig.class,// for live 4
+		QfsRestServicesConfig.class,
 
-		LiveResourceServerConfig.class,
+		ActiveUIResourceServerConfig.class,
 
 		JwtConfig.class,
 		SecurityConfig.class,
@@ -71,10 +72,10 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 		LocalContentServiceConfig.class,
 
 		ActivePivotServicesConfig.class,
-		ActivePivotRemotingServicesConfig.class, // for live 3
+		ActivePivotRemotingServicesConfig.class,
+		ActivePivotWebServicesConfig.class, // for context values discovery made by ActiveUI
 
 		MonitoringConnectorConfig.class,
-
 })
 public class MonitoringServerConfig {
 

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
@@ -61,7 +62,7 @@ public class MonitoringConnectorConfig {
 	@JmxOperation(name = "Load statistic from the remote server", desc = "Call to AP server to retrieve datastore statistics", params = {})
 	public String jmxPollStatisticFromRemoteServer() throws Exception {
 		// Rest call
-		String data = restService.path(MonitoringRestServicesConfig.REST_API_URL_PREFIX).get().as(String.class);
+		String data = restService.path(QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations")).get().as(String.class);
 		return feedDatastore(MonitoringStatisticSerializerUtil.deserialize(data, IMemoryStatistic.class));
 	}
 

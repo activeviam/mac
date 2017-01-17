@@ -9,9 +9,13 @@
 
   <xs:element name="aggregateProvider" type="tns:aggregateProvider"/>
 
+  <xs:element name="aggregatesCache" type="tns:aggregatesCacheDescription"/>
+
   <xs:element name="aggregatesEvent" type="tns:aggregatesEvent"/>
 
   <xs:element name="and" type="tns:and"/>
+
+  <xs:element name="application" type="tns:distributedApplicationDefinition"/>
 
   <xs:element name="asOfEpoch" type="tns:asOfEpoch"/>
 
@@ -28,6 +32,8 @@
   <xs:element name="cellSetDTO" type="tns:cellSet"/>
 
   <xs:element name="cellSetEvent" type="tns:cellSetEvent"/>
+
+  <xs:element name="cluster" nillable="true" type="xs:anyType"/>
 
   <xs:element name="comparatorDescription" type="tns:comparatorDescription"/>
 
@@ -47,9 +53,7 @@
 
   <xs:element name="distributedActivePivotDescription" type="tns:distributedActivePivotDescription"/>
 
-  <xs:element name="distributedQueriesTimeLimit" type="tns:distributedQueriesTimeLimit"/>
-
-  <xs:element name="distributionConfiguration" type="tns:distributionConfiguration"/>
+  <xs:element name="distributedCluster" type="tns:queryClusterDefinition"/>
 
   <xs:element name="drillthroughEvent" type="tns:drillthroughEvent"/>
 
@@ -129,6 +133,8 @@
 
   <xs:element name="measures" type="tns:measuresWrapper"/>
 
+  <xs:element name="messenger" type="tns:messengerDefinition"/>
+
   <xs:element name="missedPrefetchBehavior" type="tns:missedPrefetchBehavior"/>
 
   <xs:element name="namedSet" type="tns:namedSetDescription"/>
@@ -177,160 +183,22 @@
 
   <xs:element name="userEntitlement" type="tns:userEntitlement"/>
 
-  <xs:complexType name="streamProperties">
-    <xs:sequence>
-      <xs:element name="initialState" type="tns:initialState" minOccurs="0"/>
-      <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
-      <xs:element name="publicationDomain" type="xs:string" minOccurs="0"/>
-      <xs:element name="pushData" type="xs:boolean"/>
-      <xs:element name="streamId" type="xs:string" minOccurs="0"/>
-      <xs:element name="strictMode" type="xs:boolean"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="stringPropertyList">
-    <xs:sequence>
-      <xs:element name="entry" type="tns:stringProperty" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="stringProperty">
-    <xs:sequence/>
-    <xs:attribute name="key" type="xs:string" use="required"/>
-    <xs:attribute name="value" type="xs:string"/>
-  </xs:complexType>
-
-  <xs:complexType name="streamEvent" abstract="true">
-    <xs:sequence>
-      <xs:element name="id" type="xs:long"/>
-      <xs:element name="streamId" type="xs:string" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="failureEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:streamEvent">
-        <xs:sequence>
-          <xs:element name="cause" type="tns:failureEvent" minOccurs="0"/>
-          <xs:element name="errorClass" type="xs:string" minOccurs="0"/>
-          <xs:element name="message" type="xs:string" minOccurs="0"/>
-          <xs:element name="stackTrace" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="activePivotEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:streamEvent">
-        <xs:sequence>
-          <xs:element name="epoch" type="xs:long"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="bulkedEvents">
-    <xs:sequence>
-      <xs:element name="domainEvents" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="domainEvent" type="tns:domainEvent" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="domainEvent">
-    <xs:sequence>
-      <xs:element name="domain" type="xs:string" minOccurs="0"/>
-      <xs:element name="events" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:element ref="tns:failureEvent"/>
-              <xs:element ref="tns:activePivotEvent"/>
-              <xs:element ref="tns:drillthroughEvent"/>
-              <xs:element ref="tns:drillthroughUpdateEvent"/>
-              <xs:element ref="tns:cellEvent"/>
-              <xs:element ref="tns:cellSetEvent"/>
-              <xs:element ref="tns:aggregatesEvent"/>
-            </xs:choice>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-
   <xs:complexType name="aEntitlement" abstract="true">
     <xs:sequence>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element ref="tns:subCubeProperties"/>
-        <xs:element ref="tns:asOfEpoch"/>
         <xs:element ref="tns:mdxContext"/>
         <xs:element ref="tns:queriesTimeLimit"/>
+        <xs:element ref="tns:asOfEpoch"/>
+        <xs:element ref="tns:flatContextValues"/>
         <xs:element ref="tns:missedPrefetchBehavior"/>
         <xs:element ref="tns:drillthroughProperties"/>
-        <xs:element ref="tns:flatContextValues"/>
-        <xs:element ref="tns:distributedQueriesTimeLimit"/>
+        <xs:element ref="tns:subCubeProperties"/>
       </xs:choice>
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="aContextValue" abstract="true">
     <xs:sequence/>
-  </xs:complexType>
-
-  <xs:complexType name="subCubeProperties">
-    <xs:complexContent>
-      <xs:extension base="tns:aContextValue">
-        <xs:all>
-          <xs:element name="hierarchyRestrictions" type="tns:subCubeHierarchyList" minOccurs="0"/>
-          <xs:element name="grantedMeasures" minOccurs="0">
-            <xs:complexType>
-              <xs:sequence>
-                <xs:element name="measure" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-              </xs:sequence>
-            </xs:complexType>
-          </xs:element>
-        </xs:all>
-        <xs:attribute name="isAccessGranted" type="xs:boolean" use="required"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="subCubeHierarchyList">
-    <xs:sequence>
-      <xs:element name="hierarchy" type="tns:subCubeHierarchy" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="subCubeHierarchy">
-    <xs:sequence>
-      <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element name="allowedMember" type="tns:subCubeMemberPath"/>
-        <xs:element name="restriction" type="tns:subCubeMemberPath"/>
-      </xs:choice>
-    </xs:sequence>
-    <xs:attribute name="dimension" type="xs:string"/>
-    <xs:attribute name="name" type="xs:string"/>
-  </xs:complexType>
-
-  <xs:complexType name="subCubeMemberPath">
-    <xs:sequence>
-      <xs:element name="memberPathPart" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="asOfEpoch">
-    <xs:complexContent>
-      <xs:extension base="tns:aContextValue">
-        <xs:sequence/>
-        <xs:attribute name="epoch" type="xs:long"/>
-        <xs:attribute name="strict" type="xs:boolean" use="required"/>
-      </xs:extension>
-    </xs:complexContent>
   </xs:complexType>
 
   <xs:complexType name="mdxContext">
@@ -541,6 +409,26 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="asOfEpoch">
+    <xs:complexContent>
+      <xs:extension base="tns:aContextValue">
+        <xs:sequence/>
+        <xs:attribute name="epoch" type="xs:long"/>
+        <xs:attribute name="strict" type="xs:boolean" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="flatContextValuesHolder">
+    <xs:complexContent>
+      <xs:extension base="tns:aContextValue">
+        <xs:sequence>
+          <xs:element name="mapping" type="tns:stringEntryList" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
   <xs:complexType name="missedPrefetchBehavior">
     <xs:complexContent>
       <xs:extension base="tns:aContextValue">
@@ -592,6 +480,18 @@
     <xs:attribute name="pluginKey" type="xs:string"/>
   </xs:complexType>
 
+  <xs:complexType name="stringPropertyList">
+    <xs:sequence>
+      <xs:element name="entry" type="tns:stringProperty" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="stringProperty">
+    <xs:sequence/>
+    <xs:attribute name="key" type="xs:string" use="required"/>
+    <xs:attribute name="value" type="xs:string"/>
+  </xs:complexType>
+
   <xs:complexType name="calculatedDrillthroughColumnDescription">
     <xs:sequence>
       <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
@@ -615,21 +515,52 @@
     <xs:attribute name="name" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:complexType name="flatContextValuesHolder">
+  <xs:complexType name="subCubeProperties">
     <xs:complexContent>
       <xs:extension base="tns:aContextValue">
-        <xs:sequence>
-          <xs:element name="mapping" type="tns:stringEntryList" minOccurs="0"/>
-        </xs:sequence>
+        <xs:all>
+          <xs:element name="hierarchyRestrictions" type="tns:subCubeHierarchyList" minOccurs="0"/>
+          <xs:element name="grantedMeasures" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="measure" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:all>
+        <xs:attribute name="isAccessGranted" type="xs:boolean" use="required"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="distributedQueriesTimeLimit">
+  <xs:complexType name="subCubeHierarchyList">
+    <xs:sequence>
+      <xs:element name="hierarchy" type="tns:subCubeHierarchy" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="subCubeHierarchy">
+    <xs:sequence>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="allowedMember" type="tns:subCubeMemberPath"/>
+        <xs:element name="restriction" type="tns:subCubeMemberPath"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="dimension" type="xs:string"/>
+    <xs:attribute name="name" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="subCubeMemberPath">
+    <xs:sequence>
+      <xs:element name="memberPathPart" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="pivotEntitlement">
     <xs:complexContent>
-      <xs:extension base="tns:aContextValue">
+      <xs:extension base="tns:aEntitlement">
         <xs:sequence/>
-        <xs:attribute name="seconds" type="xs:int" use="required"/>
+        <xs:attribute name="id" type="xs:string" use="required"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -642,20 +573,555 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="pivotEntitlement">
-    <xs:complexContent>
-      <xs:extension base="tns:aEntitlement">
-        <xs:sequence/>
-        <xs:attribute name="id" type="xs:string" use="required"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
   <xs:complexType name="userEntitlement">
     <xs:sequence>
       <xs:element ref="tns:globalEntitlement" minOccurs="0"/>
       <xs:element ref="tns:pivotEntitlement" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="aQuery" abstract="true">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="mdxDrillthroughQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aQuery">
+        <xs:sequence>
+          <xs:element name="content" type="xs:string" minOccurs="0"/>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="contextsWrapper">
+    <xs:complexContent>
+      <xs:extension base="tns:aImportsWrapper">
+        <xs:sequence>
+          <xs:element ref="tns:import" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="tns:mdxContext"/>
+            <xs:element ref="tns:queriesTimeLimit"/>
+            <xs:element ref="tns:asOfEpoch"/>
+            <xs:element ref="tns:flatContextValues"/>
+            <xs:element ref="tns:missedPrefetchBehavior"/>
+            <xs:element ref="tns:drillthroughProperties"/>
+            <xs:element ref="tns:subCubeProperties"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="aImportsWrapper" abstract="true">
+    <xs:sequence>
+      <xs:element name="resources" type="tns:importedResource" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="importedResource">
+    <xs:sequence/>
+    <xs:attribute name="resource" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="aListQuery" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:aQuery">
+        <xs:sequence>
+          <xs:element name="firstResult" type="xs:int"/>
+          <xs:element name="maxResults" type="xs:int"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="mdxQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aQuery">
+        <xs:sequence>
+          <xs:element name="cellsOnly" type="xs:boolean"/>
+          <xs:element name="content" type="xs:string" minOccurs="0"/>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="getAggregatesQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aQuery">
+        <xs:sequence>
+          <xs:element name="additionalMeasures" type="tns:measuresWrapper" minOccurs="0"/>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+          <xs:element name="locations" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="measureSelections" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="measuresWrapper">
+    <xs:complexContent>
+      <xs:extension base="tns:aImportsWrapper">
+        <xs:sequence>
+          <xs:element ref="tns:import" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="tns:measure"/>
+            <xs:element ref="tns:postProcessor"/>
+            <xs:element ref="tns:nativeMeasure"/>
+          </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="defaultMeasures" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="aggregatedMeasureDescription">
+    <xs:complexContent>
+      <xs:extension base="tns:measureMemberDescription">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="field" type="xs:string" use="required"/>
+        <xs:attribute name="aggregation" type="xs:string"/>
+        <xs:attribute name="swap" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="measureMemberDescription">
+    <xs:sequence/>
+    <xs:attribute name="folder" type="xs:string"/>
+    <xs:attribute name="formatter" type="xs:string"/>
+    <xs:attribute name="group" type="xs:string"/>
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="visible" type="xs:boolean"/>
+  </xs:complexType>
+
+  <xs:complexType name="postProcessorDescription">
+    <xs:complexContent>
+      <xs:extension base="tns:measureMemberDescription">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="continuousQueryHandlers" type="xs:string"/>
+        <xs:attribute name="pluginKey" type="xs:string"/>
+        <xs:attribute name="underlyingMeasures" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="nativeMeasureDescription">
+    <xs:complexContent>
+      <xs:extension base="tns:measureMemberDescription">
+        <xs:sequence/>
+        <xs:attribute name="alias" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="mapGetAggregatesQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aQuery">
+        <xs:sequence>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+          <xs:element name="coordinates" type="tns:stringEntryCollection" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="measureSelections" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="stringEntryCollection">
+    <xs:complexContent>
+      <xs:extension base="tns:aStringEntryCollection">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="aStringEntryCollection" abstract="true">
+    <xs:sequence>
+      <xs:element name="entry" type="tns:stringEntry" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aListQuery">
+        <xs:sequence>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+          <xs:element name="isFormatted" type="xs:boolean"/>
+          <xs:element name="locations" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="location" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="mdx" type="xs:string" minOccurs="0"/>
+          <xs:element name="measures" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="mapDrillthroughQuery">
+    <xs:complexContent>
+      <xs:extension base="tns:aListQuery">
+        <xs:sequence>
+          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
+          <xs:element name="coordinates" type="tns:stringEntryCollection" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="isFormatted" type="xs:boolean"/>
+          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="location" final="extension restriction">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="path">
+    <xs:sequence>
+      <xs:element name="items" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="item" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="member">
+    <xs:sequence>
+      <xs:element name="caption" type="xs:string" minOccurs="0"/>
+      <xs:element name="displayInfo" type="xs:int"/>
+      <xs:element name="levelName" type="xs:string" minOccurs="0"/>
+      <xs:element name="path" type="tns:path" minOccurs="0"/>
+      <xs:element name="properties" type="tns:mapEntryList" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="mapEntryList">
+    <xs:sequence>
+      <xs:element name="entry" type="tns:mapEntry" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="mapEntry">
+    <xs:sequence>
+      <xs:element name="key" type="xs:anyType" minOccurs="0"/>
+      <xs:element name="value" type="xs:anyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="axis">
+    <xs:sequence>
+      <xs:element name="hierarchies" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="hierarchy" type="tns:hierarchyDTO" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="index" type="xs:int"/>
+      <xs:element name="memberProperties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="property" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="positions" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="position" type="tns:axisPosition" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="hierarchyDTO">
+    <xs:sequence>
+      <xs:element name="dimension" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="ordinal" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="axisPosition">
+    <xs:sequence>
+      <xs:element name="members" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="member" type="tns:member" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughHeader">
+    <xs:sequence>
+      <xs:element name="caption" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="type" type="xs:string" minOccurs="0"/>
+      <xs:element name="visible" type="xs:boolean"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughRow">
+    <xs:sequence>
+      <xs:element name="content" type="tns:genericArray" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="ordinal" type="xs:int" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="genericArray">
+    <xs:sequence>
+      <xs:element name="underlying" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughResult">
+    <xs:sequence>
+      <xs:element name="headers" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="headers" type="tns:drillthroughHeader" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="rows" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="rows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="estimatedTotalRowCount" type="xs:int" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="cellSet">
+    <xs:sequence>
+      <xs:element name="axes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="axis" type="tns:axis" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="cellProperties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="p" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="cells" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="cell" type="tns:cell" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="defaultMembers" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="member" type="tns:memberDTO" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="slicerAxis" type="tns:axis" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="cell">
+    <xs:sequence>
+      <xs:element name="formattedValue" type="xs:string" minOccurs="0"/>
+      <xs:element name="ordinal" type="xs:int"/>
+      <xs:element name="previousValue" type="xs:anyType" minOccurs="0"/>
+      <xs:element name="propertyValues" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="pV" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="value" type="xs:anyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="timestamp">
+    <xs:sequence>
+      <xs:element name="date" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="memberDTO">
+    <xs:sequence>
+      <xs:element name="captionPath" type="tns:path" minOccurs="0"/>
+      <xs:element name="dimension" type="xs:string" minOccurs="0"/>
+      <xs:element name="hierarchy" type="xs:string" minOccurs="0"/>
+      <xs:element name="hierarchyOrdinal" type="xs:int"/>
+      <xs:element name="level" type="xs:string" minOccurs="0"/>
+      <xs:element name="path" type="tns:path" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="aggregate">
+    <xs:sequence>
+      <xs:element name="aggregates" type="tns:mapEntryList" minOccurs="0"/>
+      <xs:element name="location" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="vectorDTO">
+    <xs:sequence>
+      <xs:element name="underlying" type="xs:anyType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="permissionsMap">
+    <xs:sequence>
+      <xs:element name="permissions" type="tns:permissionsList" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="permissionsList">
+    <xs:sequence>
+      <xs:element name="element" type="tns:permissions" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="permissions">
+    <xs:sequence/>
+    <xs:attribute name="id" type="xs:string"/>
+    <xs:attribute name="owner" type="xs:string"/>
+    <xs:attribute name="reader" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="pluginValue">
+    <xs:sequence/>
+    <xs:attribute name="interface" type="xs:string" use="required"/>
+    <xs:attribute name="key" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="genericList">
+    <xs:sequence>
+      <xs:element name="records" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="propertyInfoListWrapper">
+    <xs:sequence>
+      <xs:element ref="tns:property" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="propertyInfo">
+    <xs:sequence/>
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="expression" type="xs:string"/>
+    <xs:attribute name="pluginKey" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="objectContainer">
+    <xs:sequence>
+      <xs:element name="content" type="xs:anyType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="activePivotEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:streamEvent">
+        <xs:sequence>
+          <xs:element name="epoch" type="xs:long"/>
+          <xs:element name="queryId" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="streamEvent" abstract="true">
+    <xs:sequence>
+      <xs:element name="id" type="xs:long"/>
+      <xs:element name="streamId" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="failureEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:streamEvent">
+        <xs:sequence>
+          <xs:element name="cause" type="tns:failureEvent" minOccurs="0"/>
+          <xs:element name="errorClass" type="xs:string" minOccurs="0"/>
+          <xs:element name="message" type="xs:string" minOccurs="0"/>
+          <xs:element name="stackTrace" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:activePivotEvent">
+        <xs:sequence>
+          <xs:element name="result" type="tns:drillthroughResult" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="drillthroughUpdateEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:activePivotEvent">
+        <xs:sequence>
+          <xs:element name="addedOrUpdatedRows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="removedRows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="cellEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:activePivotEvent">
+        <xs:sequence>
+          <xs:element name="cells" type="tns:cell" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="cellSetEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:activePivotEvent">
+        <xs:sequence>
+          <xs:element name="cellSet" type="tns:cellSet" minOccurs="0"/>
+          <xs:element name="cube" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="aggregatesEvent">
+    <xs:complexContent>
+      <xs:extension base="tns:activePivotEvent">
+        <xs:sequence>
+          <xs:element name="aggregates" type="tns:aggregate" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
 
   <xs:complexType name="filterDescription">
@@ -835,517 +1301,49 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="drillthroughEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:activePivotEvent">
-        <xs:sequence>
-          <xs:element name="result" type="tns:drillthroughResult" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="drillthroughResult">
+  <xs:complexType name="streamProperties">
     <xs:sequence>
-      <xs:element name="headers" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="headers" type="tns:drillthroughHeader" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="rows" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="rows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-    <xs:attribute name="estimatedTotalRowCount" type="xs:int" use="required"/>
-  </xs:complexType>
-
-  <xs:complexType name="drillthroughHeader">
-    <xs:sequence>
-      <xs:element name="caption" type="xs:string" minOccurs="0"/>
-      <xs:element name="name" type="xs:string" minOccurs="0"/>
-      <xs:element name="type" type="xs:string" minOccurs="0"/>
-      <xs:element name="visible" type="xs:boolean"/>
+      <xs:element name="initialPublicationMode" type="tns:initialPublicationMode" minOccurs="0"/>
+      <xs:element name="initialState" type="tns:initialState" minOccurs="0"/>
+      <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
+      <xs:element name="publicationDomain" type="xs:string" minOccurs="0"/>
+      <xs:element name="pushData" type="xs:boolean"/>
+      <xs:element name="queryId" type="xs:string" minOccurs="0"/>
+      <xs:element name="streamId" type="xs:string" minOccurs="0"/>
+      <xs:element name="strictMode" type="xs:boolean"/>
     </xs:sequence>
   </xs:complexType>
 
-  <xs:complexType name="drillthroughRow">
+  <xs:complexType name="bulkedEvents">
     <xs:sequence>
-      <xs:element name="content" type="tns:genericArray" minOccurs="0"/>
-    </xs:sequence>
-    <xs:attribute name="ordinal" type="xs:int" use="required"/>
-  </xs:complexType>
-
-  <xs:complexType name="genericArray">
-    <xs:sequence>
-      <xs:element name="underlying" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="drillthroughUpdateEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:activePivotEvent">
-        <xs:sequence>
-          <xs:element name="addedOrUpdatedRows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="removedRows" type="tns:drillthroughRow" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="cellEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:activePivotEvent">
-        <xs:sequence>
-          <xs:element name="cells" type="tns:cell" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="cell">
-    <xs:sequence>
-      <xs:element name="formattedValue" type="xs:string" minOccurs="0"/>
-      <xs:element name="ordinal" type="xs:int"/>
-      <xs:element name="previousValue" type="xs:anyType" minOccurs="0"/>
-      <xs:element name="propertyValues" minOccurs="0">
+      <xs:element name="domainEvents" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="pV" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="value" type="xs:anyType" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="timestamp">
-    <xs:sequence>
-      <xs:element name="date" type="xs:dateTime" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="cellSetEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:activePivotEvent">
-        <xs:sequence>
-          <xs:element name="cellSet" type="tns:cellSet" minOccurs="0"/>
-          <xs:element name="cube" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="cellSet">
-    <xs:sequence>
-      <xs:element name="axes" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="axis" type="tns:axis" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="cellProperties" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="p" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="cells" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="cell" type="tns:cell" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="defaultMembers" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="member" type="tns:memberDTO" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="slicerAxis" type="tns:axis" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="axis">
-    <xs:sequence>
-      <xs:element name="hierarchies" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="hierarchy" type="tns:hierarchyDTO" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="index" type="xs:int"/>
-      <xs:element name="memberProperties" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="property" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element name="positions" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="position" type="tns:axisPosition" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="domainEvent" type="tns:domainEvent" minOccurs="0" maxOccurs="unbounded"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
   </xs:complexType>
 
-  <xs:complexType name="hierarchyDTO">
+  <xs:complexType name="domainEvent">
     <xs:sequence>
-      <xs:element name="dimension" type="xs:string" minOccurs="0"/>
-      <xs:element name="name" type="xs:string" minOccurs="0"/>
-      <xs:element name="ordinal" type="xs:int"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="axisPosition">
-    <xs:sequence>
-      <xs:element name="members" minOccurs="0">
+      <xs:element name="domain" type="xs:string" minOccurs="0"/>
+      <xs:element name="events" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="member" type="tns:member" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element ref="tns:activePivotEvent"/>
+              <xs:element ref="tns:failureEvent"/>
+              <xs:element ref="tns:drillthroughEvent"/>
+              <xs:element ref="tns:drillthroughUpdateEvent"/>
+              <xs:element ref="tns:cellEvent"/>
+              <xs:element ref="tns:cellSetEvent"/>
+              <xs:element ref="tns:aggregatesEvent"/>
+            </xs:choice>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="member">
-    <xs:sequence>
-      <xs:element name="caption" type="xs:string" minOccurs="0"/>
-      <xs:element name="displayInfo" type="xs:int"/>
-      <xs:element name="levelName" type="xs:string" minOccurs="0"/>
-      <xs:element name="path" type="tns:path" minOccurs="0"/>
-      <xs:element name="properties" type="tns:mapEntryList" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="path">
-    <xs:sequence>
-      <xs:element name="items" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="item" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="mapEntryList">
-    <xs:sequence>
-      <xs:element name="entry" type="tns:mapEntry" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="mapEntry">
-    <xs:sequence>
-      <xs:element name="key" type="xs:anyType" minOccurs="0"/>
-      <xs:element name="value" type="xs:anyType" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="memberDTO">
-    <xs:sequence>
-      <xs:element name="caption" type="xs:string" minOccurs="0"/>
-      <xs:element name="dimension" type="xs:string" minOccurs="0"/>
-      <xs:element name="hierarchy" type="xs:string" minOccurs="0"/>
-      <xs:element name="hierarchyOrdinal" type="xs:int"/>
-      <xs:element name="level" type="xs:string" minOccurs="0"/>
-      <xs:element name="path" type="tns:path" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="aggregatesEvent">
-    <xs:complexContent>
-      <xs:extension base="tns:activePivotEvent">
-        <xs:sequence>
-          <xs:element name="aggregates" type="tns:aggregate" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="aggregate">
-    <xs:sequence>
-      <xs:element name="aggregates" type="tns:mapEntryList" minOccurs="0"/>
-      <xs:element name="location" type="xs:string" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="aQuery" abstract="true">
-    <xs:sequence/>
-  </xs:complexType>
-
-  <xs:complexType name="mapGetAggregatesQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aQuery">
-        <xs:sequence>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-          <xs:element name="coordinates" type="tns:stringEntryCollection" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="measureSelections" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="contextsWrapper">
-    <xs:complexContent>
-      <xs:extension base="tns:aImportsWrapper">
-        <xs:sequence>
-          <xs:element ref="tns:import" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element ref="tns:subCubeProperties"/>
-            <xs:element ref="tns:asOfEpoch"/>
-            <xs:element ref="tns:mdxContext"/>
-            <xs:element ref="tns:queriesTimeLimit"/>
-            <xs:element ref="tns:missedPrefetchBehavior"/>
-            <xs:element ref="tns:drillthroughProperties"/>
-            <xs:element ref="tns:flatContextValues"/>
-            <xs:element ref="tns:distributedQueriesTimeLimit"/>
-          </xs:choice>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="aImportsWrapper" abstract="true">
-    <xs:sequence>
-      <xs:element name="resources" type="tns:importedResource" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="importedResource">
-    <xs:sequence/>
-    <xs:attribute name="resource" type="xs:string" use="required"/>
-  </xs:complexType>
-
-  <xs:complexType name="stringEntryCollection">
-    <xs:complexContent>
-      <xs:extension base="tns:aStringEntryCollection">
-        <xs:sequence/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="aStringEntryCollection" abstract="true">
-    <xs:sequence>
-      <xs:element name="entry" type="tns:stringEntry" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="mdxQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aQuery">
-        <xs:sequence>
-          <xs:element name="cellsOnly" type="xs:boolean"/>
-          <xs:element name="content" type="xs:string" minOccurs="0"/>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="mdxDrillthroughQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aQuery">
-        <xs:sequence>
-          <xs:element name="content" type="xs:string" minOccurs="0"/>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="getAggregatesQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aQuery">
-        <xs:sequence>
-          <xs:element name="additionalMeasures" type="tns:measuresWrapper" minOccurs="0"/>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-          <xs:element name="locations" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="measureSelections" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="measuresWrapper">
-    <xs:complexContent>
-      <xs:extension base="tns:aImportsWrapper">
-        <xs:sequence>
-          <xs:element ref="tns:import" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:choice minOccurs="0" maxOccurs="unbounded">
-            <xs:element ref="tns:measure"/>
-            <xs:element ref="tns:postProcessor"/>
-            <xs:element ref="tns:nativeMeasure"/>
-          </xs:choice>
-        </xs:sequence>
-        <xs:attribute name="defaultMeasures" type="xs:string"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="aggregatedMeasureDescription">
-    <xs:complexContent>
-      <xs:extension base="tns:measureMemberDescription">
-        <xs:sequence>
-          <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="field" type="xs:string" use="required"/>
-        <xs:attribute name="aggregation" type="xs:string"/>
-        <xs:attribute name="swap" type="xs:boolean"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="measureMemberDescription">
-    <xs:sequence/>
-    <xs:attribute name="folder" type="xs:string"/>
-    <xs:attribute name="formatter" type="xs:string"/>
-    <xs:attribute name="group" type="xs:string"/>
-    <xs:attribute name="name" type="xs:string"/>
-    <xs:attribute name="visible" type="xs:boolean"/>
-  </xs:complexType>
-
-  <xs:complexType name="postProcessorDescription">
-    <xs:complexContent>
-      <xs:extension base="tns:measureMemberDescription">
-        <xs:sequence>
-          <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="continuousQueryHandlers" type="xs:string"/>
-        <xs:attribute name="pluginKey" type="xs:string"/>
-        <xs:attribute name="underlyingMeasures" type="xs:string"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="nativeMeasureDescription">
-    <xs:complexContent>
-      <xs:extension base="tns:measureMemberDescription">
-        <xs:sequence/>
-        <xs:attribute name="alias" type="xs:string"/>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="aListQuery" abstract="true">
-    <xs:complexContent>
-      <xs:extension base="tns:aQuery">
-        <xs:sequence>
-          <xs:element name="firstResult" type="xs:int"/>
-          <xs:element name="maxResults" type="xs:int"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="drillthroughQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aListQuery">
-        <xs:sequence>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-          <xs:element name="isFormatted" type="xs:boolean"/>
-          <xs:element name="locations" minOccurs="0">
-            <xs:complexType>
-              <xs:sequence>
-                <xs:element name="location" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-              </xs:sequence>
-            </xs:complexType>
-          </xs:element>
-          <xs:element name="mdx" type="xs:string" minOccurs="0"/>
-          <xs:element name="measures" type="xs:string" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="mapDrillthroughQuery">
-    <xs:complexContent>
-      <xs:extension base="tns:aListQuery">
-        <xs:sequence>
-          <xs:element name="contextValues" type="tns:contextsWrapper" minOccurs="0"/>
-          <xs:element name="coordinates" type="tns:stringEntryCollection" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element name="isFormatted" type="xs:boolean"/>
-          <xs:element name="pivotId" type="xs:string" minOccurs="0"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:complexType name="location" final="extension restriction">
-    <xs:sequence/>
-  </xs:complexType>
-
-  <xs:complexType name="vectorDTO">
-    <xs:sequence>
-      <xs:element name="underlying" type="xs:anyType" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="permissionsMap">
-    <xs:sequence>
-      <xs:element name="permissions" type="tns:permissionsList" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="permissionsList">
-    <xs:sequence>
-      <xs:element name="element" type="tns:permissions" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="permissions">
-    <xs:sequence/>
-    <xs:attribute name="id" type="xs:string"/>
-    <xs:attribute name="owner" type="xs:string"/>
-    <xs:attribute name="reader" type="xs:string"/>
-  </xs:complexType>
-
-  <xs:complexType name="pluginValue">
-    <xs:sequence/>
-    <xs:attribute name="interface" type="xs:string" use="required"/>
-    <xs:attribute name="key" type="xs:string" use="required"/>
-  </xs:complexType>
-
-  <xs:complexType name="genericList">
-    <xs:sequence>
-      <xs:element name="records" type="xs:anyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="propertyInfoListWrapper">
-    <xs:sequence>
-      <xs:element ref="tns:property" minOccurs="0" maxOccurs="unbounded"/>
-    </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="propertyInfo">
-    <xs:sequence/>
-    <xs:attribute name="name" type="xs:string"/>
-    <xs:attribute name="expression" type="xs:string"/>
-    <xs:attribute name="pluginKey" type="xs:string"/>
-  </xs:complexType>
-
-  <xs:complexType name="objectContainer">
-    <xs:sequence>
-      <xs:element name="content" type="xs:anyType" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -1420,6 +1418,13 @@
   <xs:complexType name="activePivotInstanceDescription">
     <xs:all>
       <xs:element ref="tns:pivotDescription"/>
+      <xs:element name="clusters" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:cluster" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element ref="tns:filter" minOccurs="0"/>
     </xs:all>
     <xs:attribute name="id" type="xs:string" use="required"/>
@@ -1434,7 +1439,7 @@
           <xs:element name="queryExecutor" type="tns:pluginDefinition" minOccurs="0"/>
           <xs:element name="drillthroughExecutor" type="tns:pluginDefinition" minOccurs="0"/>
           <xs:element name="autoFactlessHierarchies" type="xs:boolean" minOccurs="0"/>
-          <xs:element name="aggregatesCacheSize" type="xs:int" minOccurs="0"/>
+          <xs:element name="aggregatesCacheDescription" type="tns:aggregatesCacheDescription" minOccurs="0"/>
           <xs:element ref="tns:dimensions" minOccurs="0"/>
           <xs:element ref="tns:epochDimension" minOccurs="0"/>
           <xs:element ref="tns:measures" minOccurs="0"/>
@@ -1465,18 +1470,45 @@
     <xs:complexContent>
       <xs:extension base="tns:pluginDefinition">
         <xs:sequence>
-          <xs:element name="hierarchy" type="tns:hierarchy" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element name="hierarchies" type="tns:hierarchyWrapper" minOccurs="0"/>
+          <xs:element name="measures" type="tns:measureWrapper" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="swap" type="xs:boolean"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="hierarchyWrapper">
+    <xs:sequence>
+      <xs:element name="hierarchy" type="tns:hierarchy" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="include" type="xs:boolean"/>
+  </xs:complexType>
+
   <xs:complexType name="hierarchy">
     <xs:sequence/>
     <xs:attribute name="name" type="xs:string" use="required"/>
     <xs:attribute name="dimension" type="xs:string"/>
-    <xs:attribute name="maxLevel" type="xs:string"/>
+    <xs:attribute name="level" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="measureWrapper">
+    <xs:sequence>
+      <xs:element name="measure" type="tns:measure" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="include" type="xs:boolean"/>
+  </xs:complexType>
+
+  <xs:complexType name="measure">
+    <xs:sequence/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="aggregatesCacheDescription">
+    <xs:sequence/>
+    <xs:attribute name="include" type="xs:boolean"/>
+    <xs:attribute name="selectedMeasures" type="xs:string"/>
+    <xs:attribute name="size" type="xs:int" use="required"/>
   </xs:complexType>
 
   <xs:complexType name="dimensionsWrapper">
@@ -1541,6 +1573,31 @@
     <xs:attribute name="visible" type="xs:boolean"/>
   </xs:complexType>
 
+  <xs:complexType name="dataClusterDefinition">
+    <xs:complexContent>
+      <xs:extension base="tns:clusterDefinition">
+        <xs:sequence/>
+        <xs:attribute name="applicationId" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="clusterDefinition">
+    <xs:sequence>
+      <xs:element ref="tns:messenger" minOccurs="0"/>
+      <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="messengerDefinition">
+    <xs:sequence>
+      <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="pluginKey" type="xs:string"/>
+    <xs:attribute name="protocolPath" type="xs:string"/>
+  </xs:complexType>
+
   <xs:complexType name="selectionDescription">
     <xs:sequence>
       <xs:element ref="tns:fields" minOccurs="0"/>
@@ -1567,41 +1624,49 @@
 
   <xs:complexType name="distributedActivePivotInstanceDescription">
     <xs:all>
-      <xs:element name="clusterId" type="xs:string" minOccurs="0"/>
+      <xs:element name="cluster" type="tns:queryClusterDefinition"/>
       <xs:element name="pivotDescription" type="tns:distributedActivePivotDescription"/>
-      <xs:element name="distributionType" type="tns:distributionType" minOccurs="0"/>
       <xs:element name="properties" type="tns:stringPropertyList" minOccurs="0"/>
-      <xs:element name="underlyingPivotId" type="xs:string" minOccurs="0"/>
     </xs:all>
     <xs:attribute name="id" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <xs:complexType name="distributedActivePivotDescription">
+  <xs:complexType name="queryClusterDefinition">
     <xs:complexContent>
-      <xs:extension base="tns:activePivotDescription">
+      <xs:extension base="tns:clusterDefinition">
         <xs:sequence>
-          <xs:element ref="tns:distributionConfiguration" minOccurs="0"/>
+          <xs:element name="applications" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="tns:application" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="distributionConfiguration">
-    <xs:sequence>
-      <xs:element name="distributedMessenger" type="xs:string" minOccurs="0"/>
-      <xs:element name="distributedSecurityManager" type="xs:string" minOccurs="0"/>
-      <xs:element name="localityIdentifierFactory" type="xs:string" minOccurs="0"/>
-      <xs:element name="remoteInstanceDistributionManager" type="xs:string" minOccurs="0"/>
-    </xs:sequence>
+  <xs:complexType name="distributedApplicationDefinition">
+    <xs:sequence/>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="distributingFields" type="xs:string"/>
   </xs:complexType>
 
-  <xs:simpleType name="initialState">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="INITIALIZED"/>
-      <xs:enumeration value="PAUSED"/>
-      <xs:enumeration value="STARTED"/>
-    </xs:restriction>
-  </xs:simpleType>
+  <xs:complexType name="distributedActivePivotDescription">
+    <xs:complexContent>
+      <xs:extension base="tns:resourceDescription">
+        <xs:sequence>
+          <xs:element name="aggregatesContinuousQueryEngine" type="tns:pluginDefinition" minOccurs="0"/>
+          <xs:element name="queryExecutor" type="tns:pluginDefinition" minOccurs="0"/>
+          <xs:element name="drillthroughExecutor" type="tns:pluginDefinition" minOccurs="0"/>
+          <xs:element name="aggregatesCacheDescription" type="tns:aggregatesCacheDescription" minOccurs="0"/>
+          <xs:element ref="tns:measures" minOccurs="0"/>
+          <xs:element name="sharedContexts" type="tns:contextsWrapper" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
 
   <xs:simpleType name="behavior">
     <xs:restriction base="xs:string">
@@ -1616,6 +1681,22 @@
       <xs:enumeration value="SILENT"/>
       <xs:enumeration value="WARN"/>
       <xs:enumeration value="THROW"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="initialPublicationMode">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ASYNC"/>
+      <xs:enumeration value="SYNC"/>
+      <xs:enumeration value="FULL_SYNC"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="initialState">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="INITIALIZED"/>
+      <xs:enumeration value="PAUSED"/>
+      <xs:enumeration value="STARTED"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -1669,13 +1750,6 @@
       <xs:enumeration value="CHANNEL"/>
       <xs:enumeration value="REPRESENTATIVE"/>
       <xs:enumeration value="PROMOTION"/>
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name="distributionType">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="HORIZONTAL"/>
-      <xs:enumeration value="POLYMORPHIC"/>
     </xs:restriction>
   </xs:simpleType>
 </xs:schema>

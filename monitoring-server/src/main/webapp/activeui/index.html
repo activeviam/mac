@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>ActivePivot Live - Desktop version</title>
+  <title>ActiveUI</title>
+  <link rel="shortcut icon" href="./favicon.ico">
   <style type="text/css">
 body {
   font-family: Sans-Serif;
@@ -64,65 +65,70 @@ body {
   height: 100vh;
 }
 
-#liveRoot, #desktop {
+#ActiveUI-overlay-root, #desktop {
   font-family: arsenal, verdana, sans-serif;
 }
 
   </style>
   <script>
 function handleLoad() {
-  var mdxEditorBookmark = {
-    name: 'Query Editor',
-    writable: false,
-    containerKey: 'mdx-editor',
-    showTitleBar: true,
-    body: {}
-  };
+  ActiveUI.cfg.override('logging/Logger.js', 'logging/ErrorsLogger.js');
 
-  var filtersBookmark = {
-    name: 'Filters',
-    containerKey: 'filters',
-    writable: true,
-    showTitleBar: true,
-    body: {}
-  };
+  var mdxEditorBookmark = ActiveUI.api.widgets.createMdxEditor()
+    .withName('Query Editor')
+    .notWritable()
+    .withTitleBar()
+    .toBookmark();
 
-  var discoveryBookmark = {
-    name: 'Data Explorer',
-    writable: false,
-    containerKey: 'discovery-tree',
-    showTitleBar: true,
-    body: {}
-  };
+  var filtersBookmark = ActiveUI.api.widgets.createFilters()
+    .withName('Global Filters')
+    .withTitleBar()
+    .toBookmark();
 
-  var bookmarkTreeBookmark = {
-    name: 'Bookmarks',
-    writable: false,
-    containerKey: 'bookmark-tree',
-    showTitleBar: true,
-    body: {}
-  };
+  var discoveryBookmark = ActiveUI.api.widgets.createDataExplorer()
+    .withName('Data Explorer')
+    .notWritable()
+    .withTitleBar()
+    .toBookmark();
 
-  ActivePivotLive.cfg.override('logging/Logger.js', 'logging/ErrorsLogger.js');
+  var bookmarkTreeBookmark = ActiveUI.api.widgets.createBookmarkTree()
+    .withName('Bookmarks')
+    .notWritable()
+    .withTitleBar()
+    .toBookmark();
 
-  var servers = ActivePivotLive.api.queries.serversPool;
-  var url = window.location.protocol + '//' + window.location.hostname;
-  var sentinelServer = servers.addSentinelServer({ url: 'http://localhost:8081' });
+  var servers = ActiveUI.api.queries.serversPool;
+  
+  var baseUrl = window.location.href.split('/ui')[0];
+  /* Change this URL when using a remote Content server.
+   * Basically: var url = window.location.protocol + '//' + window.location.hostname;
+   * Then add port 9091, as specified by default in com.qfs.sandbox.server.ContentServer#DEFAULT_PORT.*/
+  var contentServer = servers.addContentServer({ url: baseUrl });
+  /* Change this URL when using a remote ActiveMonitor server.
+   * Same as above for Content server, using add port 8081, from com.qfs.snl.server.impl.ActiveMonitorServer#DEFAULT_PORT.*/
+
   servers.addActivePivotServer({
-    url: window.location.href.split('/live')[0],
-    sentinelServer: sentinelServer
+    url: baseUrl,
+    contentServer: contentServer
   });
 
-  var theme = ActivePivotLive.api.themeSupervisor;
-  var Style = theme.getStyle();
-  var palette = theme.getPalette();
-  var boxShadow = '0 0px 8px 2px ' + Style.addColorLayer(palette.canvasColor, palette.textColor, 0.2);
-  ActivePivotLive.api.widgets.createDashboard()
+  ActiveUI.api.widgets.createDashboard()
     .withName('Desktop Application')
-    .withActions(['snl-messages', 'snl-alerts', 'logout', 'edit-dashboard', 'save', 'save-as', 'toggle-title-bar'])
+    .withActions([
+      'snl-messages',
+      'snl-alerts',
+      'save',
+      'save-as',
+      'edit-dashboard',
+      'logout',
+      'about',
+      'toggle-title-bar'
+    ])
     .withStyle({
-      body: {
-        backgroundColor: 'rgb(233, 233, 233)'
+      head: {
+        all: {
+          borderBottom: null
+        }
       }
     })
     .withLayout({
@@ -161,13 +167,6 @@ function handleLoad() {
       {key: '3', bookmark: discoveryBookmark},
       {key: '4', bookmark: mdxEditorBookmark}
     ])
-    .withCustomStyle({
-      docks: {
-        all: {
-          boxShadow: boxShadow
-        }
-      }
-    })
     .within('desktop');
 }
   </script>

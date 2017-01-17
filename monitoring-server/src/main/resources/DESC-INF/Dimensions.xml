@@ -3,7 +3,6 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.quartetfs.com ../activepivot-types.xsd">
 
-
 	<dimension name="Chunks">
 		<hierarchy name="Chunks">
 			<level name="Type" formatter="TypeChunkFormatter">
