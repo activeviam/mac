@@ -1,43 +1,161 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.activeviam.sandbox</groupId>
-	<artifactId>monitoring</artifactId>
-	<packaging>pom</packaging>
+	<artifactId>monitoring-server</artifactId>
+	<packaging>war</packaging>
 	<version>5.6.0-SNAPSHOT</version>
 	<name>ActivePivot Monitoring</name>
 
 	<prerequisites>
 		<maven>3.0</maven>
 	</prerequisites>
+	
+	<properties>
+		<activeui.version> 4.1.9   </activeui.version>
+		<tomcat.version>   8.5.23  </tomcat.version>
 
-	<modules>
-		<module>monitoring-server</module>
-	</modules>
+		<checkstyle.skip>true</checkstyle.skip>
+		<codeClassifier>code</codeClassifier>
+	</properties>
 
 	<dependencyManagement>
 		<dependencies>
-			
-			 <!-- import AP Server core dependencies management specifications -->
-			 <!-- Projects using sentinel do not need it, as sentinel already imports AP server core dependencies -->
 			<dependency>
 				<groupId>com.activeviam.activepivot</groupId>
 				<artifactId>activepivot-server</artifactId>
 				<version>${project.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency> 
-			
-			<dependency>
-				<groupId>com.activeviam.activeui</groupId>
-				<artifactId>activeui</artifactId>
-				<version>4.1.9</version>
 			</dependency>
-			
 		</dependencies>
 	</dependencyManagement>
+
+	<dependencies>
+		<!-- ActivePivot Dependencies -->
+		<dependency>
+			<groupId>com.activeviam.activepivot</groupId>
+			<artifactId>activepivot-server-spring</artifactId>
+		</dependency>
+
+		<!-- Composer dependencies are provided in QFS artifacts -->
+		<!-- And must be explicitly declared in application projects -->
+		<dependency>
+			<groupId>com.activeviam.tech</groupId>
+			<artifactId>composer-intf</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.activeviam.tech</groupId>
+			<artifactId>composer-impl</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- The following artifact allows to expose the Rest API of the content 
+			service -->
+		<dependency>
+			<groupId>com.activeviam.tech</groupId>
+			<artifactId>content-server-spring</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.activeviam.web</groupId>
+			<artifactId>activeviam-web-spring</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.activeviam.activeui</groupId>
+			<artifactId>activeui</artifactId>
+			<version>${activeui.version}</version>
+		</dependency>
+
+		<!-- Dependencies for the content service persistence -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-c3p0</artifactId>
+		</dependency>
+
+		<!-- Xerces override -->
+		<dependency>
+			<groupId>xerces</groupId>
+			<artifactId>xercesImpl</artifactId>
+		</dependency>
+
+		<!-- Test dependencies -->
+
+		<!-- Connection pool. Scope test to use import it only when using Jetty 
+			Server. Automatically provided when the application is deployed in a tomcat. -->
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>${tomcat.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.activeviam.activepivot</groupId>
+			<artifactId>activepivot-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-webapp</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-client</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>javax-websocket-server-impl</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-servlet</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlets</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-annotations</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
@@ -57,13 +175,13 @@
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>2.6</version>
 				<configuration>
-					<encoding>UTF-8</encoding>
+					<encoding>ISO-8859-15</encoding>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.8</version>
+				<version>2.7</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -77,7 +195,6 @@
 
 		<pluginManagement>
 			<plugins>
-				<!-- Workaround for m2e unsupported plugins -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
@@ -88,14 +205,14 @@
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.apache.maven.plugins</groupId>
-										<artifactId>maven-antrun-plugin</artifactId>
-										<versionRange>[1.7,)</versionRange>
+										<artifactId>maven-dependency-plugin</artifactId>
+										<versionRange>[2.1,)</versionRange>
 										<goals>
-											<goal>run</goal>
+											<goal>unpack</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<execute />
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -104,6 +221,5 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
-
 	</build>
 </project>
