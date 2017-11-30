@@ -6,6 +6,13 @@
  */
 package com.qfs.monitoring.cfg.impl;
 
+import java.lang.reflect.Method;
+import java.util.Properties;
+
+import javax.sql.DataSource;
+
+import org.hibernate.cfg.AvailableSettings;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +21,12 @@ import org.springframework.core.env.Environment;
 
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
+import com.qfs.content.service.impl.HibernateContentService;
 import com.qfs.pivot.content.IActivePivotContentService;
 import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
-import com.qfs.server.cfg.IActivePivotContentServiceConfig;
+import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
+import com.qfs.util.impl.QfsProperties;
 import com.quartetfs.biz.pivot.context.IContextValue;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.IKpiDescription;
@@ -61,8 +70,10 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
 	@Bean
 	@Override
 	public IActivePivotContentService activePivotContentService() {
+		org.hibernate.cfg.Configuration conf = loadConfiguration("hibernate.properties");
 		return new ActivePivotContentServiceBuilder()
-				.withoutPersistence()
+				.withPersistence(conf)
+				.withoutAudit()
 				.withCacheForEntitlements(-1)
 
 				// WARNING: In production, you should not keep the next lines, which will erase parts
@@ -82,6 +93,38 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
 	public IContentService contentService() {
 		// Return the real content service used by the activePivotContentService instead of the wrapped one
 		return activePivotContentService().getContentService().getUnderlying();
+	}
+
+	/**
+	 * Loads the Hibernate's configuration from the specified file.
+	 *
+	 * @param fileName The name of the file containing the Hibernate's properties
+	 * @return the Hibernate's configuration
+	 */
+	public static org.hibernate.cfg.Configuration loadConfiguration(String fileName) {
+		final Properties hibernateProperties = QfsProperties.loadProperties(fileName);
+		hibernateProperties
+				.put(AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
+		return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+	}
+
+	/**
+	 * This {@link DataSource} is specific to the connection pool we want to use with Hibernate. If
+	 * you don't want to use the same as we do, you don't need it.
+	 *
+	 * @param hibernateProperties the hibernate properties loaded from <i>hibernate.properties</i>
+	 *        file.
+	 * @return the {@link DataSource} for {@link HibernateContentService}.
+	 */
+	public static DataSource createTomcatJdbcDataSource(Properties hibernateProperties) {
+		try {
+			// Reflection is used to not make the sandbox depends on tomcat-jdbc.jar
+			Class<?> dataSourceKlass = Class.forName("org.apache.tomcat.jdbc.pool.DataSourceFactory");
+			Method createDataSourceMethod = dataSourceKlass.getMethod("createDataSource", Properties.class);
+			return (DataSource) createDataSourceMethod.invoke(dataSourceKlass.newInstance(), hibernateProperties);
+		} catch (Exception e) {
+			throw new BeanInitializationException("Initialization of " + DataSource.class + " failed", e);
+		}
 	}
 
 }

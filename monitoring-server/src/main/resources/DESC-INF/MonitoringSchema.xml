@@ -16,6 +16,7 @@
 			<field name="offHeapMemorySize" /> 
 			<field name="onHeapMemorySize" /> 
 			<field name="Class" expression ="class" />
+			<field name="dumpName"/>
 			
 			<!-- ChunkSet store -->
 			<field name="chunkSetId" expression="chunkToChunkSet/chunkSetId"/>

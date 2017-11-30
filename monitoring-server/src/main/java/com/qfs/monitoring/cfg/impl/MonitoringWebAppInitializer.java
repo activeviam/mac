@@ -36,7 +36,7 @@ import org.springframework.web.servlet.DispatcherServlet;
  * @author Quartet FS
  *
  */
-public class WebAppInitializer implements WebApplicationInitializer {
+public class MonitoringWebAppInitializer implements WebApplicationInitializer {
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {

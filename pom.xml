@@ -6,7 +6,7 @@
 	<groupId>com.activeviam.sandbox</groupId>
 	<artifactId>monitoring</artifactId>
 	<packaging>pom</packaging>
-	<version>5.5.1-SNAPSHOT</version>
+	<version>5.6.0-SNAPSHOT</version>
 	<name>ActivePivot Monitoring</name>
 
 	<prerequisites>
@@ -29,13 +29,13 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency> 
-		
+			
 			<dependency>
 				<groupId>com.activeviam.activeui</groupId>
 				<artifactId>activeui</artifactId>
-				<version>4.1.0-m3</version>
+				<version>4.1.9</version>
 			</dependency>
-		
+			
 		</dependencies>
 	</dependencyManagement>
 

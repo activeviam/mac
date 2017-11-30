@@ -34,6 +34,8 @@
 			<entry key="evaluatedMeasure" value="DirectMemory.SUM" />
 		</properties>
 	</postProcessor>
+	
+	<postProcessor pluginKey="TOTAL_MEMORY_USAGE" name="TotalMemoryUsage.SUM" formatter="ByteFormatter" />
 
 	<postProcessor pluginKey="FREE_ROWS_RATE" name="FreeRowsRate.AVG"
 		formatter="DOUBLE[00.00%]" underlyingMeasures="FreeRows.SUM,PhysicalChunkSize.SUM"

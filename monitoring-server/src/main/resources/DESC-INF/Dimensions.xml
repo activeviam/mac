@@ -15,12 +15,12 @@
 					<entry key="description" value="Class of the chunks" />
 				</properties>
 			</level>
-			<level name="ChunkId" property="chunkId"/>
+			<level name="ChunkId" property="chunkId" />
 		</hierarchy>
 	</dimension>
 
 	<dimension name="Date">
-		<hierarchy name="Date" allMember="false">
+		<hierarchy name="Date" allMember="true">
 			<level name="Date" type="TIME">
 				<comparator pluginKey="ReverseOrder" />
 				<properties>
@@ -32,21 +32,21 @@
 
 	<dimension name="Store">
 		<hierarchy name="Store">
-			<level name="Store"/>
-			<level name="Partition"/>
+			<level name="Store" />
+			<level name="Partition" />
 		</hierarchy>
 	</dimension>
 
 	<dimension name="Chunk Set">
 		<hierarchy name="Chunk Set">
-			<level name="Class" property="chunkSetClass" formatter="ClassFormatter"/>
-			<level name="Id" property="chunkSetId"/>
+			<level name="Class" property="chunkSetClass" formatter="ClassFormatter" />
+			<level name="Id" property="chunkSetId" />
 		</hierarchy>
 	</dimension>
 
 	<dimension name="Fields">
 		<hierarchy name="Fields">
-			<level name="Fields"/>
+			<level name="Fields" />
 		</hierarchy>
 	</dimension>
 
@@ -73,6 +73,15 @@
 			<level name="Class" property="dictionaryClass" formatter="ClassFormatter" />
 			<level name="Order" property="dictionaryOrder" />
 			<level name="Size" property="dictionarySize" />
+		</hierarchy>
+	</dimension>
+
+	<dimension name="Dump Name">
+		<hierarchy name="Dump Name" allMember="false">
+			<level name="Dump Name" property="dumpName">
+				<!-- Hack to avoid changing color in ActiveUI graphs -->
+				<comparator pluginKey="ReverseOrder" />
+			</level>
 		</hierarchy>
 	</dimension>
 

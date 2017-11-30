@@ -1,20 +1,24 @@
-<?xml version="1.0"?>
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.activeviam.activepivot</groupId>
-	<artifactId>monitoring-server</artifactId>
-	<name>Monitoring Web Application</name>
-	<version>5.5.1-SNAPSHOT</version>
+	
+	<parent>
+		<groupId>com.activeviam.sandbox</groupId>
+		<artifactId>monitoring</artifactId>
+		<version>5.6.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>monitoring-server</artifactId>	
 	<packaging>war</packaging>
 
+	<name>Monitoring Web Application</name>
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>com.activeviam.activepivot</groupId>
 				<artifactId>activepivot-server</artifactId>
-				<version>5.5.1-SNAPSHOT</version>
+				<version>${project.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -26,13 +30,6 @@
 		<dependency>
 			<groupId>com.activeviam.activepivot</groupId>
 			<artifactId>activepivot-server-spring</artifactId>
-		</dependency>
-		
-		<!-- ActiveUI dependency -->
-		<dependency>
-			<groupId>com.activeviam.activeui</groupId>
-			<artifactId>activeui</artifactId>
-			<version>4.1.0-m3</version>
 		</dependency>
 
 		<!-- Composer dependencies are provided in QFS artifacts -->
@@ -54,7 +51,16 @@
 			<groupId>com.activeviam.tech</groupId>
 			<artifactId>content-server-spring</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>com.activeviam.web</groupId>
+			<artifactId>activeviam-web-spring</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.activeviam.activeui</groupId>
+			<artifactId>activeui</artifactId>
+		</dependency>
+		
 		<!-- Dependencies for the content service persistence -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
@@ -76,6 +82,16 @@
 		</dependency>
 
 		<!-- Test dependencies -->
+		
+				<!-- Connection pool. Scope test to use import it only when using Jetty Server.
+		Automatically provided when the application is deployed in a tomcat. -->
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>8.5.23</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>com.activeviam.activepivot</groupId>
 			<artifactId>activepivot-test</artifactId>
@@ -132,10 +148,9 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
-		
 			<plugin>
 				<!-- JDK 8 is required for the Sandbox Application -->
 				<groupId>org.apache.maven.plugins</groupId>
@@ -148,12 +163,17 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.3.2</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
 				<configuration>
-					<classpathScope>test</classpathScope>
+					<encoding>ISO-8859-15</encoding>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.7</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -164,10 +184,9 @@
 				</configuration>
 			</plugin>
 		</plugins>
-		
+
 		<pluginManagement>
 			<plugins>
-				<!-- Workaround for m2e unsupported plugins -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
@@ -195,5 +214,4 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
-</project> 
+</project>

@@ -6,6 +6,10 @@
  */
 package com.qfs.formatter;
 
+import java.util.Arrays;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
@@ -28,11 +32,12 @@ public class ClassFormatter implements IFormatter {
 		// A String is expected has input.
 		if (object instanceof String) {
 			/*
-			 * Input: com.qfs.chunk.direct.impl.DirectChunkBits
-			 * Output: DirectChunkBits
+			 * Input: com.qfs.chunk.impl.ChunkOffsetLong,com.qfs.chunk.direct.impl.DirectChunkBits
+			 * Output: ChunkOffsetLong,DirectChunkBits
 			 */
-			String[] paths = ((String) object).split("\\.");
-			return paths[paths.length - 1];
+			String[] classes = ((String) object).split(Pattern.quote(","));
+			return Arrays.stream(classes).map(className -> className.replaceAll("^.*\\.", "")).collect(
+					Collectors.joining(","));
 		} else {
 			if (object == null)
 				return null;

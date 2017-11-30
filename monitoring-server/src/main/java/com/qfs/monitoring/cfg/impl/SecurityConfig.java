@@ -15,7 +15,10 @@ import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LICENSING_SERVIC
 import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LONG_POLLING_SERVICE;
 import static com.qfs.server.cfg.impl.CxfServletConfig.CXF_WEB_SERVICES;
 
+import javax.servlet.Filter;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -24,12 +27,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 import com.qfs.QfsWebUtils;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.pivot.servlet.impl.ContextValueFilter;
+import com.qfs.security.cfg.ICorsFilterConfig;
 import com.qfs.server.cfg.IActivePivotConfig;
+import com.qfs.server.cfg.impl.VersionServicesConfig;
 
 /**
  * Spring configuration fragment for security.
@@ -108,6 +115,29 @@ public class SecurityConfig extends ASecurityConfig {
 
 			// Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
 			http.headers().frameOptions().disable();
+		}
+
+	}
+
+	@Configuration
+	@Order(4)
+	public static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
+
+		@Autowired
+		protected ApplicationContext context;
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
+
+			http
+					.antMatcher(VersionServicesConfig.REST_API_URL_PREFIX + "/**")
+					// As of Spring Security 4.0, CSRF protection is enabled by default.
+					.csrf().disable()
+					// Configure CORS
+					.addFilterBefore(corsFilter, SecurityContextPersistenceFilter.class)
+					.authorizeRequests()
+					.antMatchers("/**").permitAll();
 		}
 
 	}

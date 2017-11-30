@@ -7,10 +7,11 @@
 package com.qfs.sandbox.server;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.DispatcherType;
 
@@ -18,13 +19,12 @@ import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.annotations.ClassInheritanceHandler;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.util.ConcurrentHashSet;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.springframework.web.WebApplicationInitializer;
 
-import com.qfs.monitoring.cfg.impl.WebAppInitializer;
+import com.qfs.monitoring.cfg.impl.MonitoringWebAppInitializer;
 
 /**
  * @author Quartet Financial Systems
@@ -52,21 +52,22 @@ public class MonitoringServer {
 		root.setResourceBase(WEBAPP);
 
 		// Enable GZIP compression
-		final FilterHolder gzipFilter = new FilterHolder(org.eclipse.jetty.servlets.GzipFilter.class);
-		gzipFilter.setInitParameter(
-				"mimeTypes",
-				"text/html,"
-						+ "text/xml,"
-						+ "text/javascript,"
-						+ "text/css,"
-						+ "application/x-java-serialized-object,"
-						+ "application/json,"
-						+ "application/javascript,"
-						+ "image/png,"
-						+ "image/svg+xml"
-						+ "image/jpeg");
-		gzipFilter.setInitParameter("methods", HttpMethod.GET.asString() + "," + HttpMethod.POST.asString());
-		root.addFilter(gzipFilter, "/*", EnumSet.of(DispatcherType.REQUEST));
+		final GzipHandler gzipHandler = new GzipHandler();
+		gzipHandler.setIncludedMimeTypes(
+				"text/html",
+				"text/xml",
+				"text/javascript",
+				"text/css",
+				"application/x-java-serialized-object",
+				"application/json",
+				"application/javascript",
+				"image/png",
+				"image/svg+xml",
+				"image/jpeg");
+		gzipHandler.setIncludedMethods(HttpMethod.GET.asString(), HttpMethod.POST.asString());
+		gzipHandler.setIncludedPaths("/*");
+		gzipHandler.setDispatcherTypes(EnumSet.of(DispatcherType.REQUEST));
+		root.setGzipHandler(gzipHandler);
 
 		// Create server and configure it
 		final Server server = new Server(port);
@@ -111,9 +112,8 @@ public class MonitoringServer {
 
 		@Override
 		public void preConfigure(WebAppContext context) throws Exception {
-			ConcurrentHashSet<String> set = new ConcurrentHashSet<>();
-			ConcurrentHashMap<String, ConcurrentHashSet<String>> map = new ClassInheritanceMap();
-			set.add(WebAppInitializer.class.getName());
+			final Set<String> set = Collections.singleton(MonitoringWebAppInitializer.class.getName());
+			final Map<String, Set<String>> map = new ClassInheritanceMap();
 			map.put(WebApplicationInitializer.class.getName(), set);
 			context.setAttribute(CLASS_INHERITANCE_MAP, map);
 			_classInheritanceHandler = new ClassInheritanceHandler(map);
@@ -121,9 +121,14 @@ public class MonitoringServer {
 
 	}
 
-	public static boolean containsFolder(String fileName) {
-		Path path = Paths.get(fileName);
-		return Files.exists(path);
+	/**
+	 * Returns true if the file with the given name exists.
+	 * 
+	 * @param fileName The path to the file to check for existence.
+	 * @return true if the file with the given name exists. False otherwise.
+	 */
+	static boolean containsFolder(String fileName) {
+		return Files.exists(Paths.get(fileName));
 	}
 
 }

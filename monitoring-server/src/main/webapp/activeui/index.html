@@ -72,32 +72,36 @@ body {
   </style>
   <script>
 function handleLoad() {
-  ActiveUI.cfg.override('logging/Logger.js', 'logging/ErrorsLogger.js');
+  const activeUI = ActiveUI.initialize({
+    defaultSettings: {
+      'global.logger': 'errors'
+    }
+  });
 
-  var mdxEditorBookmark = ActiveUI.api.widgets.createMdxEditor()
+  var mdxEditorBookmark = activeUI.widgets.createMdxEditor()
     .withName('Query Editor')
     .notWritable()
     .withTitleBar()
     .toBookmark();
 
-  var filtersBookmark = ActiveUI.api.widgets.createFilters()
+  var filtersBookmark = activeUI.widgets.createFilters()
     .withName('Global Filters')
     .withTitleBar()
     .toBookmark();
 
-  var discoveryBookmark = ActiveUI.api.widgets.createDataExplorer()
+  var discoveryBookmark = activeUI.widgets.createDataExplorer()
     .withName('Data Explorer')
     .notWritable()
     .withTitleBar()
     .toBookmark();
 
-  var bookmarkTreeBookmark = ActiveUI.api.widgets.createBookmarkTree()
+  var bookmarkTreeBookmark = activeUI.widgets.createBookmarkTree()
     .withName('Bookmarks')
     .notWritable()
     .withTitleBar()
     .toBookmark();
 
-  var servers = ActiveUI.api.queries.serversPool;
+  var servers = activeUI.queries.serversPool;
   
   var baseUrl = window.location.href.split('/ui')[0];
   /* Change this URL when using a remote Content server.
@@ -112,7 +116,7 @@ function handleLoad() {
     contentServer: contentServer
   });
 
-  ActiveUI.api.widgets.createDashboard()
+  activeUI.widgets.createDashboard()
     .withName('Desktop Application')
     .withActions([
       'snl-messages',

@@ -48,7 +48,8 @@ public class MonitoringSourceConfig {
 	 */
 	@Bean
 	public Void watchStatisticDirectory() {
-		DirectoryCSVTopic topic = new DirectoryCSVTopic("StatisticTopic",
+		final DirectoryCSVTopic topic = new DirectoryCSVTopic(
+				"StatisticTopic",
 				null,
 				env.getRequiredProperty("statistic.folder"),
 				FileSystems.getDefault().getPathMatcher("glob:**.json"),
@@ -66,7 +67,10 @@ public class MonitoringSourceConfig {
 						Path path = provider.getFileInfo().getIdentifier();
 						File file = path.toFile();
 						try {
-							String message = connectorConfig.feedDatastore(MemoryMonitoringService.loadDumpedStatistic(file));
+							String message = connectorConfig
+									.feedDatastore(
+											MemoryMonitoringService.loadDumpedStatistic(file),
+											file.getName().replaceAll("\\.[^.]*$", ""));
 							LOGGER.info(message);
 						} catch (Exception e) {
 							throw new QuartetRuntimeException(e);
@@ -75,7 +79,6 @@ public class MonitoringSourceConfig {
 				}
 			}
 		});
-
 		return null;
 	}
 }

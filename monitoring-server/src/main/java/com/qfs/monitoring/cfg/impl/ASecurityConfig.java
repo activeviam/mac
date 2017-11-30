@@ -40,6 +40,7 @@ import com.quartetfs.biz.pivot.security.IAuthorityComparator;
 import com.quartetfs.biz.pivot.security.impl.AuthorityComparatorAdapter;
 import com.quartetfs.biz.pivot.security.impl.ContextValueManager;
 import com.quartetfs.fwk.ordering.impl.CustomComparator;
+import com.qfs.jwt.service.impl.JwtService;
 
 /**
  * Common security configuration.
@@ -111,7 +112,7 @@ public class ASecurityConfig {
 
 	@Bean
 	public JwtFilter jwtFilter(AuthenticationManager authenticationManagerBean) {
-		return new JwtFilter(authenticationManagerBean);
+		return new JwtFilter(authenticationManagerBean, JwtService.PRINCIPAL_CLAIM_KEY, JwtService.AUTHORITIES_CLAIM_KEY);
 	}
 
 	/**

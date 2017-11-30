@@ -21,7 +21,7 @@ import com.quartetfs.fwk.QuartetRuntimeException;
  * @author Quartet FS
  */
 @QuartetExtendedPluginValue(intf = IPostProcessor.class, key = DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProcessor<Long> {
+public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProcessor<Long, Long> {
 
 	/** post processor plugin key */
 	public final static String PLUGIN_KEY = "DIRECT_MEMORY_ONLY";

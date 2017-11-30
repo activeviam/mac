@@ -7,6 +7,8 @@
 package com.qfs.monitoring.cfg.impl;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +17,7 @@ import org.springframework.core.env.Environment;
 
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
+import com.qfs.monitoring.memory.DatastoreMonitoringDescriptionConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
 import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
@@ -26,9 +29,10 @@ import com.qfs.rest.services.impl.JsonRestService;
 import com.qfs.server.cfg.impl.MonitoringRestServicesConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
+import com.qfs.store.impl.StoreUtils;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
-import com.quartetfs.biz.pivot.monitoring.impl.JMXEnabler;
+import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import com.quartetfs.fwk.serialization.SerializerException;
 
 /**
@@ -63,25 +67,29 @@ public class MonitoringConnectorConfig {
 	public String jmxPollStatisticFromRemoteServer() throws Exception {
 		// Rest call
 		String data = restService.path(QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations")).get().as(String.class);
-		return feedDatastore(MonitoringStatisticSerializerUtil.deserialize(data, IMemoryStatistic.class));
+		return feedDatastore(
+				MonitoringStatisticSerializerUtil.deserialize(new StringReader(data), IMemoryStatistic.class),
+				"remote");
 	}
 
 	@JmxOperation(desc = "Load statistic from file.",
 			name = "Load a IMemoryStatistic",
 			params = { "path" })
 	public String loadDumpedStatistic(String path) throws SerializerException, IOException {
-		return feedDatastore(MemoryMonitoringService.loadDumpedStatistic(path));
+		return feedDatastore(
+				MemoryMonitoringService.loadDumpedStatistic(path),
+				Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", ""));
 	}
 
 	/**
 	 * @param datastoreStats {@link IMemoryStatistic} to load.
 	 * @return message to the user
 	 */
-	public String feedDatastore(IMemoryStatistic datastoreStats) {
+	public String feedDatastore(final IMemoryStatistic datastoreStats, final String dumpName) {
 		IDatastoreSchemaTransactionInformation info = null;
 		try {
 			datastore.getTransactionManager().startTransaction();
-			datastoreStats.accept(new DatastoreFeederVisitor(datastore));
+			datastoreStats.accept(new DatastoreFeederVisitor(datastore, dumpName));
 			info = datastore.getTransactionManager().commitTransaction();
 		} catch (DatastoreTransactionException e) {
 			e.printStackTrace();
@@ -93,7 +101,10 @@ public class MonitoringConnectorConfig {
 		}
 
 		if (info != null) {
-			return "Commit successful at epoch " + info.getId();
+			return "Commit successful at epoch "
+					+ info.getId()
+					+ ". Datastore size "
+					+ StoreUtils.getSize(datastore.getHead(), DatastoreMonitoringDescriptionConstants.CHUNK_STORE);
 		} else {
 			return "Issue during the commit.";
 		}

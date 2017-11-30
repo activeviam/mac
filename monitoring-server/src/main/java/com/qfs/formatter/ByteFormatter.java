@@ -45,12 +45,21 @@ public class ByteFormatter implements IFormatter {
 	 * @return data size as text
 	 */
 	public static String printDataSize(long byteCount) {
-		if (byteCount == 0)
+		if (byteCount == 0) {
 			return null;
+		}
+
 		final long gb = byteCount / GB;
 		final long mb = (byteCount % GB) / MB;
 		final long kb = (byteCount % MB) / KB;
 		final long remaining = (byteCount % KB);
+		if (gb > 0) {
+			return pnz(gb, "GiB") + pnz(mb, "MiB");
+		} else if (mb > 0) {
+			return pnz(mb, "MiB") + pnz(kb, "KiB");
+		} else if (kb > 0) {
+			return pnz(kb, "KiB") + pnz(remaining, "bytes");
+		}
 		return pnz(gb, "GiB") + pnz(mb, "MiB") + pnz(kb, "KiB") + pnz(remaining, "bytes");
 	}
 

@@ -14,69 +14,85 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
+import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
+import com.qfs.content.cfg.impl.ContentServerWebSocketServicesConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.server.cfg.IActivePivotConfig;
-import com.qfs.server.cfg.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
+import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
 import com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotRestServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotWebServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotWebSocketServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
+import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
-import com.qfs.server.cfg.impl.QfsRestServicesConfig;
-import com.quartetfs.biz.pivot.monitoring.impl.JMXEnabler;
+import com.qfs.server.cfg.impl.VersionServicesConfig;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
+import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 
 /**
  * Spring configuration of the ActivePivot Sandbox application.
  *
  * <p>
- * This is the entry point for the Spring "Java Config" of the entire application. This is referenced in
- * {@link WebAppInitializer} to bootstrap the application (as per Spring framework principles).
+ * This is the entry point for the Spring "Java Config" of the entire application. This is
+ * referenced in {@link MonitoringWebAppInitializer} to bootstrap the application (as per Spring framework
+ * principles).
  *
  * <p>
- * We use {@link PropertySource} annotation(s) to define some .properties file(s), whose content will be loaded into the
- * Spring {@link Environment}, allowing some externally-driven configuration of the application. Parameters can be
- * quickly changed by modifying the {@code sandbox.properties} file.
+ * We use {@link PropertySource} annotation(s) to define some .properties file(s), whose content
+ * will be loaded into the Spring {@link Environment}, allowing some externally-driven configuration
+ * of the application. Parameters can be quickly changed by modifying the {@code sandbox.properties}
+ * file.
  *
  * <p>
- * We use {@link Import} annotation(s) to reference additional Spring {@link Configuration} classes, so that we can
- * manage the application configuration in a modular way (split by domain/feature, re-use of core config, override of
- * core config, customized config, etc...).
+ * We use {@link Import} annotation(s) to reference additional Spring {@link Configuration} classes,
+ * so that we can manage the application configuration in a modular way (split by domain/feature,
+ * re-use of core config, override of core config, customized config, etc...).
  *
  * <p>
- * Spring best practices recommends not to have arguments in bean methods if possible. One should rather autowire the
- * appropriate spring configurations (and not beans directly unless necessary), and use the beans from there.
+ * Spring best practices recommends not to have arguments in bean methods if possible. One should
+ * rather autowire the appropriate spring configurations (and not beans directly unless necessary),
+ * and use the beans from there.
  *
  * @author Quartet FS
  */
 @PropertySource(value = "classpath:monitoring.properties")
 @Configuration
-@Import(value = {
-		ActivePivotConfig.class,
-		MonitoringDatastoreConfig.class,
-		MonitoringCorsFilterConfig.class,
-		ActivePivotXmlaServletConfig.class,
+@Import(
+		value = {
+				ActivePivotManagerConfig.class,
+				ActivePivotConfig.class,
+				MonitoringDatastoreConfig.class,
+				MonitoringCorsFilterConfig.class,
 
-		MonitoringSourceConfig.class,
+				ActivePivotServicesConfig.class,
+				ActivePivotWebServicesConfig.class,
+				ActivePivotWebSocketServicesConfig.class,
+				ContentServerWebSocketServicesConfig.class,
+				ContentServerResourceServerConfig.class,
+				ActivePivotRemotingServicesConfig.class,
+				ActivePivotXmlaServletConfig.class,
+				ActiveViamRestServicesConfig.class,
 
-		QfsRestServicesConfig.class,
+				MonitoringSourceConfig.class,
+				VersionServicesConfig.class,
 
-		ActiveUIResourceServerConfig.class,
+				ActivePivotRestServicesConfig.class,
 
-		JwtConfig.class,
-		SecurityConfig.class,
+				ActiveUIResourceServerConfig.class,
 
-		LocalContentServiceConfig.class,
+				JwtConfig.class,
+				SecurityConfig.class,
 
-		ActivePivotServicesConfig.class,
-		ActivePivotRemotingServicesConfig.class,
-		ActivePivotWebServicesConfig.class, // for context values discovery made by ActiveUI
+				LocalContentServiceConfig.class,
 
-		MonitoringConnectorConfig.class,
-})
+				MonitoringConnectorConfig.class,
+
+		})
 public class MonitoringServerConfig {
 
 	/** Before anything else we statically initialize the Quartet FS Registry. */
@@ -102,8 +118,8 @@ public class MonitoringServerConfig {
 
 	/**
 	 *
-	 * Initialize and start the ActivePivot Manager, after performing all the
-	 * injections into the ActivePivot plug-ins.
+	 * Initialize and start the ActivePivot Manager, after performing all the injections into the
+	 * ActivePivot plug-ins.
 	 *
 	 * @return void
 	 * @throws Exception any exception that occurred during the manager's start up
@@ -143,7 +159,10 @@ public class MonitoringServerConfig {
 	@Bean
 	public JMXEnabler JMXActivePivotContentServiceEnabler() throws Exception {
 		// to allow operations from the JMX bean
-		return new JMXEnabler(new DynamicActivePivotContentServiceMBean(apCSConfig.activePivotContentService(), apConfig.activePivotManager()));
+		return new JMXEnabler(
+				new DynamicActivePivotContentServiceMBean(
+						apCSConfig.activePivotContentService(),
+						apConfig.activePivotManager()));
 	}
 
 }
