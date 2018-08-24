@@ -1,20 +1,21 @@
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.activeviam.sandbox</groupId>
 	<artifactId>monitoring-server</artifactId>
 	<packaging>war</packaging>
-	<version>5.6.0-SNAPSHOT</version>
+	<version>5.6.6</version>
 	<name>ActivePivot Monitoring</name>
 
 	<prerequisites>
 		<maven>3.0</maven>
 	</prerequisites>
-	
+
 	<properties>
-		<activeui.version> 4.1.9   </activeui.version>
-		<tomcat.version>   8.5.23  </tomcat.version>
+		<activeui.version>4.2.1</activeui.version>
+		<tomcat.version>8.5.23</tomcat.version>
 
 		<checkstyle.skip>true</checkstyle.skip>
 		<codeClassifier>code</codeClassifier>
@@ -63,11 +64,7 @@
 			<artifactId>activeviam-web-spring</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>com.activeviam.activeui</groupId>
-			<artifactId>activeui</artifactId>
-			<version>${activeui.version}</version>
-		</dependency>
+
 
 		<!-- Dependencies for the content service persistence -->
 		<dependency>
@@ -87,6 +84,23 @@
 		<dependency>
 			<groupId>xerces</groupId>
 			<artifactId>xercesImpl</artifactId>
+		</dependency>
+
+		<!-- ActiveUI dependency -->
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>react</artifactId>
+			<version>16.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.webjars.npm</groupId>
+			<artifactId>react-dom</artifactId>
+			<version>16.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.activeviam.activeui</groupId>
+			<artifactId>activeui-sdk</artifactId>
+			<version>${activeui.version}</version>
 		</dependency>
 
 		<!-- Test dependencies -->
