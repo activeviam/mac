@@ -15,21 +15,24 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
 import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
-import com.qfs.content.cfg.impl.ContentServerWebSocketServicesConfig;
+import com.qfs.monitoring.cfg.security.impl.MonitoringCorsFilterConfig;
+import com.qfs.monitoring.cfg.security.impl.MonitoringServerSecurityConfig;
+import com.qfs.monitoring.cfg.security.impl.MonitoringUserDetailsServiceConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
 import com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotRestServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotWebServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotWebSocketServicesConfig;
 import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
 import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
+import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
+import com.qfs.server.cfg.impl.DatastoreConfig;
+import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
-import com.qfs.server.cfg.impl.VersionServicesConfig;
+import com.qfs.service.store.impl.NoSecurityDatastoreServiceConfig;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
@@ -39,7 +42,7 @@ import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
  *
  * <p>
  * This is the entry point for the Spring "Java Config" of the entire application. This is
- * referenced in {@link MonitoringWebAppInitializer} to bootstrap the application (as per Spring framework
+ * referenced in {@link MACWebAppInitializer} to bootstrap the application (as per Spring framework
  * principles).
  *
  * <p>
@@ -64,32 +67,33 @@ import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 @Configuration
 @Import(
 		value = {
-				ActivePivotManagerConfig.class,
+				// Core imports
 				ActivePivotConfig.class,
-				MonitoringDatastoreConfig.class,
-				MonitoringCorsFilterConfig.class,
+				JwtConfig.class,
+				DatastoreConfig.class,
+				NoSecurityDatastoreServiceConfig.class,
+				FullAccessBranchPermissionsManagerConfig.class,
+				LocalContentServiceConfig.class,
 
+				// Core WS imports
 				ActivePivotServicesConfig.class,
 				ActivePivotWebServicesConfig.class,
-				ActivePivotWebSocketServicesConfig.class,
-				ContentServerWebSocketServicesConfig.class,
 				ContentServerResourceServerConfig.class,
 				ActivePivotRemotingServicesConfig.class,
 				ActivePivotXmlaServletConfig.class,
+
 				ActiveViamRestServicesConfig.class,
+				ActiveViamWebSocketServicesConfig.class,
+
+				// Specific to monitoring server
+				MonitoringServerSecurityConfig.class,
+				MonitoringCorsFilterConfig.class,
+				MonitoringUserDetailsServiceConfig.class,
+
+				MonitoringDatastoreDescriptionConfig.class,
+				MonitoringManagerDescriptionConfig.class,
 
 				MonitoringSourceConfig.class,
-				VersionServicesConfig.class,
-
-				ActivePivotRestServicesConfig.class,
-
-				ActiveUIResourceServerConfig.class,
-
-				JwtConfig.class,
-				SecurityConfig.class,
-
-				LocalContentServiceConfig.class,
-
 				MonitoringConnectorConfig.class,
 
 		})

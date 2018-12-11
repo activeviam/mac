@@ -40,7 +40,7 @@ import com.quartetfs.biz.pivot.definitions.IKpiDescription;
  *
  * @author Quartet FS
  */
-@Import({ ContentServerRestServicesConfig.class, JwtRestServiceConfig.class })
+@Import({ ContentServerRestServicesConfig.class, JwtRestServiceConfig.class, ActiveUIResourceServerConfig.class })
 @Configuration
 public class LocalContentServiceConfig implements IActivePivotContentServiceConfig {
 

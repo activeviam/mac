@@ -24,7 +24,7 @@ import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.springframework.web.WebApplicationInitializer;
 
-import com.qfs.monitoring.cfg.impl.MonitoringWebAppInitializer;
+import com.qfs.monitoring.cfg.impl.MACWebAppInitializer;
 
 /**
  * @author Quartet Financial Systems
@@ -112,7 +112,7 @@ public class MonitoringServer {
 
 		@Override
 		public void preConfigure(WebAppContext context) throws Exception {
-			final Set<String> set = Collections.singleton(MonitoringWebAppInitializer.class.getName());
+			final Set<String> set = Collections.singleton(MACWebAppInitializer.class.getName());
 			final Map<String, Set<String>> map = new ClassInheritanceMap();
 			map.put(WebApplicationInitializer.class.getName(), set);
 			context.setAttribute(CLASS_INHERITANCE_MAP, map);

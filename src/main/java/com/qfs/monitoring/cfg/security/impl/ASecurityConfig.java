@@ -1,10 +1,10 @@
 /*
- * (C) Quartet FS 2015-2016
+ * (C) Quartet FS 2017
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of Quartet Financial Systems Limited. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.qfs.monitoring.cfg.impl;
+package com.qfs.monitoring.cfg.security.impl;
 
 import java.util.Arrays;
 
@@ -17,109 +17,118 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.UserDetailsManager;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 import com.qfs.content.service.IContentService;
-import com.qfs.jwt.impl.JwtFilter;
 import com.qfs.jwt.service.IJwtService;
 import com.qfs.security.cfg.ICorsFilterConfig;
-import com.qfs.security.spring.impl.CompositeUserDetailsService;
 import com.qfs.server.cfg.IJwtConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
+import com.qfs.server.cfg.impl.VersionServicesConfig;
 import com.qfs.servlet.handlers.impl.NoRedirectLogoutSuccessHandler;
 import com.quartetfs.biz.pivot.security.IAuthorityComparator;
 import com.quartetfs.biz.pivot.security.impl.AuthorityComparatorAdapter;
-import com.quartetfs.biz.pivot.security.impl.ContextValueManager;
 import com.quartetfs.fwk.ordering.impl.CustomComparator;
-import com.qfs.jwt.service.impl.JwtService;
 
 /**
- * Common security configuration.
+ * Generic implementation for security configuration of a server hosting ActivePivot, or Content
+ * server or ActiveMonitor.
+ * <p>
+ * This class contains methods:
+ * <ul>
+ * <li>To define authorized users</li>,
+ * <li>To enable anomymous user access</li>,
+ * <li>To configure the JWT filter</li>,
+ * <li>To configure the security for Version service</li>.
+ * </ul>
  *
  * @author Quartet FS
  */
 @EnableGlobalAuthentication
 @Configuration
-public class ASecurityConfig {
+public abstract class ASecurityConfig {
 
 	/** Set to true to allow anonymous access */
 	public static final boolean useAnonymous = false;
+
+	public static final String BASIC_AUTH_BEAN_NAME = "basicAuthenticationEntryPoint";
+
+	public static final String AP_COOKIE_NAME = "AP_JSESSIONID";
 
 	public static final String ROLE_USER = "ROLE_USER";
 	public static final String ROLE_ADMIN = "ROLE_ADMIN";
 	public static final String ROLE_TECH = "ROLE_TECH";
 	public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
-	/**
-	 * ROLE_KPI is added to users, to give them permission
-	 * to read kpis created by other users in the content server
-	 * In order to "share" kpis created in the content server, the kpi
-	 * reader role is set to : ROLE_KPI
-	 */
-	public static final String ROLE_KPI = "ROLE_KPI";
-
-	public static final String PIVOT_USER = "pivot";
-	public static final String[] PIVOT_USER_ROLES = { ROLE_TECH, ROLE_CS_ROOT };
-
-	protected static final AuthenticationEntryPoint authenticationEntryPoint = new HttpStatusEntryPoint(
-			HttpStatus.UNAUTHORIZED);
-
 	@Autowired
-	protected Environment env;
+	protected MonitoringUserDetailsServiceConfig userDetailsConfig;
 
 	@Autowired
 	protected IJwtConfig jwtConfig;
+
+	/**
+	 * As of Spring Security 5.0, the way the passwords are encoded must
+	 * be specified. When logging, the input password will be encoded
+	 * and compared with the stored encoded password. To determine which
+	 * encoding function was used to encode the password, the stored
+	 * encoded passwords are prefixed with the id of the encoding function.
+	 * <p>
+	 * In order to avoid reformatting existing passwords in databases one can
+	 * set the default <code>PasswordEncoder</code> to use for stored
+	 * passwords that are not prefixed. This is the role of the following
+	 * function.
+	 * <p>
+	 * More information can be found in the <a href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding />
+	 * Spring documentation</a>
+	 */
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		((DelegatingPasswordEncoder) passwordEncoder).setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
+		return passwordEncoder;
+	}
+
+	/**
+	 * Returns the default {@link AuthenticationEntryPoint} to use
+	 * for the fallback basic HTTP authentication.
+	 *
+	 * @return The default {@link AuthenticationEntryPoint} for the
+	 *         fallback HTTP basic authentication.
+	 */
+	@Bean(name=BASIC_AUTH_BEAN_NAME)
+	public AuthenticationEntryPoint basicAuthenticationEntryPoint() {
+		return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+	}
 
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 		auth
 				.eraseCredentials(false)
-				.userDetailsService(userDetailsService()).and()
+				// Add an LDAP authentication provider instead of this to support LDAP
+				.userDetailsService(this.userDetailsConfig.userDetailsService()).and()
 				// Required to allow JWT
 				.authenticationProvider(jwtConfig.jwtAuthenticationProvider());
 	}
 
-	@Bean
-	public UserDetailsService userDetailsService() {
-		InMemoryUserDetailsManagerBuilder b = new InMemoryUserDetailsManagerBuilder()
-				.withUser("admin").password("admin").authorities(ROLE_USER, ROLE_ADMIN, ROLE_KPI, ROLE_CS_ROOT).and()
-				.withUser("user1").password("user1").authorities(ROLE_USER, ROLE_KPI, "ROLE_DESK_A").and()
-				.withUser("user2").password("user2").authorities(ROLE_USER, "ROLE_EUR_USD").and()
-				.withUser("manager1").password("manager1").authorities(ROLE_USER, ROLE_KPI).and()
-				.withUser("manager2").password("manager2").authorities(ROLE_USER, ROLE_KPI).and();
-
-		return new CompositeUserDetailsService(Arrays.asList(b.build(),
-				technicalUserDetailsService()));
-	}
-
-	protected UserDetailsManager technicalUserDetailsService() {
-		return new InMemoryUserDetailsManagerBuilder()
-				// Technical user for ActivePivot Live access
-				.withUser("live").password("live").authorities(ROLE_TECH).and()
-				// Technical user for ActivePivot server
-				.withUser(PIVOT_USER).password("pivot").authorities(PIVOT_USER_ROLES).and()
-				.build();
-	}
-
-	@Bean
-	public JwtFilter jwtFilter(AuthenticationManager authenticationManagerBean) {
-		return new JwtFilter(authenticationManagerBean, JwtService.PRINCIPAL_CLAIM_KEY, JwtService.AUTHORITIES_CLAIM_KEY);
-	}
-
 	/**
-	 * Defines the comparator used by the
-	 * {@link ContextValueManager#setAuthorityComparator(IAuthorityComparator) ContextValueManager}
-	 * and the {@link IJwtService}.
-	 *
+	 * [Bean] Comparator for user roles
+	 * <p>
+	 * Defines the comparator used by:
+	 * </p>
+	 * <ul>
+	 *   <li>com.quartetfs.biz.pivot.security.impl.ContextValueManager#setAuthorityComparator(IAuthorityComparator)</li>
+	 *   <li>{@link IJwtService}</li>
+	 * </ul>
 	 * @return a comparator that indicates which authority/role prevails over another. <b>NOTICE -
 	 *         an authority coming AFTER another one prevails over this "previous" authority.</b>
 	 *         This authority ordering definition is essential to resolve possible ambiguity when,
@@ -148,6 +157,9 @@ public class ASecurityConfig {
 		protected final String cookieName;
 
 		@Autowired
+		protected Environment env;
+
+		@Autowired
 		protected ApplicationContext context;
 
 		/**
@@ -169,7 +181,7 @@ public class ASecurityConfig {
 
 		@Override
 		protected final void configure(final HttpSecurity http) throws Exception {
-			JwtFilter jwtFilter = context.getBean(JwtFilter.class);
+			Filter jwtFilter = context.getBean(IJwtConfig.class).jwtFilter();
 			Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
 
 			http
@@ -177,7 +189,7 @@ public class ASecurityConfig {
 					.csrf().disable()
 					// Configure CORS
 					.addFilterBefore(corsFilter, SecurityContextPersistenceFilter.class)
-					// To allow authentication with JWT (Required for Live JS)
+					// To allow authentication with JWT (Required for ActiveUI)
 					.addFilterAfter(jwtFilter, SecurityContextPersistenceFilter.class);
 
 			if (logout) {
@@ -222,10 +234,12 @@ public class ASecurityConfig {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
-			Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
-
+			final Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
+			final AuthenticationEntryPoint basicAuthenticationEntryPoint = context.getBean(
+					BASIC_AUTH_BEAN_NAME,
+					AuthenticationEntryPoint.class);
 			http
-					.antMatcher(JwtRestServiceConfig.NAMESPACE + "/**")
+					.antMatcher(JwtRestServiceConfig.REST_API_URL_PREFIX + "/**")
 					// As of Spring Security 4.0, CSRF protection is enabled by default.
 					.csrf().disable()
 					// Configure CORS
@@ -234,7 +248,62 @@ public class ASecurityConfig {
 					.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 					.antMatchers("/**").hasAnyAuthority(ROLE_USER)
 					.and()
-					.httpBasic().authenticationEntryPoint(authenticationEntryPoint);
+					.httpBasic().authenticationEntryPoint(basicAuthenticationEntryPoint);
+		}
+
+	}
+
+	/**
+	 * Configuration for Version service to allow anyone to access this service
+	 *
+	 * @author Quartet FS
+	 * @see HttpStatusEntryPoint
+	 */
+	public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
+
+		@Autowired
+		protected ApplicationContext context;
+
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
+
+			http
+					.antMatcher(VersionServicesConfig.REST_API_URL_PREFIX + "/**")
+					// As of Spring Security 4.0, CSRF protection is enabled by default.
+					.csrf().disable()
+					// Configure CORS
+					.addFilterBefore(corsFilter, SecurityContextPersistenceFilter.class)
+					.authorizeRequests()
+					.antMatchers("/**").permitAll();
+		}
+
+	}
+
+	/**
+	 * Configuration for ActiveUI.
+	 *
+	 * @author Quartet FS
+	 * @see HttpStatusEntryPoint
+	 */
+	public static abstract class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
+
+		@Override
+		protected void doConfigure(HttpSecurity http) throws Exception {
+			// Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
+			final String pattern = "^(.{0}|\\/|\\/" + "ui" + "(\\/.*)?)$";
+			http
+					// Only theses URLs must be handled by this HttpSecurity
+					.regexMatcher(pattern)
+					.authorizeRequests()
+					// The order of the matchers matters
+					.regexMatchers(HttpMethod.OPTIONS, pattern)
+					.permitAll()
+					.regexMatchers(HttpMethod.GET, pattern)
+					.permitAll();
+
+			// Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
+			http.headers().frameOptions().disable();
 		}
 
 	}

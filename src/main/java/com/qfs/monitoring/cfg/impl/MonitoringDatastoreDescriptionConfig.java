@@ -13,12 +13,8 @@ import org.springframework.core.env.Environment;
 
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.monitoring.memory.DatastoreMonitoringDescription;
-import com.qfs.multiversion.impl.KeepLastEpochPolicy;
-import com.qfs.server.cfg.IDatastoreConfig;
+import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.build.impl.DatastoreBuilder;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 
 /**
  *
@@ -28,7 +24,7 @@ import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcesso
  *
  */
 @Configuration
-public class MonitoringDatastoreConfig implements IDatastoreConfig {
+public class MonitoringDatastoreDescriptionConfig implements IDatastoreDescriptionConfig {
 
 	/** Spring environment, automatically wired */
 	@Autowired
@@ -46,18 +42,10 @@ public class MonitoringDatastoreConfig implements IDatastoreConfig {
 	 * @return the {@link IDatastoreSchemaDescription} of the datastore
 	 * used to greet statistics.
 	 */
+	@Override
 	@Bean
 	public IDatastoreSchemaDescription schemaDescription() {
 		return new DatastoreMonitoringDescription();
 	}
 
-	@Override
-	@Bean
-	public IDatastore datastore() {
-		return new DatastoreBuilder()
-				.setSchemaDescription(schemaDescription())
-				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(apConfig.activePivotManagerDescription()))
-				.setEpochManagementPolicy(new KeepLastEpochPolicy())
-				.build();
-	}
 }

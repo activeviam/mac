@@ -6,8 +6,8 @@
 	<groupId>com.activeviam.sandbox</groupId>
 	<artifactId>monitoring-server</artifactId>
 	<packaging>war</packaging>
-	<version>5.6.6</version>
-	<name>ActivePivot Monitoring</name>
+	<version>5.8-0-SNAPSHOT</version>
+	<name>ActivePivot Memory Analysis Cube</name>
 
 	<prerequisites>
 		<maven>3.0</maven>
@@ -78,12 +78,6 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-c3p0</artifactId>
-		</dependency>
-
-		<!-- Xerces override -->
-		<dependency>
-			<groupId>xerces</groupId>
-			<artifactId>xercesImpl</artifactId>
 		</dependency>
 
 		<!-- ActiveUI dependency -->

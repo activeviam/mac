@@ -22,6 +22,8 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.servlet.DispatcherServlet;
 
+import com.qfs.monitoring.cfg.security.impl.MonitoringServerSecurityConfig;
+
 /**
  *
  * Initializer of the Web Application.
@@ -36,7 +38,7 @@ import org.springframework.web.servlet.DispatcherServlet;
  * @author Quartet FS
  *
  */
-public class MonitoringWebAppInitializer implements WebApplicationInitializer {
+public class MACWebAppInitializer implements WebApplicationInitializer {
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
@@ -47,7 +49,7 @@ public class MonitoringWebAppInitializer implements WebApplicationInitializer {
 		// Change the session cookie name. Needs only to be done when there are several servers (AP,
 		// Content server, Sentinel) with the same URL but running on different ports.
 		// Cookies ignore the port (See RFC 6265).
-		servletContext.getSessionCookieConfig().setName("MONITORING_OH");
+		servletContext.getSessionCookieConfig().setName(MonitoringServerSecurityConfig.COOKIE_NAME);
 
 		// The main servlet/the central dispatcher
 		final DispatcherServlet servlet = new DispatcherServlet(rootAppContext);
