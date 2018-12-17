@@ -6,7 +6,7 @@
 	<groupId>com.activeviam.sandbox</groupId>
 	<artifactId>monitoring-server</artifactId>
 	<packaging>war</packaging>
-	<version>5.8-0-SNAPSHOT</version>
+	<version>5.8.0-SNAPSHOT</version>
 	<name>ActivePivot Memory Analysis Cube</name>
 
 	<prerequisites>

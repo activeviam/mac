@@ -52,7 +52,7 @@ public class MonitoringSourceConfig {
 				"StatisticTopic",
 				null,
 				env.getRequiredProperty("statistic.folder"),
-				FileSystems.getDefault().getPathMatcher("glob:**.json"),
+				FileSystems.getDefault().getPathMatcher("glob:**.json*"),
 				new WatcherService());
 
 		topic.listen(new IFileListener<Path>() {
