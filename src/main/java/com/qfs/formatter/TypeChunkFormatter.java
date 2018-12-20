@@ -6,12 +6,12 @@
  */
 package com.qfs.formatter;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Quartet FS
@@ -34,7 +34,7 @@ public class TypeChunkFormatter implements IFormatter {
 		membersMap.put("record", "Record");
 		membersMap.put("reference", "Reference");
 		membersMap.put("index", "Index");
-		membersMap.put(ChunkSetStatistic.QFS_VERSION, "Qfs version");
+		membersMap.put(MemoryStatisticConstants.STATISTIC_NAME_QFS_VERSION, "Qfs version");
 		membersMap.put("dictionary", "Dictionary");
 	}
 

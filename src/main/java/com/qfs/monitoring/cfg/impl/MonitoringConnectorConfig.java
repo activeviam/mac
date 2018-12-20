@@ -6,19 +6,11 @@
  */
 package com.qfs.monitoring.cfg.impl;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.file.Paths;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.memory.DatastoreMonitoringDescriptionConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
 import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
 import com.qfs.pivot.monitoring.impl.MonitoringStatisticSerializerUtil;
@@ -34,6 +26,14 @@ import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import com.quartetfs.fwk.serialization.SerializerException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Paths;
 
 /**
  * Spring configuration of the connector (REST & JMX).
@@ -82,14 +82,23 @@ public class MonitoringConnectorConfig {
 	}
 
 	/**
-	 * @param datastoreStats {@link IMemoryStatistic} to load.
+	 * @param memoryStatistic {@link IMemoryStatistic} to load.
 	 * @return message to the user
 	 */
-	public String feedDatastore(final IMemoryStatistic datastoreStats, final String dumpName) {
+	public String feedDatastore(final IMemoryStatistic memoryStatistic, final String dumpName) {
 		IDatastoreSchemaTransactionInformation info = null;
 		try {
 			datastore.getTransactionManager().startTransaction();
-			datastoreStats.accept(new DatastoreFeederVisitor(datastore, dumpName));
+			switch (memoryStatistic.getName()){
+				case MemoryStatisticConstants.STATISTIC_NAME_DATASTORE :
+					// falls through
+				case MemoryStatisticConstants.STATISTIC_NAME_STORE :
+					memoryStatistic.accept(new DatastoreFeederVisitor(datastore, dumpName));
+					break;
+				default :
+					throw new DatastoreTransactionException("Memory statistics for "+memoryStatistic.getName()
+							+" is not supported for feeding this memory analysis cube.");
+			}
 			info = datastore.getTransactionManager().commitTransaction();
 		} catch (DatastoreTransactionException e) {
 			e.printStackTrace();
