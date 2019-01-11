@@ -90,9 +90,9 @@ public class MonitoringConnectorConfig {
 		try {
 			datastore.getTransactionManager().startTransaction();
 			switch (memoryStatistic.getName()){
-				case MemoryStatisticConstants.STATISTIC_NAME_DATASTORE :
+				case MemoryStatisticConstants.STAT_NAME_DATASTORE:
 					// falls through
-				case MemoryStatisticConstants.STATISTIC_NAME_STORE :
+				case MemoryStatisticConstants.STAT_NAME_STORE:
 					memoryStatistic.accept(new DatastoreFeederVisitor(datastore, dumpName));
 					break;
 				default :

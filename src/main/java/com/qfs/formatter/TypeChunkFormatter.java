@@ -34,7 +34,7 @@ public class TypeChunkFormatter implements IFormatter {
 		membersMap.put("record", "Record");
 		membersMap.put("reference", "Reference");
 		membersMap.put("index", "Index");
-		membersMap.put(MemoryStatisticConstants.STATISTIC_NAME_QFS_VERSION, "Qfs version");
+		membersMap.put(MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUM, "Qfs version");
 		membersMap.put("dictionary", "Dictionary");
 	}
 
