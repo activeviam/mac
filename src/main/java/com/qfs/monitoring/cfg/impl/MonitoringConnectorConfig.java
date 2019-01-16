@@ -8,7 +8,7 @@ package com.qfs.monitoring.cfg.impl;
 
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
-import com.qfs.monitoring.memory.DatastoreMonitoringDescriptionConstants;
+import com.qfs.monitoring.memory.MemoryAnalysisDatastoreDescriptionConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
@@ -113,7 +113,7 @@ public class MonitoringConnectorConfig {
 			return "Commit successful at epoch "
 					+ info.getId()
 					+ ". Datastore size "
-					+ StoreUtils.getSize(datastore.getHead(), DatastoreMonitoringDescriptionConstants.CHUNK_STORE);
+					+ StoreUtils.getSize(datastore.getHead(), MemoryAnalysisDatastoreDescriptionConstants.CHUNK_STORE);
 		} else {
 			return "Issue during the commit.";
 		}

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.monitoring.memory.DatastoreMonitoringDescription;
+import com.qfs.monitoring.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
 
@@ -45,7 +45,7 @@ public class MonitoringDatastoreDescriptionConfig implements IDatastoreDescripti
 	@Override
 	@Bean
 	public IDatastoreSchemaDescription schemaDescription() {
-		return new DatastoreMonitoringDescription();
+		return new MemoryAnalysisDatastoreDescription();
 	}
 
 }
