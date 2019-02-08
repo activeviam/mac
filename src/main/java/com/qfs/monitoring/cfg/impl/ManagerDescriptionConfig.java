@@ -18,7 +18,6 @@ import com.qfs.drillthrough.impl.FieldsColumn;
 import com.qfs.formatter.ByteFormatter;
 import com.qfs.formatter.ClassFormatter;
 import com.qfs.formatter.IndexFormatter;
-import com.qfs.formatter.TypeChunkFormatter;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
 import com.qfs.monitoring.memory.DatastoreConstants;
@@ -111,7 +110,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withDimension("Chunks")
 				.withHierarchyOfSameName()
 				.withLevel(CHUNK_TYPE_LEVEL)
-				.withFormatter(TypeChunkFormatter.KEY)
 				.withProperty("description", "What are chunks for")
 				.withLevel(CHUNK_CLASS_LEVEL)
 				.withFormatter(ClassFormatter.KEY)

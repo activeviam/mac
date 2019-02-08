@@ -6,18 +6,14 @@
  */
 package com.qfs.monitoring.cfg.impl;
 
-(??)import java.io.IOException;
-(??)import java.io.StringReader;
-(??)import java.nio.file.Paths;
-(??)
-(??)import org.springframework.beans.factory.annotation.Autowired;
-(??)import org.springframework.context.annotation.Bean;
-(??)import org.springframework.context.annotation.Configuration;
-(??)import org.springframework.core.env.Environment;
-(??)
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Paths;
+import java.util.Collections;
+
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
-(??)import com.qfs.monitoring.memory.DatastoreMonitoringDescriptionConstants;
+import com.qfs.monitoring.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
@@ -39,10 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.file.Paths;
 
 /**
  * Spring configuration of the connector (REST & JMX).
@@ -82,7 +74,7 @@ public class MonitoringConnectorConfig {
 	public String jmxPollStatisticFromRemoteServer() throws Exception {
 		// Rest call
 		final String data = restService.path(
-					QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations"))
+				QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations"))
 				.get().as(String.class);
 		return feedDatastore(
 				MonitoringStatisticSerializerUtil.deserialize(new StringReader(data), IMemoryStatistic.class),

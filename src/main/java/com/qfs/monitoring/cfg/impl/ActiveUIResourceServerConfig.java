@@ -4,7 +4,7 @@
  * property of Quartet Financial Systems Limited. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.qfs.sandbox.cfg.impl;
+package com.qfs.monitoring.cfg.impl;
 
 import java.util.Set;
 
