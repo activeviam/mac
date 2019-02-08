@@ -24,7 +24,7 @@ import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.springframework.web.WebApplicationInitializer;
 
-import com.qfs.monitoring.cfg.impl.MACWebAppInitializer;
+import com.activeviam.mac.cfg.impl.MACWebAppInitializer;
 
 /**
  * @author Quartet Financial Systems
@@ -84,7 +84,7 @@ public class MacServer {
 	public static void main(String[] args) throws Exception {
 
 		//Set default logging
-		System.setProperty("java.util.logging.config.class", "com.qfs.logging.LoggingConfiguration");
+		System.setProperty("java.util.logging.config.class", "LoggingConfiguration");
 
 		int port = DEFAULT_PORT;
 		if (args != null && args.length >= 1) {
