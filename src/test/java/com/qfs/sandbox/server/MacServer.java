@@ -29,7 +29,7 @@ import com.qfs.monitoring.cfg.impl.MACWebAppInitializer;
 /**
  * @author Quartet Financial Systems
  */
-public class MonitoringServer {
+public class MacServer {
 
 	/** Root of the web application files, defined relatively to the project root */
 	protected static final String WEBAPP = "src/main/webapp";
@@ -111,7 +111,7 @@ public class MonitoringServer {
 	public static class JettyAnnotationConfiguration extends AnnotationConfiguration {
 
 		@Override
-		public void preConfigure(WebAppContext context) throws Exception {
+		public void preConfigure(WebAppContext context) {
 			final Set<String> set = Collections.singleton(MACWebAppInitializer.class.getName());
 			final Map<String, Set<String>> map = new ClassInheritanceMap();
 			map.put(WebApplicationInitializer.class.getName(), set);
@@ -123,7 +123,7 @@ public class MonitoringServer {
 
 	/**
 	 * Returns true if the file with the given name exists.
-	 * 
+	 *
 	 * @param fileName The path to the file to check for existence.
 	 * @return true if the file with the given name exists. False otherwise.
 	 */

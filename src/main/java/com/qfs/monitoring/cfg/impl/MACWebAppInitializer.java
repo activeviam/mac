@@ -44,7 +44,7 @@ public class MACWebAppInitializer implements WebApplicationInitializer {
 	public void onStartup(ServletContext servletContext) throws ServletException {
 		// Spring Context Bootstrapping
 		AnnotationConfigWebApplicationContext rootAppContext = new AnnotationConfigWebApplicationContext();
-		rootAppContext.register(MonitoringServerConfig.class);
+		rootAppContext.register(MacServerConfig.class);
 		servletContext.addListener(new ContextLoaderListener(rootAppContext));
 		// Change the session cookie name. Needs only to be done when there are several servers (AP,
 		// Content server, Sentinel) with the same URL but running on different ports.

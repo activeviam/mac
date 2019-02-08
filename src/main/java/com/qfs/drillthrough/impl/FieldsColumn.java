@@ -8,7 +8,6 @@ package com.qfs.drillthrough.impl;
 
 import java.util.Properties;
 
-import com.qfs.monitoring.memory.MemoryAnalysisDatastoreDescription.StringArrayObject;
 import com.quartetfs.biz.pivot.context.drillthrough.ICalculatedDrillthroughColumn;
 import com.quartetfs.biz.pivot.context.drillthrough.impl.ASimpleCalculatedDrillthroughColumn;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
@@ -35,7 +34,7 @@ public class FieldsColumn extends ASimpleCalculatedDrillthroughColumn {
 	}
 
 	@Override
-	protected Object evaluate(Object underlyingField) {
-		return ((StringArrayObject) underlyingField).toString();
+	protected Object evaluate(final Object underlyingField) {
+		return underlyingField.toString();
 	}
 }

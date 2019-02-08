@@ -14,8 +14,9 @@
 	</prerequisites>
 
 	<properties>
-		<activeui.version>4.2.1</activeui.version>
-		<tomcat.version>8.5.23</tomcat.version>
+		<activepivot.version>  5.8.0-SNAPSHOT  </activepivot.version>
+		<activeui.version>     4.2.8           </activeui.version>
+		<tomcat.version>       8.5.23          </tomcat.version>
 
 		<checkstyle.skip>true</checkstyle.skip>
 		<codeClassifier>code</codeClassifier>
@@ -26,7 +27,7 @@
 			<dependency>
 				<groupId>com.activeviam.activepivot</groupId>
 				<artifactId>activepivot-server</artifactId>
-				<version>${project.version}</version>
+				<version>${activepivot.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -53,7 +54,7 @@
 			<scope>compile</scope>
 		</dependency>
 
-		<!-- The following artifact allows to expose the Rest API of the content 
+		<!-- The following artifact allows to expose the Rest API of the content
 			service -->
 		<dependency>
 			<groupId>com.activeviam.tech</groupId>
@@ -63,8 +64,6 @@
 			<groupId>com.activeviam.web</groupId>
 			<artifactId>activeviam-web-spring</artifactId>
 		</dependency>
-
-
 
 		<!-- Dependencies for the content service persistence -->
 		<dependency>
@@ -82,24 +81,14 @@
 
 		<!-- ActiveUI dependency -->
 		<dependency>
-			<groupId>org.webjars.npm</groupId>
-			<artifactId>react</artifactId>
-			<version>16.3.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.webjars.npm</groupId>
-			<artifactId>react-dom</artifactId>
-			<version>16.3.1</version>
-		</dependency>
-		<dependency>
 			<groupId>com.activeviam.activeui</groupId>
-			<artifactId>activeui-sdk</artifactId>
+			<artifactId>activeui</artifactId>
 			<version>${activeui.version}</version>
 		</dependency>
 
 		<!-- Test dependencies -->
 
-		<!-- Connection pool. Scope test to use import it only when using Jetty 
+		<!-- Connection pool. Scope test to use import it only when using Jetty
 			Server. Automatically provided when the application is deployed in a tomcat. -->
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
@@ -199,6 +188,33 @@
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
 			</plugin>
+                        <plugin>
+                                <artifactId>maven-install-plugin</artifactId>
+                                <version>2.4</version>
+                                <!-- Do not contribute the resulting war to maven repository, as no one will use it -->
+                                <configuration>
+                                        <skip>true</skip>
+                                </configuration>
+                        </plugin>
+
+                        <plugin>
+                                <groupId>org.codehaus.mojo</groupId>
+                                <artifactId>exec-maven-plugin</artifactId>
+                                <version>1.6.0</version>
+                                <executions>
+                                        <execution>
+                                                <goals>
+                                                        <goal>java</goal>
+                                                </goals>
+                                                <id>serve</id>
+                                                <configuration>
+                                                        <mainClass>com.qfs.sandbox.server.MonitoringServer</mainClass>
+                                                        <classpathScope>test</classpathScope>
+                                                </configuration>
+                                        </execution>
+                                </executions>
+                        </plugin>
+
 		</plugins>
 
 		<pluginManagement>

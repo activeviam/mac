@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import com.qfs.sandbox.cfg.impl.ActiveUIResourceServerConfig;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +54,6 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
 	 * The name of the property which contains the role allowed to add new KPIs in the configuration service.
 	 */
 	public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
-
-	public static final String ENTITLEMENTS_TTL = "contentServer.security.cache.entitlementsTTL";
 
 	@Autowired
 	public Environment env;

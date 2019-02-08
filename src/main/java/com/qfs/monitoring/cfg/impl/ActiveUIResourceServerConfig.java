@@ -4,7 +4,7 @@
  * property of Quartet Financial Systems Limited. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.qfs.monitoring.cfg.impl;
+package com.qfs.sandbox.cfg.impl;
 
 import java.util.Set;
 
@@ -47,7 +47,9 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
 
 		// ActiveUI web app also serves request to the root, so that the redirection from root to ActiveUI works
 		registry.serve("/")
-				.addResourceLocations("/", "classpath:META-INF/resources/")
+				.addResourceLocations(
+						"/",
+						"classpath:META-INF/resources/")
 				.setCacheControl(getDefaultCacheControl());
 	}
 
@@ -79,9 +81,7 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
 
 		return QfsArrays.mutableSet(
 				"/activeui/", // index.html, favicon.ico, etc.
-				"classpath:META-INF/resources/activeviam/activeui-sdk/", // ActiveUI SDK UMD scripts and supporting assets
-				"classpath:META-INF/resources/webjars/react/16.3.1/umd/",
-				"classpath:META-INF/resources/webjars/react-dom/16.3.1/umd/");
+				"classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts and supporting assets
 	}
 
 }

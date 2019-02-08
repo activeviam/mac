@@ -6,9 +6,18 @@
  */
 package com.qfs.monitoring.cfg.impl;
 
+(??)import java.io.IOException;
+(??)import java.io.StringReader;
+(??)import java.nio.file.Paths;
+(??)
+(??)import org.springframework.beans.factory.annotation.Autowired;
+(??)import org.springframework.context.annotation.Bean;
+(??)import org.springframework.context.annotation.Configuration;
+(??)import org.springframework.core.env.Environment;
+(??)
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
-import com.qfs.monitoring.memory.MemoryAnalysisDatastoreDescriptionConstants;
+(??)import com.qfs.monitoring.memory.DatastoreMonitoringDescriptionConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.DatastoreFeederVisitor;
@@ -58,21 +67,30 @@ public class MonitoringConnectorConfig {
 
 	@SuppressWarnings("resource")
 	@Bean
-	protected IRestService restService(String baseUrl) {
-		return restService = new JsonRestService(baseUrl,
-				new ClientPool(2, new UserAuthenticator(USERNAME, PASSWORD)));
+	protected IRestService restService() {
+		return restService = new JsonRestService(
+				baseUrl(),
+				new ClientPool(
+						2,
+						Collections.singletonList(new UserAuthenticator(USERNAME, PASSWORD))));
 	}
 
-	@JmxOperation(name = "Load statistic from the remote server", desc = "Call to AP server to retrieve datastore statistics", params = {})
+	@JmxOperation(
+			name = "Load statistic from the remote server",
+			desc = "Call to AP server to retrieve datastore statistics",
+			params = {})
 	public String jmxPollStatisticFromRemoteServer() throws Exception {
 		// Rest call
-		String data = restService.path(QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations")).get().as(String.class);
+		final String data = restService.path(
+					QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations"))
+				.get().as(String.class);
 		return feedDatastore(
 				MonitoringStatisticSerializerUtil.deserialize(new StringReader(data), IMemoryStatistic.class),
 				"remote");
 	}
 
-	@JmxOperation(desc = "Load statistic from file.",
+	@JmxOperation(
+			desc = "Load statistic from file.",
 			name = "Load a IMemoryStatistic",
 			params = { "path" })
 	public String loadDumpedStatistic(String path) throws SerializerException, IOException {
@@ -113,13 +131,12 @@ public class MonitoringConnectorConfig {
 			return "Commit successful at epoch "
 					+ info.getId()
 					+ ". Datastore size "
-					+ StoreUtils.getSize(datastore.getHead(), MemoryAnalysisDatastoreDescriptionConstants.CHUNK_STORE);
+					+ StoreUtils.getSize(datastore.getHead(), DatastoreConstants.CHUNK_STORE);
 		} else {
 			return "Issue during the commit.";
 		}
 	}
 
-	@Bean
 	public String baseUrl() {
 		return "http://" + env.getRequiredProperty("server.remote.uri");
 	}

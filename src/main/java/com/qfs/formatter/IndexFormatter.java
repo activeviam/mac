@@ -17,7 +17,7 @@ import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
 /**
- * @author Quartet FS
+ * @author ActiveViam
  */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = IndexFormatter.KEY)
 public class IndexFormatter implements IFormatter {
@@ -32,7 +32,7 @@ public class IndexFormatter implements IFormatter {
 		return KEY;
 	}
 
-	protected static final Map<String, String> membersMap = new HashMap<>();
+	private static final Map<Object, String> membersMap = new HashMap<>();
 	static {
 		membersMap.put(MultiVersionCompositePrimaryRecordIndex.class.getName(), "Composite primary index");
 		membersMap.put(MultiVersionCompositeSecondaryRecordIndex.class.getName(), "Composite secondary index");
@@ -41,13 +41,13 @@ public class IndexFormatter implements IFormatter {
 	}
 
 	@Override
-	public String format(Object object) {
-		String formatted = membersMap.get(object);
+	public String format(final Object object) {
+		final String formatted = membersMap.get(object);
 		if (formatted == null) {
 			return object != null ? object.toString() : null;
+		} else {
+			return formatted;
 		}
-
-		return formatted;
 	}
 
 }

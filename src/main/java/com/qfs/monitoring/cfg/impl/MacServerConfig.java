@@ -6,15 +6,6 @@
  */
 package com.qfs.monitoring.cfg.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
-
-import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
 import com.qfs.monitoring.cfg.security.impl.MonitoringCorsFilterConfig;
 import com.qfs.monitoring.cfg.security.impl.MonitoringServerSecurityConfig;
 import com.qfs.monitoring.cfg.security.impl.MonitoringUserDetailsServiceConfig;
@@ -23,19 +14,21 @@ import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
-import com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotWebServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
 import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
 import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
 import com.qfs.server.cfg.impl.DatastoreConfig;
 import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
-import com.qfs.service.store.impl.NoSecurityDatastoreServiceConfig;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 
 /**
  * Spring configuration of the ActivePivot Sandbox application.
@@ -71,16 +64,9 @@ import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 				ActivePivotConfig.class,
 				JwtConfig.class,
 				DatastoreConfig.class,
-				NoSecurityDatastoreServiceConfig.class,
+				NoWriteDatastoreServiceConfig.class,
 				FullAccessBranchPermissionsManagerConfig.class,
 				LocalContentServiceConfig.class,
-
-				// Core WS imports
-				ActivePivotServicesConfig.class,
-				ActivePivotWebServicesConfig.class,
-				ContentServerResourceServerConfig.class,
-				ActivePivotRemotingServicesConfig.class,
-				ActivePivotXmlaServletConfig.class,
 
 				ActiveViamRestServicesConfig.class,
 				ActiveViamWebSocketServicesConfig.class,
@@ -90,18 +76,20 @@ import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 				MonitoringCorsFilterConfig.class,
 				MonitoringUserDetailsServiceConfig.class,
 
-				MonitoringDatastoreDescriptionConfig.class,
-				MonitoringManagerDescriptionConfig.class,
+				DatastoreDescriptionConfig.class,
+				ManagerDescriptionConfig.class,
 
 				MonitoringSourceConfig.class,
 				MonitoringConnectorConfig.class,
-
 		})
-public class MonitoringServerConfig {
+public class MacServerConfig {
 
-	/** Before anything else we statically initialize the Quartet FS Registry. */
-	static {
-		Registry.setContributionProvider(new ClasspathContributionProvider("com.qfs", "com.quartetfs"));
+	/* Before anything else we statically initialize the Quartet FS Registry. */
+	{
+		Registry.setContributionProvider(new ClasspathContributionProvider(
+				"com.qfs",
+				"com.quartetfs",
+				"com.activeviam"));
 	}
 
 	/** Spring environment, automatically wired */
