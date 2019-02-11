@@ -122,11 +122,11 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_CLASS)] = chunkStatistic.getAttributes()
 				.get(ATTR_NAME_CREATOR_CLASS)
 				.asText();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_OFF_HEAP_SIZE)] = chunkStatistic
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = chunkStatistic
 				.getShallowOffHeap();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ON_HEAP_SIZE)] = chunkStatistic
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = chunkStatistic
 				.getShallowOnHeap();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.DUMP_NAME)] = dumpName;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
 
 		tm.add(DatastoreConstants.CHUNK_STORE, currentChunkRecord);
 
@@ -140,8 +140,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_TYPE)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_CLASS)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_OFF_HEAP_SIZE)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ON_HEAP_SIZE)] = null;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = null;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = null;
 
 		return null;
 	}
@@ -151,7 +151,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		// The first Statistic should contain the export date.
 		// We assume the first visited statistic is a Composite.
 		if (current == null) {
-			final IStatisticAttribute dateAtt = defaultMemoryStatistic.getAttributes().get(DatastoreConstants.EXPORT_DATE);
+			final IStatisticAttribute dateAtt = defaultMemoryStatistic.getAttributes().get(DatastoreConstants.CHUNK__EXPORT_DATE);
 			if (dateAtt==null){
 				throw new IllegalStateException("First level statistic should contain the export date.");
 			}
@@ -161,19 +161,19 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			epochId = defaultMemoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH).asLong();
 		}
 
-		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.STORE_AND_PARTITION_STORE_NAME)) {
+		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
 			currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
 			// Set the store name
 			currentChunkRecord[chunkRecordFormat
-					.getFieldIndex(DatastoreConstants.STORE_AND_PARTITION_STORE_NAME)] = defaultMemoryStatistic.getAttributes()
-							.get(DatastoreConstants.STORE_AND_PARTITION_STORE_NAME)
+					.getFieldIndex(DatastoreConstants.CHUNK__STORE_NAME)] = defaultMemoryStatistic.getAttributes()
+							.get(DatastoreConstants.CHUNK__STORE_NAME)
 							.asText();
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.EXPORT_DATE)] = current;
-		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID)) {
+			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = current;
+		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
 			// Set the partition id
 			currentChunkRecord[chunkRecordFormat
-					.getFieldIndex(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID)] = defaultMemoryStatistic.getAttributes()
-							.get(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID)
+					.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = defaultMemoryStatistic.getAttributes()
+							.get(DatastoreConstants.CHUNK__PARTITION_ID)
 							.asInt();
 		}
 
@@ -184,10 +184,10 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		isQfsVersion = false;
 
 		// Reset
-		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.STORE_AND_PARTITION_STORE_NAME)) {
+		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
 			currentChunkRecord = null;
-		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID)) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID)] = null;
+		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
+			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = null;
 		}
 
 		return null;

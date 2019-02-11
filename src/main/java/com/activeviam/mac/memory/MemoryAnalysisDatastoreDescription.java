@@ -25,6 +25,11 @@ import java.util.Collection;
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
+	public static final String CHUNK_TO_REF = "chunkToReferences";
+	public static final String CHUNK_TO_INDICES = "chunkToIndices";
+	public static final String CHUNK_TO_SETS = "chunkToChunkSet";
+	public static final String CHUNK_TO_DICS = "chunkToDic";
+
 	/**
 	 * @return description of {@link DatastoreConstants#CHUNK_STORE} (main store)
 	 */
@@ -41,14 +46,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.FIELDS, ILiteralType.OBJECT, StringArrayObject.DEFAULT_VALUE)
 				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				// other fields
-				.withField(DatastoreConstants.STORE_AND_PARTITION_STORE_NAME)
-				.withField(DatastoreConstants.STORE_AND_PARTITION_PARTITION_ID, ILiteralType.INT)
+				.withField(DatastoreConstants.CHUNK__STORE_NAME)
+				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNK_TYPE)
 				.withField(DatastoreConstants.CHUNK_CLASS)
-				.withField(DatastoreConstants.CHUNK_OFF_HEAP_SIZE, ILiteralType.LONG)
-				.withField(DatastoreConstants.CHUNK_ON_HEAP_SIZE, ILiteralType.LONG)
-				.withField(DatastoreConstants.DUMP_NAME, ILiteralType.STRING)
-				.withField(DatastoreConstants.EXPORT_DATE, "date[" + DatastoreConstants.DATE_PATTERN + "]")
+				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, "date[" + DatastoreConstants.DATE_PATTERN + "]")
 				.build();
 
 	}
@@ -128,28 +133,28 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				ReferenceDescription.builder()
 						.fromStore(DatastoreConstants.CHUNK_STORE)
 						.toStore(DatastoreConstants.REFERENCE_STORE)
-						.withName("chunkToReferences")
+						.withName(CHUNK_TO_REF)
 						.withMapping(DatastoreConstants.REFERENCE_ID, DatastoreConstants.REFERENCE_ID)
 						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.EPOCH_ID)
 						.build(),
 				ReferenceDescription.builder()
 						.fromStore(DatastoreConstants.CHUNK_STORE)
 						.toStore(DatastoreConstants.INDEX_STORE)
-						.withName("chunkToIndices")
+						.withName(CHUNK_TO_INDICES)
 						.withMapping(DatastoreConstants.INDEX_ID, DatastoreConstants.INDEX_ID)
 						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.EPOCH_ID)
 						.build(),
 				ReferenceDescription.builder()
 						.fromStore(DatastoreConstants.CHUNK_STORE)
 						.toStore(DatastoreConstants.CHUNK_SET_STORE)
-						.withName("chunkToChunkSet")
+						.withName(CHUNK_TO_SETS)
 						.withMapping(DatastoreConstants.CHUNKSET_ID, DatastoreConstants.CHUNKSET_ID)
 						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.EPOCH_ID)
 						.build(),
 				ReferenceDescription.builder().
 						fromStore(DatastoreConstants.CHUNK_STORE)
 						.toStore(DatastoreConstants.DICTIONARY_STORE)
-						.withName("chunkToDic")
+						.withName(CHUNK_TO_DICS)
 						.withMapping(DatastoreConstants.DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
 						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.EPOCH_ID)
 						.build()

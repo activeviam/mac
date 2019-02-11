@@ -26,9 +26,9 @@ public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProces
 	/** post processor plugin key */
 	public final static String PLUGIN_KEY = "DIRECT_MEMORY_ONLY";
 
-	protected final static String MEASURE_KEY = "evaluatedMeasure";
+	public final static String MEASURE_KEY = "evaluatedMeasure";
 
-	protected int index;
+	private int index;
 
 	public DirectMemoryOnlyPostProcessor(String name, IPostProcessorCreationContext creationContext) {
 		super(name, creationContext);

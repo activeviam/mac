@@ -9,11 +9,14 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
+import com.activeviam.properties.SpringAllPropertyResolverConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
+import com.qfs.server.cfg.i18n.impl.LocalI18nConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
+import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
 import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
 import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
 import com.qfs.server.cfg.impl.DatastoreConfig;
@@ -59,31 +62,35 @@ import org.springframework.core.env.Environment;
  *
  * @author Quartet FS
  */
-@PropertySource(value = "classpath:monitoring.properties")
+@PropertySource(value = "classpath:application.properties")
 @Configuration
 @Import(
 		value = {
+				SpringAllPropertyResolverConfig.class,
+
 				JwtRestServiceConfig.class,
 				JwtConfig.class,
+
+				DatastoreDescriptionConfig.class,
+				ManagerDescriptionConfig.class,
 
 				// Pivot
 				ActivePivotConfig.class,
 				DatastoreConfig.class,
 				NoWriteDatastoreServiceConfig.class,
 				FullAccessBranchPermissionsManagerConfig.class,
+				ActivePivotServicesConfig.class,
 				ActiveViamRestServicesConfig.class,
 				ActiveViamWebSocketServicesConfig.class,
 
 				// Content server
 				LocalContentServiceConfig.class,
+				LocalI18nConfig.class,
 
 				// Specific to monitoring server
 				SecurityConfig.class,
 				CorsConfig.class,
 				UserConfig.class,
-
-				DatastoreDescriptionConfig.class,
-				ManagerDescriptionConfig.class,
 
 				SourceConfig.class,
 				MonitoringConnectorConfig.class,

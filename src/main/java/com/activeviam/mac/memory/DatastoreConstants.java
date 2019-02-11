@@ -26,7 +26,7 @@ public class DatastoreConstants {
 
 	// Field names
 
-	public static final String EXPORT_DATE = MemoryStatisticConstants.ATTR_NAME_DATE;
+	public static final String CHUNK__EXPORT_DATE = MemoryStatisticConstants.ATTR_NAME_DATE;
 	public static final String DATE_PATTERN = MemoryStatisticConstants.DATE_PATTERN;
 
 	// Ids of different stores used as key.
@@ -40,14 +40,14 @@ public class DatastoreConstants {
 	public static final String CHUNK_TYPE = "chunkType"; // is it an index, ref, record, dic...
 
 	// store and partition info.
-	public static final String STORE_AND_PARTITION_STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
-	public static final String STORE_AND_PARTITION_PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
+	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
+	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 
 	// ## CHUNK_STORE ## Field names of the chunk store
 	public static final String CHUNK_CLASS = "class";
-	public static final String CHUNK_OFF_HEAP_SIZE = "offHeapMemorySize";
-	public static final String CHUNK_ON_HEAP_SIZE = "onHeapMemorySize";
-	public static final String DUMP_NAME = "dumpName"; // The name of the off-heap dump
+	public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
+	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
+	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
 	public static final String CHUNK_SET_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
