@@ -4,7 +4,7 @@
  * property of Quartet Financial Systems Limited. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.qfs.sandbox.server;
+package com.activeviam.mac.server;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
