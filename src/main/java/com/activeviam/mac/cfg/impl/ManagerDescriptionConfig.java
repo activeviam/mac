@@ -82,7 +82,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
 				.fromBaseStore(DatastoreConstants.CHUNK_STORE)
 				.withAllFields()
-				.withAlias(DatastoreConstants.CHUNK_CLASS, CHUNK_CLASS_FIELD)
+				.withAlias(DatastoreConstants.CHUNK__CLASS, CHUNK_CLASS_FIELD)
 
 				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
 				.withAllFields()
@@ -145,7 +145,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		return builder
 				.withDimension(CHUNK_HIERARCHY)
 				.withHierarchyOfSameName()
-				.withLevel(CHUNK_TYPE_LEVEL).withPropertyName(DatastoreConstants.CHUNK_TYPE)
+				.withLevel(CHUNK_TYPE_LEVEL).withPropertyName(DatastoreConstants.CHUNK__TYPE)
 				.withProperty("description", "What are chunks for")
 				.withLevel(CHUNK_CLASS_LEVEL).withPropertyName(CHUNK_CLASS_FIELD)
 				.withFormatter(ClassFormatter.KEY)

@@ -8,6 +8,8 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.desc.IDatastoreSchemaDescription;
+import com.qfs.multiversion.IEpochManagementPolicy;
+import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,4 +30,9 @@ public class DatastoreDescriptionConfig implements IDatastoreDescriptionConfig {
 		return new MemoryAnalysisDatastoreDescription();
 	}
 
+	@Override
+	public IEpochManagementPolicy epochManagementPolicy() {
+		// TODO(ope) discuss this: we want to see the change after a GC, how to do the initial load of many exports
+		return new KeepAllEpochPolicy();
+	}
 }

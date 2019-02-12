@@ -6,6 +6,9 @@
  */
 package com.activeviam.mac.memory;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IReferenceDescription;
 import com.qfs.desc.IStoreDescription;
@@ -14,9 +17,7 @@ import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.util.impl.QfsArrays;
-
-import java.util.Arrays;
-import java.util.Collection;
+import com.quartetfs.fwk.format.IParser;
 
 /**
  * Contains all stores used to analyze a memory analysis dump.
@@ -48,12 +49,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				// other fields
 				.withField(DatastoreConstants.CHUNK__STORE_NAME)
 				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNK_TYPE)
-				.withField(DatastoreConstants.CHUNK_CLASS)
+				.withField(DatastoreConstants.CHUNK__TYPE)
+				.withField(DatastoreConstants.CHUNK__CLASS)
 				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, "date[" + DatastoreConstants.DATE_PATTERN + "]")
+				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
 				.build();
 
 	}
@@ -98,7 +99,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withStoreName(DatastoreConstants.INDEX_STORE)
 				.withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.EPOCH_ID, ILiteralType.LONG).asKeyField()
-				.withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT)//FIXME primary, secondary, key
+				.withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT)//FIXME(ope) primary, secondary, key
 				.withField(DatastoreConstants.INDEX_CLASS)
 				.build();
 	}

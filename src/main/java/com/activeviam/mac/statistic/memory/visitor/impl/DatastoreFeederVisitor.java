@@ -118,8 +118,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			type = TYPE_QFS_VERSION;
 		}
 
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_TYPE)] = type;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_CLASS)] = chunkStatistic.getAttributes()
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = type;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = chunkStatistic.getAttributes()
 				.get(ATTR_NAME_CREATOR_CLASS)
 				.asText();
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = chunkStatistic
@@ -138,8 +138,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_TYPE)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_CLASS)] = null;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = null;
+		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = null;
 		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = null;
 
@@ -306,7 +306,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final DictionaryStatistic dictionaryStatistic) {
-		if (dictionaryStatistic.getName() != MemoryStatisticConstants.STAT_NAME_DICTIONARY) {
+		if (!dictionaryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY)) {
 			// The stat was constructed as a dictionary stat, but in fact belongs to another structure, like the keys of an index
 			visitChildren(dictionaryStatistic);
 			return null;

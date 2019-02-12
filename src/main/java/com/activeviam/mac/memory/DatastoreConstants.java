@@ -37,14 +37,14 @@ public class DatastoreConstants {
 	public static final String INDEX_ID = "indexId";
 	public static final String FIELDS = "fields";
 	public static final String DICTIONARY_ID = "dicId";
-	public static final String CHUNK_TYPE = "chunkType"; // is it an index, ref, record, dic...
+	public static final String CHUNK__TYPE = "chunkType"; // is it an index, ref, record, dic...
 
 	// store and partition info.
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 
 	// ## CHUNK_STORE ## Field names of the chunk store
-	public static final String CHUNK_CLASS = "class";
+	public static final String CHUNK__CLASS = "class";
 	public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
 	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
