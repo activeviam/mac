@@ -10,3 +10,7 @@ ActivePivot memory tools will generate reports compressed with [Snappy](https://
 to easily decompress such files, this project provides a command to do so.  
 Run `mvn exec:java@unsnappy -Dunsnappy.file=<path/to/your/file>` to extract the content.
 
+Known limitations
+-----
+
+ * This tool does not support projects with multiple datastores.

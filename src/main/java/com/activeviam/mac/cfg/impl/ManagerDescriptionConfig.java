@@ -86,12 +86,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
 				.withAllFields()
-				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.REFERENCE_ID)
 				.withAlias(DatastoreConstants.REFERENCE_CLASS, REFERENCE_CLASS_FIELD)
 
 				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
 				.withAllFields()
-				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.INDEX_ID)
 				.withAlias(DatastoreConstants.INDEX_CLASS, INDEX_CLASS_FIELD)
 
 				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)

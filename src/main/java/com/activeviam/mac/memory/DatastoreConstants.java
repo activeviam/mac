@@ -23,6 +23,13 @@ public class DatastoreConstants {
 	public static final String REFERENCE_STORE = MemoryStatisticConstants.STAT_NAME_REFERENCE;
 	public static final String INDEX_STORE = MemoryStatisticConstants.STAT_NAME_INDEX;
 	public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
+	public static final String STORE_PARTITION_STORE = "StorePartitions";
+	public static final String STORE_FIELD_STORE = "StoreFields";
+	public static final String STORE_STORE = "Stores";
+	public static final String LEVEL_STORE = "Levels";
+	public static final String PROVIDER_COMPONENT_STORE = "ProviderComponents";
+	public static final String PROVIDER_PARTITION_STORE = "ProviderPartitions";
+	public static final String PIVOT_STORE = "PivotPartitions";
 
 	// Field names
 
@@ -39,9 +46,16 @@ public class DatastoreConstants {
 	public static final String DICTIONARY_ID = "dicId";
 	public static final String CHUNK__TYPE = "chunkType"; // is it an index, ref, record, dic...
 
+	private static final String _PROVIDER_ID = "providerId";
+	private static final String _PROVIDER_COMPONENT_TYPE = "providerComponentType";
+	private static final String _PROVIDER_PARTITION = "providerPartitionId";
+
 	// store and partition info.
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
+	public static final String CHUNK__PROVIDER_ID = _PROVIDER_ID;
+	public static final String CHUNK__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
+	public static final String CHUNK__PROVIDER_PARTITION_ID = _PROVIDER_PARTITION;
 
 	// ## CHUNK_STORE ## Field names of the chunk store
 	public static final String CHUNK__CLASS = "class";
@@ -51,8 +65,14 @@ public class DatastoreConstants {
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
 	public static final String CHUNK_SET_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
-	public static final String CHUNK_SET_FREE_ROWS = MemoryStatisticConstants.ATTR_NAME_FREED_ROWS;
+	public static final String CHUNK_SET_FREE_ROWS = "freeRows";
 	public static final String CHUNK_SET_PHYSICAL_CHUNK_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
+	public static final String CHUNKSET__PARTITION = "partitionId";
+	public static final String CHUNKSET__STORE_NAME = "storeName";
+	public static final String CHUNKSET__PROVIDER_ID = _PROVIDER_ID;
+	public static final String CHUNKSET__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
+	public static final String CHUNKSET__DICTIONARY_ID = "dictionaryId";
+	public static final String CHUNKSET__FREED_ROWS = "freedRows";
 
 	// ## REFERENCES_STORE ## Field names of the Reference store
 	public static final String REFERENCE_NAME = MemoryStatisticConstants.ATTR_NAME_REFERENCE_NAME;
@@ -61,15 +81,59 @@ public class DatastoreConstants {
 	public static final String REFERENCE_TO_STORE = MemoryStatisticConstants.ATTR_NAME_TO_STORE;
 	public static final String REFERENCE_TO_STORE_PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_TO_STORE_PARTITION_ID;
 	public static final String REFERENCE_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+	public static final String REFERENCE__FIELDS = "fields";
 
 	// ## INDEX_STORE ## Field names of the Index store
 	public static final String INDEX_TYPE = "type";
 	public static final String INDEX_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+	public static final String INDEX__STORE_NAME = "storeName";
+	public static final String INDEX__STORE_PARTITION = "partitionId";
+	public static final String INDEX__FIELDS = "fields";
 
 	// ## DICTIONARY_STORE ## Field names of the Dictionary store
 	public static final String DICTIONARY_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
 	public static final String DICTIONARY_ORDER = "order";
 	public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+	public static final String DIC__PROVIDER_ID = _PROVIDER_ID;
+	public static final String DIC__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
+	public static final String DIC__PROVIDER_PARTITION_ID = _PROVIDER_PARTITION;
+	public static final String DIC__INDEX_ID = "indexId";
+
+	public static final String STORE_PARTITION__STORE_NAME = "storeName";
+	public static final String STORE_PARTIION__PARTITION_ID = "partitionId";
+
+	public static final String STORE_FIELD__STORE_NAME = "storeName";
+	public static final String STORE_FIELD__FIELD = "field";
+	public static final String STORE_FIELD__DICTIONARY_ID = "dictionaryId";
+
+	public static final String STORE__STORE_NAME = "storeName";
+
+	public static final String LEVEL__MANAGER_ID = "managerId";
+	public static final String LEVEL__PIVOT_ID = "pivotId";
+	public static final String LEVEL__DIMENSION = "dimension";
+	public static final String LEVEL__HIERARCHY = "hierarchy";
+	public static final String LEVEL__LEVEL = "level";
+	public static final String LEVEL__EPOCH_ID = EPOCH_ID;
+	public static final String LEVEL__DICTIONARY_ID = "dictionaryId";
+	public static final String LEVEL__ON_HEAP_SIZE = "onHeap";
+	public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
+	public static final String LEVEL__MEMBER_COUNT = "memberCount";
+
+	public static final String PROVIDER_PARTITION__PROVIDER_ID = _PROVIDER_ID;
+	public static final String PROVIDER_PARTITION__PARTITION_ID = _PROVIDER_PARTITION;
+	public static final String PROVIDER_PARTITION__PIVOT_ID = "pivotId";
+	public static final String PROVIDER_PARTITION__MANAGER_ID = "managerId";
+
+	public static final String PROVIDER_COMPONENT__PROVIDER_ID = _PROVIDER_ID;
+	public static final String PROVIDER_COMPONENT__PARTITION_ID = _PROVIDER_PARTITION;
+	public static final String PROVIDER_COMPONENT__EPOCH_ID = EPOCH_ID;
+	public static final String PROVIDER_COMPONENT__TYPE = _PROVIDER_COMPONENT_TYPE;
+	public static final String PROVIDER_COMPONENT__CLASS = "class";
+	public static final String PROVIDER_COMPONENT__ON_HEAP_SIZE = "onHeap";
+	public static final String PROVIDER_COMPONENT__OFF_HEAP_SIZE = "offHeap";
+
+	public static final String PIVOT__PIVOT_ID = "pivotId";
+	public static final String PIVOT__MANAGER_ID = "managerId";
 
 	private DatastoreConstants() {}
 
