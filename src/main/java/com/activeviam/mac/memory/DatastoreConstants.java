@@ -29,8 +29,8 @@ public class DatastoreConstants {
 	public static final String STORE_STORE = "Stores";
 	public static final String LEVEL_STORE = "Levels";
 	public static final String PROVIDER_COMPONENT_STORE = "ProviderComponents";
-	public static final String PROVIDER_PARTITION_STORE = "ProviderPartitions";
-	public static final String PIVOT_STORE = "PivotPartitions";
+	public static final String PROVIDER_STORE = "Providers";
+	public static final String PIVOT_STORE = "ActivePivot";
 	public static final String APPLICATION_STORE = "Application";
 
 	// Field names
@@ -122,10 +122,12 @@ public class DatastoreConstants {
 	public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
 	public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
-	public static final String PROVIDER_PARTITION__PROVIDER_ID = _PROVIDER_ID;
-	public static final String PROVIDER_PARTITION__PARTITION_ID = _PROVIDER_PARTITION;
-	public static final String PROVIDER_PARTITION__PIVOT_ID = "pivotId";
-	public static final String PROVIDER_PARTITION__MANAGER_ID = "managerId";
+	public static final String PROVIDER__PROVIDER_ID = _PROVIDER_ID;
+	public static final String PROVIDER__PIVOT_ID = "pivotId";
+	public static final String PROVIDER__MANAGER_ID = "managerId";
+	public static final String PROVIDER__INDEX = "index";
+	public static final String PROVIDER__TYPE = "type";
+	public static final String PROVIDER__CATEGORY = "category";
 
 	public static final String PROVIDER_COMPONENT__PROVIDER_ID = _PROVIDER_ID;
 	public static final String PROVIDER_COMPONENT__PARTITION_ID = _PROVIDER_PARTITION;

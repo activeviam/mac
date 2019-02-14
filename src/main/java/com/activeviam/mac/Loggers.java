@@ -9,5 +9,7 @@ package com.activeviam.mac;
 public class Loggers {
 
 	public static final String LOADING = "com.activeviam.mac.loading";
+	public static final String DATASTORE_LOADING = "com.activeviam.mac.loading.datastore";
+	public static final String ACTIVEPIVOT_LOADING = "com.activeviam.mac.loading.activepivot";
 
 }

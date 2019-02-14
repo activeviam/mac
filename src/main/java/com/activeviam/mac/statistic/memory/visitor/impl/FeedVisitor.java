@@ -6,9 +6,11 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.activeviam.mac.Loggers;
@@ -16,6 +18,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -23,8 +26,8 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.multiversion.IEpoch;
 import com.qfs.store.IDatastoreSchemaMetadata;
+import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
@@ -45,20 +48,109 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		this.dumpName = dumpName;
 	}
 
+	static Object[] buildChunkTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final ChunkStatistic stat) {
+		final IRecordFormat chunkRecordFormat = storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
+				.getStoreFormat()
+				.getRecordFormat();
+		final Object[] tuple = new Object[chunkRecordFormat.getFieldCount()];
+
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
+				stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] =
+				stat.getShallowOffHeap();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] =
+				stat.getShallowOnHeap();
+		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+		if (fieldAttr != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
+		}
+
+		return tuple;
+	}
+
+	static Object[] buildDictionaryTupleFrom(
+			final IRecordFormat format,
+			final IMemoryStatistic stat) {
+		final Object[] tuple = new Object[format.getFieldCount()];
+
+		final IStatisticAttribute dicIdAttr = Objects.requireNonNull(
+				stat.getAttribute(ATTR_NAME_DICTIONARY_ID),
+				() -> "No dictionary ID for " + stat);
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
+//		// Init. chunk record
+//		currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
+
+		// TODO(ope) deal with dictionary fields if any
+//		final IStatisticAttribute fieldNamesAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
+//		if (fieldNamesAttr!=null) {
+//			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(
+//					fieldNamesAttr.asStringArray());
+//		}
+
+		final IStatisticAttribute dicClassAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
+		final String dictionaryClass;
+		if (dicClassAttr != null) {
+			dictionaryClass = dicClassAttr.asText();
+		} else {
+			logger.warning("Dictionary does not state its class " + stat);
+			dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		}
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
+
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] =
+				stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] =
+				stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
+
+		return tuple;
+	}
+
+	static Object[] buildChunksetTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final ChunkSetStatistic stat) {
+		final IRecordFormat format = getChunksetFormat(storageMetadata);
+		final Object[] tuple = new Object[format.getFieldCount()];
+
+		IStatisticAttribute chunkSetIdAttr = Objects.requireNonNull(
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID),
+				() -> "No id in this chunkset statistic: " + stat);
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetIdAttr.asLong();
+
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_CLASS)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)] = 0;
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
+
+		return tuple;
+	}
+
 	@Override
 	public Void visit(DefaultMemoryStatistic stat) {
 		switch (stat.getName()) {
-				case MemoryStatisticConstants.STAT_NAME_DATASTORE:
-				case MemoryStatisticConstants.STAT_NAME_STORE:
-					final DatastoreFeederVisitor datastoreFeed = new DatastoreFeederVisitor(
-							this.storageMetadata,
-							this.transaction,
-							this.dumpName);
-					stat.accept(datastoreFeed);
-					break;
-				default :
-					logger.warning("Unsupported statistic named " + stat.getName() + ". Ignoring it");
-			}
+		case MemoryStatisticConstants.STAT_NAME_DATASTORE:
+		case MemoryStatisticConstants.STAT_NAME_STORE:
+			final DatastoreFeederVisitor datastoreFeed = new DatastoreFeederVisitor(
+					this.storageMetadata,
+					this.transaction,
+					this.dumpName);
+			datastoreFeed.startFrom(stat);
+			break;
+		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
+		case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
+			final PivotFeederVisitor feed = new PivotFeederVisitor(
+					this.storageMetadata,
+					this.transaction,
+					this.dumpName);
+			feed.startFrom(stat);
+		default:
+			logger.warning("Unsupported statistic named " + stat.getName() + ". Ignoring it :(");
+		}
 
 		return null;
 	}
@@ -112,6 +204,22 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		} else {
 			throw new RuntimeException("Missing memory properties in " + stat.getName() + ": " + stat.getAttributes());
 		}
+	}
+
+	static IRecordFormat getRecordFormat(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final String storeName) {
+		return storageMetadata.getStoreMetadata(storeName)
+				.getStoreFormat()
+				.getRecordFormat();
+	}
+
+	static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
+	}
+
+	static IRecordFormat getChunksetFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.CHUNKSET_STORE);
 	}
 
 }

@@ -201,13 +201,16 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.build();
 	}
 
-	protected IStoreDescription providerPartitionStore() {
-		return StartBuilding.store().withStoreName(DatastoreConstants.PROVIDER_PARTITION_STORE)
-				.withField(DatastoreConstants.PROVIDER_PARTITION__PROVIDER_ID, ILiteralType.LONG).asKeyField()
-				.withField(DatastoreConstants.PROVIDER_PARTITION__PARTITION_ID, ILiteralType.INT).asKeyField()
+	protected IStoreDescription providerStore() {
+		return StartBuilding.store().withStoreName(DatastoreConstants.PROVIDER_STORE)
+				.withField(DatastoreConstants.PROVIDER__PROVIDER_ID, ILiteralType.LONG).asKeyField()
 				/* Foreign keys */
-				.withField(DatastoreConstants.PROVIDER_PARTITION__PIVOT_ID)
-				.withField(DatastoreConstants.PROVIDER_PARTITION__MANAGER_ID)
+				.withField(DatastoreConstants.PROVIDER__PIVOT_ID)
+				.withField(DatastoreConstants.PROVIDER__MANAGER_ID)
+				/* Attributes */
+				.withField(DatastoreConstants.PROVIDER__INDEX, ILiteralType.STRING, "<None>")
+				.withField(DatastoreConstants.PROVIDER__TYPE)
+				.withField(DatastoreConstants.PROVIDER__CATEGORY)
 				.build();
 	}
 
@@ -246,7 +249,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				storeStore(),
 				levelStore(),
 				providerComponentStore(),
-				providerPartitionStore(),
+				providerStore(),
 				pivotStore(),
 				applicationStore());
 	}
@@ -286,17 +289,16 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 								.build(),
 						// Provider component refs
 						StartBuilding.reference()
-								.fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE).toStore(DatastoreConstants.PROVIDER_PARTITION_STORE)
+								.fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE).toStore(DatastoreConstants.PROVIDER_STORE)
 								.withName("ProviderComponentToPartition")
-								.withMapping(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, DatastoreConstants.PROVIDER_PARTITION__PROVIDER_ID)
-								.withMapping(DatastoreConstants.PROVIDER_COMPONENT__PARTITION_ID, DatastoreConstants.PROVIDER_PARTITION__PARTITION_ID)
+								.withMapping(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, DatastoreConstants.PROVIDER__PROVIDER_ID)
 								.build(),
 						// Provider partitions refs
 						StartBuilding.reference()
-								.fromStore(DatastoreConstants.PROVIDER_PARTITION_STORE).toStore(DatastoreConstants.PIVOT_STORE)
+								.fromStore(DatastoreConstants.PROVIDER_STORE).toStore(DatastoreConstants.PIVOT_STORE)
 								.withName("ProviderToPivot")
-								.withMapping(DatastoreConstants.PROVIDER_PARTITION__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-								.withMapping(DatastoreConstants.PROVIDER_PARTITION__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
+								.withMapping(DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
+								.withMapping(DatastoreConstants.PROVIDER__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
 								.build()))
 				.flatMap(Collection::stream)
 				.collect(Collectors.toList());
