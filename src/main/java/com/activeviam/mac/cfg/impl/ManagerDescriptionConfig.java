@@ -84,25 +84,25 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withAllFields()
 				.withAlias(DatastoreConstants.CHUNK__CLASS, CHUNK_CLASS_FIELD)
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
-				.withAllFields()
-				.withAlias(DatastoreConstants.REFERENCE_CLASS, REFERENCE_CLASS_FIELD)
-
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
-				.withAllFields()
-				.withAlias(DatastoreConstants.INDEX_CLASS, INDEX_CLASS_FIELD)
-
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
-				.withAllFields()
-				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.CHUNKSET_ID)
-				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, CHUNKSET_CLASS_FIELD)
-				.withAlias(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE, CHUNKSET_SIZE_FIELD)
-
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_DICS)
-				.withAllFields()
-				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.DICTIONARY_ID)
-				.withAlias(DatastoreConstants.DICTIONARY_CLASS, DICTIONARY_CLASS_FIELD)
-				.withAlias(DatastoreConstants.DICTIONARY_SIZE, DICTIONARY_SIZE_FIELD)
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
+//				.withAllFields()
+//				.withAlias(DatastoreConstants.REFERENCE_CLASS, REFERENCE_CLASS_FIELD)
+//
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
+//				.withAllFields()
+//				.withAlias(DatastoreConstants.INDEX_CLASS, INDEX_CLASS_FIELD)
+//
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
+//				.withAllFields()
+//				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.CHUNKSET_ID)
+//				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, CHUNKSET_CLASS_FIELD)
+//				.withAlias(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE, CHUNKSET_SIZE_FIELD)
+//
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_DICS)
+//				.withAllFields()
+//				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.DICTIONARY_ID)
+//				.withAlias(DatastoreConstants.DICTIONARY_CLASS, DICTIONARY_CLASS_FIELD)
+//				.withAlias(DatastoreConstants.DICTIONARY_SIZE, DICTIONARY_SIZE_FIELD)
 
 				.build();
 	}
@@ -119,21 +119,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.withFormatter(EpochFormatter.TYPE + "[HH:mm:ss]")
 						.end()
 
-				.withDescriptionPostProcessor(
-						StartBuilding
-								.copperCalculations()
-								.withDefinition(this::copperCalculations)
-								.build())
+//				.withDescriptionPostProcessor(
+//						StartBuilding
+//								.copperCalculations()
+//								.withDefinition(this::copperCalculations)
+//								.build())
 
 				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
 
-				.withSharedDrillthroughProperties()
-				.hideColumn(DatastoreConstants.FIELDS)
-				.withCalculatedColumn()
-				.withName("Field names")
-				.withPluginKey(FieldsColumn.PLUGIN_KEY)
-				.withUnderlyingFields(DatastoreConstants.FIELDS)
-				.end().end()
+//				.withSharedDrillthroughProperties()
+//				.hideColumn(DatastoreConstants.FIELDS)
+//				.withCalculatedColumn()
+//				.withName("Field names")
+//				.withPluginKey(FieldsColumn.PLUGIN_KEY)
+//				.withUnderlyingFields(DatastoreConstants.FIELDS)
+//				.end().end()
 
 				.build();
 	}
@@ -155,43 +155,44 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withComparator(ReverseOrderComparator.type)
 				.withProperty("description", "Date at which statistics were retrieved")
 
-				.withDimension("Store")
-				.withHierarchyOfSameName()
-				.withLevel("Store").withPropertyName(DatastoreConstants.CHUNK__STORE_NAME)
-				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-
-				.withDimension("Chunk Set")
-				.withHierarchyOfSameName()
-				.withLevel("Class").withPropertyName(CHUNKSET_CLASS_FIELD)
-				.withFormatter(ClassFormatter.KEY)
-				.withLevel("Id").withPropertyName(DatastoreConstants.CHUNKSET_ID)
-
-				.withSingleLevelDimension("Fields").withPropertyName(DatastoreConstants.FIELDS)
-
-				.withDimension("References and Indices")
-				.withHierarchy("References")
-				.withLevel("Name").withPropertyName(DatastoreConstants.REFERENCE_NAME)
-				.withHierarchy("Indices")
-				.withLevel("Type").withPropertyName(INDEX_CLASS_FIELD)
-				.withFormatter(IndexFormatter.KEY)
-				.withComparator(CustomComparator.type)
-				.withFirstObjects(
-						"com.qfs.store.impl.MultiVersionCompositePrimaryRecordIndex",
-						"com.qfs.store.impl.MultiVersionCompositeSecondaryRecordIndex",
-						"com.qfs.store.impl.MultiVersionPrimaryRecordIndex",
-						"com.qfs.store.impl.MultiVersionSecondaryRecordIndex")
-
-				.withDimension("Dictionary")
-				.withHierarchyOfSameName()
-				.withLevel("Class").withPropertyName(DICTIONARY_CLASS_FIELD)
-				.withFormatter(ClassFormatter.KEY)
-				.withLevel("Order").withPropertyName(DatastoreConstants.DICTIONARY_ORDER)
-				.withLevel("Size").withPropertyName(DICTIONARY_SIZE_FIELD)
-
-				.withDimension("Dump name")
-				.withHierarchyOfSameName().slicing()
-				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-				.withComparator(ReverseOrderComparator.type);
+//				.withDimension("Store")
+//				.withHierarchyOfSameName()
+//				.withLevel("Store").withPropertyName(DatastoreConstants.CHUNK__STORE_NAME)
+//				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+//
+//				.withDimension("Chunk Set")
+//				.withHierarchyOfSameName()
+//				.withLevel("Class").withPropertyName(CHUNKSET_CLASS_FIELD)
+//				.withFormatter(ClassFormatter.KEY)
+//				.withLevel("Id").withPropertyName(DatastoreConstants.CHUNKSET_ID)
+//
+//				.withSingleLevelDimension("Fields").withPropertyName(DatastoreConstants.FIELDS)
+//
+//				.withDimension("References and Indices")
+//				.withHierarchy("References")
+//				.withLevel("Name").withPropertyName(DatastoreConstants.REFERENCE_NAME)
+//				.withHierarchy("Indices")
+//				.withLevel("Type").withPropertyName(INDEX_CLASS_FIELD)
+//				.withFormatter(IndexFormatter.KEY)
+//				.withComparator(CustomComparator.type)
+//				.withFirstObjects(
+//						"com.qfs.store.impl.MultiVersionCompositePrimaryRecordIndex",
+//						"com.qfs.store.impl.MultiVersionCompositeSecondaryRecordIndex",
+//						"com.qfs.store.impl.MultiVersionPrimaryRecordIndex",
+//						"com.qfs.store.impl.MultiVersionSecondaryRecordIndex")
+//
+//				.withDimension("Dictionary")
+//				.withHierarchyOfSameName()
+//				.withLevel("Class").withPropertyName(DICTIONARY_CLASS_FIELD)
+//				.withFormatter(ClassFormatter.KEY)
+//				.withLevel("Order").withPropertyName(DatastoreConstants.DICTIONARY_ORDER)
+//				.withLevel("Size").withPropertyName(DICTIONARY_SIZE_FIELD)
+//
+//				.withDimension("Dump name")
+//				.withHierarchyOfSameName().slicing()
+//				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
+//				.withComparator(ReverseOrderComparator.type)
+				;
 	}
 
 	private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
@@ -203,14 +204,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withAlias("Timestamp")
 				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]")
 
-				.withPostProcessor(DIRECT_CHUNKS_COUNT)
-				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
-				.withProperty(
-						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
-						CHUNK_CLASS_LEVEL + "@" + CHUNK_HIERARCHY)
-				.withProperty(
-						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
+//				.withPostProcessor(DIRECT_CHUNKS_COUNT)
+//				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
+//				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
+//				.withProperty(
+//						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
+//						CHUNK_CLASS_LEVEL + "@" + CHUNK_HIERARCHY)
+//				.withProperty(
+//						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
 
 				/*.withPostProcessor(DIRECT_MEMORY_CHUNK_USAGE_SUM)
 				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)

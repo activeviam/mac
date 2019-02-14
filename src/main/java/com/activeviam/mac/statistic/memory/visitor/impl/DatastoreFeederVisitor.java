@@ -6,8 +6,15 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+
+import java.time.Instant;
+import java.util.Objects;
+
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.StringArrayObject;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -18,17 +25,11 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastore;
+import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.IRecordSet;
-import com.qfs.store.IStoreFormat;
 import com.qfs.store.impl.ChunkSet;
-import com.qfs.store.record.IByteRecordFormat;
-import com.qfs.store.transaction.ITransactionManager;
-
-import java.time.Instant;
-
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+import com.qfs.store.record.IRecordFormat;
+import com.qfs.store.transaction.IOpenedTransaction;
 
 /**
  * This visitor is not reusable.
@@ -41,28 +42,26 @@ import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_
 public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	/** Type name if the memory usage comes from an {@link IRecordSet} */
-	public static final String TYPE_RECORD = "record";
+	public static final String TYPE_RECORD = "Record";
 	/** Type name if the memory usage comes from references */
-	public static final String TYPE_REFERENCE = "reference";
+	public static final String TYPE_REFERENCE = "Reference";
 	/** Type name if the memory usage comes from indexes */
-	public static final String TYPE_INDEX = "index";
+	public static final String TYPE_INDEX = "Index";
 	/** Type name if the memory usage comes from dictionaries */
-	public static final String TYPE_DICTIONARY = "dictionary";
+	public static final String TYPE_DICTIONARY = "Dictionary";
 	/** Type name if the memory usage comes from the version chunks */
-	public static final String TYPE_QFS_VERSION = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN;
+	public static final String TYPE_VERSION_COLUMN = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN;
 
 	/**
 	 * A boolean that if true tells us that the currently visited component is responsible for
 	 * storing versioning data.
 	 */
-	protected boolean isQfsVersion = false; // FIXME find a cleaner way to do that. (specific stat for instance).
+	protected boolean isVersionColumn = false; // FIXME find a cleaner way to do that. (specific stat for instance).
 
-	/** The datastore to which tuple can be added. */
-	protected final IDatastore datastore;
-	/** The transaction manager to which tuple can be added. */
-	protected final ITransactionManager tm;
+	private final IDatastoreSchemaMetadata storageMetadata;
+	private final IOpenedTransaction tm;
 	/** The record format of the store that stores the chunks. */
-	protected final IByteRecordFormat chunkRecordFormat;
+	protected final IRecordFormat chunkRecordFormat;
 	/** The name of the off-heap dump. Can be null */
 	protected final String dumpName;
 
@@ -72,6 +71,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	protected Instant current = null;
 	/** The epoch id we are currently reading statistics for */
 	protected Long epochId = null;
+
+	protected String branch = null;
 	/** ID of the current {@link ChunkSet}. */
 	protected Long chunkSetId = null;
 	/** ID of the current reference. */
@@ -81,16 +82,24 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	/** ID of the current dictionary. */
 	protected Long dictionaryId = null;
 
+	private String store = null;
+	private Integer partition = null;
+	private IndexType indexType = null;
+
 	/**
 	 * Constructor.
 	 *
-	 * @param datastore the datastore to fill with the off-heap dump data
+	 * @param storageMetadata structure of the metadata
+	 * @param transaction the open transaction to use to fill the datastore with the visited data
 	 * @param dumpName The name of the off-heap dump. Can be null.
 	 */
-	public DatastoreFeederVisitor(final IDatastore datastore, final String dumpName) {
-		this.datastore = datastore;
-		this.tm = datastore.getTransactionManager();
-		this.chunkRecordFormat = datastore.getSchemaMetadata()
+	public DatastoreFeederVisitor(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final IOpenedTransaction transaction,
+			final String dumpName) {
+		this.storageMetadata = storageMetadata;
+		this.tm = transaction;
+		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
 				.getStoreFormat()
 				.getRecordFormat();
@@ -99,253 +108,222 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = chunkStatistic.getChunkId();
+		final Object[] tuple = buildChunkTupleFrom(this.storageMetadata, chunkStatistic);
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = this.dumpName;
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = this.current;
 
-		String type = null;
-		if (chunkSetId!=null) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetId;
+		final String type;
+		if (chunkSetId != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetId;
 			type = TYPE_RECORD;
-		} else if (referenceId!=null) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = referenceId;
+		} else if (referenceId != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = referenceId;
 			type = TYPE_REFERENCE;
-		} else if (indexId!=null) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] = indexId;
+		} else if (indexId != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] = indexId;
 			type = TYPE_INDEX;
-		} else if (dictionaryId!=null) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
+		} else if (dictionaryId != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
 			type = TYPE_DICTIONARY;
-		} else if (isQfsVersion) {
-			type = TYPE_QFS_VERSION;
+		} else if (isVersionColumn) {
+			type = TYPE_VERSION_COLUMN;
+		} else {
+			type = null;
 		}
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = type;
 
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = type;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = chunkStatistic.getAttributes()
-				.get(ATTR_NAME_CREATOR_CLASS)
-				.asText();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = chunkStatistic
-				.getShallowOffHeap();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = chunkStatistic
-				.getShallowOnHeap();
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-
-		tm.add(DatastoreConstants.CHUNK_STORE, currentChunkRecord);
+		tm.add(DatastoreConstants.CHUNK_STORE, tuple);
 
 		visitChildren(chunkStatistic);
 
 		// Reset
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = null;
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = null;
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = null;
 
 		return null;
 	}
 
 	@Override
-	public Void visit(final DefaultMemoryStatistic defaultMemoryStatistic) {
+	public Void visit(final DefaultMemoryStatistic stat) {
+		final IStatisticAttribute epochAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH);
+		if (epochAttr != null) {
+			this.epochId = epochAttr.asLong();
+		}
+		final IStatisticAttribute branchAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
+		if (branchAttr != null) {
+			this.branch = branchAttr.asText();
+		}
+
 		// The first Statistic should contain the export date.
 		// We assume the first visited statistic is a Composite.
-		if (current == null) {
-			final IStatisticAttribute dateAtt = defaultMemoryStatistic.getAttributes().get(DatastoreConstants.CHUNK__EXPORT_DATE);
-			if (dateAtt==null){
+		if (this.current == null) {
+			final IStatisticAttribute dateAtt = stat.getAttribute(DatastoreConstants.CHUNK__EXPORT_DATE);
+			if (dateAtt == null) {
 				throw new IllegalStateException("First level statistic should contain the export date.");
 			}
-			current = Instant.ofEpochSecond(dateAtt.asLong());
-		}
-		if (defaultMemoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_EPOCH)) {
-			epochId = defaultMemoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH).asLong();
-		}
+			this.current = Instant.ofEpochSecond(dateAtt.asLong());
 
-		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
-			currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
-			// Set the store name
-			currentChunkRecord[chunkRecordFormat
-					.getFieldIndex(DatastoreConstants.CHUNK__STORE_NAME)] = defaultMemoryStatistic.getAttributes()
-							.get(DatastoreConstants.CHUNK__STORE_NAME)
-							.asText();
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = current;
-		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
-			// Set the partition id
-			currentChunkRecord[chunkRecordFormat
-					.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = defaultMemoryStatistic.getAttributes()
-							.get(DatastoreConstants.CHUNK__PARTITION_ID)
-							.asInt();
+			FeedVisitor.includeApplicationInfoIfAny(
+					this.tm,
+					this.current,
+					this.epochId,
+					this.dumpName,
+					stat);
 		}
 
-		isQfsVersion = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(defaultMemoryStatistic.getName());
-
-		visitChildren(defaultMemoryStatistic);
-
-		isQfsVersion = false;
-
-		// Reset
-		if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
-			currentChunkRecord = null;
-		} else if (defaultMemoryStatistic.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = null;
+		switch (stat.getName()) {
+		case MemoryStatisticConstants.STAT_NAME_STORE:
+			processStoreStat(stat);
+			break;
+		case MemoryStatisticConstants.STAT_NAME_STORE_PARTITION:
+			processStorePartition(stat);
+			break;
+		case MemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
+			processPrimaryIndices(stat);
+			break;
+		case MemoryStatisticConstants.STAT_NAME_SECONDARY_INDICES:
+			processSecondaryIndices(stat);
+			break;
+		default:
+			recordStatAndExplore(stat);
 		}
 
 		return null;
 	}
 
 	@Override
-	public Void visit(final ChunkSetStatistic chunkSetStatistic) {
-		IStatisticAttribute chunkSetIdAttr = chunkSetStatistic.getAttributes().get(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID);
-		chunkSetId=chunkSetIdAttr.asLong();
+	public Void visit(final ChunkSetStatistic stat) {
+		final Object[] tuple = buildChunksetTupleFrom(this.storageMetadata, stat);
+		final IRecordFormat format = getChunksetFormat(this.storageMetadata);
 
-		tm.add(
-				DatastoreConstants.CHUNK_SET_STORE,
-				chunkSetId,
-				epochId,
-				chunkSetStatistic.getAttributes().get(DatastoreConstants.CHUNK_SET_CLASS).asText(),
-				chunkSetStatistic.getAttributes().get(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE).asInt(),
-				chunkSetStatistic.getAttributes().get(DatastoreConstants.CHUNK_SET_FREE_ROWS).asInt());
+		this.chunkSetId = (Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)];
 
-		if (chunkSetStatistic.getChildren() != null) {
-			for (final IMemoryStatistic child : chunkSetStatistic.getChildren()) {
+		assert this.epochId != null;
+		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
+		if (this.partition != null) {
+			assert this.store != null;
+
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__PARTITION)] = this.partition;
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__STORE_NAME)] = this.store;
+		} else if (this.dictionaryId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__DICTIONARY_ID)] = this.dictionaryId;
+		} else {
+			throw new RuntimeException("Cannot process this stat. A chunkset is not attached to a dictionary or a store. Faulty stat: " + stat);
+		}
+
+		tm.add(DatastoreConstants.CHUNKSET_STORE, tuple);
+
+		if (stat.getChildren() != null) {
+			for (final IMemoryStatistic child : stat.getChildren()) {
 				// Could be the rowMapping if SparseChunkSet
-				final IStatisticAttribute keyAtt = child.getAttributes().get(MemoryStatisticConstants.ATTR_NAME_FIELD);
-				if (keyAtt != null) {
-					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] =
-							new MemoryAnalysisDatastoreDescription.StringArrayObject(keyAtt.asText());
-				} else {
-					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
-				}
+//				final IStatisticAttribute keyAtt = child.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+				// TODO(ope) use the field attributes of the chunkset
+//				if (keyAtt != null) {
+//					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] =
+//							new StringArrayObject(keyAtt.asText());
+//				} else {
+//					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
+//				}
 				child.accept(this);
 			}
 		}
 
 		// Reset
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
-		chunkSetId=null;
+//		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
+		this.chunkSetId = null;
 
 		return null;
-	}
-
-	/**
-	 * Build an object array that represents a reference.
-	 *
-	 * @param referenceStatistic the {@link ReferenceStatistic} from which the array must be built.
-	 * @return the object array.
-	 */
-	protected Object[] buildPartOfReferenceStatisticTuple(final ReferenceStatistic referenceStatistic) {
-		final IStoreFormat refStoreFormat = datastore.getSchemaMetadata()
-				.getStoreMetadata(DatastoreConstants.REFERENCE_STORE)
-				.getStoreFormat();
-		final Object[] tuple = new Object[refStoreFormat.getRecordFormat().getFieldCount()];
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(
-				DatastoreConstants.REFERENCE_FROM_STORE)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_FROM_STORE).asText();
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID)] =
-				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID).asInt();
-		tuple[refStoreFormat.getRecordFormat()
-				.getFieldIndex(DatastoreConstants.REFERENCE_TO_STORE)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_TO_STORE).asText();
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(
-				DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID)
-						.asInt();
-		return tuple;
 	}
 
 	@Override
 	public Void visit(final ReferenceStatistic referenceStatistic) {
-		final Object[] tuple = buildPartOfReferenceStatisticTuple(referenceStatistic);
-		final IStoreFormat refStoreFormat = datastore.getSchemaMetadata()
-				.getStoreMetadata(DatastoreConstants.REFERENCE_STORE)
-				.getStoreFormat();
+		final Object[] tuple = buildPartOfReferenceStatisticTuple(this.storageMetadata, referenceStatistic);
+		final IRecordFormat refStoreFormat = getReferenceFormat(this.storageMetadata);
 
 		// fill out the tuple
-		referenceId = referenceStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_REFERENCE_ID).asLong();
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(DatastoreConstants.REFERENCE_ID)] = referenceId;
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(DatastoreConstants.REFERENCE_NAME)] =
-				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
-		tuple[refStoreFormat.getRecordFormat().getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] =
-				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
-		tuple[refStoreFormat.getRecordFormat()
-				.getFieldIndex(DatastoreConstants.EPOCH_ID)] = epochId;
-		tm.add(DatastoreConstants.REFERENCE_STORE, tuple);
+		this.referenceId = referenceStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_REFERENCE_ID).asLong();
 
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = referenceId;
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_NAME)] =
+				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] =
+				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
+		tm.add(DatastoreConstants.REFERENCE_STORE, tuple);
 
 		visitChildren(referenceStatistic);
 
 		//Reset
-		referenceId = null;
+		this.referenceId = null;
 
 		return null;
 	}
 
 	@Override
-	public Void visit(final IndexStatistic indexStatistic) {
-	indexId = indexStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
-		tm.add(
-				DatastoreConstants.INDEX_STORE,
-				indexId,
-				epochId,
-				null, //FIXME
-				indexStatistic.getAttributes().get(DatastoreConstants.INDEX_CLASS).asText());
+	public Void visit(final IndexStatistic stat) {
+		final Object[] tuple = buildIndexTupleFrom(this.storageMetadata, stat);
+		final IRecordFormat format = getIndexFormat(this.storageMetadata);
 
-		final String[] fieldNames = indexStatistic.getAttribute(DatastoreConstants.FIELDS)
-				.asStringArray();
+		this.indexId = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
+		final boolean isKeyIndex = stat.getName().equals(MemoryStatisticConstants.STAT_NAME_KEY_INDEX);
+		if (isKeyIndex) {
+			this.indexType = IndexType.KEY;
+		}
 
-		assert fieldNames != null && fieldNames.length > 0 : "Cannot find fields in the attributes of "
-				+ indexStatistic;
+		assert this.store != null;
+		tuple[format.getFieldIndex(DatastoreConstants.INDEX__STORE_NAME)] = this.store;
+		assert this.partition != null;
+		tuple[format.getFieldIndex(DatastoreConstants.INDEX__STORE_PARTITION)] = this.partition;
+		tuple[format.getFieldIndex(DatastoreConstants.INDEX_TYPE)] = this.indexType;
 
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
+		this.tm.add(DatastoreConstants.INDEX_STORE, tuple);
 
-		visitChildren(indexStatistic);
+		visitChildren(stat);
 
 		// Reset
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
+//		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
 		indexId = null;
+		if (isKeyIndex) {
+			this.indexType = null;
+		}
 
 		return null;
 	}
 
 	@Override
-	public Void visit(final DictionaryStatistic dictionaryStatistic) {
-		if (!dictionaryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY)) {
-			// The stat was constructed as a dictionary stat, but in fact belongs to another structure, like the keys of an index
-			visitChildren(dictionaryStatistic);
-			return null;
-		}
-		final IStatisticAttribute dicIdAttr = dictionaryStatistic.getAttribute(ATTR_NAME_DICTIONARY_ID);
-		if (dicIdAttr == null) {
-			System.err.println("No dictionary ID for " + dictionaryStatistic);
-		}
-		dictionaryId = dicIdAttr.asLong();
-		// Init. chunk record
-		currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
+	public Void visit(final DictionaryStatistic stat) {
+//		if (!dictionaryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY)) {
+//			// The stat was constructed as a dictionary stat, but in fact belongs to another structure, like the keys of an index
+//			visitChildren(dictionaryStatistic);
+//			return null;
+//		}
+		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
+		final Object[] tuple = buildDictionaryTupleFrom(this.storageMetadata, stat);
+		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
+//		// Init. chunk record
+//		currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
 
-		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.EPOCH_ID)] = epochId;
-		final IStatisticAttribute fieldNamesAttr = dictionaryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
-		if (fieldNamesAttr!=null) {
-			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new MemoryAnalysisDatastoreDescription.StringArrayObject(
-					fieldNamesAttr.asStringArray());
-		}
+//		currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.EPOCH_ID)] = epochId;
 
-		final IStatisticAttribute dicClassAttr = dictionaryStatistic.getAttribute(DatastoreConstants.DICTIONARY_CLASS);
-		final String dictionaryClass;
-		if (dicClassAttr!=null){
-			dictionaryClass=dicClassAttr.asText();
-		} else{
-			System.err.println("Dictionary does not state its class "+dictionaryStatistic);
-			dictionaryClass = dictionaryStatistic.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
+		if (this.indexId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.DIC__INDEX_ID)] = this.indexId;
 		}
-		tm.add(
-				DatastoreConstants.DICTIONARY_STORE,
-				dictionaryId,
-				epochId,
-				dictionaryStatistic.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt(),
-				dictionaryStatistic.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt(),
-				dictionaryClass);
+		// Nothing to do for the provider. There are dealt in another visitor
 
-		visitChildren(dictionaryStatistic);
+		tm.add(DatastoreConstants.DICTIONARY_STORE, tuple);
+
+		visitChildren(stat);
 
 		// Reset
-		currentChunkRecord = null;
+//		currentChunkRecord = null;
 		dictionaryId = null;
 		return null;
 	}
@@ -361,6 +339,225 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				child.accept(this);
 			}
 		}
+	}
+
+	private void processStoreStat(final IMemoryStatistic stat) {
+		final IStatisticAttribute nameAttr = Objects.requireNonNull(
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
+				() -> "No store name in stat " + stat);
+		this.store = nameAttr.asText();
+
+		// Explore the store children
+		visitChildren(stat);
+
+		this.store = null;
+	}
+
+	private void processStorePartition(final IMemoryStatistic stat) {
+		final IStatisticAttribute partitionAttr = Objects.requireNonNull(
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PARTITION_ID),
+				() -> "No partition attribute in stat" + stat);
+		this.partition = partitionAttr.asInt();
+
+		visitChildren(stat);
+
+		this.partition = null;
+	}
+
+	private void processPrimaryIndices(final IMemoryStatistic stat) {
+		processIndexList(stat, IndexType.PRIMARY);
+	}
+
+	private void processSecondaryIndices(final IMemoryStatistic stat) {
+		processIndexList(stat, IndexType.SECONDARY);
+	}
+
+	private void processIndexList(final IMemoryStatistic stat, final IndexType type) {
+		this.indexType = type;
+		visitChildren(stat);
+		this.indexType = null;
+	}
+
+	private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
+		if (stat.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
+			currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
+			// Set the store name
+			currentChunkRecord[chunkRecordFormat
+					.getFieldIndex(DatastoreConstants.CHUNK__STORE_NAME)] = stat.getAttributes()
+					.get(DatastoreConstants.CHUNK__STORE_NAME)
+					.asText();
+			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = current;
+		} else if (stat.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
+			// Set the partition id
+			currentChunkRecord[chunkRecordFormat
+					.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = stat.getAttributes()
+					.get(DatastoreConstants.CHUNK__PARTITION_ID)
+					.asInt();
+		}
+
+		isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
+
+		visitChildren(stat);
+
+		isVersionColumn = false;
+
+		// Reset
+		if (stat.getAttributes().containsKey(DatastoreConstants.CHUNK__STORE_NAME)) {
+			currentChunkRecord = null;
+		} else if (stat.getAttributes().containsKey(DatastoreConstants.CHUNK__PARTITION_ID)) {
+			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = null;
+		}
+	}
+
+	/**
+	 * Build an object array that represents a reference.
+	 *
+	 * @param referenceStatistic the {@link ReferenceStatistic} from which the array must be built.
+	 * @return the object array.
+	 */
+	protected Object[] buildPartOfReferenceStatisticTuple(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final ReferenceStatistic referenceStatistic) {
+		final IRecordFormat refStoreFormat = getReferenceFormat(storageMetadata);
+
+		final Object[] tuple = new Object[refStoreFormat.getFieldCount()];
+		tuple[refStoreFormat.getFieldIndex(
+				DatastoreConstants.REFERENCE_FROM_STORE)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_FROM_STORE).asText();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID)] =
+				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID).asInt();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_TO_STORE)] =
+				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_TO_STORE).asText();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID)] =
+				referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID).asInt();
+
+		return tuple;
+	}
+
+	private static Object[] buildChunkTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final ChunkStatistic stat) {
+		final IRecordFormat chunkRecordFormat = storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
+				.getStoreFormat()
+				.getRecordFormat();
+		final Object[] tuple = new Object[chunkRecordFormat.getFieldCount()];
+
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
+				stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] =
+				stat.getShallowOffHeap();
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] =
+				stat.getShallowOnHeap();
+		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+		if (fieldAttr != null) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
+		}
+
+		return tuple;
+	}
+
+	private static Object[] buildIndexTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final IndexStatistic stat) {
+		final IRecordFormat storeFormat = getIndexFormat(storageMetadata);
+
+		final Object[] tuple = new Object[storeFormat.getFieldCount()];
+		tuple[storeFormat.getFieldIndex(DatastoreConstants.INDEX_ID)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
+
+		final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS)
+				.asStringArray();
+		assert fieldNames != null && fieldNames.length > 0 : "Cannot find fields in the attributes of " + stat;
+		tuple[storeFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(fieldNames);
+
+		tuple[storeFormat.getFieldIndex(DatastoreConstants.INDEX_CLASS)] =
+				stat.getAttribute(DatastoreConstants.INDEX_CLASS).asText();
+
+		return tuple;
+	}
+
+	private static Object[] buildDictionaryTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final IMemoryStatistic stat) {
+		final IRecordFormat format = getDictionaryFormat(storageMetadata);
+		final Object[] tuple = new Object[format.getFieldCount()];
+
+		final IStatisticAttribute dicIdAttr = Objects.requireNonNull(
+				stat.getAttribute(ATTR_NAME_DICTIONARY_ID),
+				() -> "No dictionary ID for " + stat);
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
+//		// Init. chunk record
+//		currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
+
+		// TODO(ope) deal with dictionary fields if any
+//		final IStatisticAttribute fieldNamesAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
+//		if (fieldNamesAttr!=null) {
+//			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(
+//					fieldNamesAttr.asStringArray());
+//		}
+
+		final IStatisticAttribute dicClassAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
+		final String dictionaryClass;
+		if (dicClassAttr != null) {
+			dictionaryClass = dicClassAttr.asText();
+		} else {
+			System.err.println("Dictionary does not state its class " + stat);
+			dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		}
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
+
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] =
+				stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] =
+				stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
+
+		return tuple;
+	}
+
+	private static Object[] buildChunksetTupleFrom(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final ChunkSetStatistic stat) {
+		final IRecordFormat format = getChunksetFormat(storageMetadata);
+		final Object[] tuple = new Object[format.getFieldCount()];
+
+		IStatisticAttribute chunkSetIdAttr = Objects.requireNonNull(
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID),
+				() -> "No id in this chunkset statistic: " + stat);
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetIdAttr.asLong();
+
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_CLASS)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)] = 0;
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)] =
+				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
+
+		return tuple;
+	}
+
+	private static IRecordFormat getIndexFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.INDEX_STORE);
+	}
+
+	private static IRecordFormat getReferenceFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.REFERENCE_STORE);
+	}
+
+	private static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
+	}
+
+	private static IRecordFormat getChunksetFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return getRecordFormat(storageMetadata, DatastoreConstants.CHUNKSET_STORE);
+	}
+
+	private static IRecordFormat getRecordFormat(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final String storeName) {
+		return storageMetadata.getStoreMetadata(storeName)
+				.getStoreFormat()
+				.getRecordFormat();
 	}
 
 }

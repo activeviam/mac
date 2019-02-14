@@ -119,6 +119,9 @@ public class MacServerConfig {
 	@Autowired
 	protected IActivePivotContentServiceConfig apCSConfig;
 
+	@Autowired
+	protected SourceConfig sourceConfig;
+
 	/**
 	 *
 	 * Initialize and start the ActivePivot Manager, after performing all the injections into the
@@ -129,6 +132,9 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
+		// Perform the initial load
+		sourceConfig.loadStatistics();
+
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
 		/* *********************************************** */
@@ -138,6 +144,9 @@ public class MacServerConfig {
 		} catch (AgentException e) {
 			throw new IllegalStateException("Cannot start the application", e);
 		}
+
+		// Connect the real-time updates
+		sourceConfig.watchStatisticDirectory();
 
 		return null;
 	}

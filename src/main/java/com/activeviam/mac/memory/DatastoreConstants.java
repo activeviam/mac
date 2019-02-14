@@ -16,10 +16,11 @@ public class DatastoreConstants {
 
 	// Default values
 	public static final long LONG_IF_NOT_EXIST = -1L;
+	public static final int INT_IF_NOT_EXIST = -1;
 
 	// ALL STORES
 	public static final String CHUNK_STORE = MemoryStatisticConstants.STAT_NAME_CHUNK;
-	public static final String CHUNK_SET_STORE = MemoryStatisticConstants.STAT_NAME_CHUNKSET;
+	public static final String CHUNKSET_STORE = MemoryStatisticConstants.STAT_NAME_CHUNKSET;
 	public static final String REFERENCE_STORE = MemoryStatisticConstants.STAT_NAME_REFERENCE;
 	public static final String INDEX_STORE = MemoryStatisticConstants.STAT_NAME_INDEX;
 	public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
@@ -30,6 +31,7 @@ public class DatastoreConstants {
 	public static final String PROVIDER_COMPONENT_STORE = "ProviderComponents";
 	public static final String PROVIDER_PARTITION_STORE = "ProviderPartitions";
 	public static final String PIVOT_STORE = "PivotPartitions";
+	public static final String APPLICATION_STORE = "Application";
 
 	// Field names
 
@@ -62,6 +64,7 @@ public class DatastoreConstants {
 	public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
 	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
+	public static final String CHUNK__FIELD = "field";
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
 	public static final String CHUNK_SET_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
@@ -134,6 +137,14 @@ public class DatastoreConstants {
 
 	public static final String PIVOT__PIVOT_ID = "pivotId";
 	public static final String PIVOT__MANAGER_ID = "managerId";
+
+	public static final String APPLICATION__DATE = "date";
+	public static final String APPLICATION__EPOCH = EPOCH_ID;
+	public static final String APPLICATION__DUMP_NAME = "dumpName";
+	public static final String APPLICATION__USED_ON_HEAP = "usedOnHeap";
+	public static final String APPLICATION__MAX_ON_HEAP = "maxOnHeap";
+	public static final String APPLICATION__USED_OFF_HEAP = "usedOffHeap";
+	public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
 
 	private DatastoreConstants() {}
 

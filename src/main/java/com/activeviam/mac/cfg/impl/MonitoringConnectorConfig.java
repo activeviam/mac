@@ -10,9 +10,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Optional;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor;
+import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -85,7 +87,7 @@ public class MonitoringConnectorConfig {
 			desc = "Load statistic from file.",
 			name = "Load a IMemoryStatistic",
 			params = { "path" })
-	public String loadDumpedStatistic(String path) throws SerializerException, IOException {
+	public String loadDumpedStatistic(String path) throws IOException {
 		return feedDatastore(
 				MemoryMonitoringService.loadDumpedStatistic(path),
 				Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", ""));
@@ -96,32 +98,13 @@ public class MonitoringConnectorConfig {
 	 * @return message to the user
 	 */
 	public String feedDatastore(final IMemoryStatistic memoryStatistic, final String dumpName) {
-		IDatastoreSchemaTransactionInformation info = null;
-		try {
-			datastore.getTransactionManager().startTransaction();
-			switch (memoryStatistic.getName()){
-				case MemoryStatisticConstants.STAT_NAME_DATASTORE:
-					// falls through
-				case MemoryStatisticConstants.STAT_NAME_STORE:
-					memoryStatistic.accept(new DatastoreFeederVisitor(datastore, dumpName));
-					break;
-				default :
-					throw new DatastoreTransactionException("Memory statistics for "+memoryStatistic.getName()
-							+" is not supported for feeding this memory analysis cube.");
-			}
-			info = datastore.getTransactionManager().commitTransaction();
-		} catch (DatastoreTransactionException e) {
-			e.printStackTrace();
-			try {
-				datastore.getTransactionManager().rollbackTransaction();
-			} catch (NoTransactionException | DatastoreTransactionException e1) {
-				e1.printStackTrace();
-			}
-		}
+		final Optional<IDatastoreSchemaTransactionInformation> info = this.datastore.edit(tm -> {
+			memoryStatistic.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName));
+		});
 
-		if (info != null) {
+		if (info.isPresent()) {
 			return "Commit successful at epoch "
-					+ info.getId()
+					+ info.get().getId()
 					+ ". Datastore size "
 					+ StoreUtils.getSize(datastore.getHead(), DatastoreConstants.CHUNK_STORE);
 		} else {
