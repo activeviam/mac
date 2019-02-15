@@ -189,6 +189,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final DefaultMemoryStatistic stat) {
+		final Long initialEpoch = this.epochId;
+		final String initialBranch = this.branch;
 		readEpochAndBranchIfAny(stat);
 
 		switch (stat.getName()) {
@@ -208,7 +210,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			recordStatAndExplore(stat);
 		}
 
-		this.epochId = null;
+		this.epochId = initialEpoch;
+		this.branch = initialBranch;
 
 		return null;
 	}
@@ -427,15 +430,11 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	private void readEpochAndBranchIfAny(final IMemoryStatistic stat) {
 		final IStatisticAttribute epochAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH);
 		if (epochAttr != null) {
-			final Long epoch = epochAttr.asLong();
-			assert this.epochId == null || epoch.equals(this.epochId);
-			this.epochId = epoch;
+			this.epochId = epochAttr.asLong();
 		}
 		final IStatisticAttribute branchAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
 		if (branchAttr != null) {
-			final String branch = branchAttr.asText();
-			assert this.branch == null || this.branch.equals(branch);
-			this.branch = branch;
+			this.branch = branchAttr.asText();
 		}
 	}
 

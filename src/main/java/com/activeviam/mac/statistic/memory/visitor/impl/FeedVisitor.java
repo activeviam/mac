@@ -88,8 +88,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				stat.getAttribute(ATTR_NAME_DICTIONARY_ID),
 				() -> "No dictionary ID for " + stat);
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
-//		// Init. chunk record
-//		currentChunkRecord = new Object[chunkRecordFormat.getFieldCount()];
 
 		// TODO(ope) deal with dictionary fields if any
 //		final IStatisticAttribute fieldNamesAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
