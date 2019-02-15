@@ -75,6 +75,7 @@ public class DatastoreConstants {
 	public static final String CHUNKSET__PROVIDER_ID = _PROVIDER_ID;
 	public static final String CHUNKSET__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
 	public static final String CHUNKSET__DICTIONARY_ID = "dictionaryId";
+	public static final String CHUNKSET__TYPE = "chunksetType";
 	public static final String CHUNKSET__FREED_ROWS = "freedRows";
 
 	// ## REFERENCES_STORE ## Field names of the Reference store

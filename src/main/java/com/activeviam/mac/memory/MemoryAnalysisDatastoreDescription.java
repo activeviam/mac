@@ -50,7 +50,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				.withField(DatastoreConstants.CHUNK__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				.withField(DatastoreConstants.CHUNK__PROVIDER_PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
-				.withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)
+				.withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE, ILiteralType.OBJECT)
 				/* Attributes */
 //				.withField(DatastoreConstants.CHUNK__STORE_NAME)
 //				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT)
@@ -78,10 +78,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNKSET__PARTITION, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNKSET__STORE_NAME)
 				.withField(DatastoreConstants.CHUNKSET__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.CHUNKSET__PROVIDER_COMPONENT_TYPE)
+				.withField(DatastoreConstants.CHUNKSET__PROVIDER_COMPONENT_TYPE, ILiteralType.OBJECT)
 				.withField(DatastoreConstants.CHUNKSET__DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				/* Attributes */
 				.withField(DatastoreConstants.CHUNK_SET_CLASS)
+				.withField(DatastoreConstants.CHUNKSET__TYPE)
 				.withField(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNK_SET_FREE_ROWS, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNKSET__FREED_ROWS, ILiteralType.INT)
@@ -136,7 +137,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				/* Foreign keys */
 				.withField(DatastoreConstants.DIC__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				.withField(DatastoreConstants.DIC__PROVIDER_PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
-				.withField(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE)
+				.withField(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE, ILiteralType.OBJECT)
 				.withField(DatastoreConstants.DIC__INDEX_ID, ILiteralType.LONG)
 				/* Attributes */
 				.withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.INT)
@@ -191,7 +192,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 		return StartBuilding.store().withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__PARTITION_ID, ILiteralType.INT).asKeyField()
-				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE).asKeyField()
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE, ILiteralType.OBJECT).asKeyField()
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__EPOCH_ID, ILiteralType.LONG).asKeyField()
 				/* Attributes */
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)

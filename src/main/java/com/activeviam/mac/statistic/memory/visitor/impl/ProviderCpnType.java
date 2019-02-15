@@ -8,9 +8,19 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 public enum ProviderCpnType {
 
-	POINT_INDEX,
-	POINT_MAPPING,
-	AGGREGATE_STORE,
-	BITMAP_MATCHER
+	POINT_INDEX("PointIndex"),
+	POINT_MAPPING("PointMapping"),
+	AGGREGATE_STORE("AggregateStore"),
+	BITMAP_MATCHER("BitmapMatcher");
 
+	final String friendlyName;
+
+	ProviderCpnType(String friendlyName) {
+		this.friendlyName = friendlyName;
+	}
+
+	@Override
+	public String toString() {
+		return this.friendlyName;
+	}
 }

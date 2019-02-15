@@ -27,11 +27,22 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
+import com.qfs.store.IRecordSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
+	/** Type name if the memory usage comes from an {@link IRecordSet} */
+	public static final String TYPE_RECORD = "Record";
+	/** Type name if the memory usage comes from references */
+	public static final String TYPE_REFERENCE = "Reference";
+	/** Type name if the memory usage comes from indexes */
+	public static final String TYPE_INDEX = "Index";
+	/** Type name if the memory usage comes from dictionaries */
+	public static final String TYPE_DICTIONARY = "Dictionary";
+	/** Type name if the memory usage comes from the version chunks */
+	public static final String TYPE_VERSION_COLUMN = "VersionColumn";
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.LOADING);
 
@@ -49,23 +60,20 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	static Object[] buildChunkTupleFrom(
-			final IDatastoreSchemaMetadata storageMetadata,
+			final IRecordFormat format,
 			final ChunkStatistic stat) {
-		final IRecordFormat chunkRecordFormat = storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-				.getStoreFormat()
-				.getRecordFormat();
-		final Object[] tuple = new Object[chunkRecordFormat.getFieldCount()];
+		final Object[] tuple = new Object[format.getFieldCount()];
 
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
 				stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] =
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] =
 				stat.getShallowOffHeap();
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] =
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] =
 				stat.getShallowOnHeap();
 		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 		if (fieldAttr != null) {
-			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
 		}
 
 		return tuple;
@@ -109,9 +117,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	static Object[] buildChunksetTupleFrom(
-			final IDatastoreSchemaMetadata storageMetadata,
+			final IRecordFormat format,
 			final ChunkSetStatistic stat) {
-		final IRecordFormat format = getChunksetFormat(storageMetadata);
 		final Object[] tuple = new Object[format.getFieldCount()];
 
 		IStatisticAttribute chunkSetIdAttr = Objects.requireNonNull(
@@ -148,6 +155,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 					this.transaction,
 					this.dumpName);
 			feed.startFrom(stat);
+			break;
 		default:
 			logger.warning("Unsupported statistic named " + stat.getName() + ". Ignoring it :(");
 		}

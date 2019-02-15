@@ -132,9 +132,6 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
-		// Perform the initial load
-		sourceConfig.loadStatistics();
-
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
 		/* *********************************************** */

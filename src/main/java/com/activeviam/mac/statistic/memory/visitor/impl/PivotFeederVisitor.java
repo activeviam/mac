@@ -48,6 +48,7 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	private Integer partition;
 	private Long indexId;
 	private Long dictionaryId;
+	private Long chunkSetId;
 	private ProviderCpnType cpnType;
 	private boolean isVersionColumn;
 
@@ -123,16 +124,68 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkSetStatistic stat) {
-		// FIXME(ope) later work to do here
-		throw new UnsupportedOperationException("Not implemented yet");
-//		return null;
+		final IRecordFormat format = FeedVisitor.getChunksetFormat(this.storageMetadata);
+		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, stat);
+
+		assert this.epochId != null;
+		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
+		final String type;
+		if (this.cpnType != null) {
+			assert this.providerId != null;
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PROVIDER_ID)] = this.providerId;
+			assert this.partition != null;
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__PARTITION)] = this.partition;
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)] = this.cpnType;
+			type = this.cpnType.toString();
+		} else if (this.dictionaryId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__DICTIONARY_ID)] = this.dictionaryId;
+			type = FeedVisitor.TYPE_DICTIONARY;
+		} else {
+			throw new RuntimeException("Cannot process this stat. A chunkset is not attached to a dictionary or a provider component. Faulty stat: " + stat);
+		}
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__TYPE)] = type;
+
+		this.transaction.add(DatastoreConstants.CHUNKSET_STORE, tuple);
+
+		this.chunkSetId = (Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)];
+		visitChildren(stat);
+		this.chunkSetId = null;
+
+		return null;
 	}
 
 	@Override
 	public Void visit(final ChunkStatistic stat) {
-		// FIXME(ope) later work to do here
-		throw new UnsupportedOperationException("Not implemented yet");
-//		return null;
+		final IRecordFormat format = getChunkFormat(this.storageMetadata);
+		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
+		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = this.dumpName;
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = this.current;
+
+		final String type;
+		if (this.chunkSetId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetId;
+			type = FeedVisitor.TYPE_RECORD;
+		} else if (this.indexId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] = indexId;
+			type = FeedVisitor.TYPE_INDEX;
+		} else if (this.dictionaryId != null) {
+			tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
+			type = FeedVisitor.TYPE_DICTIONARY;
+		} else if (isVersionColumn) {
+			type = FeedVisitor.TYPE_VERSION_COLUMN;
+		} else if (this.cpnType != null) {
+			type = this.cpnType.toString();
+		} else {
+			type = null;
+		}
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = type;
+
+		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
+
+		visitChildren(stat);
+
+		return null;
 	}
 
 	@Override
@@ -141,10 +194,8 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(IndexStatistic indexStatistic) {
-		// FIXME(ope) later work to do here
-		throw new UnsupportedOperationException("Not implemented yet");
-//		return null;
+	public Void visit(IndexStatistic stat) {
+		throw new UnsupportedOperationException("An ActivePivot cannot contain references. Received: " + stat);
 	}
 
 	@Override
@@ -157,13 +208,22 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		assert this.partition != null;
 		tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_PARTITION_ID)] = this.partition;
 		assert this.cpnType != null;
-		tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE)] = this.cpnType.name();
+
+		final ProviderCpnType type = detectProviderComponent(stat);
+		if (type != null) {
+			assert this.cpnType == null;
+			this.cpnType = type;
+		}
+		tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE)] = this.cpnType;
 
 		this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 		visitChildren(stat);
 		this.dictionaryId = null;
+		if (type != null) {
+			this.cpnType = null;
+		}
 
 		return null;
 	}
@@ -319,6 +379,10 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		default:
 			throw new IllegalArgumentException("Unsupported provider type " + stat);
 		}
+	}
+
+	private static IRecordFormat getChunkFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_STORE);
 	}
 
 	private static IRecordFormat getProviderFormat(IDatastoreSchemaMetadata storageMetadata) {
