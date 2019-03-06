@@ -10,9 +10,9 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,250 +20,163 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
-import com.activeviam.health.monitor.IHealthCheckAgent;
+import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DatastoreSchemaDescription;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
-import com.qfs.junit.EnvTestRule;
 import com.qfs.junit.ResourceRule;
 import com.qfs.literal.ILiteralType;
+import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
-import com.qfs.pivot.servlet.impl.ContextValueFilter;
-import com.qfs.rest.client.impl.ClientPool;
-import com.qfs.rest.services.impl.JsonRestService;
-import com.qfs.server.cfg.IActivePivotConfig;
-import com.qfs.server.cfg.IDatastoreConfig;
-import com.qfs.server.cfg.impl.MonitoringRestServicesConfig;
-import com.qfs.service.store.impl.NoSecurityDatastoreServiceConfig;
+import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
+import com.qfs.service.monitoring.IMemoryMonitoringService;
 import com.qfs.store.IDatastore;
-import com.qfs.store.build.impl.DatastoreBuilder;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.query.IDictionaryCursor;
-import com.qfs.store.query.impl.DatastoreQueryHelper;
 import com.qfs.store.record.IRecordReader;
-import com.qfs.store.service.impl.DatastoreService;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
+import com.qfs.util.impl.ThrowingLambda;
 import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.security.IContextValueManager;
-import com.quartetfs.biz.pivot.security.IContextValuePropagator;
-import com.quartetfs.fwk.security.ISecurityFacade;
-import com.quartetfs.fwk.security.impl.SecurityDetails;
+import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
+import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
+import com.quartetfs.fwk.AgentException;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import test.scenario.MultipleStores;
 import test.scenario.MultipleStoresData;
 
 public class TestMemoryStatisticLoading {
 
-	@ClassRule
-	public static final EnvTestRule envRule = EnvTestRule.getInstance();
+//	@ClassRule
+//	public static final EnvTestRule envRule = EnvTestRule.getInstance();
 	@ClassRule
 	public static final ResourceRule resources = new ResourceRule();
 
-	protected static final String datastoreBeanName = "datastore";
-	protected static final String jsonDatastoreServiceBeanName = "jsonDatastoreService";
-//	private static JettyServer jettyServer;
-	private static ClientPool clientPool;
-	private static JsonRestService service;
-	private static IDatastore datastore;
-
-	@Rule
-	public TemporaryFolder temp = new TemporaryFolder();
-
-	@Configuration
-	@Import(value = {
-			MonitoringRestServicesConfig.class,
-			TestOffHeapMonitoringServiceConfig.DatastoreConfigForTest.class,
-			TestOffHeapMonitoringServiceConfig.APConfigForTest.class
-	})
-	protected static class TestOffHeapMonitoringServiceConfig {
-
-		@Configuration
-		protected static class DatastoreConfigForTest implements IDatastoreConfig {
-
-			@Bean(name = datastoreBeanName)
-			@Override
-			public IDatastore datastore() {
-				return new UnitTestDatastoreBuilder()
-						.setSchemaDescription(MultipleStores.schemaDescription())
-						.build();
-			}
-
-			@Bean(name = jsonDatastoreServiceBeanName)
-			public DatastoreService jsonDatastoreService() {
-				final ISecurityFacade sf = Mockito.mock(ISecurityFacade.class);
-				Mockito.when(sf.snapshotSecurityDetails()).thenReturn(
-						new SecurityDetails("user1", new HashSet<>(Arrays.asList("ROLE_USER", "role1"))));
-
-				return new DatastoreService(
-						datastore(),
-						new NoSecurityDatastoreServiceConfig(),
-						sf);
-			}
-
-		}
-
-		@Configuration
-		protected static class APConfigForTest implements IActivePivotConfig {
-
-			@Override
-			public IActivePivotManagerDescription activePivotManagerDescription() {
-				return null;
-			}
-
-			@Bean
-			@Override
-			public IActivePivotManager activePivotManager() {
-				// As of Spring 5.0, Beans cannot be null anymore;
-				// see: https://stackoverflow.com/questions/49044770/change-in-how-spring-5-handles-null-beans
-				final IActivePivotManager manager = Mockito.mock(IActivePivotManager.class);
-				Mockito.when(manager.getMemoryStatistic()).thenReturn(
-						new MemoryStatisticBuilder()
-								.withName("mock")
-								.withCreatorClasses(APConfigForTest.class)
-								.withMemoryFootPrint(0, 0)
-								.build());
-				return manager;
-			}
-
-			@Override
-			public IHealthCheckAgent healthCheckAgent() {
-				return null;
-			}
-
-			@Override
-			public ContextValueFilter contextValueFilter() {
-				return null;
-			}
-
-			@Override
-			public IContextValuePropagator contextValuePropagator() {
-				return null;
-			}
-
-			@Override
-			public IContextValueManager contextValueManager() {
-				return null;
-			}
-		}
-
+	@BeforeClass
+	public static void setUpRegistry() {
+		PivotTestUtils.setUpRegistry(OnHeapPivotMemoryQuantifierPlugin.class);
 	}
-
-	/**
-	 * The {@link DatastoreService} that will be used
-	 * (as a local service but it could be remote)
-	 */
-	protected static DatastoreService jsonDatastoreService;
-
-//	@BeforeClass
-//	// Override super to only add one rest service with a different datastore configuration
-//	public static void setUp() throws Exception {
-//		MemUtils.runGC();
-//
-////		jettyServer = new JettyServer(TestOffHeapMonitoringServiceConfig.class);
-////
-////		jettyServer.createServer();
-////		jettyServer.start();
-//
-//		clientPool = new ClientPool(1);
-//		service = new JsonRestService(QfsWebUtils.url("http://localhost:" + jettyServer.getPort(),
-//		                                              MonitoringRestServicesConfig.REST_API_URL_PREFIX,
-//		                                              "/"), clientPool);
-//
-//		datastore = (IDatastore) jettyServer.getApplicationContext().getBean(datastoreBeanName);
-//		MultipleStoresData.addDataSingle(MultipleStoresData.generateData(2, 5, 0), datastore.getTransactionManager());
-//
-//		jsonDatastoreService = (DatastoreService) jettyServer.getApplicationContext().getBean(jsonDatastoreServiceBeanName);
-//	}
-//
-//	@AfterClass
-//	public static void tearDownTestOffHeap() {
-//		datastore = null;
-//		if (clientPool != null) {
-//			clientPool.close();
-//			clientPool = null;
-//		}
-//		jsonDatastoreService = null;
-//		if (jettyServer != null) {
-//			jettyServer.stop();
-//			jettyServer = null;
-//		}
-//	}
-
-	// TODO(ope) restore tests with remote loading
-//	@Test
-//	public void testFillMonitoringDatastoreFromRemoteServer() throws Exception {
-//		// MONITORING DATASTORE
-//		final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-//		final IDatastore monitoringDatastore = new DatastoreBuilder()
-//				.setSchemaDescription(desc)
-//				.build();
-//
-//		final String data = service.path("memory_allocations").get().as(String.class);
-//		final IMemoryStatistic stats = MonitoringStatisticSerializerUtil.deserialize(
-//				new StringReader(data),
-//				IMemoryStatistic.class);
-//
-//		final IMemoryStatistic datastoreStats = stats.getChildren().stream()
-//				.filter(s -> MemoryStatisticConstants.STAT_NAME_DATASTORE.equals(s.getName()))
-//				.findFirst()
-//				.orElseThrow(() -> new AssertionError("No stats for the datastore in " + data));
-//
-//		monitoringDatastore.getTransactionManager().startTransaction();
-//		datastoreStats.accept(new DatastoreFeederVisitor(monitoringDatastore, "test"));
-//		monitoringDatastore.getTransactionManager().commitTransaction();
-//
-//		for (final String storeName : monitoringDatastore.getSchemaMetadata().getStoreNames()) {
-//			final int cursorSize = DatastoreQueryHelper.getCursorSize(
-//					monitoringDatastore.getHead().getQueryRunner()
-//							.forStore(storeName)
-//							.withoutCondition()
-//							.selectingAllStoreFields()
-//							.run());
-//			Assertions.assertThat(cursorSize).isGreaterThanOrEqualTo(1); // check store is non empty
-//		}
-//	}
 
 	/**
 	 * Assert the number of offheap chunks by filling the datastore used
 	 * for monitoring AND doing a query on it for counting. Comparing
 	 * the value from counting from {@link IMemoryStatistic}.
-	 *
-	 * @throws Exception
 	 */
 	@Test
-	public void testLoadMonitoringDatastore() throws Exception {
-		IDatastore monitoredDatastore = resources.create(() -> new UnitTestDatastoreBuilder()
-				.setSchemaDescription(MultipleStores.schemaDescription())
-				.build());
+	public void testLoadDatastoreStats() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			fillApplication(monitoredDatastore);
 
-		MultipleStoresData.addDataSingle(MultipleStoresData.generateData(2, 5, 0), monitoredDatastore.getTransactionManager());
+			final IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
+			completeWithMemoryInfo(datastoreStats);
+			assertLoadsCorrectly(datastoreStats);
+		});
+	}
 
-		final IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-		completeWithMemoryInfo(datastoreStats);
-		assertDatastoreLoadsCorrectly(datastoreStats);
+	@Test
+	public void testLoadPivotStats() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			fillApplication(monitoredDatastore);
+
+			final IMemoryStatistic pivotStats = monitoredManager.getMemoryStatistic();
+			completeWithMemoryInfo(pivotStats);
+
+			assertLoadsCorrectly(pivotStats);
+		});
+	}
+
+	@Test
+	public void testLoadFullStats() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			fillApplication(monitoredDatastore);
+
+			final IMemoryStatistic stats = new MemoryStatisticBuilder()
+					.withName("application")
+					.withCreatorClasses(getClass())
+					.withChildren(
+							monitoredDatastore.getMemoryStatistic(),
+							monitoredManager.getMemoryStatistic())
+					.build();
+			completeWithMemoryInfo(stats);
+			assertLoadsCorrectly(stats);
+		});
+	}
+
+	@Test
+	public void testPerStoreDatastoreLoad() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			fillApplication(monitoredDatastore);
+			final IDatastore monitoringDatastore = createAnalysisDatastore();
+
+			final int storeCount = monitoredDatastore.getSchemaMetadata().getStoreCount();
+			for (int i = 0; i < storeCount; i++) {
+				final IMemoryStatistic memoryStatisticForStore = monitoredDatastore.getMemoryStatisticForStore(i);
+				completeWithMemoryInfo(memoryStatisticForStore);
+				memoryStatisticForStore.getAttributes().put(
+						MemoryStatisticConstants.ATTR_NAME_DATE,
+						new LongStatisticAttribute(Instant.now().getEpochSecond()));
+
+				final int iteration = i;
+				monitoringDatastore.edit(tm -> {
+					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "store_" + iteration);
+					memoryStatisticForStore.accept(feeder);
+				});
+			}
+
+			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
+			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
+
+			assertDatastoreConsistentWithSummary(monitoringDatastore, fullDatastoreSummary);
+		});
+	}
+
+	@Test
+	public void testLoadPivotPerPivot() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			fillApplication(monitoredDatastore);
+			final IDatastore monitoringDatastore = createAnalysisDatastore();
+
+			int i = 0;
+			for (final IMultiVersionActivePivot pivot: monitoredManager.getActivePivots().values()) {
+				final IMemoryStatistic pivotStat = pivot.getMemoryStatistic();
+				completeWithMemoryInfo(pivotStat);
+
+				pivotStat.getAttributes().put(
+						MemoryStatisticConstants.ATTR_NAME_DATE,
+						new LongStatisticAttribute(Instant.now().getEpochSecond()));
+
+				final int iteration = ++i;
+				monitoringDatastore.edit(tm -> {
+					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "pivot_" + iteration);
+					pivotStat.accept(feeder);
+				});
+			}
+
+			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
+			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
+
+			assertDatastoreConsistentWithSummary(monitoringDatastore, fullDatastoreSummary);
+		});
 	}
 
 	@Test
@@ -276,37 +189,176 @@ public class TestMemoryStatisticLoading {
 		doTestLoadMonitoringDatastoreWithVectors(false);
 	}
 
-	@Test
-	public void testPerStoreDatastoreLoad() throws DatastoreTransactionException {
-		IDatastore monitoredDatastore = new UnitTestDatastoreBuilder()
-				.setSchemaDescription(MultipleStores.schemaDescription())
+	private static void createApplication(
+			final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
+		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
+				.withStore(
+						StartBuilding.store().withStoreName("Sales")
+								.withField("id", ILiteralType.INT).asKeyField()
+								.withField("seller")
+								.withField("buyer")
+								.withField("date", ILiteralType.LOCAL_DATE)
+								.withField("productId", ILiteralType.LONG)
+								.withModuloPartitioning(4, "id")
+								.build())
+				.withStore(
+						StartBuilding.store().withStoreName("People")
+								.withField("id").asKeyField()
+								.withField("firstName")
+								.withField("lastName")
+								.withField("company")
+								.build())
+				.withStore(
+						StartBuilding.store().withStoreName("Products")
+								.withField("id", ILiteralType.LONG).asKeyField()
+								.withField("name")
+								.build())
+				.withReference(
+						StartBuilding.reference()
+								.fromStore("Sales").toStore("People")
+								.withName("Sales->Buyer")
+								.withMapping("buyer", "id")
+								.build())
+				.withReference(
+						StartBuilding.reference()
+								.fromStore("Sales").toStore("People")
+								.withName("Sales->Seller")
+								.withMapping("seller", "id")
+								.build())
+				.withReference(
+						StartBuilding.reference()
+								.fromStore("Sales").toStore("Products")
+								.withName("Sales->Products")
+								.withMapping("productId", "id")
+								.build())
+				.build();
+		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+				.withSchema().withSelection(
+						StartBuilding.selection(datastoreSchema).fromBaseStore("Sales")
+								.withAllFields()
+								.usingReference("Sales->Products")
+								.withField("product", "name")
+								.usingReference("Sales->Buyer")
+								.withField("buyer_firstName", "firstName")
+								.withField("buyer_lastName", "lastName")
+								.withField("buyer_company", "company")
+								.usingReference("Sales->Seller")
+								.withField("seller_firstName", "firstName")
+								.withField("seller_lastName", "lastName")
+								.withField("seller_company", "company")
+								.build())
+				.withCube(
+						StartBuilding.cube("HistoryCube")
+								.withContributorsCount()
+								.withSingleLevelDimension("Product").withPropertyName("product")
+								.withSingleLevelDimension("Date").withPropertyName("date")
+								.withDimension("Operations")
+								.withHierarchy("Sellers")
+								.withLevel("Company").withPropertyName("seller_company")
+								.withLevel("LastName").withPropertyName("seller_lastName")
+								.withLevel("FirstName").withPropertyName("seller_firstName")
+								.withHierarchy("Buyers")
+								.withLevel("Company").withPropertyName("buyer_company")
+								.withLevel("LastName").withPropertyName("buyer_lastName")
+								.withLevel("FirstName").withPropertyName("buyer_firstName")
+								.withFilter(
+										FactFilterConditions.not(
+												FactFilterConditions.eq("date", LocalDate.now())))
+								.build())
+				.withCube(
+						StartBuilding.cube("DailyCube")
+								.withContributorsCount()
+								.withSingleLevelDimension("Product").withPropertyName("product")
+								.withDimension("Operations")
+								.withHierarchy("Sellers")
+								.withLevel("Company").withPropertyName("seller_company")
+								.withLevel("LastName").withPropertyName("seller_lastName")
+								.withLevel("FirstName").withPropertyName("seller_firstName")
+								.withHierarchy("Buyers")
+								.withLevel("Company").withPropertyName("buyer_company")
+								.withLevel("LastName").withPropertyName("buyer_lastName")
+								.withLevel("FirstName").withPropertyName("buyer_firstName")
+								.withFilter(FactFilterConditions.eq("date", LocalDate.now()))
+								.build())
+				.withCube(
+						StartBuilding.cube("OverviewCube")
+								.withContributorsCount()
+								.withSingleLevelDimension("Product").withPropertyName("product")
+								.withSingleLevelDimension("Date").withPropertyName("date")
+								.withDimension("Operations")
+								.withHierarchy("Sales")
+								.withLevel("Seller").withPropertyName("seller_company")
+								.withLevel("Buyer").withPropertyName("buyer_company")
+								.withHierarchy("Purchases")
+								.withLevel("Buyer").withPropertyName("buyer_company")
+								.withLevel("Seller").withPropertyName("seller_company")
+								.build())
 				.build();
 
-		MultipleStoresData.addDataSingle(MultipleStoresData.generateData(6, 36, 3), monitoredDatastore.getTransactionManager());
-
-		IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-		IDatastore monitoringDatastore = new DatastoreBuilder()
-				.setSchemaDescription(desc)
-				.build();
-
-		final int storeCount = monitoredDatastore.getSchemaMetadata().getStoreCount();
-		for (int i = 0; i < storeCount; i++) {
-			final IMemoryStatistic memoryStatisticForStore = monitoredDatastore.getMemoryStatisticForStore(i);
-			completeWithMemoryInfo(memoryStatisticForStore);
-			memoryStatisticForStore.getAttributes().put(
-					MemoryStatisticConstants.ATTR_NAME_DATE,
-					new LongStatisticAttribute(Instant.now().getEpochSecond()));
-
-			final int iteration = i;
-			monitoringDatastore.edit(tm -> {
-				memoryStatisticForStore.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "store_" + iteration));
-			});
+		final IDatastore datastore = resources.create(() -> StartBuilding.datastore()
+				.setSchemaDescription(datastoreSchema)
+				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+				.build());
+		final IActivePivotManager manager;
+		try {
+			manager = StartBuilding.manager()
+					.setDescription(managerDescription)
+					.setDatastoreAndDescription(datastore, datastoreSchema)
+					.buildAndStart();
+		} catch (AgentException e) {
+			throw new RuntimeException("Cannot create manager", e);
 		}
+		resources.register(manager::stop);
 
-		IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-		final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
+		actions.accept(datastore, manager);
+	}
 
-		assertDatastoreConsistentWithSummary(monitoringDatastore, fullDatastoreSummary);
+	/**
+	 * Fills the datastore created by {@link #createApplication()}.
+	 * @param datastore datastore to fill
+	 */
+	private static void fillApplication(final IDatastore datastore) {
+		datastore.edit(tm -> {
+			final int peopleCount = 10;
+			IntStream.range(0, peopleCount).forEach(i -> {
+				tm.add("People", String.valueOf(i), "FN" + (i % 4), "LN" + i, "Corp" + (i + 1 % 3));
+			});
+			final int productCount = 20;
+			LongStream.range(0, productCount).forEach(i -> {
+				tm.add("Products", i, "p" + i);
+			});
+
+			final Random r = new Random(47605);
+			IntStream.range(0, 1000).forEach(i -> {
+				final int seller = r.nextInt(peopleCount);
+				int buyer;
+				do { buyer = r.nextInt(peopleCount); } while (buyer == seller);
+				tm.add(
+						"Sales",
+				       i,
+						String.valueOf(seller),
+						String.valueOf(buyer),
+						LocalDate.now().plusDays(-r.nextInt(7)),
+						(long) r.nextInt(productCount));
+			});
+		});
+	}
+
+	// FIXME(ope) it would be good to be able to actually use the service to export the stats
+	private static IMemoryMonitoringService createService(final IDatastore datastore, final IActivePivotManager manager) {
+		return new MemoryMonitoringService(
+				datastore,
+				manager,
+				datastore.getEpochManager());
+	}
+
+	private static IDatastore createAnalysisDatastore() {
+		final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
+		return resources.create(() -> {
+			return StartBuilding.datastore()
+					.setSchemaDescription(desc)
+					.build();
+		});
 	}
 
 	public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
@@ -315,10 +367,11 @@ public class TestMemoryStatisticLoading {
 		final IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
 		completeWithMemoryInfo(datastoreStats);
 
-		assertDatastoreLoadsCorrectly(datastoreStats);
+		assertLoadsCorrectly(datastoreStats);
 	}
 
 	protected static final String VECTOR_STORE_NAME = "vectorStore";
+
 	protected static IDatastore buildDatastoreWithVectors() {
 		DatastoreSchemaDescription desc = MultipleStores.schemaDescription();
 		List<IStoreDescription> storeDescCopy = new ArrayList<>(desc.getStoreDescriptions());
@@ -381,19 +434,16 @@ public class TestMemoryStatisticLoading {
 	/**
 	 * Asserts the chunks number and off-heap memory as computed from the loaded datastore are consistent
 	 * with the ones computed by visiting the statistic.
-	 * @param datastoreStats
+	 * @param statistics
 	 */
-	protected void assertDatastoreLoadsCorrectly(IMemoryStatistic datastoreStats) {
-		IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-		IDatastore monitoringDatastore = new DatastoreBuilder()
-				.setSchemaDescription(desc)
-				.build();
+	protected void assertLoadsCorrectly(IMemoryStatistic statistics) {
+		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 		monitoringDatastore.edit(tm -> {
-			datastoreStats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
+			statistics.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
 		});
 
-		final StatisticsSummary statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
+		final StatisticsSummary statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(statistics);
 
 		assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
 	}
