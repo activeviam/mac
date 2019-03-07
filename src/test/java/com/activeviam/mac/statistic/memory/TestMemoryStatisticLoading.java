@@ -151,10 +151,14 @@ public class TestMemoryStatisticLoading {
 				}
 			});
 
-			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
-
-			assertDatastoreConsistentWithSummary(monitoringDatastore, fullDatastoreSummary);
+			// Create a composite stat for the comparison
+			final StatisticsSummary fullStats = MemoryStatisticsTestUtils.getStatisticsSummary(
+					new MemoryStatisticBuilder()
+							.withName("total")
+							.withCreatorClasses(getClass())
+							.withChildren(storeStats)
+							.build());
+			assertDatastoreConsistentWithSummary(monitoringDatastore, fullStats);
 		});
 	}
 
@@ -184,10 +188,14 @@ public class TestMemoryStatisticLoading {
 				}
 			});
 
-			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
-
-			assertDatastoreConsistentWithSummary(monitoringDatastore, fullDatastoreSummary);
+			// Create a composite stat for the comparison
+			final StatisticsSummary fullStats = MemoryStatisticsTestUtils.getStatisticsSummary(
+					new MemoryStatisticBuilder()
+							.withName("total")
+							.withCreatorClasses(getClass())
+							.withChildren(pivotStats)
+							.build());
+			assertDatastoreConsistentWithSummary(monitoringDatastore, fullStats);
 		});
 	}
 
