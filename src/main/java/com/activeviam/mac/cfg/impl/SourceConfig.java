@@ -17,7 +17,7 @@ import com.qfs.msg.csv.ICsvDataProvider;
 import com.qfs.msg.csv.IFileEvent;
 import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
 import com.qfs.msg.impl.WatcherService;
-import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.quartetfs.fwk.QuartetRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -72,11 +72,11 @@ public class SourceConfig {
 			Collection<? extends ICsvDataProvider<Path>> providers = event.created();
 
 			for (ICsvDataProvider<Path> provider : providers) {
-				Path path = provider.getFileInfo().getIdentifier();
-				File file = path.toFile();
+				final Path path = provider.getFileInfo().getIdentifier();
+				final File file = path.toFile();
 				try {
 					String message = connectorConfig.feedDatastore(
-							MemoryMonitoringService.loadDumpedStatistic(file),
+							MemoryStatisticSerializerUtil.readStatisticFile(file),
 							file.getName().replaceAll("\\.[^.]*$", ""));
 					LOGGER.info(message);
 				} catch (Exception e) {

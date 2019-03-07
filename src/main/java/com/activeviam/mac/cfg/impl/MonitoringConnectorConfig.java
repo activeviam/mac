@@ -13,26 +13,21 @@ import java.util.Collections;
 import java.util.Optional;
 
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.QfsWebUtils;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
-import com.qfs.pivot.monitoring.impl.MonitoringStatisticSerializerUtil;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.rest.client.impl.ClientPool;
 import com.qfs.rest.client.impl.UserAuthenticator;
 import com.qfs.rest.services.IRestService;
 import com.qfs.rest.services.impl.JsonRestService;
 import com.qfs.server.cfg.impl.MonitoringRestServicesConfig;
 import com.qfs.store.IDatastore;
-import com.qfs.store.NoTransactionException;
 import com.qfs.store.impl.StoreUtils;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
-import com.quartetfs.fwk.serialization.SerializerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -79,7 +74,7 @@ public class MonitoringConnectorConfig {
 				QfsWebUtils.url(MonitoringRestServicesConfig.REST_API_URL_PREFIX, "memory_allocations"))
 				.get().as(String.class);
 		return feedDatastore(
-				MonitoringStatisticSerializerUtil.deserialize(new StringReader(data), IMemoryStatistic.class),
+				MemoryStatisticSerializerUtil.deserialize(new StringReader(data), IMemoryStatistic.class),
 				"remote");
 	}
 
@@ -89,7 +84,7 @@ public class MonitoringConnectorConfig {
 			params = { "path" })
 	public String loadDumpedStatistic(String path) throws IOException {
 		return feedDatastore(
-				MemoryMonitoringService.loadDumpedStatistic(path),
+				MemoryStatisticSerializerUtil.readStatisticFile(Paths.get(path).toFile()),
 				Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", ""));
 	}
 

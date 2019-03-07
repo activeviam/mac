@@ -17,7 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
 
-import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
 
 /**
@@ -40,11 +40,11 @@ public class Tools {
 	public static void extractSnappyFile(final String path) {
 		Objects.requireNonNull(path, "File to uncompress not provided");
 
-		final String extension = MemoryMonitoringService.COMPRESSED_FILE_EXTENSION;
+		final String extension = MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
 		boolean isCompressedFile = path.endsWith("." + extension);
 		if (!isCompressedFile) {
 			throw new IllegalArgumentException(
-					"Extension of `" + path + "` does not match the list of compressed extensions. Use one of [" + MemoryMonitoringService.COMPRESSED_FILE_EXTENSION + "] to use this tool.");
+					"Extension of `" + path + "` does not match the list of compressed extensions. Use one of [" + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION + "] to use this tool.");
 		}
 
 		final String subpart = path.substring(0, path.length() - extension.length() - 1);

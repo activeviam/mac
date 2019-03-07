@@ -44,8 +44,8 @@ import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
-import com.qfs.pivot.monitoring.impl.MemoryMonitoringService;
-import com.qfs.service.monitoring.IMemoryMonitoringService;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.query.IDictionaryCursor;
@@ -54,7 +54,6 @@ import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
 import com.qfs.util.impl.ThrowingLambda;
 import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
@@ -68,8 +67,6 @@ import test.scenario.MultipleStoresData;
 
 public class TestMemoryStatisticLoading {
 
-//	@ClassRule
-//	public static final EnvTestRule envRule = EnvTestRule.getInstance();
 	@ClassRule
 	public static final ResourceRule resources = new ResourceRule();
 
@@ -334,7 +331,7 @@ public class TestMemoryStatisticLoading {
 	}
 
 	/**
-	 * Fills the datastore created by {@link #createApplication()}.
+	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
 	 */
 	private static void fillApplication(final IDatastore datastore) {
@@ -365,8 +362,8 @@ public class TestMemoryStatisticLoading {
 	}
 
 	// FIXME(ope) it would be good to be able to actually use the service to export the stats
-	private static IMemoryMonitoringService createService(final IDatastore datastore, final IActivePivotManager manager) {
-		return new MemoryMonitoringService(
+	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
+		return new MemoryAnalysisService(
 				datastore,
 				manager,
 				datastore.getEpochManager());

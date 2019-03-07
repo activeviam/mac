@@ -20,7 +20,7 @@ import com.qfs.junit.ResourceRule;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
-import com.qfs.pivot.monitoring.impl.MonitoringStatisticSerializerUtil;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.pivot.servlet.impl.ContextValueFilter;
 import com.qfs.rest.client.impl.ClientPool;
 import com.qfs.rest.services.impl.JsonRestService;
@@ -201,7 +201,7 @@ public class TestRemoteMemoryStatisticLoading {
 				.build();
 
 		final String data = service.path("memory_allocations").get().as(String.class);
-		final IMemoryStatistic stats = MonitoringStatisticSerializerUtil.deserialize(
+		final IMemoryStatistic stats = MemoryStatisticSerializerUtil.deserialize(
 				new StringReader(data),
 				IMemoryStatistic.class);
 
