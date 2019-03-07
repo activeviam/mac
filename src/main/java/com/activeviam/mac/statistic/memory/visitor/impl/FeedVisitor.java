@@ -50,6 +50,12 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	private final IOpenedTransaction transaction;
 	private final String dumpName;
 
+	/** The export date, found on the first statistics we read */
+	protected Instant current = null;
+	/** The epoch id we are currently reading statistics for */
+	protected Long epochId = null;
+	protected String branch = null;
+
 	public FeedVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction tm,
@@ -155,7 +161,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			feed.startFrom(stat);
 			break;
 		default:
-			logger.warning("Unsupported statistic named " + stat.getName() + ". Ignoring it :(");
+			if (stat.getChildren() != null) {
+				for (final IMemoryStatistic child : stat.getChildren()) {
+					child.accept(this);
+				}
+			}
 		}
 
 		return null;

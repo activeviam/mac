@@ -13,12 +13,16 @@ import java.util.stream.Stream;
 
 import com.activeviam.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
+import com.qfs.desc.IDuplicateKeyHandler;
 import com.qfs.desc.IReferenceDescription;
 import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
+import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
+import com.qfs.store.record.IRecordReader;
+import com.qfs.store.record.impl.Records;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
 
@@ -231,7 +235,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.APPLICATION__MAX_ON_HEAP, ILiteralType.LONG)
 				.withField(DatastoreConstants.APPLICATION__USED_OFF_HEAP, ILiteralType.LONG)
 				.withField(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, ILiteralType.LONG)
-				.withDuplicateKeyHandler(DuplicateKeyHandlers.THROW_WITHIN_TRANSACTION)
+				.withDuplicateKeyHandler(DuplicateKeyHandlers.ALWAYS_UPDATE)
 				.build();
 	}
 
@@ -339,6 +343,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_PARTITION_ID, DatastoreConstants.PROVIDER_COMPONENT__PARTITION_ID)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.PROVIDER_COMPONENT__EPOCH_ID)
 						.build());
 	}
 

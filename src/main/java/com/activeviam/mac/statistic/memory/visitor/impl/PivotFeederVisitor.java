@@ -7,6 +7,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -26,6 +27,8 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
+import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.fwk.QuartetRuntimeException;
 
 public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
@@ -234,7 +237,14 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				this.cpnType = null;
 			}
 		} else if (this.hierarchy != null) {
-			// TODO(ope) complete the info for the level
+			// We are processing a hierarchy
+			// TODO(ope) complete the level with the dictionary it's using
+
+			this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
+
+			this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
+			visitChildren(stat);
+			this.dictionaryId = null;
 		} else {
 			throw new QuartetRuntimeException("Unexpected stat on dictionary: " + stat);
 		}
@@ -314,13 +324,15 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	private void processLevel(final IMemoryStatistic stat) {
-		this.level = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
+		final IRecordFormat format = getLevelFormat(this.storageMetadata);
+		final Object[] tuple = buildLevelTupleFrom(format, stat);
 
-		// TODO(ope) commit the info about the level
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__MANAGER_ID)] = this.manager;
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__PIVOT_ID)] = this.pivot;
+
+		// TODO(ope) we don't have any information about the dictionary
 
 		assert stat.getChildren() == null || stat.getChildren().isEmpty();
-
-		this.level = null;
 	}
 
 	private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
@@ -400,6 +412,33 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		return tuple;
 	}
 
+	private static Object[] buildLevelTupleFrom(
+			final IRecordFormat format,
+			final IMemoryStatistic stat) {
+		final Object[] tuple = new Object[format.getFieldCount()];
+		final String levelId = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
+
+		final String[] parts;
+		if (levelId.equals(IMeasureHierarchy.MEASURES_LEVEL_NAME)) {
+			parts = new String[3];
+			Arrays.fill(parts, IHierarchy.MEASURES);
+		} else {
+			parts = levelId.split("\\\\");
+			assert parts.length == 3;
+		}
+
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__DIMENSION)] = parts[0];
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__HIERARCHY)] = parts[1];
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__LEVEL)] = parts[2];
+
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
+		tuple[format.getFieldIndex(DatastoreConstants.LEVEL__MEMBER_COUNT)] =
+			stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
+
+		return tuple;
+	}
+
 	private static String getProviderCategory(final IMemoryStatistic stat) {
 		switch (stat.getName()) {
 		case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
@@ -419,6 +458,10 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	private static IRecordFormat getProviderFormat(IDatastoreSchemaMetadata storageMetadata) {
 		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.PROVIDER_STORE);
+	}
+
+	private static IRecordFormat getLevelFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.LEVEL_STORE);
 	}
 
 }

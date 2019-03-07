@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -109,15 +110,16 @@ public class TestMemoryStatisticLoading {
 	public void testLoadFullStats() {
 		createApplication((monitoredDatastore, monitoredManager) -> {
 			fillApplication(monitoredDatastore);
+			final List<IMemoryStatistic> children = Arrays.asList(
+					monitoredDatastore.getMemoryStatistic(),
+					monitoredManager.getMemoryStatistic());
+			children.forEach(TestMemoryStatisticLoading::completeWithMemoryInfo);
 
 			final IMemoryStatistic stats = new MemoryStatisticBuilder()
 					.withName("application")
 					.withCreatorClasses(getClass())
-					.withChildren(
-							monitoredDatastore.getMemoryStatistic(),
-							monitoredManager.getMemoryStatistic())
+					.withChildren(children)
 					.build();
-			completeWithMemoryInfo(stats);
 			assertLoadsCorrectly(stats);
 		});
 	}
@@ -129,19 +131,25 @@ public class TestMemoryStatisticLoading {
 			final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 			final int storeCount = monitoredDatastore.getSchemaMetadata().getStoreCount();
-			for (int i = 0; i < storeCount; i++) {
-				final IMemoryStatistic memoryStatisticForStore = monitoredDatastore.getMemoryStatisticForStore(i);
-				completeWithMemoryInfo(memoryStatisticForStore);
-				memoryStatisticForStore.getAttributes().put(
-						MemoryStatisticConstants.ATTR_NAME_DATE,
-						new LongStatisticAttribute(Instant.now().getEpochSecond()));
+			final long exportTime = Instant.now().getEpochSecond();
+			final List<IMemoryStatistic> storeStats = IntStream.range(0, storeCount)
+					.mapToObj(i -> {
+						final IMemoryStatistic memoryStatisticForStore = monitoredDatastore.getMemoryStatisticForStore(i);
+						completeWithMemoryInfo(memoryStatisticForStore);
+						memoryStatisticForStore.getAttributes().put(
+								MemoryStatisticConstants.ATTR_NAME_DATE,
+								new LongStatisticAttribute(exportTime));
 
-				final int iteration = i;
-				monitoringDatastore.edit(tm -> {
-					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "store_" + iteration);
-					memoryStatisticForStore.accept(feeder);
-				});
-			}
+						return memoryStatisticForStore;
+					})
+					.collect(Collectors.toList());
+
+			monitoringDatastore.edit(tm -> {
+				for (final IMemoryStatistic storeStat : storeStats) {
+					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "store_loading");
+					storeStat.accept(feeder);
+				}
+			});
 
 			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
 			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
@@ -156,21 +164,25 @@ public class TestMemoryStatisticLoading {
 			fillApplication(monitoredDatastore);
 			final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-			int i = 0;
-			for (final IMultiVersionActivePivot pivot: monitoredManager.getActivePivots().values()) {
-				final IMemoryStatistic pivotStat = pivot.getMemoryStatistic();
-				completeWithMemoryInfo(pivotStat);
+			final long exportTime = Instant.now().getEpochSecond();
+			final List<IMemoryStatistic> pivotStats = monitoredManager.getActivePivots().values().stream()
+					.map(pivot -> {
+						final IMemoryStatistic pivotStat = pivot.getMemoryStatistic();
+						completeWithMemoryInfo(pivotStat);
 
-				pivotStat.getAttributes().put(
-						MemoryStatisticConstants.ATTR_NAME_DATE,
-						new LongStatisticAttribute(Instant.now().getEpochSecond()));
+						pivotStat.getAttributes().put(
+								MemoryStatisticConstants.ATTR_NAME_DATE,
+								new LongStatisticAttribute(exportTime));
+						return pivotStat;
+					})
+					.collect(Collectors.toList());
 
-				final int iteration = ++i;
-				monitoringDatastore.edit(tm -> {
-					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "pivot_" + iteration);
+			monitoringDatastore.edit(tm -> {
+				for (final IMemoryStatistic pivotStat: pivotStats) {
+					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "pivot_loading");
 					pivotStat.accept(feeder);
-				});
-			}
+				}
+			});
 
 			IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
 			final StatisticsSummary fullDatastoreSummary = MemoryStatisticsTestUtils.getStatisticsSummary(datastoreStats);
