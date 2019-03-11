@@ -6,8 +6,6 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import java.util.concurrent.TimeUnit;
-
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
 import com.activeviam.copper.columns.Columns;
@@ -17,25 +15,18 @@ import com.activeviam.desc.build.IHasAtLeastOneMeasure;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
-import com.activeviam.formatter.IndexFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.postprocessor.impl.DirectMemoryOnlyPostProcessor;
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.activeviam.drillthrough.impl.FieldsColumn;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
-import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
-import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.postprocessing.IPostProcessorConstants;
 import com.quartetfs.fwk.format.impl.DateFormatter;
-import com.quartetfs.fwk.ordering.impl.CustomComparator;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -81,7 +72,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	private ISelectionDescription createSelection() {
 		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
 				.fromBaseStore(DatastoreConstants.CHUNK_STORE)
+//				.withAllReachableFields(allReachableFields -> {
+//
+//					return null;
+//				})
 				.withAllFields()
+				.except(
+//						DatastoreConstants.CHUNK__PROVIDER_PARTITION_ID,
+//						DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
+//						DatastoreConstants.CHUNK__PROVIDER_ID
+				)
 				.withAlias(DatastoreConstants.CHUNK__CLASS, CHUNK_CLASS_FIELD)
 
 //				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
@@ -92,9 +92,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //				.withAllFields()
 //				.withAlias(DatastoreConstants.INDEX_CLASS, INDEX_CLASS_FIELD)
 //
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
-//				.withAllFields()
-//				.except(DatastoreConstants.EPOCH_ID, DatastoreConstants.CHUNKSET_ID)
+				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
+				.withAllFields()
+				.except(DatastoreConstants.EPOCH_ID,
+						DatastoreConstants.CHUNKSET_ID,
+						DatastoreConstants.CHUNKSET__PROVIDER_ID
+				)
 //				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, CHUNKSET_CLASS_FIELD)
 //				.withAlias(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE, CHUNKSET_SIZE_FIELD)
 //
@@ -125,7 +128,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //								.withDefinition(this::copperCalculations)
 //								.build())
 
-				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
+//				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
 
 //				.withSharedDrillthroughProperties()
 //				.hideColumn(DatastoreConstants.FIELDS)
@@ -150,10 +153,26 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withProperty("description", "Class of the chunks")
 				.withLevel("ChunkId").withPropertyName(DatastoreConstants.CHUNK_ID)
 
+				.withDimension("Store")
+				.withHierarchyOfSameName()
+				.withLevel("Name").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
+				.withLevel("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION__PARTITION_ID)
+
 				.withSingleLevelDimension("Date").withPropertyName(DatastoreConstants.CHUNK__EXPORT_DATE)
 				.withType(ILevelInfo.LevelType.TIME)
 				.withComparator(ReverseOrderComparator.type)
 				.withProperty("description", "Date at which statistics were retrieved")
+
+
+				.withSingleLevelDimension(DatastoreConstants.CHUNKSET_ID)
+				.withSingleLevelDimension(DatastoreConstants.INDEX_ID)
+				.withSingleLevelDimension(DatastoreConstants.DICTIONARY_ID)
+				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD)
+
+				.withSingleLevelDimension(DatastoreConstants.CHUNKSET__PROVIDER_ID)
+				.withSingleLevelDimension(DatastoreConstants.CHUNKSET__PROVIDER_COMPONENT_TYPE)
+				.withSingleLevelDimension(DatastoreConstants.CHUNKSET__TYPE)
+				.withSingleLevelDimension(DatastoreConstants.CHUNK_SET_CLASS)
 
 //				.withDimension("Store")
 //				.withHierarchyOfSameName()

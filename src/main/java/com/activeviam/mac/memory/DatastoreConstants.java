@@ -24,9 +24,9 @@ public class DatastoreConstants {
 	public static final String REFERENCE_STORE = MemoryStatisticConstants.STAT_NAME_REFERENCE;
 	public static final String INDEX_STORE = MemoryStatisticConstants.STAT_NAME_INDEX;
 	public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
-	public static final String STORE_PARTITION_STORE = "StorePartitions";
+//	public static final String STORE_PARTITION_STORE = "StorePartitions";
 	public static final String STORE_FIELD_STORE = "StoreFields";
-	public static final String STORE_STORE = "Stores";
+//	public static final String STORE_STORE = "Stores";
 	public static final String LEVEL_STORE = "Levels";
 	public static final String PROVIDER_COMPONENT_STORE = "ProviderComponents";
 	public static final String PROVIDER_STORE = "Providers";
@@ -56,8 +56,6 @@ public class DatastoreConstants {
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 	public static final String CHUNK__PROVIDER_ID = _PROVIDER_ID;
-	public static final String CHUNK__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
-	public static final String CHUNK__PROVIDER_PARTITION_ID = _PROVIDER_PARTITION;
 
 	// ## CHUNK_STORE ## Field names of the chunk store
 	public static final String CHUNK__CLASS = "class";
@@ -65,13 +63,13 @@ public class DatastoreConstants {
 	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 	public static final String CHUNK__FIELD = "field";
+	public static final String CHUNK__PARTITION__STORE_NAME = "storeName";
+	public static final String CHUNK__PARTITION__PARTITION_ID = "partitionId";
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
 	public static final String CHUNK_SET_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 	public static final String CHUNK_SET_FREE_ROWS = "freeRows";
 	public static final String CHUNK_SET_PHYSICAL_CHUNK_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
-	public static final String CHUNKSET__PARTITION = "partitionId";
-	public static final String CHUNKSET__STORE_NAME = "storeName";
 	public static final String CHUNKSET__PROVIDER_ID = _PROVIDER_ID;
 	public static final String CHUNKSET__PROVIDER_COMPONENT_TYPE = _PROVIDER_COMPONENT_TYPE;
 	public static final String CHUNKSET__DICTIONARY_ID = "dictionaryId";
@@ -103,14 +101,9 @@ public class DatastoreConstants {
 	public static final String DIC__PROVIDER_PARTITION_ID = _PROVIDER_PARTITION;
 	public static final String DIC__INDEX_ID = "indexId";
 
-	public static final String STORE_PARTITION__STORE_NAME = "storeName";
-	public static final String STORE_PARTIION__PARTITION_ID = "partitionId";
-
 	public static final String STORE_FIELD__STORE_NAME = "storeName";
 	public static final String STORE_FIELD__FIELD = "field";
 	public static final String STORE_FIELD__DICTIONARY_ID = "dictionaryId";
-
-	public static final String STORE__STORE_NAME = "storeName";
 
 	public static final String LEVEL__MANAGER_ID = "managerId";
 	public static final String LEVEL__PIVOT_ID = "pivotId";

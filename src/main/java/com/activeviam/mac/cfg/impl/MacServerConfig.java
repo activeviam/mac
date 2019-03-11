@@ -30,7 +30,6 @@ import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
@@ -132,6 +131,8 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
+//		new JungSchemaPrinter(true).print("", datastoreConfig.datastore());
+
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
 		/* *********************************************** */
@@ -141,6 +142,7 @@ public class MacServerConfig {
 		} catch (AgentException e) {
 			throw new IllegalStateException("Cannot start the application", e);
 		}
+
 
 		// Connect the real-time updates
 		sourceConfig.watchStatisticDirectory();

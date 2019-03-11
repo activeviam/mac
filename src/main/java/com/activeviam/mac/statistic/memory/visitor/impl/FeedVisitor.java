@@ -6,13 +6,6 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
-
-import java.time.Instant;
-import java.util.Objects;
-import java.util.logging.Logger;
-
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -30,6 +23,13 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.IRecordSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.logging.Logger;
+
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
@@ -71,12 +71,9 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		final Object[] tuple = new Object[format.getFieldCount()];
 
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
-				stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] =
-				stat.getShallowOffHeap();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] =
-				stat.getShallowOnHeap();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
 		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 		if (fieldAttr != null) {
 			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();

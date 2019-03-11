@@ -6,6 +6,9 @@
  */
 package com.activeviam.mac;
 
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
+import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,9 +20,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
 
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
-
 /**
  * Tool class providing CLI methods.
  *
@@ -27,14 +27,14 @@ import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInpu
  */
 public class Tools {
 
-	public static int main(final String[] args) {
-		if ("extract".equals(args[0])) {
-			extractSnappyFile(args[1]);
-			return 0;
-		} else {
-			System.err.println("Unsupported command. Got " + Arrays.toString(args));
-			return 1;
-		}
+	public static void main(final String[] args) {
+//		if ("extract".equals(args[0])) {
+			extractSnappyFile(args[0]);
+//			return 0;
+//		} else {
+//			System.err.println("Unsupported command. Got " + Arrays.toString(args));
+////			return 1;
+//		}
 	}
 
 	public static void extractSnappyFile(final String path) {

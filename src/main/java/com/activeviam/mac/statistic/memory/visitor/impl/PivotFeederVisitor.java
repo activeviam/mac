@@ -6,11 +6,6 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.logging.Logger;
-
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -31,6 +26,11 @@ import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
 import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.fwk.QuartetRuntimeException;
 
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.logging.Logger;
+
 public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	/** Class logger */
@@ -50,13 +50,14 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	private String pivot;
 	private Long providerId;
 	private Integer partition;
-	private Long indexId;
 	private Long dictionaryId;
 	private Long chunkSetId;
 	private String hierarchy;
 	private String level;
-	private ProviderCpnType cpnType;
+	private ProviderCpnType providerCpnType;
 	private boolean isVersionColumn;
+
+	protected StatisticTreePrinter printer;
 
 	public PivotFeederVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
@@ -68,6 +69,7 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	public void startFrom(final IMemoryStatistic stat) {
+		printer = DebugVisitor.debug(stat);
 		if (this.current == null) {
 			final IStatisticAttribute dateAtt = stat.getAttribute(DatastoreConstants.CHUNK__EXPORT_DATE);
 			if (dateAtt == null) {
@@ -93,7 +95,11 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 					this.dumpName,
 					stat);
 
-			stat.accept(this);
+			try {
+				stat.accept(this);
+			} finally {
+				printer.print();
+			}
 		} else {
 			throw new RuntimeException("Cannot reuse a feed instance");
 		}
@@ -141,13 +147,11 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		assert this.epochId != null;
 		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
 		final String type;
-		if (this.cpnType != null) {
+		if (this.providerCpnType != null) {
 			assert this.providerId != null;
 			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PROVIDER_ID)] = this.providerId;
 			assert this.partition != null;
-			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__PARTITION)] = this.partition;
-			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)] = this.cpnType;
-			type = this.cpnType.toString();
+			type = this.providerCpnType.toString();
 		} else if (this.dictionaryId != null) {
 			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__DICTIONARY_ID)] = this.dictionaryId;
 			type = FeedVisitor.TYPE_DICTIONARY;
@@ -169,28 +173,36 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(final ChunkStatistic stat) {
 		final IRecordFormat format = getChunkFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
-		tuple[format.getFieldIndex(DatastoreConstants.EPOCH_ID)] = this.epochId;
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = this.dumpName;
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__EXPORT_DATE)] = this.current;
+		setTupleElement(tuple, format, DatastoreConstants.EPOCH_ID, this.epochId);
+		setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+		setTupleElement(tuple, format, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
 
-		final String type;
-		if (this.chunkSetId != null) {
-			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetId;
-			type = FeedVisitor.TYPE_RECORD;
-		} else if (this.indexId != null) {
-			tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] = indexId;
-			type = FeedVisitor.TYPE_INDEX;
-		} else if (this.dictionaryId != null) {
-			tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
-			type = FeedVisitor.TYPE_DICTIONARY;
-		} else if (isVersionColumn) {
-			type = FeedVisitor.TYPE_VERSION_COLUMN;
-		} else if (this.cpnType != null) {
-			type = this.cpnType.toString();
+		if (this.providerId != null) {
+			setTupleElement(tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
+			setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partition);
+			setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, this.providerCpnType.toString());
+
+			switch (this.providerCpnType) {
+				case POINT_INDEX:
+					if (this.chunkSetId != null) {
+						setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
+					} else {
+						setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
+					}
+					break;
+				case POINT_MAPPING:
+					break;
+				case AGGREGATE_STORE:
+					setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
+					break;
+				case BITMAP_MATCHER:
+					break;
+			}
+		} else if (this.hierarchy != null){
+			setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
 		} else {
-			type = null;
+			throw new RuntimeException("Unexpected statistic " + stat);
 		}
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__TYPE)] = type;
 
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
@@ -219,14 +231,14 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_ID)] = this.providerId;
 			assert this.partition != null;
 			tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_PARTITION_ID)] = this.partition;
-			assert this.cpnType != null;
+			assert this.providerCpnType != null;
 
 			final ProviderCpnType type = detectProviderComponent(stat);
 			if (type != null) {
-				assert this.cpnType == null;
-				this.cpnType = type;
+				assert this.providerCpnType == null;
+				this.providerCpnType = type;
 			}
-			tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE)] = this.cpnType;
+			tuple[format.getFieldIndex(DatastoreConstants.DIC__PROVIDER_COMPONENT_TYPE)] = this.providerCpnType;
 
 			this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
 
@@ -234,7 +246,7 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			visitChildren(stat);
 			this.dictionaryId = null;
 			if (type != null) {
-				this.cpnType = null;
+				this.providerCpnType = null;
 			}
 		} else if (this.hierarchy != null) {
 			// We are processing a hierarchy
@@ -335,17 +347,18 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		assert stat.getChildren() == null || stat.getChildren().isEmpty();
 	}
 
-	private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
+	protected void recordStatAndExplore(final DefaultMemoryStatistic stat) {
 		final ProviderCpnType type = detectProviderComponent(stat);
 		if (type != null) {
-			this.cpnType = type;
+			this.providerCpnType = type;
 		}
 
+		// FIXME it will probably be always null after my PR.
 		isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
 		visitChildren(stat);
 		isVersionColumn = false;
 		if (type != null) {
-			this.cpnType = null;
+			this.providerCpnType = null;
 		}
 	}
 
@@ -462,6 +475,13 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	private static IRecordFormat getLevelFormat(IDatastoreSchemaMetadata storageMetadata) {
 		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.LEVEL_STORE);
+	}
+
+	protected void setTupleElement(Object[] tuple, IRecordFormat format, String field, Object value) {
+		if(value == null) {
+			throw new RuntimeException("Expected a non-null value for field " + field);
+		}
+		tuple[format.getFieldIndex(field)] = value;
 	}
 
 }
