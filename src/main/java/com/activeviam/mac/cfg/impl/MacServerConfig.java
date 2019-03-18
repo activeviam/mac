@@ -92,7 +92,6 @@ import org.springframework.core.env.Environment;
 				UserConfig.class,
 
 				SourceConfig.class,
-				MonitoringConnectorConfig.class,
 
 				ActiveUIResourceServerConfig.class
 		})
@@ -131,7 +130,9 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
+
 //		new JungSchemaPrinter(true).print("", datastoreConfig.datastore());
+
 
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
@@ -148,6 +149,11 @@ public class MacServerConfig {
 		sourceConfig.watchStatisticDirectory();
 
 		return null;
+	}
+
+	@Bean
+	public JMXEnabler JMXMonitoringConnectorEnabler() {
+		return new JMXEnabler("StatisticSource", sourceConfig);
 	}
 
 	/**

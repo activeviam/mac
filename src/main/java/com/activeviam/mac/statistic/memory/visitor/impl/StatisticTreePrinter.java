@@ -61,7 +61,7 @@ public class StatisticTreePrinter {
 		}
 	}
 
-	public void print() {
+	public String getTreesAsString() {
 		StringBuilder sb = new StringBuilder();
 		for (Tree tree : trees) {
 			Node root = tree.root;
@@ -70,10 +70,14 @@ public class StatisticTreePrinter {
 
 			print(sb, 0, root);
 		}
-		System.out.println(sb.toString());
+		return sb.toString();
 	}
 
-	protected void print(StringBuilder sb, int depth, Node n) {
+	public void print() {
+		System.out.println(getTreesAsString());
+	}
+
+	protected static void print(StringBuilder sb, int depth, Node n) {
 		depth++;
 		for (Node child : n.children.values()) {
 			for (int i = 0; i < depth; i++) {
@@ -95,6 +99,12 @@ public class StatisticTreePrinter {
 
 		Collections.reverse(tree);
 		return tree;
+	}
+
+	public static String getTreeAsString(IMemoryStatistic child) {
+		StatisticTreePrinter p = new StatisticTreePrinter();
+		p.add(child);
+		return p.getTreesAsString();
 	}
 
 	protected static boolean areEquals(IMemoryStatistic s1, IMemoryStatistic s2) {

@@ -22,9 +22,12 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.IRecordSet;
 import com.qfs.store.record.IRecordFormat;
+import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -43,6 +46,18 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	public static final String TYPE_DICTIONARY = "Dictionary";
 	/** Type name if the memory usage comes from the version chunks */
 	public static final String TYPE_VERSION_COLUMN = "VersionColumn";
+
+	// Group Names
+	public static final String GROUP_DATA = "Data";
+	public static final String GROUP_AGGREGATE_PROVIDER = "AggregateProvider";
+	public static final String GROUP_HIERARCHY = "Hierarchy";
+	public static final String GROUP_INDEX = TYPE_INDEX;
+	public static final String GROUP_REFERENCE = TYPE_REFERENCE;
+	/**
+	 * Field dictionarized that is not used as a level
+	 */
+	public static final String GROUP_OTHER = "Other";
+
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.LOADING);
 
@@ -78,8 +93,24 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		if (fieldAttr != null) {
 			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
 		}
-
 		return tuple;
+	}
+
+	// TODO remove
+	protected static boolean zob(IOpenedTransaction transaction, Object[] t, Object... keys) {
+		List<String> fields = transaction.getMetadata().getStoreMetadata(DatastoreConstants.CHUNK_STORE).getFieldNames();
+		IRecordReader reader = transaction.getQueryRunner()
+				.createGetByKeyQuery(DatastoreConstants.CHUNK_STORE, fields.toArray(new String[0]))
+				.runInTransaction(keys);
+		if (reader != null) {
+			Object[] tt = reader.toTuple();
+			System.out.println("==========");
+			System.out.println(Arrays.toString(t));
+			System.out.println(Arrays.toString(tt));
+			int j = 0;
+			return true;
+		}
+		return false;
 	}
 
 	static Object[] buildDictionaryTupleFrom(
@@ -92,12 +123,9 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				() -> "No dictionary ID for " + stat);
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
 
-		// TODO(ope) deal with dictionary fields if any
 //		final IStatisticAttribute fieldNamesAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
-//		if (fieldNamesAttr!=null) {
-//			currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(
-//					fieldNamesAttr.asStringArray());
-//		}
+//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(
+//				fieldNamesAttr.asStringArray());
 
 		final IStatisticAttribute dicClassAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
 		final String dictionaryClass;
@@ -109,10 +137,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		}
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
 
-		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] =
-				stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
-		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] =
-				stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
 
 		return tuple;
 	}
@@ -127,13 +153,10 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				() -> "No id in this chunkset statistic: " + stat);
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetIdAttr.asLong();
 
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_CLASS)] =
-				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_CLASS)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS).asText();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)] = 0;
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)] =
-				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)] =
-				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
 
 		return tuple;
 	}
@@ -143,11 +166,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		switch (stat.getName()) {
 		case MemoryStatisticConstants.STAT_NAME_DATASTORE:
 		case MemoryStatisticConstants.STAT_NAME_STORE:
-			final DatastoreFeederVisitor datastoreFeed = new DatastoreFeederVisitor(
+			final DatastoreFeederVisitor visitor = new DatastoreFeederVisitor(
 					this.storageMetadata,
 					this.transaction,
 					this.dumpName);
-			datastoreFeed.startFrom(stat);
+			visitor.startFrom(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
 		case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
@@ -158,11 +181,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			feed.startFrom(stat);
 			break;
 		default:
-			if (stat.getChildren() != null) {
-				for (final IMemoryStatistic child : stat.getChildren()) {
-					child.accept(this);
-				}
-			}
+			visitChildren(this, stat);
 		}
 
 		return null;
@@ -193,6 +212,20 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		return null;
 	}
 
+	/**
+	 * Visits all the children of the given {@link IMemoryStatistic}.
+	 *
+	 * @param visitor the visitor to use to visit the children
+	 * @param statistic The statistics whose children to visit
+	 */
+	protected static void visitChildren(final IMemoryStatisticVisitor<?> visitor, final IMemoryStatistic statistic) {
+		if (statistic.getChildren() != null) {
+			for (final IMemoryStatistic child : statistic.getChildren()) {
+				child.accept(visitor);
+			}
+		}
+	}
+
 	static void includeApplicationInfoIfAny(
 			final IOpenedTransaction tm,
 			final Instant date,
@@ -208,7 +241,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			tm.add(
 					DatastoreConstants.APPLICATION_STORE,
 					date,
-					epoch,
+//					epoch,
 					dumpName,
 					usedHeap.asLong(),
 					maxHeap.asLong(),
@@ -233,6 +266,22 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
 	static IRecordFormat getChunksetFormat(IDatastoreSchemaMetadata storageMetadata) {
 		return getRecordFormat(storageMetadata, DatastoreConstants.CHUNKSET_STORE);
+	}
+
+	protected static void setTupleElement(Object[] tuple, IRecordFormat format, String field, Object value) {
+		if(value == null) {
+			throw new RuntimeException("Expected a non-null value for field " + field);
+		}
+		tuple[format.getFieldIndex(field)] = value;
+	}
+
+	protected static void checkTuple(Object[] tuple, IRecordFormat format) {
+		for (int i = 0; i < tuple.length; i++) {
+			if (tuple[i] == null) {
+				String field = format.getFieldName(i);
+				throw new RuntimeException("Unexpected null value for field " + field + " in tuple: " + Arrays.toString(tuple));
+			}
+		}
 	}
 
 }

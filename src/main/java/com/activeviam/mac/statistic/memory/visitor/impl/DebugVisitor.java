@@ -27,39 +27,14 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
 	protected final AtomicLong id = new AtomicLong(0);
 
-	protected int depth = -1;
+	protected int depth = 0;
 
-	public static StatisticTreePrinter debug(IMemoryStatistic root) {
+	public static StatisticTreePrinter createDebugPrinter(IMemoryStatistic root) {
 		root.accept(new DebugVisitor());
 		return new StatisticTreePrinter();
 	}
 
-//	public static void printAscendingTree(IMemoryStatistic child) {
-//		IMemoryStatistic s = child;
-//		List<IMemoryStatistic> tree = new LinkedList<>();
-//		do {
-//			tree.add(s);
-//		} while ((s = s.getParent()) != null);
-//
-//		Iterator<IMemoryStatistic> it = ((LinkedList<IMemoryStatistic>) tree).descendingIterator();
-//		int depth = 0;
-//		StringBuilder sb = new StringBuilder();
-//		while (it.hasNext()) {
-//			IMemoryStatistic next = it.next();
-//			for (int i = 0; i < depth; i++) {
-//				sb.append('\t');
-//			}
-//			sb.append(next.toString());
-//			if (it.hasNext()) {
-//				sb.append(System.lineSeparator());
-//			}
-//			depth++;
-//		}
-//
-//		System.out.println(sb.toString());
-//	}
-
-	protected void setParent(IMemoryStatistic parent) {
+	protected void enrichStatisticWithDebugAttributes(IMemoryStatistic parent) {
 		addDebugAttributes(parent);
 		if (parent.getChildren() == null) {
 			return;
@@ -67,7 +42,6 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
 		depth++;
 		for (IMemoryStatistic child : parent.getChildren()) {
-			child.setParent(parent);
 			addDebugAttributes(child);
 			child.accept(this);
 		}
@@ -85,37 +59,37 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(DefaultMemoryStatistic memoryStatistic) {
-		setParent(memoryStatistic);
+		enrichStatisticWithDebugAttributes(memoryStatistic);
 		return null;
 	}
 
 	@Override
 	public Void visit(ChunkSetStatistic chunkSetStatistic) {
-		setParent(chunkSetStatistic);
+		enrichStatisticWithDebugAttributes(chunkSetStatistic);
 		return null;
 	}
 
 	@Override
 	public Void visit(ChunkStatistic chunkStatistic) {
-		setParent(chunkStatistic);
+		enrichStatisticWithDebugAttributes(chunkStatistic);
 		return null;
 	}
 
 	@Override
 	public Void visit(ReferenceStatistic referenceStatistic) {
-		setParent(referenceStatistic);
+		enrichStatisticWithDebugAttributes(referenceStatistic);
 		return null;
 	}
 
 	@Override
 	public Void visit(IndexStatistic indexStatistic) {
-		setParent(indexStatistic);
+		enrichStatisticWithDebugAttributes(indexStatistic);
 		return null;
 	}
 
 	@Override
 	public Void visit(DictionaryStatistic dictionaryStatistic) {
-		setParent(dictionaryStatistic);
+		enrichStatisticWithDebugAttributes(dictionaryStatistic);
 		return null;
 	}
 }

@@ -6,26 +6,6 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
@@ -44,8 +24,6 @@ import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.query.IDictionaryCursor;
@@ -64,6 +42,26 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import test.scenario.MultipleStores;
 import test.scenario.MultipleStoresData;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 
 public class TestMemoryStatisticLoading {
 
@@ -362,12 +360,12 @@ public class TestMemoryStatisticLoading {
 	}
 
 	// FIXME(ope) it would be good to be able to actually use the service to export the stats
-	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
-		return new MemoryAnalysisService(
-				datastore,
-				manager,
-				datastore.getEpochManager());
-	}
+//	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
+//		return new MemoryAnalysisService(
+//				datastore,
+//				manager,
+//				datastore.getEpochManager());
+//	}
 
 	private static IDatastore createAnalysisDatastore() {
 		final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
