@@ -208,9 +208,8 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
 		final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
-		final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, stat);
 		// Since join in copper is not LeftOuter, add a default value for store
-		FeedVisitor.setTupleElement(tupleChunkAndStore, f, DatastoreConstants.CHUNK_AND_STORE__STORE, IRecordFormat.GLOBAL_DEFAULT_STRING);
+		final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, stat, IRecordFormat.GLOBAL_DEFAULT_STRING);
 		this.transaction.add(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
 
 		visitChildren(stat);

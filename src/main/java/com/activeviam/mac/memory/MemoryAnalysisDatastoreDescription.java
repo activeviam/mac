@@ -8,12 +8,16 @@ package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
+import com.qfs.desc.IDuplicateKeyHandler;
 import com.qfs.desc.IReferenceDescription;
 import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
+import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
+import com.qfs.store.record.IRecordReader;
+import com.qfs.store.record.impl.Records;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
 
@@ -62,7 +66,28 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
-				.withDuplicateKeyHandler(DuplicateKeyHandlers.THROW_WITHIN_TRANSACTION)
+				.withDuplicateKeyHandler(new IDuplicateKeyHandler() {
+					@Override
+					public IRecordReader selectDuplicateKeyInDatastore(IRecordReader duplicateRecord, IRecordReader previousRecord, IStoreMetadata storeMetadata, Records.IDictionaryProvider dictionaryProvider, int[] primaryIndexFields, int partitionId) {
+						for (int i = 0; i < duplicateRecord.getFormat().getFieldCount(); i++) {
+							Object a = duplicateRecord.read(i);
+							Object b = previousRecord.read(i);
+							if (!a.equals(b)) {
+								Object[] t = new Object[duplicateRecord.getFormat().getFieldCount()];
+								previousRecord.transfer(t);
+								int j = 0;
+
+							}
+						}
+
+						if(!Records.sameContent(previousRecord, duplicateRecord)) {
+							int i = 0;
+							boolean q = Records.sameContent(previousRecord, duplicateRecord);
+						}
+						return null;
+					}
+				})
+//				.withDuplicateKeyHandler(DuplicateKeyHandlers.THROW_WITHIN_TRANSACTION)
 				.build();
 	}
 

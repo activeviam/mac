@@ -52,7 +52,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	protected boolean isVersionColumn = false; // FIXME find a cleaner way to do that. (specific stat for instance).
 
 	private final IDatastoreSchemaMetadata storageMetadata;
-	private final IOpenedTransaction tm;
+	private final IOpenedTransaction transaction;
 	/** The record format of the store that stores the chunks. */
 	protected final IRecordFormat chunkRecordFormat;
 	/** The name of the off-heap dump. Can be null */
@@ -96,7 +96,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			final IOpenedTransaction transaction,
 			final String dumpName) {
 		this.storageMetadata = storageMetadata;
-		this.tm = transaction;
+		this.transaction = transaction;
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
 				.getStoreFormat()
@@ -136,7 +136,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			assert this.epochId != null;
 
 			FeedVisitor.includeApplicationInfoIfAny(
-					this.tm,
+					this.transaction,
 					this.current,
 					this.epochId,
 					this.dumpName,
@@ -169,9 +169,9 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 		if (this.store != null) {
 			final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
-			final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, chunkStatistic);
+			final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, chunkStatistic, this.store);
 			FeedVisitor.setTupleElement(tupleChunkAndStore, f, DatastoreConstants.CHUNK_AND_STORE__STORE, this.store);
-			tm.add(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
+			FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
 		}
 
 //		if (this.store != null) {
@@ -186,7 +186,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = this.field;
 		}
 
-		tm.add(DatastoreConstants.CHUNK_STORE, tuple);
+		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
 		visitChildren(this, chunkStatistic);
 
@@ -240,43 +240,14 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkSetStatistic stat) {
-		final IRecordFormat format = FeedVisitor.getChunksetFormat(this.storageMetadata);
-		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, stat);
-
-		assert this.epochId != null;
-//		final String type;
-//		if (this.partitionId != null) {
-//			// TODO cleaning not needed anymore
-//			type = FeedVisitor.TYPE_RECORD;
-//		} else if (this.dictionaryId != null) {
-//			tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__DICTIONARY_ID)] = this.dictionaryId;
-//			type = FeedVisitor.TYPE_DICTIONARY;
-//		} else {
-//			throw new RuntimeException("Cannot process this stat. A chunkset is not attached to a dictionary or a store. Faulty stat: " + stat);
-//		}
-//		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__TYPE)] = type;
-
-		tm.add(DatastoreConstants.CHUNKSET_STORE, tuple);
-
-		this.chunkSetId = (Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)];
-		if (stat.getChildren() != null) {
-			for (final IMemoryStatistic child : stat.getChildren()) {
-				// Could be the rowMapping if SparseChunkSet
-//				final IStatisticAttribute keyAtt = child.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-				// TODO(ope) use the field attributes of the chunkset
-//				if (keyAtt != null) {
-//					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] =
-//							new StringArrayObject(keyAtt.asText());
-//				} else {
-//					currentChunkRecord[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = null;
-//				}
-				child.accept(this);
-			}
-		}
-		// Reset
-		this.chunkSetId = null;
-
-		return null;
+		return new ChunkSetStatisticVisitor(
+				this.storageMetadata,
+				this.transaction,
+				this.dumpName,
+				this.current,
+				this.store,
+				this.partitionId
+		).visit(stat);
 	}
 
 	@Override
@@ -290,7 +261,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = this.referenceId;
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_NAME)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
-		tm.add(DatastoreConstants.REFERENCE_STORE, tuple);
+		FeedVisitor.add(referenceStatistic, this.transaction, DatastoreConstants.REFERENCE_STORE, tuple);
 
 		visitChildren(this, referenceStatistic);
 
@@ -313,7 +284,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
 
-		this.tm.add(DatastoreConstants.INDEX_STORE, tuple);
+		FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
 		visitChildren(this, stat);
 
@@ -332,7 +303,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
-		tm.add(DatastoreConstants.DICTIONARY_STORE, tuple);
+		FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
 		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 		if (fieldAttr != null) {

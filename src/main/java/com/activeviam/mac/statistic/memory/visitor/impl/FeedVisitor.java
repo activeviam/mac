@@ -27,7 +27,9 @@ import com.qfs.store.transaction.IOpenedTransaction;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -69,6 +71,22 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		this.dumpName = dumpName;
 	}
 
+	protected static Map<Long, IMemoryStatistic> cache = new HashMap<>();
+
+	protected static void add(IMemoryStatistic statistic, IOpenedTransaction transaction, String store, Object... tuple) {
+		if (statistic instanceof ChunkStatistic) {
+			IMemoryStatistic old = cache.put(((ChunkStatistic) statistic).getChunkId(), statistic);
+			if (old != null) {
+//				System.out.println("Old");
+//				System.out.println(StatisticTreePrinter.getTreeAsString(old));
+//				System.out.println("New");
+//				System.out.println(StatisticTreePrinter.getTreeAsString(statistic));
+//				int i = 0;
+			}
+		}
+		transaction.add(store, tuple);
+	}
+
 	static Object[] buildChunkTupleFrom(
 			final IRecordFormat format,
 			final ChunkStatistic stat) {
@@ -85,10 +103,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		return tuple;
 	}
 
-	static Object[] buildChunkAndStoreTuple(IRecordFormat chunkAndStoreFormat, ChunkStatistic statistic) {
+	static Object[] buildChunkAndStoreTuple(IRecordFormat chunkAndStoreFormat, ChunkStatistic statistic, String store) {
 		final Object[] tupleChunkAndStore = new Object[chunkAndStoreFormat.getFieldCount()];
 		long chunkId = statistic.getChunkId();
 		FeedVisitor.setTupleElement(tupleChunkAndStore, chunkAndStoreFormat, DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID, chunkId);
+		FeedVisitor.setTupleElement(tupleChunkAndStore, chunkAndStoreFormat, DatastoreConstants.CHUNK_AND_STORE__STORE, store);
 		return tupleChunkAndStore;
 	}
 
