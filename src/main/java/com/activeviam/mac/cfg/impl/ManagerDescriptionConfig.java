@@ -8,12 +8,12 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
+import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
-import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -129,11 +129,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.withFormatter(EpochFormatter.TYPE + "[HH:mm:ss]")
 						.end()
 
-//				.withDescriptionPostProcessor(
-//						StartBuilding
-//								.copperCalculations()
-//								.withDefinition(this::copperCalculations)
-//								.build())
+				.withDescriptionPostProcessor(
+						StartBuilding
+								.copperCalculations()
+								.withDefinition(this::copperCalculations)
+								.build())
 
 //				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
 
@@ -164,9 +164,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withProperty("description", "Class of the chunks")
 				.withLevel("ChunkId").withPropertyName(DatastoreConstants.CHUNK_ID)
 
-				.withDimension("Store")
-				.withHierarchyOfSameName()
-				.withLevel("StoreName").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
+//				.withDimension("Store")
+//				.withHierarchyOfSameName()
+//				.withLevel("StoreName").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
 
 				.withSingleLevelDimension("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION__PARTITION_ID)
 
@@ -177,7 +177,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
 				.withSingleLevelDimension("ChunkType").withPropertyName(DatastoreConstants.CHUNK__TYPE)
-				.withSingleLevelDimension("ChunkGroup").withPropertyName(DatastoreConstants.CHUNK__GROUP)
 
 				// FROM ChunkSet store
 				.withSingleLevelDimension("ChunkSetType").withPropertyName(DatastoreConstants.CHUNKSET__TYPE)
@@ -284,23 +283,33 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withFormatter(ByteFormatter.KEY)*/;
 	}
 
-	private void copperCalculations(final BuildingContext buildingContext) {
-		buildingContext.withFormatter(ByteFormatter.KEY)
-				.createDatasetFromFacts()
-				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-								.as(DIRECT_MEMORY_SUM),
-						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
-								.as(HEAP_MEMORY_CHUNK_USAGE_SUM))
-				.publish();
+	private void copperCalculations(final BuildingContext context) {
+//		context.withFormatter(ByteFormatter.KEY)
+//				.createDatasetFromFacts()
+//				.agg(
+//						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+//								.as(DIRECT_MEMORY_SUM),
+//						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
+//								.as(HEAP_MEMORY_CHUNK_USAGE_SUM))
+//				.publish();
+//
+//		context.withinFolder("Technical ChunkSet")
+//				.createDatasetFromFacts()
+//				.agg(
+//						Columns.sum(DatastoreConstants.CHUNK_SET_FREE_ROWS)
+//								.as("FreeRows.SUM"),
+//						Columns.sum(CHUNKSET_SIZE_FIELD)
+//								.as("PhysicalChunkSize.SUM"))
+//				.publish();
 
-		buildingContext.withinFolder("Technical ChunkSet")
-				.createDatasetFromFacts()
-				.agg(
-						Columns.sum(DatastoreConstants.CHUNK_SET_FREE_ROWS)
-								.as("FreeRows.SUM"),
-						Columns.sum(CHUNKSET_SIZE_FIELD)
-								.as("PhysicalChunkSize.SUM"))
+
+		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
+		context.createDatasetFromFacts()
+				.agg(Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE))
+				.join(datasetFromStore, Columns.mapping(DatastoreConstants.CHUNK_ID).to(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID))
+				.withColumn(DatastoreConstants.CHUNK_AND_STORE__STORE, Columns.col(DatastoreConstants.CHUNK_AND_STORE__STORE)
+						.asHierarchy()
+						.withLastObjects(IRecordFormat.GLOBAL_DEFAULT_STRING))
 				.publish();
 
 //		buildingContext.createDatasetFromFacts()
@@ -319,19 +328,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //				.agg(Columns.sum(DIRECT_CHUNKS_COUNT).as(DIRECT_CHUNKS_COUNT))
 //				.publish();
 
-		buildingContext.createDatasetFromFacts()
-				.groupBy(Columns.col(CHUNK_CLASS_FIELD))
-				.agg(Columns.sum(DIRECT_MEMORY_SUM).as("c"))
-				.agg(Columns.sum("c").as(DIRECT_MEMORY_CHUNK_USAGE_SUM))
-				.publish();
-
-		buildingContext.createDatasetFromFacts()
-				.withColumn(
-						"c",
-						Columns.col(DIRECT_MEMORY_CHUNK_USAGE_SUM)
-							.plus(Columns.col(HEAP_MEMORY_CHUNK_USAGE_SUM)).as("cc"))
-				.agg(Columns.sum("c").as("TotalMemoryUsage.SUM"))
-				.publish();
+//		context.createDatasetFromFacts()
+//				.groupBy(Columns.col(CHUNK_CLASS_FIELD))
+//				.agg(Columns.sum(DIRECT_MEMORY_SUM).as("c"))
+//				.agg(Columns.sum("c").as(DIRECT_MEMORY_CHUNK_USAGE_SUM))
+//				.publish();
+//
+//		context.createDatasetFromFacts()
+//				.withColumn(
+//						"c",
+//						Columns.col(DIRECT_MEMORY_CHUNK_USAGE_SUM)
+//							.plus(Columns.col(HEAP_MEMORY_CHUNK_USAGE_SUM)).as("cc"))
+//				.agg(Columns.sum("c").as("TotalMemoryUsage.SUM"))
+//				.publish();
 	}
 
 

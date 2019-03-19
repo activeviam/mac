@@ -51,7 +51,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 
 				.withField(DatastoreConstants.CHUNK__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
 				.withField(DatastoreConstants.CHUNK__PARTITION__PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
 				.withField(DatastoreConstants.CHUNK__FIELD)
 				.withField(DatastoreConstants.CHUNK__TYPE)
@@ -61,10 +60,20 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
 				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
 
-				.withField(DatastoreConstants.CHUNK__GROUP, ILiteralType.STRING)
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
 				.withDuplicateKeyHandler(DuplicateKeyHandlers.THROW_WITHIN_TRANSACTION)
+				.build();
+	}
+
+	/**
+	 * @return description of {@link DatastoreConstants#CHUNK_AND_STORE__STORE_NAME}
+	 */
+	protected IStoreDescription chunkAndStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME)
+				.withField(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID, ILiteralType.LONG).asKeyField()
+				.withField(DatastoreConstants.CHUNK_AND_STORE__STORE).asKeyField()
 				.build();
 	}
 
@@ -129,7 +138,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.INT)
 				.withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
 				.withField(DatastoreConstants.DICTIONARY_CLASS)
-				.withField(DatastoreConstants.DICTIONARY_IS_LEVEL, ILiteralType.BOOLEAN, false)
 				.build();
 	}
 
@@ -206,6 +214,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public Collection<? extends IStoreDescription> getStoreDescriptions() {
 		return Arrays.asList(
 				chunkStore(),
+				chunkAndStore(),
 				chunkSetStore(),
 				referenceStore(),
 				indexStore(),

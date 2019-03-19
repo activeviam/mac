@@ -22,7 +22,10 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
+import com.qfs.store.query.ICompiledGetByKey;
+import com.qfs.store.record.IByteRecordFormat;
 import com.qfs.store.record.IRecordFormat;
+import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
@@ -47,19 +50,21 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	protected Long epochId = null;
 	protected String branch = null;
 
-	private String manager;
-	private String pivot;
-	private Long providerId;
-	private Integer partition;
-	private Long dictionaryId;
-	private Long chunkSetId;
-	private String dimension;
-	private String hierarchy;
-	private String level;
-	private Integer levelMemberCount;
-	private ProviderCpnType providerCpnType;
+	protected String manager;
+	protected String pivot;
+	protected Long providerId;
+	protected Integer partition;
+	protected Long dictionaryId;
+	protected Long chunkSetId;
+	protected String dimension;
+	protected String hierarchy;
+	protected String level;
+	protected Integer levelMemberCount;
+	protected ProviderCpnType providerCpnType;
 
 	protected StatisticTreePrinter printer;
+
+	protected final ICompiledGetByKey chunkIdCQ;
 
 	public PivotFeederVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
@@ -68,6 +73,8 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.storageMetadata = storageMetadata;
 		this.transaction = tm;
 		this.dumpName = dumpName;
+
+		this.chunkIdCQ = tm.getQueryRunner().createGetByKeyQuery(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK_ID);
 	}
 
 	public void startFrom(final IMemoryStatistic stat) {
@@ -186,17 +193,25 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				case BITMAP_MATCHER:
 					break;
 			}
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__GROUP, FeedVisitor.GROUP_AGGREGATE_PROVIDER);
-		} else if (this.level != null){
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__GROUP, FeedVisitor.GROUP_HIERARCHY);
+		} else if (this.level != null) {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_DICTIONARY);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FIELD, this.level);
+			IRecordReader r = this.chunkIdCQ.runInTransaction(new Object[]{stat.getChunkId()}, false);
+			if (r != null) {
+				// There is already an entry that has likely been set by the DatastoreFeederVisitor. We do not need to keep on
+				return null; // Abort
+			}
 		} else {
 			throw new RuntimeException("Unexpected statistic " + stat);
 		}
 
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
+
+		final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
+		final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, stat);
+		// Since join in copper is not LeftOuter, add a default value for store
+		FeedVisitor.setTupleElement(tupleChunkAndStore, f, DatastoreConstants.CHUNK_AND_STORE__STORE, IRecordFormat.GLOBAL_DEFAULT_STRING);
+		this.transaction.add(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
 
 		visitChildren(stat);
 
@@ -216,7 +231,6 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			this.dictionaryId = null;
 		} else if (this.level != null) {
 			// We are processing a hierarchy/level
-			tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_IS_LEVEL)] = true;
 			this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
 
 			this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];

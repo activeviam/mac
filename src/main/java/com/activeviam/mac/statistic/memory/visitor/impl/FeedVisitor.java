@@ -47,17 +47,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	/** Type name if the memory usage comes from the version chunks */
 	public static final String TYPE_VERSION_COLUMN = "VersionColumn";
 
-	// Group Names
-	public static final String GROUP_DATA = "Data";
-	public static final String GROUP_AGGREGATE_PROVIDER = "AggregateProvider";
-	public static final String GROUP_HIERARCHY = "Hierarchy";
-	public static final String GROUP_INDEX = TYPE_INDEX;
-	public static final String GROUP_REFERENCE = TYPE_REFERENCE;
-	/**
-	 * Field dictionarized that is not used as a level
-	 */
-	public static final String GROUP_OTHER = "Other";
-
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.LOADING);
 
@@ -94,6 +83,13 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
 		}
 		return tuple;
+	}
+
+	static Object[] buildChunkAndStoreTuple(IRecordFormat chunkAndStoreFormat, ChunkStatistic statistic) {
+		final Object[] tupleChunkAndStore = new Object[chunkAndStoreFormat.getFieldCount()];
+		long chunkId = statistic.getChunkId();
+		FeedVisitor.setTupleElement(tupleChunkAndStore, chunkAndStoreFormat, DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID, chunkId);
+		return tupleChunkAndStore;
 	}
 
 	// TODO remove

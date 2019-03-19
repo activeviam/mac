@@ -37,7 +37,6 @@ public class DatastoreConstants {
 	// Field names
 
 	public static final String CHUNK__EXPORT_DATE = MemoryStatisticConstants.ATTR_NAME_DATE;
-	public static final String CHUNK__GROUP = "chunkGroup";
 	public static final String CHUNK__DEBUG_TREE = "chunkDebugTree";
 	public static final String DATE_PATTERN = MemoryStatisticConstants.DATE_PATTERN;
 
@@ -58,6 +57,10 @@ public class DatastoreConstants {
 	public static final String PROVIDER__TYPE = "type";
 	public static final String PROVIDER__CATEGORY = "category";
 
+	public static final String CHUNK_AND_STORE__STORE_NAME = "chunkAndStore";
+	public static final String CHUNK_AND_STORE__CHUNK_ID = MemoryStatisticConstants.ATTR_NAME_CHUNK_ID;
+	public static final String CHUNK_AND_STORE__STORE = MemoryStatisticConstants.STAT_NAME_STORE;
+
 	// store and partition info.
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
@@ -69,7 +72,6 @@ public class DatastoreConstants {
 	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 	public static final String CHUNK__FIELD = "field";
-	public static final String CHUNK__PARTITION__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
@@ -98,7 +100,6 @@ public class DatastoreConstants {
 	public static final String DICTIONARY_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
 	public static final String DICTIONARY_ORDER = "order";
 	public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
-	public static final String DICTIONARY_IS_LEVEL = "isLevel";
 	public static final String DIC__INDEX_ID = "indexId";
 
 	public static final String STORE_FIELD__STORE_NAME = "storeName";
