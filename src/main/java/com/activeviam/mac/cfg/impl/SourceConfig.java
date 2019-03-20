@@ -31,9 +31,11 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * @author Quartet FS
@@ -80,30 +82,36 @@ public class SourceConfig {
 	public void processEvent(final IFileEvent<Path> event) {
 		if (event != null && event.created() != null) {
 			// Load stat
-			Collection<? extends ICsvDataProvider<Path>> providers = event.created();
+			final Collection<? extends ICsvDataProvider<Path>> providers = event.created();
 
-			for (ICsvDataProvider<Path> provider : providers) {
-				final Path path = provider.getFileInfo().getIdentifier();
-				final File file = path.toFile();
-				try {
-					String message = feedDatastore(
-							MemoryStatisticSerializerUtil.readStatisticFile(file),
-							file.getName().replaceAll("\\.[^.]*$", ""));
-					LOGGER.info(message);
-				} catch (Exception e) {
-					throw new QuartetRuntimeException(e);
-				}
+			final String dumpName = "autoload-" + LocalDate.now().toString().replaceAll("\\.[^.]*$", "");
+			try {
+				final Stream<IMemoryStatistic> inputs = providers.stream()
+						.map(provider -> provider.getFileInfo().getIdentifier().toFile())
+						.map(file -> {
+							try {
+								return MemoryStatisticSerializerUtil.readStatisticFile(file);
+							} catch (final IOException ioe) {
+								throw new RuntimeException("Cannot read statistics from " + file);
+							}
+						});
+				final String message = feedDatastore(
+						inputs,
+						dumpName);
+				LOGGER.info(message);
+			} catch (Exception e) {
+				throw new QuartetRuntimeException(e);
 			}
 		}
 	}
 
 	/**
-	 * @param memoryStatistic {@link IMemoryStatistic} to load.
+	 * @param memoryStatistics {@link IMemoryStatistic} to load.
 	 * @return message to the user
 	 */
-	public String feedDatastore(final IMemoryStatistic memoryStatistic, final String dumpName) {
+	public String feedDatastore(final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
 		final Optional<IDatastoreSchemaTransactionInformation> info = this.datastore.edit(tm -> {
-			memoryStatistic.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName));
+			memoryStatistics.forEach(stat -> stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName)));
 		});
 
 
@@ -125,7 +133,7 @@ public class SourceConfig {
 			params = { "path" })
 	public String loadDumpedStatistic(String path) throws IOException {
 		return feedDatastore(
-				MemoryStatisticSerializerUtil.readStatisticFile(Paths.get(path).toFile()),
+				Stream.of(MemoryStatisticSerializerUtil.readStatisticFile(Paths.get(path).toFile())),
 				Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", ""));
 	}
 }

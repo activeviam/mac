@@ -42,6 +42,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 	public static final String CHUNK_TO_APP = "ChunkToApp";
 
+	public static final String SHARED_OWNER = "shared";
+	public static final String SHARED_COMPONENT = "shared";
+
 	public static final int NO_PARTITION = -3;
 	public static final int MANY_PARTITIONS = -2;
 
@@ -85,44 +88,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
-				.withDuplicateKeyHandler(new IDuplicateKeyHandler() {
-					private String getOwner(final IRecordReader record, final Records.IDictionaryProvider dictionaryProvider) {
-						final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__OWNER);
-						final int owner = record.readInt(idx);
-						final IDictionary<?> dictionary = dictionaryProvider.getDictionary(idx);
-						return (String) dictionary.read(owner);
-					}
-
-					@Override
-					public IRecordReader selectDuplicateKeyWithinTransaction(
-							final IRecordReader duplicateRecord,
-							final IRecordReader previousRecord,
-							final IStoreMetadata storeMetadata,
-							final Records.IDictionaryProvider dictionaryProvider,
-							final int[] primaryIndexFields,
-							final int partitionId) {
-						final String currentOwner = getOwner(previousRecord, dictionaryProvider);
-						final String newOwner = getOwner(duplicateRecord, dictionaryProvider);
-						if (newOwner.equals(currentOwner)) {
-							return duplicateRecord;
-						} else {
-							throw new RuntimeException("We must update the owner");
-						}
-					}
-
-					@Override
-					public IRecordReader selectDuplicateKeyInDatastore(
-							final IRecordReader duplicateRecord,
-							final IRecordReader previousRecord,
-							final IStoreMetadata storeMetadata,
-							final Records.IDictionaryProvider dictionaryProvider,
-							final int[] primaryIndexFields,
-							final int partitionId) {
-						// TODO(ope) complete the error
-						throw new IllegalStateException(
-								"Cannot override an existing record. Consider deleting first the records by dumpName before inserting new ones");
-					}
-				})
+				.withDuplicateKeyHandler(new ChunkRecordHandler())
 				.build();
 	}
 

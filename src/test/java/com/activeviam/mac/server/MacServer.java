@@ -27,7 +27,7 @@ import org.springframework.web.WebApplicationInitializer;
 import com.activeviam.mac.cfg.impl.MACWebAppInitializer;
 
 /**
- * @author Quartet Financial Systems
+ * @author ActiveViam
  */
 public class MacServer {
 

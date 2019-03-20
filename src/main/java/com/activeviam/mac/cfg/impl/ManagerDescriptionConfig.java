@@ -6,13 +6,10 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
-import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -21,13 +18,11 @@ import com.activeviam.desc.build.ISelectionDescriptionBuilder;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
-import com.qfs.store.record.IRecordFormat;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
@@ -198,6 +193,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withLevel("Owner").withPropertyName(DatastoreConstants.CHUNK__OWNER)
 				.withLevel("Component").withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
 				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+
+				.withSingleLevelDimension("Dump").withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
 
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
 
