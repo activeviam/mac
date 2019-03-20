@@ -75,8 +75,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
 
 				.withField(DatastoreConstants.CHUNK__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.CHUNK__FIELD)
-				.withField(DatastoreConstants.CHUNK__TYPE)
+//				.withField(DatastoreConstants.CHUNK__FIELD)
 				.withField(DatastoreConstants.CHUNK__CLASS)
 				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
@@ -340,12 +339,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 //						.withName(CHUNK_TO_DICS)
 //						.withMapping(DatastoreConstants.DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
 //						.build(),
-				StartBuilding.reference()
-						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-						.withName(CHUNK_TO_PROVIDER)
-						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-						.withMapping(DatastoreConstants.CHUNK__TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-						.build());
+//				StartBuilding.reference()
+//						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+//						.withName(CHUNK_TO_PROVIDER)
+//						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
+//						.withMapping(DatastoreConstants.CHUNK__PARENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+//						.build());
+		);
 	}
 
 	protected Collection<IReferenceDescription> getChunksetReferences() {

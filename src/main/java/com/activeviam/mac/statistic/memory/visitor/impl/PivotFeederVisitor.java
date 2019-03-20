@@ -187,27 +187,9 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		if (this.providerId != null) {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partition);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, this.providerCpnType.toString());
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
 
-//			switch (this.providerCpnType) {
-//			case POINT_INDEX:
-//				if (this.chunkSetId != null) {
-//					FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-//				} else {
-//					FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
-//				}
-//				break;
-//			case POINT_MAPPING:
-//				break;
-//			case AGGREGATE_STORE:
-//				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-//				break;
-//			case BITMAP_MATCHER:
-//				break;
-//			}
 		} else if (this.level != null) {
-//			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
-//			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_DICTIONARY);
 			final IRecordReader r = this.chunkIdCQ.runInTransaction(new Object[]{stat.getChunkId(), this.dumpName}, false);
 			if (r != null) {
 				// There is already an entry that has likely been set by the DatastoreFeederVisitor. We do not need to keep on

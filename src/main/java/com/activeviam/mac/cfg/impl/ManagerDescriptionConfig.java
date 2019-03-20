@@ -80,39 +80,39 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withAllFields()
 				.withAlias(DatastoreConstants.CHUNK__CLASS, prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
-				.withAllFields()
-				.except(DatastoreConstants.CHUNKSET_ID)
-				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
+//				.withAllFields()
+//				.except(DatastoreConstants.CHUNKSET_ID)
+//				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
-				.withAllFields()
-				.except(DatastoreConstants.REFERENCE_ID)
-				.withAlias(DatastoreConstants.REFERENCE_CLASS, prefixField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_CLASS))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
+//				.withAllFields()
+//				.except(DatastoreConstants.REFERENCE_ID)
+//				.withAlias(DatastoreConstants.REFERENCE_CLASS, prefixField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_CLASS))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
-				.withAllFields()
-				.except(DatastoreConstants.INDEX_ID)
-				.withAlias(DatastoreConstants.INDEX_TYPE, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
-				.withAlias(DatastoreConstants.INDEX_CLASS, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_CLASS))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
+//				.withAllFields()
+//				.except(DatastoreConstants.INDEX_ID)
+//				.withAlias(DatastoreConstants.INDEX_TYPE, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
+//				.withAlias(DatastoreConstants.INDEX_CLASS, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_CLASS))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER)
-				.withAllFields()
-				.except(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-				.withAlias(DatastoreConstants.PROVIDER_COMPONENT__CLASS, prefixField(DatastoreConstants.PROVIDER_COMPONENT_STORE, DatastoreConstants.PROVIDER_COMPONENT__CLASS))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER)
+//				.withAllFields()
+//				.except(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
+//				.withAlias(DatastoreConstants.PROVIDER_COMPONENT__CLASS, prefixField(DatastoreConstants.PROVIDER_COMPONENT_STORE, DatastoreConstants.PROVIDER_COMPONENT__CLASS))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER, MemoryAnalysisDatastoreDescription.PROVIDER_COMPONENT_TO_PROVIDER)
-				.withAllFields()
-				.except(DatastoreConstants.PROVIDER__PROVIDER_ID)
-				.withAlias(DatastoreConstants.PROVIDER__INDEX, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__INDEX))
-				.withAlias(DatastoreConstants.PROVIDER__TYPE, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__TYPE))
-				.withAlias(DatastoreConstants.PROVIDER__CATEGORY, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER, MemoryAnalysisDatastoreDescription.PROVIDER_COMPONENT_TO_PROVIDER)
+//				.withAllFields()
+//				.except(DatastoreConstants.PROVIDER__PROVIDER_ID)
+//				.withAlias(DatastoreConstants.PROVIDER__INDEX, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__INDEX))
+//				.withAlias(DatastoreConstants.PROVIDER__TYPE, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__TYPE))
+//				.withAlias(DatastoreConstants.PROVIDER__CATEGORY, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))
 
-				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_DICS)
-				.withAllFields()
-				.except(DatastoreConstants.DICTIONARY_ID)
-				.withAlias(DatastoreConstants.DICTIONARY_CLASS, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_CLASS))
-				.withAlias(DatastoreConstants.DICTIONARY_SIZE, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_SIZE))
+//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_DICS)
+//				.withAllFields()
+//				.except(DatastoreConstants.DICTIONARY_ID)
+//				.withAlias(DatastoreConstants.DICTIONARY_CLASS, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_CLASS))
+//				.withAlias(DatastoreConstants.DICTIONARY_SIZE, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_SIZE))
 
 				.build();
 	}
@@ -157,7 +157,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				// FROM ChunkStore
 				.withDimension(CHUNK_HIERARCHY)
 				.withHierarchyOfSameName()
-				.withLevel(CHUNK_TYPE_LEVEL).withPropertyName(DatastoreConstants.CHUNK__TYPE)
+				.withLevel(CHUNK_TYPE_LEVEL).withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
 				.withProperty("description", "What are chunks for")
 				.withLevel(CHUNK_CLASS_LEVEL).withPropertyName(prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
 				.withFormatter(ClassFormatter.KEY)
@@ -175,29 +175,29 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withComparator(ReverseOrderComparator.type)
 				.withProperty("description", "Date at which statistics were retrieved")
 
-				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
-				.withSingleLevelDimension("ChunkType").withPropertyName(DatastoreConstants.CHUNK__TYPE)
+//				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
+				.withSingleLevelDimension("ChunkType").withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
 
 				// FROM ChunkSet store
-				.withSingleLevelDimension("ChunkSetType").withPropertyName(DatastoreConstants.CHUNKSET__TYPE)
+//				.withSingleLevelDimension("ChunkSetType").withPropertyName(DatastoreConstants.CHUNKSET__TYPE)
 
 				// FROM ReferenceStore
-				.withSingleLevelDimension(DatastoreConstants.REFERENCE_NAME)
+//				.withSingleLevelDimension(DatastoreConstants.REFERENCE_NAME)
 
 				// FROM IndexStore
-				.withSingleLevelDimension(prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
-				.withSingleLevelDimension(DatastoreConstants.INDEX__FIELDS)
+//				.withSingleLevelDimension(prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
+//				.withSingleLevelDimension(DatastoreConstants.INDEX__FIELDS)
 
 				// FROM ProviderComponentsStore
-				.withSingleLevelDimension(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+//				.withSingleLevelDimension(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
 
 				// FROM ProviderStore
-				.withSingleLevelDimension(DatastoreConstants.PROVIDER__PIVOT_ID)
+				/*.withSingleLevelDimension(DatastoreConstants.PROVIDER__PIVOT_ID)
 				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__INDEX))
 				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__TYPE))
-				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))
+				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))*/
 
-				.withDimension("Tech")
+				/*.withDimension("Tech")
 
 				// FROM ChunkStore
 				.withSingleLevelHierarchy(DatastoreConstants.CHUNKSET_ID)
@@ -212,7 +212,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				// FROM ReferenceStore
 				.withSingleLevelHierarchy(prefixField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_CLASS))
 				// FROM ChunkSet store
-				.withSingleLevelHierarchy(prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))
+				.withSingleLevelHierarchy(prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))*/
 
 //				.withDimension("Store")
 //				.withHierarchyOfSameName()

@@ -98,8 +98,19 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
 		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 		if (fieldAttr != null) {
-			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
+			// FIXME(ope) later work to do here
+			System.out.println("PIVOT-2996 A chunk has a field defined :)");
+//			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
 		}
+
+		final IStatisticAttribute sizeAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH);
+		final int chunkSize = sizeAttribute == null ? 0 : sizeAttribute.asInt();
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, chunkSize);
+
+		// TODO(ope) we may want to do the same for chunk whenever possible
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, 0);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, 0);
+
 		return tuple;
 	}
 

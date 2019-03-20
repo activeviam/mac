@@ -50,6 +50,10 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	protected boolean visitingRowMapping = false;
 	protected boolean visitingVectorBlock = false;
 
+	protected Integer chunkSize;
+	protected Integer freeRows;
+	protected Integer nonWrittenRows;
+
 	public ChunkSetStatisticVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction transaction,
@@ -77,15 +81,29 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(DefaultMemoryStatistic memoryStatistic) {
 		if (memoryStatistic.getName().equals(MemoryStatisticConstants.ATTR_NAME_ROW_MAPPING)) {
 			this.visitingRowMapping = true;
+
+			FeedVisitor.visitChildren(this, memoryStatistic);
+
+			this.visitingRowMapping = false;
 		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
 			this.visitingRowMapping = false;
+
+			// Remove this stat for a subchunk, particularly for vector chunks
+			final Integer previousSize = this.chunkSize;
+			final Integer previousFree = this.freeRows;
+			final Integer previousNonWritten = this.nonWrittenRows;
+			this.chunkSize = null;
+			this.freeRows = null;
+			this.nonWrittenRows = null;
+
+			FeedVisitor.visitChildren(this, memoryStatistic);
+
+			this.chunkSize = previousSize;
+			this.freeRows = previousFree;
+			this.nonWrittenRows = previousNonWritten;
 		} else {
 			throw new RuntimeException("unexpected statistic " + memoryStatistic);
 		}
-
-		FeedVisitor.visitChildren(this, memoryStatistic);
-
-		this.visitingRowMapping = false;
 
 		return null;
 	}
@@ -94,6 +112,9 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(ChunkSetStatistic chunkSetStatistic) {
 		final IRecordFormat format = FeedVisitor.getChunksetFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, chunkSetStatistic);
+		this.chunkSize = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)];
+		this.freeRows = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)];
+		this.nonWrittenRows = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)];
 
 		FeedVisitor.add(chunkSetStatistic, this.transaction, DatastoreConstants.CHUNKSET_STORE, tuple);
 
@@ -103,6 +124,9 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 
 		// Reset
 		this.chunkSetId = null;
+		this.chunkSize = null;
+		this.freeRows = null;
+		this.nonWrittenRows = null;
 
 		return null;
 	}
@@ -121,15 +145,25 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, MemoryAnalysisDatastoreDescription.ParentType.RECORDS);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, String.valueOf(this.chunkSetId));
 
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_RECORD);
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
 		if (!this.visitingRowMapping && !this.visitingVectorBlock) {
 			// A block of vector does not belong to a single field
-			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__FIELD, this.field);
+			// FIXME(ope) contribute to the store for field mapping
+//			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__FIELD, this.field);
+		}
+
+		// Complete chunk info regarding size and usage if not defined by a parent
+		if (this.chunkSize != null) {
+			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__SIZE, this.chunkSetId);
+		}
+		if (this.freeRows != null) {
+			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__FREE_ROWS, this.freeRows);
+		}
+		if (this.nonWrittenRows != null) {
+			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, this.nonWrittenRows);
 		}
 
 		// Debug
