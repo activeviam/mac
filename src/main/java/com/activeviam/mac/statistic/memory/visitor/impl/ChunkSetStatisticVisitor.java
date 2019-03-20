@@ -8,6 +8,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -41,6 +42,7 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	protected final Instant current;
 	/** The name of the store of the visited statistic */
 	protected final String store;
+	private final ParentType rootComponent;
 	/** The partition id of the visited statistic */
 	protected final int partitionId;
 
@@ -60,12 +62,14 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 			final String dumpName,
 			final Instant current,
 			final String store,
+			final ParentType rootComponent,
 			final int partitionId) {
 		this.storageMetadata = storageMetadata;
 		this.transaction = transaction;
 		this.dumpName = dumpName;
 		this.current = current;
 		this.store = store;
+		this.rootComponent = rootComponent;
 		this.partitionId = partitionId;
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
@@ -142,12 +146,13 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
 
 		// FIXME(ope) this is wrong, we should really read the origin of the chunkset
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, MemoryAnalysisDatastoreDescription.ParentType.RECORDS);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, ParentType.RECORDS);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, String.valueOf(this.chunkSetId));
 
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent.toString());
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
 		if (!this.visitingRowMapping && !this.visitingVectorBlock) {

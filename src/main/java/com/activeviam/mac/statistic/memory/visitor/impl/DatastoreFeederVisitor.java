@@ -74,6 +74,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	/** ID of the current dictionary. */
 	protected Long dictionaryId = null;
 
+	protected ParentType rootComponent;
 	protected ParentType directParentType;
 	protected String directParentId;
 
@@ -143,7 +144,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
-//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.ownerComponent);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partitionId;
 
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter.getTreeAsString(chunkStatistic);
@@ -189,6 +190,9 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		case MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN:
 			processRecordVersion(stat);
 			break;
+		case MemoryStatisticConstants.STAT_NAME_DICTIONARY_MANAGER:
+			processDictionaryManager(stat);
+			break;
 		default:
 			recordStatAndExplore(stat);
 		}
@@ -207,6 +211,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				this.dumpName,
 				this.current,
 				this.store,
+				this.rootComponent,
 				this.partitionId
 		).visit(stat);
 	}
@@ -228,9 +233,11 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		final String previousParentId = this.directParentId;
 		this.directParentType = ParentType.REFERENCE;
 		this.directParentId = String.valueOf(this.referenceId);
+		this.rootComponent = ParentType.REFERENCE;
 		visitChildren(this, referenceStatistic);
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
+		this.rootComponent = null;
 
 		//Reset
 		this.referenceId = null;
@@ -257,9 +264,13 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		final String previousParentId = this.directParentId;
 		this.directParentType = ParentType.INDEX;
 		this.directParentId = String.valueOf(this.indexId);
+		this.rootComponent = ParentType.INDEX;
+
 		visitChildren(this, stat);
+
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
+		this.rootComponent = null;
 
 		// Reset
 		this.indexId = null;
@@ -297,6 +308,12 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		return null;
 	}
 
+	protected void processDictionaryManager(final IMemoryStatistic stat) {
+		this.rootComponent = ParentType.DICTIONARY;
+		visitChildren(this, stat);
+		this.rootComponent = null;
+	}
+
 	protected void processStoreStat(final IMemoryStatistic stat) {
 		final IStatisticAttribute nameAttr = Objects.requireNonNull(
 				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
@@ -327,9 +344,11 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.directParentType = ParentType.RECORDS;
 		this.directParentId = String.valueOf(
 				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID).asLong());
+		this.rootComponent = ParentType.RECORDS;
 		visitChildren(this, stat);
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
+		this.rootComponent = null;
 	}
 
 	private void processRecordVersion(final IMemoryStatistic stat) {

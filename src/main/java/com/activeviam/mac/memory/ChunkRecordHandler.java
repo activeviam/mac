@@ -11,8 +11,8 @@ import com.qfs.store.record.impl.Records;
 
 public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
-	static int sharedOwnerValue = -1;
-	static int sharedComponentValue = -1;
+	private int sharedOwnerValue = -1;
+	private int sharedComponentValue = -1;
 
 	@Override
 	public IRecordReader selectDuplicateKeyWithinTransaction(
@@ -23,14 +23,15 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 			final int[] primaryIndexFields,
 			final int partitionId) {
 		init(storeMetadata, dictionaryProvider);
-		final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
 
-		if (previousRecord.readInt(ownerIdx) == sharedOwnerValue) {
+		final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
+		final int currentOwner = getDicOwner(previousRecord);
+
+		if (currentOwner == sharedOwnerValue) {
 			return previousRecord;
 		} else {
-			final String currentOwner = getOwner(previousRecord, dictionaryProvider);
-			final String newOwner = getOwner(duplicateRecord, dictionaryProvider);
-			if (newOwner.equals(currentOwner)) {
+			final int newOwner = getDicOwner(duplicateRecord);
+			if (newOwner == currentOwner) {
 				return duplicateRecord;
 			} else {
 				final IWritableRecord newRecord = copyRecord(duplicateRecord);

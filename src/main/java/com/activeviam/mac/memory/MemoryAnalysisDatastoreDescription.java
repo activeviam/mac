@@ -71,9 +71,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING).asKeyField()
 				/* Foreign keys */
 
-				.withField(DatastoreConstants.CHUNK__OWNER)
-				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
-				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
+				.withField(DatastoreConstants.CHUNK__OWNER).dictionarized()
+				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT).dictionarized()
+				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
 				.withField(DatastoreConstants.CHUNK__PARENT_ID)
 				.withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
 

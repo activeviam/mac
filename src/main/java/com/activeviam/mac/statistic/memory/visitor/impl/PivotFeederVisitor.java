@@ -55,6 +55,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 	protected String level;
 	protected ProviderCpnType providerCpnType;
 
+	protected ParentType rootComponent;
 	protected ParentType directParentType;
 	protected String directParentId;
 
@@ -166,10 +167,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.pivot);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
+		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
 
 		if (this.providerId != null) {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partition);
 		} else {
 			throw new RuntimeException("Unexpected statistic " + stat);
 		}
@@ -188,6 +190,14 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(DictionaryStatistic stat) {
+		final ProviderCpnType cpnType = detectProviderComponent(stat);
+		if (cpnType != null) {
+			assert this.providerCpnType == null;
+			assert this.rootComponent == null;
+			this.providerCpnType = cpnType;
+			this.rootComponent = getCorrespondingParentType(cpnType);
+		}
+
 		final IRecordFormat format = FeedVisitor.getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
@@ -196,7 +206,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		final ParentType previousParentType = this.directParentType;
 		final String previousParentId = this.directParentId;
-		this.directParentType = ParentType.DICTIONARY;
+		this.directParentType = cpnType != null ? this.rootComponent : ParentType.DICTIONARY;
 		this.directParentId = String.valueOf(this.dictionaryId);
 
 		if (this.providerId != null) {
@@ -308,6 +318,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		final String previousParentId = this.directParentId;
 		this.directParentId = levelDescription;
 		this.directParentType = ParentType.LEVEL;
+		this.rootComponent = ParentType.LEVEL;
 
 		final LevelStatisticVisitor levelVisitor = new LevelStatisticVisitor(
 				this,
@@ -318,6 +329,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
+		this.rootComponent = null;
 
 		// Maybe instead explicitly visit specific children: Dico, Members
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MEMBER_COUNT, levelVisitor.memberCount);
@@ -346,11 +358,13 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		final String previousParentId = this.directParentId;
 		this.directParentType = getCorrespondingParentType(type);
 		this.directParentId = this.pivot + "-" + this.providerId + "-" + type + "-" + this.partition;
+		this.rootComponent = this.directParentType;
 
 		visitChildren(stat);
 
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
+		this.rootComponent = null;
 		this.providerCpnType = null;
 	}
 

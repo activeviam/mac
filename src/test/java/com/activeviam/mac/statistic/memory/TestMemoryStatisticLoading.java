@@ -71,6 +71,7 @@ import java.util.stream.LongStream;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
@@ -469,9 +470,10 @@ public class TestMemoryStatisticLoading {
 		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(CHUNK_STORE)
 				.withCondition(BaseConditions.Or(
-						BaseConditions.Equal(CHUNK__OWNER, IRecordFormat.GLOBAL_DEFAULT_STRING)
+						BaseConditions.Equal(CHUNK__OWNER, IRecordFormat.GLOBAL_DEFAULT_STRING),
+						BaseConditions.Equal(CHUNK__COMPONENT, IRecordFormat.GLOBAL_DEFAULT_STRING)
 				))
-				.selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER)
+				.selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER, CHUNK__COMPONENT)
 				.onCurrentThread().run();
 		if (cursor.hasNext()) {
 			int count = 0;
@@ -480,7 +482,7 @@ public class TestMemoryStatisticLoading {
 				count += 1;
 				System.out.println("Error for " + cursor.getRawRecord());
 			}
-			throw new AssertionError(count + " chunks without parent type/id");
+			throw new AssertionError(count + " chunks without owner or component");
 		}
 	}
 

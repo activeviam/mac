@@ -16,8 +16,11 @@ import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
 import com.activeviam.desc.build.ISelectionDescriptionBuilder;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
+import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
+import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.ibm.wsdl.PartImpl;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
@@ -192,7 +195,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withHierarchyOfSameName()
 				.withLevel("Owner").withPropertyName(DatastoreConstants.CHUNK__OWNER)
 				.withLevel("Component").withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
-				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID).withFormatter(PartitionIdFormatter.KEY)
 
 				.withSingleLevelDimension("Dump").withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
 
@@ -304,33 +307,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	private void copperCalculations(final BuildingContext context) {
-//		context.withFormatter(ByteFormatter.KEY)
-//				.createDatasetFromFacts()
-//				.agg(
-//						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-//								.as(DIRECT_MEMORY_SUM),
-//						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
-//								.as(HEAP_MEMORY_CHUNK_USAGE_SUM))
-//				.publish();
-//
-//		context.withinFolder("Technical ChunkSet")
-//				.createDatasetFromFacts()
-//				.agg(
-//						Columns.sum(DatastoreConstants.CHUNK_SET_FREE_ROWS)
-//								.as("FreeRows.SUM"),
-//						Columns.sum(CHUNKSET_SIZE_FIELD)
-//								.as("PhysicalChunkSize.SUM"))
-//				.publish();
-
-		context.createDatasetFromFacts()
+		context.withFormatter(ByteFormatter.KEY)
+				.createDatasetFromFacts()
 				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM),
 						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
+						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
+				.publish();
+
+		context.withinFolder("Technical ChunkSet")
+				.createDatasetFromFacts()
+				.agg(
 						Columns.sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
 						Columns.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
 						Columns.sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
 				.publish();
-
 
 //		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
 //		context.createDatasetFromFacts()
