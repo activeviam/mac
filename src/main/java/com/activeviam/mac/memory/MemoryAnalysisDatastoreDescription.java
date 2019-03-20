@@ -13,6 +13,7 @@ import com.qfs.desc.IReferenceDescription;
 import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
+import com.qfs.dic.IDictionary;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
@@ -85,6 +86,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
 				.withDuplicateKeyHandler(new IDuplicateKeyHandler() {
+					private String getOwner(final IRecordReader record, final Records.IDictionaryProvider dictionaryProvider) {
+						final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__OWNER);
+						final int owner = record.readInt(idx);
+						final IDictionary<?> dictionary = dictionaryProvider.getDictionary(idx);
+						return (String) dictionary.read(owner);
+					}
+
 					@Override
 					public IRecordReader selectDuplicateKeyWithinTransaction(
 							final IRecordReader duplicateRecord,
@@ -93,7 +101,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 							final Records.IDictionaryProvider dictionaryProvider,
 							final int[] primaryIndexFields,
 							final int partitionId) {
-						return duplicateRecord;
+						final String currentOwner = getOwner(previousRecord, dictionaryProvider);
+						final String newOwner = getOwner(duplicateRecord, dictionaryProvider);
+						if (newOwner.equals(currentOwner)) {
+							return duplicateRecord;
+						} else {
+							throw new RuntimeException("We must update the owner");
+						}
 					}
 
 					@Override
