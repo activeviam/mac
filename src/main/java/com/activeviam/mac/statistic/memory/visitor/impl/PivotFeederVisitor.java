@@ -10,6 +10,7 @@ import com.activeviam.copper.HierarchyCoordinate;
 import com.activeviam.copper.LevelCoordinate;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -62,6 +63,9 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	protected Integer levelMemberCount;
 	protected ProviderCpnType providerCpnType;
 
+	protected ParentType directParentType;
+	protected String directParentId;
+
 	protected StatisticTreePrinter printer;
 
 	protected final ICompiledGetByKey chunkIdCQ;
@@ -74,7 +78,10 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.transaction = tm;
 		this.dumpName = dumpName;
 
-		this.chunkIdCQ = tm.getQueryRunner().createGetByKeyQuery(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK_ID);
+		this.chunkIdCQ = tm.getQueryRunner().createGetByKeyQuery(
+				DatastoreConstants.CHUNK_STORE,
+				DatastoreConstants.CHUNK_ID,
+				DatastoreConstants.CHUNK__DUMP_NAME);
 	}
 
 	public void startFrom(final IMemoryStatistic stat) {
@@ -145,7 +152,12 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			processLevelMember(stat);
 			break;
 		default:
-			visitChildren(stat);
+			final ProviderCpnType type = detectProviderComponent(stat);
+			if (type != null) {
+				processProviderComponent(stat, type);
+			} else {
+				visitChildren(stat);
+			}
 		}
 
 		return null;
@@ -177,26 +189,26 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partition);
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, this.providerCpnType.toString());
 
-			switch (this.providerCpnType) {
-				case POINT_INDEX:
-					if (this.chunkSetId != null) {
-						FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-					} else {
-						FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
-					}
-					break;
-				case POINT_MAPPING:
-					break;
-				case AGGREGATE_STORE:
-					FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-					break;
-				case BITMAP_MATCHER:
-					break;
-			}
+//			switch (this.providerCpnType) {
+//			case POINT_INDEX:
+//				if (this.chunkSetId != null) {
+//					FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
+//				} else {
+//					FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
+//				}
+//				break;
+//			case POINT_MAPPING:
+//				break;
+//			case AGGREGATE_STORE:
+//				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
+//				break;
+//			case BITMAP_MATCHER:
+//				break;
+//			}
 		} else if (this.level != null) {
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_DICTIONARY);
-			IRecordReader r = this.chunkIdCQ.runInTransaction(new Object[]{stat.getChunkId()}, false);
+//			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_ID, this.dictionaryId);
+//			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_DICTIONARY);
+			final IRecordReader r = this.chunkIdCQ.runInTransaction(new Object[]{stat.getChunkId(), this.dumpName}, false);
 			if (r != null) {
 				// There is already an entry that has likely been set by the DatastoreFeederVisitor. We do not need to keep on
 				return null; // Abort
@@ -246,7 +258,7 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		final IStatisticAttribute idAttr = Objects.requireNonNull(
 				stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID),
 				() -> "No manager id in " + stat);
-		this.manager =  idAttr.asText();
+		this.manager = idAttr.asText();
 
 		visitChildren(stat);
 
@@ -328,8 +340,16 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__HIERARCHY, this.hierarchy);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__LEVEL, this.level);
 
+		final ParentType previousParentType = this.directParentType;
+		final String previousParentId = this.directParentId;
+		this.directParentId = levelDescription;
+		this.directParentType = ParentType.LEVEL;
 		visitChildren(stat);
+		this.directParentType = previousParentType;
+		this.directParentId = previousParentId;
 
+		// FIXME(ope) not sure to like visiting the children first in the hope of find info
+		// Maybe instead explicitly visit specific children: Dico, Members
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MEMBER_COUNT, this.levelMemberCount);
 		if (!this.hierarchy.equals(IMeasureHierarchy.MEASURE_HIERARCHY) && !this.level.equals(ILevelInfo.ClassificationType.ALL.name())) {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DICTIONARY_ID, this.dictionaryId);
@@ -346,41 +366,38 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.levelMemberCount = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
 	}
 
-		/**
-		 * Visits all the children of the given {@link IMemoryStatistic}.
-		 *
-		 * @param statistic The statistics whose children to visit.
-		 */
-	protected void visitChildren(final IMemoryStatistic statistic) {
-		if (statistic.getChildren() != null) {
-			final ProviderCpnType type = detectProviderComponent(statistic);
-			if (type != null) {
-				// A provider component is visited.
-				this.providerCpnType = type;
-				processProviderComponent(statistic);
-			}
-
-			for (final IMemoryStatistic child : statistic.getChildren()) {
-				child.accept(this);
-			}
-
-			if (type != null) {
-				// This statistic corresponds to a provider component, Once the children have been visited,
-				// nullify the type to proceed the visit.
-				this.providerCpnType = null;
-			}
-		}
-	}
-
-	protected void processProviderComponent(IMemoryStatistic statistic) {
+	private void processProviderComponent(final IMemoryStatistic stat, final ProviderCpnType type) {
+		this.providerCpnType = Objects.requireNonNull(type, "Null provider type");
 		IRecordFormat format = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.PROVIDER_COMPONENT_STORE);
-		Object[] tuple = buildProviderComponentTupleFrom(format, statistic);
+		Object[] tuple = buildProviderComponentTupleFrom(format, stat);
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER_COMPONENT__TYPE, this.providerCpnType.toString());
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, this.providerId);
 
 		FeedVisitor.checkTuple(tuple, format);
 		this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, tuple);
+
+		final ParentType previousParentType = this.directParentType;
+		final String previousParentId = this.directParentId;
+		this.directParentType = getCorrespondingParentType(type);
+		this.directParentId = this.pivot + "-" + this.providerId + "-" + type + "-" + this.partition;
+
+		visitChildren(stat);
+
+		this.directParentType = previousParentType;
+		this.directParentId = previousParentId;
+		this.providerCpnType = null;
+	}
+
+	/**
+	 * Visits all the children of the given {@link IMemoryStatistic}.
+	 *
+	 * @param statistic The statistics whose children to visit.
+	 */
+	protected void visitChildren(final IMemoryStatistic statistic) {
+		for (final IMemoryStatistic child : statistic.getChildren()) {
+			child.accept(this);
+		}
 	}
 
 	/**
@@ -391,16 +408,26 @@ public class PivotFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	 */
 	protected ProviderCpnType detectProviderComponent(final IMemoryStatistic stat) {
 		switch (stat.getName()) {
-			case PivotMemoryStatisticConstants.STAT_NAME_POINT_INDEX:
-				return ProviderCpnType.POINT_INDEX;
-			case PivotMemoryStatisticConstants.STAT_NAME_POINT_MAPPING:
-				return ProviderCpnType.POINT_MAPPING;
-			case PivotMemoryStatisticConstants.STAT_NAME_AGGREGATE_STORE:
-				return ProviderCpnType.AGGREGATE_STORE;
-			case PivotMemoryStatisticConstants.STAT_NAME_BITMAP_MATCHER:
-				return ProviderCpnType.BITMAP_MATCHER;
-			default:
-				return null;
+		case PivotMemoryStatisticConstants.STAT_NAME_POINT_INDEX:
+			return ProviderCpnType.POINT_INDEX;
+		case PivotMemoryStatisticConstants.STAT_NAME_POINT_MAPPING:
+			return ProviderCpnType.POINT_MAPPING;
+		case PivotMemoryStatisticConstants.STAT_NAME_AGGREGATE_STORE:
+			return ProviderCpnType.AGGREGATE_STORE;
+		case PivotMemoryStatisticConstants.STAT_NAME_BITMAP_MATCHER:
+			return ProviderCpnType.BITMAP_MATCHER;
+		default:
+			return null;
+		}
+	}
+
+	protected ParentType getCorrespondingParentType(final ProviderCpnType type) {
+		switch (type) {
+		case POINT_INDEX: return ParentType.POINT_INDEX;
+		case POINT_MAPPING: return ParentType.POINT_MAPPING;
+		case AGGREGATE_STORE: return ParentType.AGGREGATE_STORE;
+		case BITMAP_MATCHER: return ParentType.BITMAP_MATCHER;
+		default: throw new IllegalStateException("Incomplete switch case. Got: " + type);
 		}
 	}
 

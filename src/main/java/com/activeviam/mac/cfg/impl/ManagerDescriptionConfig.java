@@ -168,7 +168,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //				.withHierarchyOfSameName()
 //				.withLevel("StoreName").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
 
-				.withSingleLevelDimension("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION__PARTITION_ID)
+				.withSingleLevelDimension("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 
 				.withSingleLevelDimension("Date").withPropertyName(DatastoreConstants.CHUNK__EXPORT_DATE)
 				.withType(ILevelInfo.LevelType.TIME)

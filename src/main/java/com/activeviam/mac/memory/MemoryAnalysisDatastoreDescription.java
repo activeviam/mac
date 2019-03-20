@@ -39,6 +39,19 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final String CHUNK_TO_DICS = "chunkToDic";
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
+	public static final int MANY_PARTITIONS = -2;
+
+	public enum ParentType {
+		RECORDS,
+		DICTIONARY,
+		REFERENCE,
+		INDEX,
+		POINT_MAPPING,
+		POINT_INDEX,
+		AGGREGATE_STORE,
+		BITMAP_MATCHER,
+		LEVEL
+	}
 
 	/**
 	 * @return description of {@link DatastoreConstants#CHUNK_STORE} (main store)
@@ -48,27 +61,41 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withStoreName(DatastoreConstants.CHUNK_STORE)
 				// key
 				.withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG).asKeyField()
+				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING).asKeyField()
 				/* Foreign keys */
-				.withField(DatastoreConstants.CHUNKSET_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.REFERENCE_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
+//				.withField(DatastoreConstants.CHUNKSET_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
+//				.withField(DatastoreConstants.REFERENCE_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
+//				.withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
+//				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
+
+				.withField(DatastoreConstants.CHUNK__OWNER)
+				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
+				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
+				.withField(DatastoreConstants.CHUNK__PARENT_ID)
+				.withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
 
 				.withField(DatastoreConstants.CHUNK__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-				.withField(DatastoreConstants.CHUNK__PARTITION__PARTITION_ID, ILiteralType.INT, DatastoreConstants.INT_IF_NOT_EXIST)
 				.withField(DatastoreConstants.CHUNK__FIELD)
 				.withField(DatastoreConstants.CHUNK__TYPE)
 				.withField(DatastoreConstants.CHUNK__CLASS)
 				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
-				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+				.withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.INT)
+				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.INT)
+				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
 
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
 				.withDuplicateKeyHandler(new IDuplicateKeyHandler() {
 					@Override
-					public IRecordReader selectDuplicateKeyInDatastore(IRecordReader duplicateRecord, IRecordReader previousRecord, IStoreMetadata storeMetadata, Records.IDictionaryProvider dictionaryProvider, int[] primaryIndexFields, int partitionId) {
+					public IRecordReader selectDuplicateKeyInDatastore(
+							final IRecordReader duplicateRecord,
+							final IRecordReader previousRecord,
+							final IStoreMetadata storeMetadata,
+							final Records.IDictionaryProvider dictionaryProvider,
+							final int[] primaryIndexFields,
+							final int partitionId) {
 						for (int i = 0; i < duplicateRecord.getFormat().getFieldCount(); i++) {
 							Object a = duplicateRecord.read(i);
 							Object b = previousRecord.read(i);
@@ -289,30 +316,30 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 	private Collection<IReferenceDescription> getChunkReferences() {
 		return Arrays.asList(
-				StartBuilding.reference()
-						.fromStore(DatastoreConstants.CHUNK_STORE)
-						.toStore(DatastoreConstants.REFERENCE_STORE)
-						.withName(CHUNK_TO_REF)
-						.withMapping(DatastoreConstants.REFERENCE_ID, DatastoreConstants.REFERENCE_ID)
-						.build(),
-				StartBuilding.reference()
-						.fromStore(DatastoreConstants.CHUNK_STORE)
-						.toStore(DatastoreConstants.INDEX_STORE)
-						.withName(CHUNK_TO_INDICES)
-						.withMapping(DatastoreConstants.INDEX_ID, DatastoreConstants.INDEX_ID)
-						.build(),
-				StartBuilding.reference()
-						.fromStore(DatastoreConstants.CHUNK_STORE)
-						.toStore(DatastoreConstants.CHUNKSET_STORE)
-						.withName(CHUNK_TO_SETS)
-						.withMapping(DatastoreConstants.CHUNKSET_ID, DatastoreConstants.CHUNKSET_ID)
-						.build(),
-				StartBuilding.reference()
-						.fromStore(DatastoreConstants.CHUNK_STORE)
-						.toStore(DatastoreConstants.DICTIONARY_STORE)
-						.withName(CHUNK_TO_DICS)
-						.withMapping(DatastoreConstants.DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
-						.build(),
+//				StartBuilding.reference()
+//						.fromStore(DatastoreConstants.CHUNK_STORE)
+//						.toStore(DatastoreConstants.REFERENCE_STORE)
+//						.withName(CHUNK_TO_REF)
+//						.withMapping(DatastoreConstants.REFERENCE_ID, DatastoreConstants.REFERENCE_ID)
+//						.build(),
+//				StartBuilding.reference()
+//						.fromStore(DatastoreConstants.CHUNK_STORE)
+//						.toStore(DatastoreConstants.INDEX_STORE)
+//						.withName(CHUNK_TO_INDICES)
+//						.withMapping(DatastoreConstants.INDEX_ID, DatastoreConstants.INDEX_ID)
+//						.build(),
+//				StartBuilding.reference()
+//						.fromStore(DatastoreConstants.CHUNK_STORE)
+//						.toStore(DatastoreConstants.CHUNKSET_STORE)
+//						.withName(CHUNK_TO_SETS)
+//						.withMapping(DatastoreConstants.CHUNKSET_ID, DatastoreConstants.CHUNKSET_ID)
+//						.build(),
+//				StartBuilding.reference()
+//						.fromStore(DatastoreConstants.CHUNK_STORE)
+//						.toStore(DatastoreConstants.DICTIONARY_STORE)
+//						.withName(CHUNK_TO_DICS)
+//						.withMapping(DatastoreConstants.DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
+//						.build(),
 				StartBuilding.reference()
 						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
 						.withName(CHUNK_TO_PROVIDER)

@@ -50,6 +50,14 @@ public class DatastoreConstants {
 	public static final String DICTIONARY_ID = "dicId";
 	public static final String CHUNK__TYPE = "chunkType"; // is it an index, ref, record, dic...
 
+	public static final String CHUNK__OWNER = "owner";
+	public static final String CHUNK__COMPONENT = "component";
+	public static final String CHUNK__PARENT_ID = "parentId";
+	public static final String CHUNK__PARENT_TYPE = "parentType";
+	public static final String CHUNK__SIZE = "size";
+	public static final String CHUNK__NON_WRITTEN_ROWS = "nonWrittenRows";
+	public static final String CHUNK__FREE_ROWS = "freeRows";
+
 	public static final String PROVIDER__PROVIDER_ID = PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
 	public static final String PROVIDER__PIVOT_ID = "pivotId";
 	public static final String PROVIDER__MANAGER_ID = "managerId";
@@ -72,7 +80,6 @@ public class DatastoreConstants {
 	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 	public static final String CHUNK__FIELD = "field";
-	public static final String CHUNK__PARTITION__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 
 	// ## CHUNK_SET_STORE ## Field names of the ChunkSet store
 	public static final String CHUNK_SET_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;

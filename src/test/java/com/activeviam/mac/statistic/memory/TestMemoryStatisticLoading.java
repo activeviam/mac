@@ -24,12 +24,16 @@ import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
+import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
+import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.util.impl.ThrowingLambda;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
@@ -43,17 +47,22 @@ import org.junit.Test;
 import test.scenario.MultipleStores;
 import test.scenario.MultipleStoresData;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -83,9 +92,11 @@ public class TestMemoryStatisticLoading {
 		createApplication((monitoredDatastore, monitoredManager) -> {
 			fillApplication(monitoredDatastore);
 
-			final IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-			completeWithMemoryInfo(datastoreStats);
-			assertLoadsCorrectly(datastoreStats);
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
+			final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
+
+			assertLoadsCorrectly(storeStats);
 		});
 	}
 
@@ -94,8 +105,9 @@ public class TestMemoryStatisticLoading {
 		createApplication((monitoredDatastore, monitoredManager) -> {
 			fillApplication(monitoredDatastore);
 
-			final IMemoryStatistic pivotStats = monitoredManager.getMemoryStatistic();
-			completeWithMemoryInfo(pivotStats);
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
+			final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
 
 			assertLoadsCorrectly(pivotStats);
 		});
@@ -105,103 +117,23 @@ public class TestMemoryStatisticLoading {
 	public void testLoadFullStats() {
 		createApplication((monitoredDatastore, monitoredManager) -> {
 			fillApplication(monitoredDatastore);
-			final List<IMemoryStatistic> children = Arrays.asList(
-					monitoredDatastore.getMemoryStatistic(),
-					monitoredManager.getMemoryStatistic());
-			children.forEach(TestMemoryStatisticLoading::completeWithMemoryInfo);
 
-			final IMemoryStatistic stats = new MemoryStatisticBuilder()
-					.withName("application")
-					.withCreatorClasses(getClass())
-					.withChildren(children)
-					.build();
-			assertLoadsCorrectly(stats);
-		});
-	}
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportMostRecentVersion("testLoadFullStats");
+			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
 
-	@Test
-	public void testPerStoreDatastoreLoad() {
-		createApplication((monitoredDatastore, monitoredManager) -> {
-			fillApplication(monitoredDatastore);
-			final IDatastore monitoringDatastore = createAnalysisDatastore();
-
-			final int storeCount = monitoredDatastore.getSchemaMetadata().getStoreCount();
-			final long exportTime = Instant.now().getEpochSecond();
-			final List<IMemoryStatistic> storeStats = IntStream.range(0, storeCount)
-					.mapToObj(i -> {
-						final IMemoryStatistic memoryStatisticForStore = monitoredDatastore.getMemoryStatisticForStore(i);
-						completeWithMemoryInfo(memoryStatisticForStore);
-						memoryStatisticForStore.getAttributes().put(
-								MemoryStatisticConstants.ATTR_NAME_DATE,
-								new LongStatisticAttribute(exportTime));
-
-						return memoryStatisticForStore;
-					})
-					.collect(Collectors.toList());
-
-			monitoringDatastore.edit(tm -> {
-				for (final IMemoryStatistic storeStat : storeStats) {
-					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "store_loading");
-					storeStat.accept(feeder);
-				}
-			});
-
-			// Create a composite stat for the comparison
-			final StatisticsSummary fullStats = MemoryStatisticsTestUtils.getStatisticsSummary(
-					new MemoryStatisticBuilder()
-							.withName("total")
-							.withCreatorClasses(getClass())
-							.withChildren(storeStats)
-							.build());
-			assertDatastoreConsistentWithSummary(monitoringDatastore, fullStats);
-		});
-	}
-
-	@Test
-	public void testLoadPivotPerPivot() {
-		createApplication((monitoredDatastore, monitoredManager) -> {
-			fillApplication(monitoredDatastore);
-			final IDatastore monitoringDatastore = createAnalysisDatastore();
-
-			final long exportTime = Instant.now().getEpochSecond();
-			final List<IMemoryStatistic> pivotStats = monitoredManager.getActivePivots().values().stream()
-					.map(pivot -> {
-						final IMemoryStatistic pivotStat = pivot.getMemoryStatistic();
-						completeWithMemoryInfo(pivotStat);
-
-						pivotStat.getAttributes().put(
-								MemoryStatisticConstants.ATTR_NAME_DATE,
-								new LongStatisticAttribute(exportTime));
-						return pivotStat;
-					})
-					.collect(Collectors.toList());
-
-			monitoringDatastore.edit(tm -> {
-				for (final IMemoryStatistic pivotStat: pivotStats) {
-					final FeedVisitor feeder = new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "pivot_loading");
-					pivotStat.accept(feeder);
-				}
-			});
-
-			// Create a composite stat for the comparison
-			final StatisticsSummary fullStats = MemoryStatisticsTestUtils.getStatisticsSummary(
-					new MemoryStatisticBuilder()
-							.withName("total")
-							.withCreatorClasses(getClass())
-							.withChildren(pivotStats)
-							.build());
-			assertDatastoreConsistentWithSummary(monitoringDatastore, fullStats);
+			assertLoadsCorrectly(fullStats);
 		});
 	}
 
 	@Test
 	public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
-		doTestLoadMonitoringDatastoreWithVectors(true);
+		doTestLoadMonitoringDatastoreWithVectors(false);
 	}
 
 	@Test
 	public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
-		doTestLoadMonitoringDatastoreWithVectors(false);
+		doTestLoadMonitoringDatastoreWithVectors(true);
 	}
 
 	private static void createApplication(
@@ -359,13 +291,14 @@ public class TestMemoryStatisticLoading {
 		});
 	}
 
-	// FIXME(ope) it would be good to be able to actually use the service to export the stats
-//	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
-//		return new MemoryAnalysisService(
-//				datastore,
-//				manager,
-//				datastore.getEpochManager());
-//	}
+	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
+		final Path dumpDirectory = QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
+		return new MemoryAnalysisService(
+				datastore,
+				manager,
+				datastore.getEpochManager(),
+				dumpDirectory);
+	}
 
 	private static IDatastore createAnalysisDatastore() {
 		final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
@@ -377,33 +310,67 @@ public class TestMemoryStatisticLoading {
 	}
 
 	public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
-		final IDatastore monitoredDatastore = resources.create(TestMemoryStatisticLoading::buildDatastoreWithVectors);
-		commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
-		final IMemoryStatistic datastoreStats = monitoredDatastore.getMemoryStatistic();
-		completeWithMemoryInfo(datastoreStats);
+		createApplicationWithVector(duplicateVectors, (monitoredDatastore, monitoredManager) -> {
+			commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
 
-		assertLoadsCorrectly(datastoreStats);
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportMostRecentVersion("doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
+			final Collection<IMemoryStatistic> datastoreStats = loadDatastoreMemoryStatFromFolder(exportPath);
+
+			assertLoadsCorrectly(datastoreStats);
+		});
 	}
 
 	protected static final String VECTOR_STORE_NAME = "vectorStore";
 
-	protected static IDatastore buildDatastoreWithVectors() {
-		DatastoreSchemaDescription desc = MultipleStores.schemaDescription();
-		List<IStoreDescription> storeDescCopy = new ArrayList<>(desc.getStoreDescriptions());
-		storeDescCopy.add(new StoreDescriptionBuilder()
-				                  .withStoreName(VECTOR_STORE_NAME)
-				                  .withField("vectorId", ILiteralType.INT).asKeyField()
-				                  .withVectorField("vectorInt1", ILiteralType.INT).withVectorBlockSize(35)
-				                  .withVectorField("vectorInt2", ILiteralType.INT).withVectorBlockSize(20)
-				                  .withVectorField("vectorLong", ILiteralType.LONG).withVectorBlockSize(30)
-				                  .build());
-		DatastoreSchemaDescription datastoreSchemaDescription = new DatastoreSchemaDescription(storeDescCopy, desc.getReferenceDescriptions());
-
-		final IDatastore monitoredDatastore = new UnitTestDatastoreBuilder()
-				.setSchemaDescription(datastoreSchemaDescription)
+	protected static void createApplicationWithVector(
+			final boolean useVectorsAsMeasures,
+			final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
+		final IDatastoreSchemaDescription schemaDescription = StartBuilding.datastoreSchema()
+				.withStore(
+						StartBuilding.store()
+								.withStoreName(VECTOR_STORE_NAME)
+								.withField("vectorId", ILiteralType.INT).asKeyField()
+								.withVectorField("vectorInt1", ILiteralType.INT).withVectorBlockSize(35)
+								.withVectorField("vectorInt2", ILiteralType.INT).withVectorBlockSize(20)
+								.withVectorField("vectorLong", ILiteralType.LONG).withVectorBlockSize(30)
+								.build())
+				.build();
+		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+				.withSchema()
+				.withSelection(
+						StartBuilding.selection(schemaDescription).fromBaseStore(VECTOR_STORE_NAME).withAllFields().build())
+				.withCube(
+						StartBuilding.cube("C")
+							.withMeasures(builder -> {
+								if (useVectorsAsMeasures) {
+									return builder
+											.withAggregatedMeasure().sum("vectorInt1")
+											.withAggregatedMeasure().avg("vectorLong");
+								} else {
+									return builder.withContributorsCount();
+								}
+							})
+						.withSingleLevelDimension("Id").withPropertyName("vectorId")
+								.withAggregateProvider().leaf()
+						.build())
 				.build();
 
-		return monitoredDatastore;
+		final IDatastore datastore = resources.create(() -> new UnitTestDatastoreBuilder()
+				.setSchemaDescription(schemaDescription)
+				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+				.build());
+		final IActivePivotManager manager;
+		try {
+			manager = StartBuilding.manager()
+			.setDatastoreAndDescription(datastore, schemaDescription)
+			.setDescription(managerDescription)
+					.buildAndStart();
+		} catch (AgentException e) {
+			throw new RuntimeException("Cannot start the manager", e);
+		}
+
+		actions.accept(datastore, manager);
 	}
 
 	protected static void commitDataInDatastoreWithVectors(
@@ -442,23 +409,29 @@ public class TestMemoryStatisticLoading {
 				tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2);
 			});
 		}
-
-		MultipleStoresData.addDataSingle(MultipleStoresData.generateData(2, 5, 0), monitoredDatastore.getTransactionManager());
 	}
 
 	/**
 	 * Asserts the chunks number and off-heap memory as computed from the loaded datastore are consistent
 	 * with the ones computed by visiting the statistic.
-	 * @param statistics
+	 * @param statistic
 	 */
-	protected void assertLoadsCorrectly(IMemoryStatistic statistics) {
+	protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
+		assertLoadsCorrectly(Collections.singleton(statistic));
+	}
+
+	protected void assertLoadsCorrectly(final Collection<? extends IMemoryStatistic> statistics) {
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 		monitoringDatastore.edit(tm -> {
-			statistics.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
+			statistics.forEach(stat -> stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test")));
 		});
 
-		final StatisticsSummary statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(statistics);
+		final StatisticsSummary statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(
+				new MemoryStatisticBuilder()
+						.withCreatorClasses(getClass())
+						.withChildren(statistics)
+						.build());
 
 		assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
 	}
@@ -514,17 +487,40 @@ public class TestMemoryStatisticLoading {
 		});
 	}
 
-	private static void completeWithMemoryInfo(final IMemoryStatistic statistic) {
-		final Map<String, Long> fakeMemoryInfo = QfsArrays.mutableMap(
-				MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY, 10L,
-				MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY, 20L,
-				MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY, 30L,
-				MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY, 40L);
-		fakeMemoryInfo.forEach((attribute, value) -> {
-			statistic.getAttributes().put(
-					attribute,
-					new LongStatisticAttribute(value));
-		});
+	private static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) throws IOException {
+		return loadMemoryStatFromFolder(folderPath, __ -> true);
+	}
+
+	private static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) throws IOException {
+		final IMemoryStatistic allStat = loadMemoryStatFromFolder(
+				folderPath,
+				path -> path.getFileName().startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
+		return (Collection<IMemoryStatistic>) allStat.getChildren();
+	}
+
+	private static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) throws IOException {
+		final IMemoryStatistic allStat = loadMemoryStatFromFolder(
+				folderPath,
+				path -> path.getFileName().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
+		return (Collection<IMemoryStatistic>) allStat.getChildren();
+	}
+
+	private static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath, final Predicate<Path> filter) throws IOException {
+		final List<IMemoryStatistic> childStats = Files.list(folderPath)
+				.filter(filter)
+				.map(file -> {
+					try {
+						return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
+					} catch (IOException e) {
+						throw new RuntimeException("Cannot read " + file, e);
+					}
+				})
+				.collect(Collectors.toList());
+
+		return new MemoryStatisticBuilder()
+				.withCreatorClasses(TestMemoryStatisticLoading.class)
+				.withChildren(childStats)
+				.build();
 	}
 
 }

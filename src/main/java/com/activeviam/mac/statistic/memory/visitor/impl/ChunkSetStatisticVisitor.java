@@ -7,6 +7,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -20,6 +21,7 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import com.quartetfs.biz.pivot.definitions.impl.Field;
 
 import java.time.Instant;
 
@@ -46,13 +48,15 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	protected Long chunkSetId = null;
 	protected String field = null;
 	protected boolean visitingRowMapping = false;
+	protected boolean visitingVectorBlock = false;
 
-	public ChunkSetStatisticVisitor(IDatastoreSchemaMetadata storageMetadata,
-									IOpenedTransaction transaction,
-									String dumpName,
-									Instant current,
-									String store,
-									int partitionId) {
+	public ChunkSetStatisticVisitor(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final IOpenedTransaction transaction,
+			final String dumpName,
+			final Instant current,
+			final String store,
+			final int partitionId) {
 		this.storageMetadata = storageMetadata;
 		this.transaction = transaction;
 		this.dumpName = dumpName;
@@ -73,6 +77,8 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(DefaultMemoryStatistic memoryStatistic) {
 		if (memoryStatistic.getName().equals(MemoryStatisticConstants.ATTR_NAME_ROW_MAPPING)) {
 			this.visitingRowMapping = true;
+		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
+			this.visitingRowMapping = false;
 		} else {
 			throw new RuntimeException("unexpected statistic " + memoryStatistic);
 		}
@@ -106,16 +112,23 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
 			final IStatisticAttribute fieldAttribute = chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 			this.field = fieldAttribute.asText();
+		} else if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+			this.visitingVectorBlock = true;
 		}
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
 
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_RECORD);
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+		// FIXME(ope) this is wrong, we should really read the origin of the chunkset
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, MemoryAnalysisDatastoreDescription.ParentType.RECORDS);
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, String.valueOf(this.chunkSetId));
 
-		if (!this.visitingRowMapping) {
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNKSET_ID, this.chunkSetId);
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__TYPE, FeedVisitor.TYPE_RECORD);
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+
+		if (!this.visitingRowMapping && !this.visitingVectorBlock) {
+			// A block of vector does not belong to a single field
 			FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__FIELD, this.field);
 		}
 
@@ -130,6 +143,7 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 		visitChildren(this, chunkStatistic);
 
 		this.field = null;
+		this.visitingVectorBlock = false;
 
 		return null;
 	}
