@@ -146,6 +146,8 @@ public class ChunkSetStatisticVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, String.valueOf(this.chunkSetId));
 
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
 		if (!this.visitingRowMapping && !this.visitingVectorBlock) {

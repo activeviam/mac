@@ -40,6 +40,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 	public static final String CHUNK_TO_APP = "ChunkToApp";
+
+	public static final int NO_PARTITION = -3;
 	public static final int MANY_PARTITIONS = -2;
 
 	public enum ParentType {
@@ -64,10 +66,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING).asKeyField()
 				/* Foreign keys */
-//				.withField(DatastoreConstants.CHUNKSET_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-//				.withField(DatastoreConstants.REFERENCE_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-//				.withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-//				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 
 				.withField(DatastoreConstants.CHUNK__OWNER)
 				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
@@ -88,6 +86,17 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 				.withDuplicateKeyHandler(new IDuplicateKeyHandler() {
 					@Override
+					public IRecordReader selectDuplicateKeyWithinTransaction(
+							final IRecordReader duplicateRecord,
+							final IRecordReader previousRecord,
+							final IStoreMetadata storeMetadata,
+							final Records.IDictionaryProvider dictionaryProvider,
+							final int[] primaryIndexFields,
+							final int partitionId) {
+						return duplicateRecord;
+					}
+
+					@Override
 					public IRecordReader selectDuplicateKeyInDatastore(
 							final IRecordReader duplicateRecord,
 							final IRecordReader previousRecord,
@@ -95,25 +104,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 							final Records.IDictionaryProvider dictionaryProvider,
 							final int[] primaryIndexFields,
 							final int partitionId) {
-						for (int i = 0; i < duplicateRecord.getFormat().getFieldCount(); i++) {
-							Object a = duplicateRecord.read(i);
-							Object b = previousRecord.read(i);
-							if (!a.equals(b)) {
-								Object[] t = new Object[duplicateRecord.getFormat().getFieldCount()];
-								previousRecord.transfer(t);
-								int j = 0;
-
-							}
-						}
-
-						if(!Records.sameContent(previousRecord, duplicateRecord)) {
-							int i = 0;
-							boolean q = Records.sameContent(previousRecord, duplicateRecord);
-						}
-						return null;
+						// TODO(ope) complete the error
+						throw new IllegalStateException(
+								"Cannot override an existing record. Consider deleting first the records by dumpName before inserting new ones");
 					}
 				})
-//				.withDuplicateKeyHandler(DuplicateKeyHandlers.THROW_WITHIN_TRANSACTION)
 				.build();
 	}
 

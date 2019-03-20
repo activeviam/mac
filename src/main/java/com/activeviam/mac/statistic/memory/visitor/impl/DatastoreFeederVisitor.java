@@ -142,6 +142,10 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
+		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
+//		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.ownerComponent);
+		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partitionId;
+
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter.getTreeAsString(chunkStatistic);
 
 		/* // FIXME(ope) restore this if needed
@@ -152,8 +156,6 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
 		}
 		//*/
-
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partitionId;
 
 		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 

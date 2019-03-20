@@ -6,7 +6,9 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
@@ -71,6 +73,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
+
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.parent.pivot);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, MemoryAnalysisDatastoreDescription.NO_PARTITION);
 
 		final IRecordReader r = this.chunkIdCQ.runInTransaction(new Object[]{stat.getChunkId(), this.dumpName}, false);
 		if (r != null) {

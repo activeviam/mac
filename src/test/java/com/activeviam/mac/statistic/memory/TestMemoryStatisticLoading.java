@@ -72,6 +72,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
 
@@ -438,6 +439,11 @@ public class TestMemoryStatisticLoading {
 
 		assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
 
+		checkForUnclassifiedChunks(monitoringDatastore);
+		checkForUnrootedChunks(monitoringDatastore);
+	}
+
+	private void checkForUnclassifiedChunks(IDatastore monitoringDatastore) {
 		// Check that all chunks have a parent type/id
 		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(CHUNK_STORE)
@@ -446,6 +452,26 @@ public class TestMemoryStatisticLoading {
 						BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)
 				))
 				.selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__PARENT_TYPE, CHUNK__PARENT_ID)
+				.onCurrentThread().run();
+		if (cursor.hasNext()) {
+			int count = 0;
+			while (cursor.hasNext()) {
+				cursor.next();
+				count += 1;
+				System.out.println("Error for " + cursor.getRawRecord());
+			}
+			throw new AssertionError(count + " chunks without parent type/id");
+		}
+	}
+
+	private void checkForUnrootedChunks(IDatastore monitoringDatastore) {
+		// Check that all chunks have an owner
+		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
+				.forStore(CHUNK_STORE)
+				.withCondition(BaseConditions.Or(
+						BaseConditions.Equal(CHUNK__OWNER, IRecordFormat.GLOBAL_DEFAULT_STRING)
+				))
+				.selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER)
 				.onCurrentThread().run();
 		if (cursor.hasNext()) {
 			int count = 0;

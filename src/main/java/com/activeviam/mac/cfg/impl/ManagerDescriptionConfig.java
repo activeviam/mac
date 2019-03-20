@@ -193,6 +193,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withComparator(ReverseOrderComparator.type)
 				.withProperty("description", "Date at which statistics were retrieved")
 
+				.withDimension("Owners")
+				.withHierarchyOfSameName()
+				.withLevel("Owner").withPropertyName(DatastoreConstants.CHUNK__OWNER)
+				.withLevel("Component").withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
+				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
 
 				// FROM ChunkSet store
