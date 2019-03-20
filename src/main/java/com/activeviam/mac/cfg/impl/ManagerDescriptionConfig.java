@@ -6,6 +6,10 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
@@ -13,6 +17,7 @@ import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
+import com.activeviam.desc.build.ISelectionDescriptionBuilder;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -42,6 +47,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 	public static final String MONITORING_CUBE = "MemoryCube";
 	public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
+	public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
 	public static final String HEAP_MEMORY_CHUNK_USAGE_SUM = "HeapMemoryChunkUsage.SUM";
 	public static final String CHUNK_CLASS_LEVEL = "Class";
 	public static final String CHUNK_TYPE_LEVEL = "Type";
@@ -77,8 +83,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	private ISelectionDescription createSelection() {
 		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
 				.fromBaseStore(DatastoreConstants.CHUNK_STORE)
-				.withAllFields()
-				.withAlias(DatastoreConstants.CHUNK__CLASS, prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
+				.withAllReachableFields(allReachableFields -> {
+					allReachableFields.remove(DatastoreConstants.CHUNK__CLASS);
+
+					final Map<String, String> result = ISelectionDescriptionBuilder.FieldsCollisionHandler.CLOSEST.handle(allReachableFields);
+					result.put(prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS), DatastoreConstants.CHUNK__CLASS);
+
+					return result;
+				})
 
 //				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
 //				.withAllFields()
@@ -156,13 +168,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				// FROM ChunkStore
 				.withDimension(CHUNK_HIERARCHY)
-				.withHierarchyOfSameName()
-				.withLevel(CHUNK_TYPE_LEVEL).withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
+				.withHierarchy(CHUNK_TYPE_LEVEL)
+				.withLevelOfSameName()
+				.withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
 				.withProperty("description", "What are chunks for")
-				.withLevel(CHUNK_CLASS_LEVEL).withPropertyName(prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
+
+				.withHierarchy(CHUNK_CLASS_LEVEL)
+				.withLevelOfSameName()
+				.withPropertyName(prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
 				.withFormatter(ClassFormatter.KEY)
 				.withProperty("description", "Class of the chunks")
-				.withLevel("ChunkId").withPropertyName(DatastoreConstants.CHUNK_ID)
+
+				.withHierarchy("ChunkId")
+				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK_ID)
 
 //				.withDimension("Store")
 //				.withHierarchyOfSameName()
@@ -170,13 +188,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				.withSingleLevelDimension("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 
-				.withSingleLevelDimension("Date").withPropertyName(DatastoreConstants.CHUNK__EXPORT_DATE)
+				.withSingleLevelDimension("Date").withPropertyName(DatastoreConstants.APPLICATION__DATE)
 				.withType(ILevelInfo.LevelType.TIME)
 				.withComparator(ReverseOrderComparator.type)
 				.withProperty("description", "Date at which statistics were retrieved")
 
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
-				.withSingleLevelDimension("ChunkType").withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
 
 				// FROM ChunkSet store
 //				.withSingleLevelDimension("ChunkSetType").withPropertyName(DatastoreConstants.CHUNKSET__TYPE)
@@ -302,15 +319,23 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //								.as("PhysicalChunkSize.SUM"))
 //				.publish();
 
-
-		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
 		context.createDatasetFromFacts()
-				.agg(Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE))
-				.join(datasetFromStore, Columns.mapping(DatastoreConstants.CHUNK_ID).to(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID))
-				.withColumn(DatastoreConstants.CHUNK_AND_STORE__STORE, Columns.col(DatastoreConstants.CHUNK_AND_STORE__STORE)
-						.asHierarchy()
-						.withLastObjects(IRecordFormat.GLOBAL_DEFAULT_STRING))
+				.agg(
+						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM),
+						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
+						Columns.sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
+						Columns.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
+						Columns.sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
 				.publish();
+
+
+//		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
+//		context.createDatasetFromFacts()
+//				.join(datasetFromStore, Columns.mapping(DatastoreConstants.CHUNK_ID).to(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID))
+//				.withColumn(DatastoreConstants.CHUNK_AND_STORE__STORE, Columns.col(DatastoreConstants.CHUNK_AND_STORE__STORE)
+//						.asHierarchy()
+//						.withLastObjects(IRecordFormat.GLOBAL_DEFAULT_STRING))
+//				.publish();
 
 //		buildingContext.createDatasetFromFacts()
 //				.groupBy(Columns.col(CHUNK_CLASS_FIELD))

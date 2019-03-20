@@ -39,6 +39,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final String CHUNK_TO_DICS = "chunkToDic";
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
+	public static final String CHUNK_TO_APP = "ChunkToApp";
 	public static final int MANY_PARTITIONS = -2;
 
 	public enum ParentType {
@@ -82,7 +83,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.INT)
 				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNK__EXPORT_DATE, IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
 
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
@@ -249,8 +249,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 	protected IStoreDescription applicationStore() {
 		return StartBuilding.store().withStoreName(DatastoreConstants.APPLICATION_STORE)
-				.withField(DatastoreConstants.APPLICATION__DATE, ILiteralType.LOCAL_DATE_TIME).asKeyField()
 				.withField(DatastoreConstants.APPLICATION__DUMP_NAME).asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DATE,  IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
 				.withField(DatastoreConstants.APPLICATION__USED_ON_HEAP, ILiteralType.LONG)
 				.withField(DatastoreConstants.APPLICATION__MAX_ON_HEAP, ILiteralType.LONG)
 				.withField(DatastoreConstants.APPLICATION__USED_OFF_HEAP, ILiteralType.LONG)
@@ -344,8 +344,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 //						.withName(CHUNK_TO_PROVIDER)
 //						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
 //						.withMapping(DatastoreConstants.CHUNK__PARENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-//						.build());
-		);
+//						.build(),
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.APPLICATION_STORE)
+						.withName(CHUNK_TO_APP)
+						.withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+						.build());
 	}
 
 	protected Collection<IReferenceDescription> getChunksetReferences() {

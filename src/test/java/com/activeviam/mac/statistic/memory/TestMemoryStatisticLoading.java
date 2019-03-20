@@ -30,6 +30,7 @@ import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.query.IDictionaryCursor;
+import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
@@ -71,6 +72,8 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
 
 public class TestMemoryStatisticLoading {
 
@@ -434,6 +437,25 @@ public class TestMemoryStatisticLoading {
 						.build());
 
 		assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
+
+		// Check that all chunks have a parent type/id
+		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
+				.forStore(CHUNK_STORE)
+				.withCondition(BaseConditions.Or(
+						BaseConditions.Equal(CHUNK__PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
+						BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)
+				))
+				.selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__PARENT_TYPE, CHUNK__PARENT_ID)
+				.onCurrentThread().run();
+		if (cursor.hasNext()) {
+			int count = 0;
+			while (cursor.hasNext()) {
+				cursor.next();
+				count += 1;
+				System.out.println("Error for " + cursor.getRawRecord());
+			}
+			throw new AssertionError(count + " chunks without parent type/id");
+		}
 	}
 
 	/**

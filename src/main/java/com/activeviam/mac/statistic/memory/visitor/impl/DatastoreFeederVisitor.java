@@ -22,7 +22,6 @@ import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.impl.ChunkSet;
-import com.qfs.store.record.IByteRecordFormat;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
@@ -110,7 +109,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	public void startFrom(final IMemoryStatistic stat) {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
-			final IStatisticAttribute dateAtt = stat.getAttribute(DatastoreConstants.CHUNK__EXPORT_DATE);
+			final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
 			if (dateAtt == null) {
 				throw new IllegalStateException("First level statistic should contain the export date.");
 			}
@@ -122,7 +121,6 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			FeedVisitor.includeApplicationInfoIfAny(
 					this.transaction,
 					this.current,
-					this.epochId,
 					this.dumpName,
 					stat);
 
@@ -140,7 +138,6 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(final ChunkStatistic chunkStatistic) {
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__EXPORT_DATE, this.current);
 
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);

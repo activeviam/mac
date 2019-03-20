@@ -255,7 +255,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	static void includeApplicationInfoIfAny(
 			final IOpenedTransaction tm,
 			final Instant date,
-			final long epoch,
 			final String dumpName,
 			final IMemoryStatistic stat) {
 		final IStatisticAttribute usedHeap = stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY);
@@ -266,9 +265,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		if (usedHeap != null && maxHeap != null && usedOffHeap != null && maxOffHeap != null) {
 			tm.add(
 					DatastoreConstants.APPLICATION_STORE,
-					date,
-//					epoch,
 					dumpName,
+					date,
 					usedHeap.asLong(),
 					maxHeap.asLong(),
 					usedOffHeap.asLong(),
