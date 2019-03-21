@@ -8,17 +8,12 @@ package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.desc.IDuplicateKeyHandler;
 import com.qfs.desc.IReferenceDescription;
 import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
-import com.qfs.dic.IDictionary;
 import com.qfs.literal.ILiteralType;
-import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.record.impl.Records;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
 
@@ -93,13 +88,15 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * @return description of {@link DatastoreConstants#CHUNK_AND_STORE__STORE_NAME}
+	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
 	 */
-	protected IStoreDescription chunkAndStore() {
+	protected IStoreDescription chunkToFieldStore() {
 		return new StoreDescriptionBuilder()
-				.withStoreName(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME)
-				.withField(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID, ILiteralType.LONG).asKeyField()
-				.withField(DatastoreConstants.CHUNK_AND_STORE__STORE).asKeyField()
+				.withStoreName(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_FIELD__STORE).asKeyField()
 				.build();
 	}
 
@@ -240,7 +237,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public Collection<? extends IStoreDescription> getStoreDescriptions() {
 		return Arrays.asList(
 				chunkStore(),
-				chunkAndStore(),
+				chunkToFieldStore(),
 				chunkSetStore(),
 				referenceStore(),
 				indexStore(),

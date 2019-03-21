@@ -7,9 +7,13 @@
 package com.activeviam.mac.cfg.impl;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
+import com.activeviam.copper.builders.ColumnMapping;
+import com.activeviam.copper.builders.dataset.Datasets;
+import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -20,12 +24,12 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.ibm.wsdl.PartImpl;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
+import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
@@ -145,7 +149,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 								.withDefinition(this::copperCalculations)
 								.build())
 
-//				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
+				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
 
 //				.withSharedDrillthroughProperties()
 //				.hideColumn(DatastoreConstants.FIELDS)
@@ -205,6 +209,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withHierarchyOfSameName()
 				.slicing()
 				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
+
+				.withDimension("BlackMagic")
+				.withHierarchy("ParentId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
 
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
 
@@ -314,20 +321,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	private void copperCalculations(final BuildingContext context) {
-		context.withFormatter(ByteFormatter.KEY)
-				.createDatasetFromFacts()
-				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
-						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
-				.publish();
-
-		context.withinFolder("Technical ChunkSet")
-				.createDatasetFromFacts()
-				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
-						Columns.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
-						Columns.sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
-				.publish();
+		basicMeasures(context);
+		joinHierarchies(context);
 
 //		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
 //		context.createDatasetFromFacts()
@@ -368,6 +363,33 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //				.publish();
 	}
 
+	private void basicMeasures(final BuildingContext context) {
+		context.withFormatter(ByteFormatter.KEY)
+				.createDatasetFromFacts()
+				.agg(
+						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
+						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
+				.publish();
 
+		context.withinFolder("Technical ChunkSet")
+				.createDatasetFromFacts()
+				.agg(
+						Columns.sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
+						Columns.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
+						Columns.sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
+				.publish();
+	}
+
+	private void joinHierarchies(final BuildingContext context) {
+		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_FIELD_STORE);
+		context.createDatasetFromFacts()
+				.join(
+						fieldDataset,
+						ColumnMapping.none()
+								.and(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
+								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
+				.agg(Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-of.S"))
+				.publish();
+	}
 
 }

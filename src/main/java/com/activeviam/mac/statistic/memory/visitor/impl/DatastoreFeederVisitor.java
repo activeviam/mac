@@ -6,6 +6,10 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import java.time.Instant;
+import java.util.Objects;
+import java.util.logging.Logger;
+
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -19,17 +23,10 @@ import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
-
-import java.time.Instant;
-import java.util.Objects;
-import java.util.logging.Logger;
-
-import static com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor.visitChildren;
 
 
 /**
@@ -40,7 +37,7 @@ import static com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor.visit
  *
  * @author ActiveViam
  */
-public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
+public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
@@ -51,12 +48,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 	 */
 	protected boolean isVersionColumn = false; // FIXME find a cleaner way to do that. (specific stat for instance).
 
-	private final IDatastoreSchemaMetadata storageMetadata;
-	private final IOpenedTransaction transaction;
 	/** The record format of the store that stores the chunks. */
 	protected final IRecordFormat chunkRecordFormat;
-	/** The name of the off-heap dump. Can be null */
-	protected final String dumpName;
 
 	/** The export date, found on the first statistics we read */
 	protected Instant current = null;
@@ -98,13 +91,11 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction transaction,
 			final String dumpName) {
-		this.storageMetadata = storageMetadata;
-		this.transaction = transaction;
+		super(transaction, storageMetadata, dumpName);
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
 				.getStoreFormat()
 				.getRecordFormat();
-		this.dumpName = dumpName;
 	}
 
 	public void startFrom(final IMemoryStatistic stat) {
@@ -137,6 +128,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
+		recordFieldForStructure(this.directParentType, this.directParentId);
+
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
@@ -152,7 +145,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		/* // FIXME(ope) restore this if needed
 		if (this.store != null) {
 			final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
-			final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, chunkStatistic, this.store);
+			final Object[] tupleChunkAndStore = FeedVisitor.buildChunkToFieldTuple(f, chunkStatistic, this.store);
 			FeedVisitor.setTupleElement(tupleChunkAndStore, f, DatastoreConstants.CHUNK_AND_STORE__STORE, this.store);
 			FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
 		}
@@ -160,7 +153,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
-		visitChildren(this, chunkStatistic);
+		visitChildren(chunkStatistic);
 
 		return null;
 	}
@@ -212,6 +205,8 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				this.current,
 				this.store,
 				this.rootComponent,
+				this.directParentType,
+				this.directParentId,
 				this.partitionId
 		).visit(stat);
 	}
@@ -234,7 +229,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.directParentType = ParentType.REFERENCE;
 		this.directParentId = String.valueOf(this.referenceId);
 		this.rootComponent = ParentType.REFERENCE;
-		visitChildren(this, referenceStatistic);
+		visitChildren(referenceStatistic);
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
 		this.rootComponent = null;
@@ -266,7 +261,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.directParentId = String.valueOf(this.indexId);
 		this.rootComponent = ParentType.INDEX;
 
-		visitChildren(this, stat);
+		visitChildren(stat);
 
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
@@ -283,7 +278,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	@Override
 	public Void visit(final DictionaryStatistic stat) {
-		final IRecordFormat format = FeedVisitor.getDictionaryFormat(this.storageMetadata);
+		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
@@ -298,7 +293,9 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		final String previousParentId = this.directParentId;
 		this.directParentType = ParentType.DICTIONARY;
 		this.directParentId = String.valueOf(this.dictionaryId);
-		visitChildren(this, stat);
+		recordFieldForStructure(this.directParentType, this.directParentId);
+
+		visitChildren(stat);
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
 
@@ -310,7 +307,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	protected void processDictionaryManager(final IMemoryStatistic stat) {
 		this.rootComponent = ParentType.DICTIONARY;
-		visitChildren(this, stat);
+		visitChildren(stat);
 		this.rootComponent = null;
 	}
 
@@ -321,7 +318,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.store = nameAttr.asText();
 
 		// Explore the store children
-		visitChildren(this, stat);
+		visitChildren(stat);
 
 		this.store = null;
 	}
@@ -332,7 +329,7 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 				() -> "No partition attribute in stat" + stat);
 		this.partitionId = partitionAttr.asInt();
 
-		visitChildren(this, stat);
+		visitChildren(stat);
 
 		this.partitionId = null;
 	}
@@ -345,14 +342,14 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		this.directParentId = String.valueOf(
 				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID).asLong());
 		this.rootComponent = ParentType.RECORDS;
-		visitChildren(this, stat);
+		visitChildren(stat);
 		this.directParentType = previousParentType;
 		this.directParentId = previousParentId;
 		this.rootComponent = null;
 	}
 
 	private void processRecordVersion(final IMemoryStatistic stat) {
-		visitChildren(this, stat);
+		visitChildren(stat);
 	}
 
 	private void processPrimaryIndices(final IMemoryStatistic stat) {
@@ -365,32 +362,16 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 
 	private void processIndexList(final IMemoryStatistic stat, final IndexType type) {
 		this.indexType = type;
-		visitChildren(this, stat);
+		visitChildren(stat);
 		this.indexType = null;
 	}
 
 	private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
 		isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
 
-		visitChildren(this, stat);
+		visitChildren(stat);
 
 		isVersionColumn = false;
-	}
-
-	protected String getType(ChunkStatistic statistic) {
-		if (this.dictionaryId != null) {
-			return FeedVisitor.TYPE_DICTIONARY; // priority to dic.
-		} else if (this.chunkSetId != null) {
-			return FeedVisitor.TYPE_RECORD;
-		} else if (this.referenceId != null) {
-			return FeedVisitor.TYPE_REFERENCE;
-		} else if (this.indexId != null) {
-			return FeedVisitor.TYPE_INDEX;
-		} else if (this.isVersionColumn) {
-			return FeedVisitor.TYPE_VERSION_COLUMN;
-		} else {
-			throw new RuntimeException("Cannot determine the type of " + statistic);
-		}
 	}
 
 	private void readEpochAndBranchIfAny(final IMemoryStatistic stat) {
@@ -443,12 +424,19 @@ public class DatastoreFeederVisitor implements IMemoryStatisticVisitor<Void> {
 		return tuple;
 	}
 
-	private static IRecordFormat getIndexFormat(IDatastoreSchemaMetadata storageMetadata) {
-		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.INDEX_STORE);
-	}
+	private void recordFieldForStructure(
+			final ParentType type,
+			final String id) {
+		if (this.store != null && this.field != null) {
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_FIELD_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, this.field);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
 
-	private static IRecordFormat getReferenceFormat(IDatastoreSchemaMetadata storageMetadata) {
-		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.REFERENCE_STORE);
+			this.transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
+		}
 	}
 
 }

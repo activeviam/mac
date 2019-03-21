@@ -8,6 +8,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -96,12 +97,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
-		final IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-		if (fieldAttr != null) {
-			// FIXME(ope) later work to do here
-			System.out.println("PIVOT-2996 A chunk has a field defined :)");
-//			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__FIELD)] = fieldAttr.asText();
-		}
 
 		final IStatisticAttribute sizeAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH);
 		final int chunkSize = sizeAttribute == null ? 0 : sizeAttribute.asInt();
@@ -112,14 +107,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, 0);
 
 		return tuple;
-	}
-
-	static Object[] buildChunkAndStoreTuple(IRecordFormat chunkAndStoreFormat, ChunkStatistic statistic, String store) {
-		final Object[] tupleChunkAndStore = new Object[chunkAndStoreFormat.getFieldCount()];
-		long chunkId = statistic.getChunkId();
-		FeedVisitor.setTupleElement(tupleChunkAndStore, chunkAndStoreFormat, DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID, chunkId);
-		FeedVisitor.setTupleElement(tupleChunkAndStore, chunkAndStoreFormat, DatastoreConstants.CHUNK_AND_STORE__STORE, store);
-		return tupleChunkAndStore;
 	}
 
 	// TODO remove
@@ -276,20 +263,29 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		}
 	}
 
+	static void recordFieldForStructure(
+			final IOpenedTransaction transaction,
+			final IRecordFormat format,
+			final MemoryAnalysisDatastoreDescription.ParentType type,
+			final String id,
+			final String store,
+			final String field) {
+
+		final Object[] tuple = new Object[format.getFieldCount()];
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, field);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, store);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, type);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
+
+		transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
+	}
+
 	static IRecordFormat getRecordFormat(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final String storeName) {
 		return storageMetadata.getStoreMetadata(storeName)
 				.getStoreFormat()
 				.getRecordFormat();
-	}
-
-	static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
-		return getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
-	}
-
-	static IRecordFormat getChunksetFormat(IDatastoreSchemaMetadata storageMetadata) {
-		return getRecordFormat(storageMetadata, DatastoreConstants.CHUNKSET_STORE);
 	}
 
 	protected static void setTupleElement(Object[] tuple, IRecordFormat format, String field, Object value) {

@@ -65,9 +65,11 @@ public class DatastoreConstants {
 	public static final String PROVIDER__TYPE = "type";
 	public static final String PROVIDER__CATEGORY = "category";
 
-	public static final String CHUNK_AND_STORE__STORE_NAME = "chunkAndStore";
-	public static final String CHUNK_AND_STORE__CHUNK_ID = MemoryStatisticConstants.ATTR_NAME_CHUNK_ID;
-	public static final String CHUNK_AND_STORE__STORE = MemoryStatisticConstants.STAT_NAME_STORE;
+	public static final String CHUNK_TO_FIELD_STORE = "ChunkToField";
+	public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId";
+	public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
+	public static final String CHUNK_TO_FIELD__STORE = "storeName";
 
 	// store and partition info.
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;

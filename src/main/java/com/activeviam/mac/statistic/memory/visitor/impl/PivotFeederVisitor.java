@@ -26,7 +26,6 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IByteRecordFormat;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
@@ -145,7 +144,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkSetStatistic stat) {
-		final IRecordFormat format = FeedVisitor.getChunksetFormat(this.storageMetadata);
+		final IRecordFormat format = getChunksetFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, stat);
 
 		this.transaction.add(DatastoreConstants.CHUNKSET_STORE, tuple);
@@ -178,11 +177,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
-		final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
-		// Since join in copper is not LeftOuter, add a default value for store
-		final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, stat, IRecordFormat.GLOBAL_DEFAULT_STRING);
-		this.transaction.add(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
-
 		visitChildren(stat);
 
 		return null;
@@ -198,7 +192,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 			this.rootComponent = getCorrespondingParentType(cpnType);
 		}
 
-		final IRecordFormat format = FeedVisitor.getDictionaryFormat(this.storageMetadata);
+		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];

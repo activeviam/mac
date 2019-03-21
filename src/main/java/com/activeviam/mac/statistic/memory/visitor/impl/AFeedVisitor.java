@@ -51,13 +51,20 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
 		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.LEVEL_STORE);
 	}
 
-	private static IRecordFormat getIndexFormat(IDatastoreSchemaMetadata storageMetadata) {
+	protected static IRecordFormat getIndexFormat(IDatastoreSchemaMetadata storageMetadata) {
 		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.INDEX_STORE);
 	}
 
-	private static IRecordFormat getReferenceFormat(IDatastoreSchemaMetadata storageMetadata) {
+	protected static IRecordFormat getReferenceFormat(IDatastoreSchemaMetadata storageMetadata) {
 		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.REFERENCE_STORE);
 	}
 
+	protected static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
+	}
+
+	protected static IRecordFormat getChunksetFormat(IDatastoreSchemaMetadata storageMetadata) {
+		return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNKSET_STORE);
+	}
 
 }

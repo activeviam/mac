@@ -85,11 +85,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
-		final IByteRecordFormat f = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat();
-		// Since join in copper is not LeftOuter, add a default value for store
-		final Object[] tupleChunkAndStore = FeedVisitor.buildChunkAndStoreTuple(f, stat, IRecordFormat.GLOBAL_DEFAULT_STRING);
-		this.transaction.add(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore);
-
 		visitChildren(stat);
 
 		return null;
@@ -101,7 +96,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 			throw new RuntimeException("Already visited a dictionary: " + this.dictionaryId);
 		}
 
-		final IRecordFormat format = FeedVisitor.getDictionaryFormat(this.storageMetadata);
+		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
