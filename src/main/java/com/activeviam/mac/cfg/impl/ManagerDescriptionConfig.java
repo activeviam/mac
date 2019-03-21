@@ -158,8 +158,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.build();
 	}
 
-	protected static final String TECHNICAL_FOLDER = "Technical";
-
 	private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
 			final ICanStartBuildingDimensions builder) {
 		return builder
@@ -192,12 +190,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withProperty("description", "Date at which statistics were retrieved")
 
 				.withDimension("Owners")
-				.withHierarchyOfSameName()
-				.withLevel("Owner").withPropertyName(DatastoreConstants.CHUNK__OWNER)
-				.withLevel("Component").withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
-				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID).withFormatter(PartitionIdFormatter.KEY)
+				.withHierarchy("Owner")
+					.withLevelOfSameName()
+					.withPropertyName(DatastoreConstants.CHUNK__OWNER)
+				.withHierarchy("Component")
+					.withLevelOfSameName()
+					.withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
+				.withHierarchy("Partition")
+					.withLevelOfSameName()
+					.withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+					.withFormatter(PartitionIdFormatter.KEY)
 
-				.withSingleLevelDimension("Dump").withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
+				.withDimension("Dump")
+				.withHierarchyOfSameName()
+				.slicing()
+				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
 
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
 

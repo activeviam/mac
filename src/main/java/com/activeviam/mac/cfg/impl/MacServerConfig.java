@@ -9,7 +9,7 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
-import com.activeviam.properties.SpringAllPropertyResolverConfig;
+import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
@@ -65,7 +65,7 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Import(
 		value = {
-				SpringAllPropertyResolverConfig.class,
+				ActiveViamPropertyFromSpringConfig.class,
 
 				JwtRestServiceConfig.class,
 				JwtConfig.class,
