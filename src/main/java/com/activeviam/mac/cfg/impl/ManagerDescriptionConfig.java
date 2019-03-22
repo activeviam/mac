@@ -6,13 +6,14 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import static com.activeviam.copper.columns.Columns.count;
+import static com.activeviam.copper.columns.Columns.sum;
+
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
-import com.activeviam.copper.builders.ColumnMapping;
-import com.activeviam.copper.builders.dataset.Datasets;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -24,6 +25,7 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.postprocessor.impl.DirectMemoryOnlyPostProcessor;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
@@ -31,10 +33,14 @@ import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
+import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
+import com.quartetfs.biz.pivot.postprocessing.IPostProcessorConstants;
+import com.quartetfs.biz.pivot.postprocessing.impl.ArithmeticFormulaPostProcessor;
 import com.quartetfs.fwk.format.impl.DateFormatter;
+import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -54,6 +60,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public static final String CHUNK_CLASS_LEVEL = "Class";
 	public static final String CHUNK_TYPE_LEVEL = "Type";
 	public static final String DIRECT_CHUNKS_COUNT = "DirectChunks.COUNT";
+	public static final String HEAP_CHUNKS_COUNT = "HeapChunks.COUNT";
 	public static final String CHUNK_CLASS_FIELD = "ChunkClass";
 	public static final String CHUNKSET_CLASS_FIELD = "ChunkSetClass";
 	public static final String INDEX_CLASS_FIELD = "IndexClass";
@@ -63,6 +70,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public static final String DIRECT_MEMORY_CHUNK_USAGE_SUM = "DirectMemoryChunkUsage.SUM";
 	public static final String CHUNKSET_SIZE_FIELD = "ChunkSetSize";
 	public static final String DICTIONARY_SIZE_FIELD = "DictionarySize";
+
+	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
 
 	/** The datastore schema {@link IDatastoreSchemaDescription description}.  */
 	@Autowired
@@ -295,29 +304,27 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		return builder
 				.withContributorsCount()
 				.withAlias("Chunks.COUNT")
-				.withFormatter("INT[#,###]")
+				.withFormatter(NUMBER_FORMATTER)
 				.withUpdateTimestamp()
 				.withAlias("Timestamp")
 				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]")
 
-//				.withPostProcessor(DIRECT_CHUNKS_COUNT)
-//				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-//				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
-//				.withProperty(
-//						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
-//						CHUNK_CLASS_LEVEL + "@" + CHUNK_HIERARCHY)
-//				.withProperty(
-//						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
-
-				/*.withPostProcessor(DIRECT_MEMORY_CHUNK_USAGE_SUM)
+				.withPostProcessor(DIRECT_CHUNKS_COUNT)
 				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-				.withUnderlyingMeasures(DIRECT_MEMORY_SUM)
+				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
 				.withProperty(
 						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
-						CHUNK_CLASS_LEVEL + "@" + CHUNK_HIERARCHY)
+						CHUNK_CLASS_LEVEL + "@" + CHUNK_CLASS_LEVEL)
 				.withProperty(
 						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
-				.withFormatter(ByteFormatter.KEY)*/;
+				.withFormatter(NUMBER_FORMATTER)
+
+				.withPostProcessor(HEAP_CHUNKS_COUNT)
+					.withPluginKey(ArithmeticFormulaPostProcessor.PLUGIN_KEY)
+					.withProperty(
+							ArithmeticFormulaPostProcessor.FORMULA_PROPERTY,
+							"aggregatedValue[" + IMeasureHierarchy.COUNT_ID  + "],aggregatedValue[" + DIRECT_CHUNKS_COUNT + "],-")
+					.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID, DIRECT_CHUNKS_COUNT);
 	}
 
 	private void copperCalculations(final BuildingContext context) {
@@ -367,16 +374,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		context.withFormatter(ByteFormatter.KEY)
 				.createDatasetFromFacts()
 				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
-						Columns.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
+						sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
+						sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
 				.publish();
 
 		context.withinFolder("Technical ChunkSet")
 				.createDatasetFromFacts()
 				.agg(
-						Columns.sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
-						Columns.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
-						Columns.sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
+						sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
+						sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
+						sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
 				.publish();
 	}
 
@@ -385,10 +392,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		context.createDatasetFromFacts()
 				.join(
 						fieldDataset,
-						ColumnMapping.none()
-								.and(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
+						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-				.agg(Columns.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-of.S"))
+//				.withColumn("StoreName", Columns.col(DatastoreConstants.CHUNK_TO_FIELD__STORE)
+//						.asHierarchy())
+//				.withColumn("FieldName", Columns.col(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
+//						.asHierarchy())
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.sf"))
 				.publish();
 	}
 

@@ -48,15 +48,15 @@ public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProces
 			return; // same measure
 		}
 
+		this.underlyingMeasures = Arrays.copyOf(this.underlyingMeasures, this.underlyingMeasures.length + 1);
+		this.index = this.underlyingMeasures.length - 1;
+		this.underlyingMeasures[index] = underlyingMeasureName;
+
 		this.prefetchers.add(new DynamicAggregationPostProcessorPrefetcher(
 				getActivePivot(),
 				this,
 				getMeasuresProvider(),
-				new String[] { underlyingMeasureName }));
-
-		this.underlyingMeasures = Arrays.copyOf(underlyingMeasures, underlyingMeasures.length + 1);
-		this.index = underlyingMeasures.length - 1;
-		this.underlyingMeasures[index] = underlyingMeasureName;
+				this.underlyingMeasures));
 	}
 
 	@Override
