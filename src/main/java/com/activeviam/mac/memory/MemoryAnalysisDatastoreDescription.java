@@ -101,6 +101,30 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
+	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
+	 */
+	protected IStoreDescription chunkToIndexStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.CHUNK_TO_INDEX_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG).asKeyField()
+				.build();
+	}
+
+	/**
+	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
+	 */
+	protected IStoreDescription chunkToReferenceStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.CHUNK_TO_REF_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_REF__PARENT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_REF__REF_ID, ILiteralType.LONG).asKeyField()
+				.build();
+	}
+
+	/**
 	 * @return description of {@link DatastoreConstants#CHUNKSET_STORE}
 	 */
 	protected IStoreDescription chunkSetStore() {
@@ -237,7 +261,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public Collection<? extends IStoreDescription> getStoreDescriptions() {
 		return Arrays.asList(
 				chunkStore(),
-				chunkToFieldStore(),
 				chunkSetStore(),
 				referenceStore(),
 				indexStore(),
@@ -246,6 +269,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				providerComponentStore(),
 				providerStore(),
 				pivotStore(),
+				chunkToFieldStore(),
+				chunkToIndexStore(),
+				chunkToReferenceStore(),
 				applicationStore());
 	}
 

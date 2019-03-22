@@ -71,6 +71,16 @@ public class DatastoreConstants {
 	public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
 	public static final String CHUNK_TO_FIELD__STORE = "storeName";
 
+	public static final String CHUNK_TO_INDEX_STORE = "ChunkToIndex";
+	public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId";
+	public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_INDEX__INDEX_ID = "indexId";
+
+	public static final String CHUNK_TO_REF_STORE = "ChunkToReference";
+	public static final String CHUNK_TO_REF__PARENT_ID = "parentId";
+	public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_REF__REF_ID = "refId";
+
 	// store and partition info.
 	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;

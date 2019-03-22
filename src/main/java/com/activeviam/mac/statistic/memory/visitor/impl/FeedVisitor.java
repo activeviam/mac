@@ -109,23 +109,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		return tuple;
 	}
 
-	// TODO remove
-	protected static boolean zob(IOpenedTransaction transaction, Object[] t, Object... keys) {
-		List<String> fields = transaction.getMetadata().getStoreMetadata(DatastoreConstants.CHUNK_STORE).getFieldNames();
-		IRecordReader reader = transaction.getQueryRunner()
-				.createGetByKeyQuery(DatastoreConstants.CHUNK_STORE, fields.toArray(new String[0]))
-				.runInTransaction(keys);
-		if (reader != null) {
-			Object[] tt = reader.toTuple();
-			System.out.println("==========");
-			System.out.println(Arrays.toString(t));
-			System.out.println(Arrays.toString(tt));
-			int j = 0;
-			return true;
-		}
-		return false;
-	}
-
 	static Object[] buildDictionaryTupleFrom(
 			final IRecordFormat format,
 			final IMemoryStatistic stat) {

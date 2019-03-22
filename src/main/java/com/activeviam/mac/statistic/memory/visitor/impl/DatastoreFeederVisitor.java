@@ -118,8 +118,9 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 
 			try {
 				stat.accept(this);
-			} finally {
+			} catch (Exception e) {
 				this.printer.print();
+				throw e;
 			}
 		} else {
 			throw new RuntimeException("Cannot reuse a feed instance");
@@ -129,6 +130,8 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
 		recordFieldForStructure(this.directParentType, this.directParentId);
+		recordIndexForStructure(this.directParentType, this.directParentId);
+		recordRefForStructure(this.directParentType, this.directParentId);
 
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -207,7 +210,9 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 				this.rootComponent,
 				this.directParentType,
 				this.directParentId,
-				this.partitionId
+				this.partitionId,
+				this.indexId,
+				this.referenceId
 		).visit(stat);
 	}
 
@@ -294,6 +299,8 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 		this.directParentType = ParentType.DICTIONARY;
 		this.directParentId = String.valueOf(this.dictionaryId);
 		recordFieldForStructure(this.directParentType, this.directParentId);
+		recordIndexForStructure(this.directParentType, this.directParentId);
+		recordRefForStructure(this.directParentType, this.directParentId);
 
 		visitChildren(stat);
 		this.directParentType = previousParentType;
@@ -424,6 +431,14 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 		return tuple;
 	}
 
+	private void recordStructureParent(
+			final ParentType type,
+			final String id) {
+		recordFieldForStructure(type, id);
+		recordIndexForStructure(type, id);
+		recordRefForStructure(type, id);
+	}
+
 	private void recordFieldForStructure(
 			final ParentType type,
 			final String id) {
@@ -436,6 +451,34 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
 
 			this.transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
+		}
+	}
+
+	private void recordIndexForStructure(
+			final ParentType type,
+			final String id) {
+		if (this.indexId != null) {
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_INDEX_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, this.indexId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, id);
+
+			this.transaction.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, tuple);
+		}
+	}
+
+	private void recordRefForStructure(
+			final ParentType type,
+			final String id) {
+		if (this.referenceId != null) {
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_REF_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__REF_ID, this.referenceId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_ID, id);
+
+			this.transaction.add(DatastoreConstants.CHUNK_TO_REF_STORE, tuple);
 		}
 	}
 

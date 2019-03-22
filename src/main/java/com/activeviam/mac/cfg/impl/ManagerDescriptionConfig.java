@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
+import com.activeviam.copper.builders.dataset.Datasets;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -388,17 +389,41 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	private void joinHierarchies(final BuildingContext context) {
+		joinFieldToChunks(context);
+		joinIndexesToChunks(context);
+		joinRefsToChunks(context);
+	}
+
+	private void joinFieldToChunks(BuildingContext context) {
 		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_FIELD_STORE);
 		context.createDatasetFromFacts()
 				.join(
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-//				.withColumn("StoreName", Columns.col(DatastoreConstants.CHUNK_TO_FIELD__STORE)
-//						.asHierarchy())
-//				.withColumn("FieldName", Columns.col(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
-//						.asHierarchy())
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.sf"))
+				.publish();
+	}
+
+	private void joinRefsToChunks(BuildingContext context) {
+		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_REF_STORE);
+		context.createDatasetFromFacts()
+				.join(
+						fieldDataset,
+						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
+								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.ref"))
+				.publish();
+	}
+
+	private void joinIndexesToChunks(BuildingContext context) {
+		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE);
+		context.createDatasetFromFacts()
+				.join(
+						fieldDataset,
+						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
+								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.idx"))
 				.publish();
 	}
 

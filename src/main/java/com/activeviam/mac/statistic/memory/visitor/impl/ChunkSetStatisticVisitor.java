@@ -51,6 +51,9 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 	protected Integer freeRows;
 	protected Integer nonWrittenRows;
 
+	private final Long referenceId;
+	private final Long indexId;
+
 	public ChunkSetStatisticVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction transaction,
@@ -60,7 +63,9 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 			final ParentType rootComponent,
 			final ParentType parentType,
 			final String parentId,
-			final int partitionId) {
+			final int partitionId,
+			final Long indexId,
+			final Long referenceId) {
 		super(transaction, storageMetadata, dumpName);
 		this.current = current;
 		this.store = store;
@@ -68,6 +73,8 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 		this.directParentType = parentType;
 		this.directParentId = parentId;
 		this.partitionId = partitionId;
+		this.indexId = indexId;
+		this.referenceId = referenceId;
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
 				.getStoreFormat()
@@ -136,6 +143,9 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
+		recordIndexForStructure(this.directParentType, this.directParentId);
+		recordRefForStructure(this.directParentType, this.directParentId);
+
 		final String previousField = this.field;
 		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
 			final IStatisticAttribute fieldAttribute = chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
@@ -202,6 +212,7 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 	private void recordFieldForStructure(
 			final ParentType type,
 			final String id) {
+		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
 		if (this.store != null && this.field != null) {
 			final IRecordFormat format = this.chunkToFieldFormat;
 			final Object[] tuple = new Object[format.getFieldCount()];
@@ -213,4 +224,35 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 			this.transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
 		}
 	}
+
+	private void recordIndexForStructure(
+			final ParentType type,
+			final String id) {
+		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
+		if (this.indexId != null) {
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_INDEX_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, this.indexId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, id);
+
+			this.transaction.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, tuple);
+		}
+	}
+
+	private void recordRefForStructure(
+			final ParentType type,
+			final String id) {
+		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
+		if (this.referenceId != null) {
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_REF_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__REF_ID, this.referenceId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_ID, id);
+
+			this.transaction.add(DatastoreConstants.CHUNK_TO_REF_STORE, tuple);
+		}
+	}
+
 }
