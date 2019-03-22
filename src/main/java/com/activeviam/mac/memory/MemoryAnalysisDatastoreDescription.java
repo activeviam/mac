@@ -64,8 +64,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				// key
 				.withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING).asKeyField()
-				/* Foreign keys */
 
+				/* Foreign keys */
 				.withField(DatastoreConstants.CHUNK__OWNER).dictionarized()
 				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT).dictionarized()
 				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
@@ -73,7 +73,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
 
 				.withField(DatastoreConstants.CHUNK__PROVIDER_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-//				.withField(DatastoreConstants.CHUNK__FIELD)
+				.withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)
+
 				.withField(DatastoreConstants.CHUNK__CLASS)
 				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
@@ -187,15 +188,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.DICTIONARY_CLASS)
 				.build();
 	}
-
-//	protected IStoreDescription storeFieldStore() {
-//		return StartBuilding.store().withStoreName(DatastoreConstants.STORE_FIELD_STORE)
-//				// TODO(ope) generate an id for the datastore
-//				.withField(DatastoreConstants.STORE_FIELD__STORE_NAME).asKeyField()
-//				.withField(DatastoreConstants.STORE_FIELD__FIELD).asKeyField()
-//				.withField(DatastoreConstants.STORE_FIELD__DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
-//				.build();
-//	}
 
 	protected IStoreDescription levelStore() {
 		return StartBuilding.store().withStoreName(DatastoreConstants.LEVEL_STORE)
@@ -337,12 +329,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 //						.withName(CHUNK_TO_DICS)
 //						.withMapping(DatastoreConstants.DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
 //						.build(),
-//				StartBuilding.reference()
-//						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-//						.withName(CHUNK_TO_PROVIDER)
-//						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-//						.withMapping(DatastoreConstants.CHUNK__PARENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-//						.build(),
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+						.withName(CHUNK_TO_PROVIDER)
+						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
+						.withMapping(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+						.build(),
 				StartBuilding.reference()
 						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.APPLICATION_STORE)
 						.withName(CHUNK_TO_APP)

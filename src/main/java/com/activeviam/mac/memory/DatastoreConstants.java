@@ -82,9 +82,9 @@ public class DatastoreConstants {
 	public static final String CHUNK_TO_REF__REF_ID = "refId";
 
 	// store and partition info.
-	public static final String CHUNK__STORE_NAME = MemoryStatisticConstants.ATTR_NAME_STORE_NAME;
 	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 	public static final String CHUNK__PROVIDER_ID = PROVIDER__PROVIDER_ID;
+	public static final String CHUNK__PROVIDER_COMPONENT_TYPE = "providerCpnType";
 
 	// ## CHUNK_STORE ## Field names of the chunk store
 	public static final String CHUNK__CLASS = "class";

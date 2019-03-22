@@ -119,10 +119,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				() -> "No dictionary ID for " + stat);
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
 
-//		final IStatisticAttribute fieldNamesAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
-//		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.FIELDS)] = new StringArrayObject(
-//				fieldNamesAttr.asStringArray());
-
 		final IStatisticAttribute dicClassAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
 		final String dictionaryClass;
 		if (dicClassAttr != null) {

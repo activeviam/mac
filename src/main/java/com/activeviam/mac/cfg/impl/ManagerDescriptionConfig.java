@@ -227,6 +227,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withHierarchyOfSameName()
 				.slicing()
 				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
+				.withComparator(ReverseOrderComparator.type)
+
+				.withDimension("Pivot")
+				.withHierarchy("Manager").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
+				.withHierarchy("Pivot").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
+				.withHierarchy("ProviderType").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+//				.withHierarchy("ProviderClass").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
+				.withHierarchy("ProviderPartition").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+				.withHierarchy("ProviderId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
 				.withDimension("BlackMagic")
 				.withHierarchy("ParentId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
@@ -301,11 +310,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 //				.withFormatter(ClassFormatter.KEY)
 //				.withLevel("Order").withPropertyName(DatastoreConstants.DICTIONARY_ORDER)
 //				.withLevel("Size").withPropertyName(DICTIONARY_SIZE_FIELD)
-//
-//				.withDimension("Dump name")
-//				.withHierarchyOfSameName().slicing()
-//				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-//				.withComparator(ReverseOrderComparator.type)
 				;
 	}
 

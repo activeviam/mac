@@ -75,6 +75,7 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 		this.partitionId = partitionId;
 		this.indexId = indexId;
 		this.referenceId = referenceId;
+
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
 				.getStoreFormat()
