@@ -6,7 +6,9 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import static com.activeviam.copper.columns.Columns.col;
 import static com.activeviam.copper.columns.Columns.count;
+import static com.activeviam.copper.columns.Columns.customAgg;
 import static com.activeviam.copper.columns.Columns.sum;
 
 import java.util.Map;
@@ -27,6 +29,7 @@ import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.postprocessor.impl.DirectMemoryOnlyPostProcessor;
+import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
@@ -71,6 +74,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public static final String DIRECT_MEMORY_CHUNK_USAGE_SUM = "DirectMemoryChunkUsage.SUM";
 	public static final String CHUNKSET_SIZE_FIELD = "ChunkSetSize";
 	public static final String DICTIONARY_SIZE_FIELD = "DictionarySize";
+
+	public static final String USED_HEAP = "UsedHeapMemory";
+	public static final String COMMITTED_HEAP = "CommittedHeapMemory";
+	public static final String USED_DIRECT = "UsedDirectMemory";
+	public static final String MAX_DIRECT = "MaxDirectMemory";
 
 	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
 
@@ -330,6 +338,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 	private void copperCalculations(final BuildingContext context) {
 		basicMeasures(context);
+		applicationMeasure(context);
 		joinHierarchies(context);
 
 //		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
@@ -377,6 +386,25 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.agg(
 						sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
 						sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
+				.publish();
+
+		context.withinFolder("Technical ChunkSet")
+				.createDatasetFromFacts()
+				.agg(
+						sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
+						sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
+						sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
+				.publish();
+	}
+
+	private void applicationMeasure(final BuildingContext context) {
+		context.withFormatter(ByteFormatter.KEY)
+				.createDatasetFromFacts()
+				.agg(
+						customAgg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY).as(USED_HEAP),
+						customAgg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY).as(COMMITTED_HEAP),
+						customAgg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY).as(USED_DIRECT),
+						customAgg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY).as(MAX_DIRECT))
 				.publish();
 
 		context.withinFolder("Technical ChunkSet")
