@@ -36,7 +36,6 @@ public class DatastoreConstants {
 	public static final String DATE_PATTERN = MemoryStatisticConstants.DATE_PATTERN;
 
 	// Ids of different stores used as key.
-//	public static final String EPOCH_ID = MemoryStatisticConstants.ATTR_NAME_EPOCH;
 	public static final String CHUNK_ID = MemoryStatisticConstants.ATTR_NAME_CHUNK_ID;
 	public static final String REFERENCE_ID = "referenceId";
 	public static final String INDEX_ID = "indexId";
@@ -92,7 +91,6 @@ public class DatastoreConstants {
 	public static final String REFERENCE_TO_STORE = MemoryStatisticConstants.ATTR_NAME_TO_STORE;
 	public static final String REFERENCE_TO_STORE_PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_TO_STORE_PARTITION_ID;
 	public static final String REFERENCE_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
-	public static final String REFERENCE__FIELDS = "fields";
 
 	// ## INDEX_STORE ## Field names of the Index store
 	public static final String INDEX_TYPE = "type";

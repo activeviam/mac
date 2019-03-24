@@ -141,7 +141,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				/* Attributes */
 				.withField(DatastoreConstants.REFERENCE_NAME)
 				.withField(DatastoreConstants.REFERENCE_CLASS)
-//				.withField(DatastoreConstants.REFERENCE__FIELDS, ILiteralType.OBJECT, StringArrayObject.DEFAULT_VALUE)
 				.build();
 	}
 
