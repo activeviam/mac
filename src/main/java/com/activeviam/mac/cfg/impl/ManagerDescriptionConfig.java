@@ -35,6 +35,7 @@ import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
+import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
@@ -200,9 +201,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withFormatter(ClassFormatter.KEY)
 				.withProperty("description", "Class of the chunks")
 
-				.withHierarchy("ChunkId")
-				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK_ID)
-
 //				.withDimension("Store")
 //				.withHierarchyOfSameName()
 //				.withLevel("StoreName").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
@@ -242,77 +240,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				.withDimension(BLACK_MAGIC_HIERARCHY)
 				.withHierarchy("ParentId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
-
-//				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
-
-				// FROM ChunkSet store
-//				.withSingleLevelDimension("ChunkSetType").withPropertyName(DatastoreConstants.CHUNKSET__TYPE)
-
-				// FROM ReferenceStore
-//				.withSingleLevelDimension(DatastoreConstants.REFERENCE_NAME)
-
-				// FROM IndexStore
-//				.withSingleLevelDimension(prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
-//				.withSingleLevelDimension(DatastoreConstants.INDEX__FIELDS)
-
-				// FROM ProviderComponentsStore
-//				.withSingleLevelDimension(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-
-				// FROM ProviderStore
-				/*.withSingleLevelDimension(DatastoreConstants.PROVIDER__PIVOT_ID)
-				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__INDEX))
-				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__TYPE))
-				.withSingleLevelDimension(prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))*/
-
-				/*.withDimension("Tech")
-
-				// FROM ChunkStore
-				.withSingleLevelHierarchy(DatastoreConstants.CHUNKSET_ID)
-				.withSingleLevelHierarchy(DatastoreConstants.REFERENCE_ID)
-				.withSingleLevelHierarchy(DatastoreConstants.INDEX_ID)
-				.withSingleLevelHierarchy(DatastoreConstants.DICTIONARY_ID)
-				.withSingleLevelHierarchy(DatastoreConstants.CHUNK__PROVIDER_ID)
-				// FROM ProviderComponentsStore
-				.withSingleLevelHierarchy(prefixField(DatastoreConstants.PROVIDER_COMPONENT_STORE, DatastoreConstants.PROVIDER_COMPONENT__CLASS))
-				// FROM IndexStore
-				.withSingleLevelHierarchy(prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_CLASS))
-				// FROM ReferenceStore
-				.withSingleLevelHierarchy(prefixField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_CLASS))
-				// FROM ChunkSet store
-				.withSingleLevelHierarchy(prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))*/
-
-//				.withDimension("Store")
-//				.withHierarchyOfSameName()
-//				.withLevel("Store").withPropertyName(DatastoreConstants.CHUNK__STORE_NAME)
-//				.withLevel("Partition").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-//
-//				.withDimension("Chunk Set")
-//				.withHierarchyOfSameName()
-//				.withLevel("Class").withPropertyName(CHUNKSET_CLASS_FIELD)
-//				.withFormatter(ClassFormatter.KEY)
-//				.withLevel("Id").withPropertyName(DatastoreConstants.CHUNKSET_ID)
-//
-//				.withSingleLevelDimension("Fields").withPropertyName(DatastoreConstants.FIELDS)
-//
-//				.withDimension("References and Indices")
-//				.withHierarchy("References")
-//				.withLevel("Name").withPropertyName(DatastoreConstants.REFERENCE_NAME)
-//				.withHierarchy("Indices")
-//				.withLevel("Type").withPropertyName(INDEX_CLASS_FIELD)
-//				.withFormatter(IndexFormatter.KEY)
-//				.withComparator(CustomComparator.type)
-//				.withFirstObjects(
-//						"com.qfs.store.impl.MultiVersionCompositePrimaryRecordIndex",
-//						"com.qfs.store.impl.MultiVersionCompositeSecondaryRecordIndex",
-//						"com.qfs.store.impl.MultiVersionPrimaryRecordIndex",
-//						"com.qfs.store.impl.MultiVersionSecondaryRecordIndex")
-//
-//				.withDimension("Dictionary")
-//				.withHierarchyOfSameName()
-//				.withLevel("Class").withPropertyName(DICTIONARY_CLASS_FIELD)
-//				.withFormatter(ClassFormatter.KEY)
-//				.withLevel("Order").withPropertyName(DatastoreConstants.DICTIONARY_ORDER)
-//				.withLevel("Size").withPropertyName(DICTIONARY_SIZE_FIELD)
+				.withHierarchy("ChunkId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK_ID)
 				;
 	}
 
@@ -323,68 +251,30 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withFormatter(NUMBER_FORMATTER)
 				.withUpdateTimestamp()
 				.withAlias("Timestamp")
-				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]")
+				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
 
-				.withPostProcessor(DIRECT_CHUNKS_COUNT)
-				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
-				.withProperty(
-						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
-						CHUNK_CLASS_LEVEL + "@" + CHUNK_CLASS_LEVEL)
-				.withProperty(
-						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
-				.withFormatter(NUMBER_FORMATTER)
-
-				.withPostProcessor(HEAP_CHUNKS_COUNT)
-					.withPluginKey(ArithmeticFormulaPostProcessor.PLUGIN_KEY)
-					.withProperty(
-							ArithmeticFormulaPostProcessor.FORMULA_PROPERTY,
-							"aggregatedValue[" + IMeasureHierarchy.COUNT_ID  + "],aggregatedValue[" + DIRECT_CHUNKS_COUNT + "],-")
-					.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID, DIRECT_CHUNKS_COUNT);
+//				.withPostProcessor(DIRECT_CHUNKS_COUNT)
+//				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
+//				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
+//				.withProperty(
+//						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
+//						CHUNK_CLASS_LEVEL + "@" + CHUNK_CLASS_LEVEL)
+//				.withProperty(
+//						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
+//				.withFormatter(NUMBER_FORMATTER)
+//
+//				.withPostProcessor(HEAP_CHUNKS_COUNT)
+//					.withPluginKey(ArithmeticFormulaPostProcessor.PLUGIN_KEY)
+//					.withProperty(
+//							ArithmeticFormulaPostProcessor.FORMULA_PROPERTY,
+//							"aggregatedValue[" + IMeasureHierarchy.COUNT_ID  + "],aggregatedValue[" + DIRECT_CHUNKS_COUNT + "],-")
+//					.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID, DIRECT_CHUNKS_COUNT);
 	}
 
 	private void copperCalculations(final BuildingContext context) {
 		basicMeasures(context);
 		applicationMeasure(context);
 		joinHierarchies(context);
-
-//		StoreDataset datasetFromStore = context.createDatasetFromStore(DatastoreConstants.CHUNK_AND_STORE__STORE_NAME);
-//		context.createDatasetFromFacts()
-//				.join(datasetFromStore, Columns.mapping(DatastoreConstants.CHUNK_ID).to(DatastoreConstants.CHUNK_AND_STORE__CHUNK_ID))
-//				.withColumn(DatastoreConstants.CHUNK_AND_STORE__STORE, Columns.col(DatastoreConstants.CHUNK_AND_STORE__STORE)
-//						.asHierarchy()
-//						.withLastObjects(IRecordFormat.GLOBAL_DEFAULT_STRING))
-//				.publish();
-
-//		buildingContext.createDatasetFromFacts()
-//				.groupBy(Columns.col(CHUNK_CLASS_FIELD))
-//				.agg(
-////						Columns.count(),
-//						Columns.sum(DIRECT_MEMORY_SUM).as("m"))
-//				.withColumn(
-//						DIRECT_CHUNKS_COUNT,
-//						Columns.combine(Columns.col("m"), Columns.count())
-//								.map(values -> {
-//									final Object memory = values.read(0);
-//									final Object count = values.read(1);
-//									return memory != null ? count : 0;
-//								}))
-//				.agg(Columns.sum(DIRECT_CHUNKS_COUNT).as(DIRECT_CHUNKS_COUNT))
-//				.publish();
-
-//		context.createDatasetFromFacts()
-//				.groupBy(Columns.col(CHUNK_CLASS_FIELD))
-//				.agg(Columns.sum(DIRECT_MEMORY_SUM).as("c"))
-//				.agg(Columns.sum("c").as(DIRECT_MEMORY_CHUNK_USAGE_SUM))
-//				.publish();
-//
-//		context.createDatasetFromFacts()
-//				.withColumn(
-//						"c",
-//						Columns.col(DIRECT_MEMORY_CHUNK_USAGE_SUM)
-//							.plus(Columns.col(HEAP_MEMORY_CHUNK_USAGE_SUM)).as("cc"))
-//				.agg(Columns.sum("c").as("TotalMemoryUsage.SUM"))
-//				.publish();
 	}
 
 	private void basicMeasures(final BuildingContext context) {
@@ -393,6 +283,28 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.agg(
 						sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as(DIRECT_MEMORY_SUM),
 						sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
+				.publish();
+
+		context.withFormatter(NUMBER_FORMATTER)
+				.createDatasetFromFacts()
+				.groupBy(DatastoreConstants.CHUNK_ID)
+				.agg(
+					Columns.count(DatastoreConstants.CHUNK_ID).as("cc"),
+					sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("ofh"))
+				.withColumn(
+						DIRECT_CHUNKS_COUNT,
+						Columns.combine(col("cc"), col("ofh"))
+								.map(reader -> {
+									final long ofh = reader.readLong(1);
+									return ofh > 0 ? reader.read(0) : 0L;
+								})
+								.cast(Types.TYPE_LONG))
+				.withColumn(
+						HEAP_CHUNKS_COUNT,
+						col("cc").minus(col(DIRECT_CHUNKS_COUNT)))
+				.agg(
+						sum(DIRECT_CHUNKS_COUNT).as(DIRECT_CHUNKS_COUNT),
+						sum(HEAP_CHUNKS_COUNT).as(HEAP_CHUNKS_COUNT))
 				.publish();
 
 		context.withinFolder("Technical Chunk")
@@ -413,14 +325,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						customAgg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY).as(COMMITTED_HEAP),
 						customAgg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY).as(USED_DIRECT),
 						customAgg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY).as(MAX_DIRECT))
-				.publish();
-
-		context.withinFolder("Technical ChunkSet")
-				.createDatasetFromFacts()
-				.agg(
-						sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
-						sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
-						sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
 				.publish();
 	}
 
