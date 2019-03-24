@@ -6,6 +6,11 @@
  */
 package com.activeviam.mac.memory;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.activeviam.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IReferenceDescription;
@@ -16,11 +21,6 @@ import com.qfs.literal.ILiteralType;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Contains all stores used to analyze a memory analysis dump.
@@ -196,13 +196,23 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.LEVEL__DIMENSION).asKeyField()
 				.withField(DatastoreConstants.LEVEL__HIERARCHY).asKeyField()
 				.withField(DatastoreConstants.LEVEL__LEVEL).asKeyField()
-				/* Foreign keys */
-				.withField(DatastoreConstants.LEVEL__DICTIONARY_ID, ILiteralType.LONG, DatastoreConstants.LONG_IF_NOT_EXIST)
 				/* Attributes */
 				.withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.LEVEL__OFF_HEAP_SIZE, ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
 				.withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
 				// TODO(ope) this is a base unit, introduce some versioning with the dump
+				.build();
+	}
+
+	protected IStoreDescription chunkTolevelStore() {
+		return StartBuilding.store().withStoreName(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
 				.build();
 	}
 
@@ -264,6 +274,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				chunkToFieldStore(),
 				chunkToIndexStore(),
 				chunkToReferenceStore(),
+				chunkTolevelStore(),
 				applicationStore());
 	}
 
@@ -282,9 +293,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 								.build(),
 						// Level refs
 						StartBuilding.reference()
-								.fromStore(DatastoreConstants.LEVEL_STORE).toStore(DatastoreConstants.DICTIONARY_STORE)
-								.withName("LevelToDic")
-								.withMapping(DatastoreConstants.LEVEL__DICTIONARY_ID, DatastoreConstants.DICTIONARY_ID)
+								.fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE).toStore(DatastoreConstants.LEVEL_STORE)
+								.withName("LevelInfo")
+								.withMapping(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, DatastoreConstants.LEVEL__MANAGER_ID)
+								.withMapping(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, DatastoreConstants.LEVEL__PIVOT_ID)
+								.withMapping(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION, DatastoreConstants.LEVEL__DIMENSION)
+								.withMapping(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY, DatastoreConstants.LEVEL__HIERARCHY)
+								.withMapping(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
 								.build(),
 						// Provider component refs
 						StartBuilding.reference()

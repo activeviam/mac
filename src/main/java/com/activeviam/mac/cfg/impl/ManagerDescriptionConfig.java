@@ -80,6 +80,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public static final String USED_DIRECT = "UsedDirectMemory";
 	public static final String MAX_DIRECT = "MaxDirectMemory";
 
+	public static final String BLACK_MAGIC_FOLDER = "BlackMagic";
+	public static final String BLACK_MAGIC_HIERARCHY = "BlackMagic";
+
 	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
 
 	/** The datastore schema {@link IDatastoreSchemaDescription description}.  */
@@ -237,7 +240,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withHierarchy("ProviderPartition").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 				.withHierarchy("ProviderId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
-				.withDimension("BlackMagic")
+				.withDimension(BLACK_MAGIC_HIERARCHY)
 				.withHierarchy("ParentId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
 
 //				.withSingleLevelDimension(DatastoreConstants.CHUNK__FIELD).withLastObjects(IRecordFormat.GLOBAL_DEFAULT_OBJECT)
@@ -392,7 +395,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
 				.publish();
 
-		context.withinFolder("Technical ChunkSet")
+		context.withinFolder("Technical Chunk")
+				.withFormatter(NUMBER_FORMATTER)
 				.createDatasetFromFacts()
 				.agg(
 						sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
@@ -424,6 +428,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		joinFieldToChunks(context);
 		joinIndexesToChunks(context);
 		joinRefsToChunks(context);
+		joinLevelsToChunks(context);
 	}
 
 	private void joinFieldToChunks(BuildingContext context) {
@@ -433,7 +438,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.sf"))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.sf").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
 
@@ -444,7 +449,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE))
-				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.ref"))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.ref").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
 
@@ -455,7 +460,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE))
-				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.idx"))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.idx").withinFolder(BLACK_MAGIC_FOLDER))
+				.publish();
+	}
+
+	private void joinLevelsToChunks(BuildingContext context) {
+		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE);
+		context.createDatasetFromFacts()
+				.join(
+						fieldDataset,
+						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
+								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE))
+				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.lvl").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
 

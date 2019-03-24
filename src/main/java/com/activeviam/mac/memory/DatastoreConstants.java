@@ -135,6 +135,15 @@ public class DatastoreConstants {
 	public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
 	public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
+	public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
+	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
+	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId";
+	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
+	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
+	public static final String CHUNK_TO_LEVEL__LEVEL = "level";
+	public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId";
+	public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType";
+
 	public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 	public static final String PROVIDER_COMPONENT__CLASS = "class";
 	public static final String PROVIDER_COMPONENT__TYPE = "providerComponentType";

@@ -66,6 +66,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic stat) {
+		recordLevelForStructure(this.directParentType, this.directParentId);
+
 		final IRecordFormat format = getChunkFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -143,6 +145,23 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 			visitChildren(stat);
 		}
 		return null;
+	}
+
+	private void recordLevelForStructure(
+			final ParentType type,
+			final String id) {
+		final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_LEVEL_STORE);
+		final Object[] tuple = new Object[format.getFieldCount()];
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, this.parent.manager);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, this.parent.pivot);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION, this.parent.dimension);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY, this.parent.hierarchy);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, this.parent.level);
+
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, type);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID, id);
+
+		this.transaction.add(DatastoreConstants.CHUNK_TO_LEVEL_STORE, tuple);
 	}
 
 }

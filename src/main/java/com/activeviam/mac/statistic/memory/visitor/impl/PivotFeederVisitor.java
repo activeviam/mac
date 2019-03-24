@@ -332,9 +332,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		// Maybe instead explicitly visit specific children: Dico, Members
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MEMBER_COUNT, levelVisitor.memberCount);
-		if (!this.hierarchy.equals(IMeasureHierarchy.MEASURE_HIERARCHY) && !this.level.equals(ILevelInfo.ClassificationType.ALL.name())) {
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DICTIONARY_ID, levelVisitor.dictionaryId);
-		}
+//		if (!this.hierarchy.equals(IMeasureHierarchy.MEASURE_HIERARCHY) && !this.level.equals(ILevelInfo.ClassificationType.ALL.name())) {
+//			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DICTIONARY_ID, levelVisitor.dictionaryId);
+//		}
 
 		this.transaction.add(DatastoreConstants.LEVEL_STORE, tuple);
 
