@@ -6,9 +6,16 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.logging.Logger;
+
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -21,34 +28,10 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.IRecordSet;
 import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.logging.Logger;
-
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
-
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
-
-	/** Type name if the memory usage comes from an {@link IRecordSet} */
-	public static final String TYPE_RECORD = "Record";
-	/** Type name if the memory usage comes from references */
-	public static final String TYPE_REFERENCE = "Reference";
-	/** Type name if the memory usage comes from indexes */
-	public static final String TYPE_INDEX = "Index";
-	/** Type name if the memory usage comes from dictionaries */
-	public static final String TYPE_DICTIONARY = "Dictionary";
-	/** Type name if the memory usage comes from the version chunks */
-	public static final String TYPE_VERSION_COLUMN = "VersionColumn";
 
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.LOADING);
@@ -56,12 +39,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	private final IDatastoreSchemaMetadata storageMetadata;
 	private final IOpenedTransaction transaction;
 	private final String dumpName;
-
-	/** The export date, found on the first statistics we read */
-	protected Instant current = null;
-	/** The epoch id we are currently reading statistics for */
-	protected Long epochId = null;
-	protected String branch = null;
 
 	public FeedVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
@@ -72,19 +49,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		this.dumpName = dumpName;
 	}
 
-	protected static Map<Long, IMemoryStatistic> cache = new HashMap<>();
-
 	protected static void add(IMemoryStatistic statistic, IOpenedTransaction transaction, String store, Object... tuple) {
-		if (statistic instanceof ChunkStatistic) {
-			IMemoryStatistic old = cache.put(((ChunkStatistic) statistic).getChunkId(), statistic);
-			if (old != null) {
-//				System.out.println("Old");
-//				System.out.println(StatisticTreePrinter.getTreeAsString(old));
-//				System.out.println("New");
-//				System.out.println(StatisticTreePrinter.getTreeAsString(statistic));
-//				int i = 0;
-			}
-		}
 		transaction.add(store, tuple);
 	}
 
@@ -131,24 +96,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
-
-		return tuple;
-	}
-
-	static Object[] buildChunksetTupleFrom(
-			final IRecordFormat format,
-			final ChunkSetStatistic stat) {
-		final Object[] tuple = new Object[format.getFieldCount()];
-
-		IStatisticAttribute chunkSetIdAttr = Objects.requireNonNull(
-				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID),
-				() -> "No id in this chunkset statistic: " + stat);
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)] = chunkSetIdAttr.asLong();
-
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_CLASS)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS).asText();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)] = 0;
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)] = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
 
 		return tuple;
 	}
@@ -240,23 +187,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		} else {
 			throw new RuntimeException("Missing memory properties in " + stat.getName() + ": " + stat.getAttributes());
 		}
-	}
-
-	static void recordFieldForStructure(
-			final IOpenedTransaction transaction,
-			final IRecordFormat format,
-			final MemoryAnalysisDatastoreDescription.ParentType type,
-			final String id,
-			final String store,
-			final String field) {
-
-		final Object[] tuple = new Object[format.getFieldCount()];
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, field);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, store);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, type);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
-
-		transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
 	}
 
 	static IRecordFormat getRecordFormat(

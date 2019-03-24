@@ -45,6 +45,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 	public enum ParentType {
 		RECORDS,
+		VECTOR_BLOCK,
 		DICTIONARY,
 		REFERENCE,
 		INDEX,
@@ -123,23 +124,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
 				.withField(DatastoreConstants.CHUNK_TO_REF__REF_ID, ILiteralType.LONG).asKeyField()
 				.build();
-	}
-
-	/**
-	 * @return description of {@link DatastoreConstants#CHUNKSET_STORE}
-	 */
-	protected IStoreDescription chunkSetStore() {
-		return new StoreDescriptionBuilder()
-				.withStoreName(DatastoreConstants.CHUNKSET_STORE)
-				.withField(DatastoreConstants.CHUNKSET_ID, ILiteralType.LONG).asKeyField()
-				/* Attributes */
-				.withField(DatastoreConstants.CHUNK_SET_CLASS)
-				.withField(DatastoreConstants.CHUNKSET__TYPE)
-				.withField(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNK_SET_FREE_ROWS, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNKSET__FREED_ROWS, ILiteralType.INT)
-				.build();
-
 	}
 
 	/**
@@ -263,7 +247,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public Collection<? extends IStoreDescription> getStoreDescriptions() {
 		return Arrays.asList(
 				chunkStore(),
-				chunkSetStore(),
 				referenceStore(),
 				indexStore(),
 				dictionaryStore(),

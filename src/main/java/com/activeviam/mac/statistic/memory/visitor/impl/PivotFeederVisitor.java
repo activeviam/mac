@@ -145,12 +145,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkSetStatistic stat) {
-		final IRecordFormat format = getChunksetFormat(this.storageMetadata);
-		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, stat);
-
-		this.transaction.add(DatastoreConstants.CHUNKSET_STORE, tuple);
-
-		this.chunkSetId = (Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)];
+		this.chunkSetId = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 		visitChildren(stat);
 		this.chunkSetId = null;
 

@@ -118,20 +118,15 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(final ChunkSetStatistic chunkSetStatistic) {
+	public Void visit(final ChunkSetStatistic statistic) {
 		recordFieldForStructure(this.directParentType, this.directParentId);
 
-		final IRecordFormat format = getChunksetFormat(this.storageMetadata);
-		final Object[] tuple = FeedVisitor.buildChunksetTupleFrom(format, chunkSetStatistic);
-		this.chunkSize = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_PHYSICAL_CHUNK_SIZE)];
-		this.freeRows = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET__FREED_ROWS)];
-		this.nonWrittenRows = (Integer) tuple[format.getFieldIndex(DatastoreConstants.CHUNK_SET_FREE_ROWS)];
+		this.chunkSize = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
+		this.freeRows = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
+		this.nonWrittenRows = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_NOT_WRITTEN_ROWS).asInt();
+		this.chunkSetId = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 
-		FeedVisitor.add(chunkSetStatistic, this.transaction, DatastoreConstants.CHUNKSET_STORE, tuple);
-
-		this.chunkSetId = (Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNKSET_ID)];
-
-		FeedVisitor.visitChildren(this, chunkSetStatistic);
+		FeedVisitor.visitChildren(this, statistic);
 
 		// Reset
 		this.chunkSetId = null;
@@ -155,6 +150,8 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 			recordFieldForStructure(this.directParentType, this.directParentId);
 		} else if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
 			this.visitingVectorBlock = true;
+			// TODO(ope) Somehow invert the logic for to be able to assign a vector to its parent block
+			// Currently, vectors are first discovered as part of a ChunkObject and then the vector block is visited
 		}
 
 		final IRecordFormat format = this.chunkRecordFormat;
@@ -170,14 +167,16 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
 		// Complete chunk info regarding size and usage if not defined by a parent
-		if (this.chunkSize != null) {
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSetId);
-		}
-		if (this.freeRows != null) {
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, this.freeRows);
-		}
-		if (this.nonWrittenRows != null) {
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, this.nonWrittenRows);
+		if (!this.visitingVectorBlock) {
+			if (this.chunkSize != null) {
+				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSetId);
+			}
+			if (this.freeRows != null) {
+				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, this.freeRows);
+			}
+			if (this.nonWrittenRows != null) {
+				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, this.nonWrittenRows);
+			}
 		}
 
 		// Debug
