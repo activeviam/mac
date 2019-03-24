@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
-import com.activeviam.copper.builders.dataset.Datasets;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -28,7 +27,7 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.postprocessor.impl.DirectMemoryOnlyPostProcessor;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
@@ -38,12 +37,9 @@ import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
-import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.postprocessing.IPostProcessorConstants;
-import com.quartetfs.biz.pivot.postprocessing.impl.ArithmeticFormulaPostProcessor;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
@@ -85,6 +81,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public static final String BLACK_MAGIC_HIERARCHY = "BlackMagic";
 
 	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
+	public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+	public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
+	public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
+	public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
 
 	/** The datastore schema {@link IDatastoreSchemaDescription description}.  */
 	@Autowired
@@ -272,12 +272,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	private void copperCalculations(final BuildingContext context) {
-		basicMeasures(context);
+		memoryMeasures(context);
+		chunkMeasures(context);
 		applicationMeasure(context);
 		joinHierarchies(context);
 	}
 
-	private void basicMeasures(final BuildingContext context) {
+	private void memoryMeasures(final BuildingContext context) {
 		context.withFormatter(ByteFormatter.KEY)
 				.createDatasetFromFacts()
 				.agg(
@@ -285,6 +286,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE).as(HEAP_MEMORY_SUM))
 				.publish();
 
+		// TODO(ope) may need to optimize this as we don't need to go to chunkId to just get the count
+		// FIXME(ope) this is not working
+		context.withFormatter(NUMBER_FORMATTER)
+				.createDatasetFromFacts()
+				.filter(
+						col(DatastoreConstants.CHUNK__OWNER).equalTo(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
+								.or(col(DatastoreConstants.CHUNK__COMPONENT).equalTo(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
+								.or(col(DatastoreConstants.CHUNK__PARTITION_ID).equalTo(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS)))
+				.agg(
+						Columns.count(DatastoreConstants.CHUNK_ID).as("Shared.COUNT"))
+				.publish();
+	}
+
+	private void chunkMeasures(final BuildingContext context) {
 		context.withFormatter(NUMBER_FORMATTER)
 				.createDatasetFromFacts()
 				.groupBy(DatastoreConstants.CHUNK_ID)
@@ -307,13 +322,23 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						sum(HEAP_CHUNKS_COUNT).as(HEAP_CHUNKS_COUNT))
 				.publish();
 
-		context.withinFolder("Technical Chunk")
-				.withFormatter(NUMBER_FORMATTER)
+		context.withinFolder("Chunks")
 				.createDatasetFromFacts()
+				.withColumn(CHUNK_SIZE_SUM, sum(DatastoreConstants.CHUNK__SIZE))
+				.withColumn(NON_WRITTEN_ROWS_COUNT, sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS))
+				.withColumn(DELETED_ROWS_COUNT, sum(DatastoreConstants.CHUNK__FREE_ROWS))
 				.agg(
-						sum(DatastoreConstants.CHUNK__SIZE).as("ChunkSize.SUM"),
-						sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS).as("NonWrittenRows.COUNT"),
-						sum(DatastoreConstants.CHUNK__FREE_ROWS).as("DeletedRows.COUNT"))
+						sum(CHUNK_SIZE_SUM).withFormatter(NUMBER_FORMATTER).as(CHUNK_SIZE_SUM),
+						sum(NON_WRITTEN_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(NON_WRITTEN_ROWS_COUNT),
+						sum(DELETED_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(DELETED_ROWS_COUNT))
+				.withColumn(
+						"NonWrittenRows.Ratio",
+						col(NON_WRITTEN_ROWS_COUNT).divide(col(CHUNK_SIZE_SUM))
+								.withFormatter(PERCENT_FORMATTER))
+				.withColumn(
+						"DeletedRows.Ratio",
+						col(DELETED_ROWS_COUNT).divide(col(CHUNK_SIZE_SUM))
+								.withFormatter(PERCENT_FORMATTER))
 				.publish();
 	}
 
