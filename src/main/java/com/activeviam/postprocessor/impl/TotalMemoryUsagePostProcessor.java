@@ -1,7 +1,7 @@
 /*
- * (C) Quartet FS 2007-2017
+ * (C) ActiveViam 2007-2017
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
- * property of Quartet Financial Systems Limited. Any unauthorized use,
+ * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
 package com.activeviam.postprocessor.impl;
