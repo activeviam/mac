@@ -59,9 +59,8 @@ import org.springframework.core.env.Environment;
  * rather autowire the appropriate spring configurations (and not beans directly unless necessary),
  * and use the beans from there.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
-@PropertySource(value = "classpath:application.properties")
 @Configuration
 @Import(
 		value = {
@@ -96,14 +95,6 @@ import org.springframework.core.env.Environment;
 				ActiveUIResourceServerConfig.class
 		})
 public class MacServerConfig {
-
-	/* Before anything else we statically initialize the Quartet FS Registry. */
-	{
-		Registry.setContributionProvider(new ClasspathContributionProvider(
-				"com.qfs",
-				"com.quartetfs",
-				"com.activeviam"));
-	}
 
 	/** Datastore spring configuration */
 	@Autowired
