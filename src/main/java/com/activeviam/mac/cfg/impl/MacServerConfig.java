@@ -39,11 +39,6 @@ import org.springframework.core.env.Environment;
  * Spring configuration of the ActivePivot Sandbox application.
  *
  * <p>
- * This is the entry point for the Spring "Java Config" of the entire application. This is
- * referenced in {@link MACWebAppInitializer} to bootstrap the application (as per Spring framework
- * principles).
- *
- * <p>
  * We use {@link PropertySource} annotation(s) to define some .properties file(s), whose content
  * will be loaded into the Spring {@link Environment}, allowing some externally-driven configuration
  * of the application. Parameters can be quickly changed by modifying the {@code sandbox.properties}
