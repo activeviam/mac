@@ -8,6 +8,7 @@ package com.activeviam.mac.memory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -357,6 +358,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 //						.withMapping(DatastoreConstants.EPOCH_ID, DatastoreConstants.EPOCH_ID)
 //						.build()
 						);
+	}
+
+	@Override
+	public Collection<? extends IReferenceDescription> getSameDictionaryDescriptions() {
+		// TODO(ope) report same fields, as some are shared
+		return Collections.emptyList();
 	}
 
 	/**

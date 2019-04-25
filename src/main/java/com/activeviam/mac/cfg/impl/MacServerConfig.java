@@ -39,11 +39,6 @@ import org.springframework.core.env.Environment;
  * Spring configuration of the ActivePivot Sandbox application.
  *
  * <p>
- * This is the entry point for the Spring "Java Config" of the entire application. This is
- * referenced in {@link MACWebAppInitializer} to bootstrap the application (as per Spring framework
- * principles).
- *
- * <p>
  * We use {@link PropertySource} annotation(s) to define some .properties file(s), whose content
  * will be loaded into the Spring {@link Environment}, allowing some externally-driven configuration
  * of the application. Parameters can be quickly changed by modifying the {@code sandbox.properties}
@@ -59,9 +54,8 @@ import org.springframework.core.env.Environment;
  * rather autowire the appropriate spring configurations (and not beans directly unless necessary),
  * and use the beans from there.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
-@PropertySource(value = "classpath:application.properties")
 @Configuration
 @Import(
 		value = {
@@ -96,14 +90,6 @@ import org.springframework.core.env.Environment;
 				ActiveUIResourceServerConfig.class
 		})
 public class MacServerConfig {
-
-	/* Before anything else we statically initialize the Quartet FS Registry. */
-	{
-		Registry.setContributionProvider(new ClasspathContributionProvider(
-				"com.qfs",
-				"com.quartetfs",
-				"com.activeviam"));
-	}
 
 	/** Datastore spring configuration */
 	@Autowired

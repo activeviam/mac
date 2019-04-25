@@ -17,7 +17,11 @@ import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LICENSING_SERVIC
 import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LONG_POLLING_SERVICE;
 import static com.qfs.server.cfg.impl.CxfServletConfig.CXF_WEB_SERVICES;
 
+import com.qfs.server.cfg.IActivePivotConfig;
+import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
+import com.quartetfs.fwk.security.IUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -27,10 +31,6 @@ import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
-
-import com.qfs.server.cfg.IActivePivotConfig;
-import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
-import com.quartetfs.fwk.security.IUserDetailsService;
 
 /**
  * Spring configuration fragment for security on an ActivePivot Server.
@@ -128,6 +128,11 @@ public class SecurityConfig extends ASecurityConfig {
 			return super.authenticationManagerBean();
 		}
 
+	}
+
+	@Bean
+	public ServletContextInitializer servletContextInitializer() {
+		return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);
 	}
 
 }
