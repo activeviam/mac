@@ -9,7 +9,9 @@
 			<!--  Base store -->
 			<field name="chunkId" />
 			<field name="Date" expression="date"/> 
-			<field name="Store" expression="storeName"/>
+			<!--
+			Commented since the storeName store does not exist in the datastore
+			 <field name="Store" expression="storeName"/> -->
 			<field name="Partition" expression="partitionId"/>
 			<field name="Type" expression="chunkType"/>
 			<field name="Fields" expression="fields"/> 

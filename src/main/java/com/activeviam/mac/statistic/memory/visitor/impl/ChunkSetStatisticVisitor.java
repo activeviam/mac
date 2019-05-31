@@ -163,7 +163,7 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.store);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent.toString());
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
 		// Complete chunk info regarding size and usage if not defined by a parent
@@ -214,6 +214,9 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 			final String id) {
 		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
 		if (this.store != null && this.field != null) {
+			if (store.equalsIgnoreCase("desk")){
+				System.out.println("ChunkSetStatisticVisitor ->"+this.field+"+"+type+"+"+id);
+			}
 			final IRecordFormat format = this.chunkToFieldFormat;
 			final Object[] tuple = new Object[format.getFieldCount()];
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);

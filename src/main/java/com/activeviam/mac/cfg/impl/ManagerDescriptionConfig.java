@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
+import com.activeviam.copper.builders.ColumnMapping;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -43,6 +44,8 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
+import com.sun.tools.rngom.digested.DAttributePattern;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -190,6 +193,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				// FROM ChunkStore
 				.withDimension(CHUNK_HIERARCHY)
+				
+				.withHierarchy("ChunkId")
+				.withLevelOfSameName()
+				.withPropertyName(DatastoreConstants.CHUNK_ID)
+				
 				.withHierarchy(CHUNK_TYPE_LEVEL)
 				.withLevelOfSameName()
 				.withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
@@ -200,12 +208,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withPropertyName(prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
 				.withFormatter(ClassFormatter.KEY)
 				.withProperty("description", "Class of the chunks")
-
-//				.withDimension("Store")
-//				.withHierarchyOfSameName()
-//				.withLevel("StoreName").withPropertyName(DatastoreConstants.CHUNK__PARTITION__STORE_NAME)
-
-				.withSingleLevelDimension("PartitionId").withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 
 				.withSingleLevelDimension("Date").withPropertyName(DatastoreConstants.APPLICATION__DATE)
 				.withType(ILevelInfo.LevelType.TIME)
@@ -233,15 +235,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withDimension("Pivot")
 				.withHierarchy("Manager").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
 				.withHierarchy("Pivot").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
+				// The hierarchy calles "hierarchy" will be created by coPPer join as an Analysis hierarchy
+//				.withHierarchy("hierarchy").withLevelOfSameName().withPropertyName(DatastoreConstants.LEVEL__HIERARCHY)
 				.withHierarchy("ProviderType").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
 //				.withHierarchy("ProviderClass").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
 				.withHierarchy("ProviderPartition").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 				.withHierarchy("ProviderId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
-
+				
+				
 				.withDimension(BLACK_MAGIC_HIERARCHY)
 				.withHierarchy("ParentId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
 				.withHierarchy("ChunkId").withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK_ID)
 				;
+	
+		
 	}
 
 	private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
@@ -250,7 +257,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withAlias("Chunks.COUNT")
 				.withFormatter(NUMBER_FORMATTER)
 				.withUpdateTimestamp()
-				.withAlias("Timestamp")
 				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
 
 //				.withPostProcessor(DIRECT_CHUNKS_COUNT)
@@ -277,6 +283,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		applicationMeasure(context);
 		joinHierarchies(context);
 	}
+	
+
 
 	private void memoryMeasures(final BuildingContext context) {
 		context.withFormatter(ByteFormatter.KEY)
@@ -331,6 +339,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						sum(CHUNK_SIZE_SUM).withFormatter(NUMBER_FORMATTER).as(CHUNK_SIZE_SUM),
 						sum(NON_WRITTEN_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(NON_WRITTEN_ROWS_COUNT),
 						sum(DELETED_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(DELETED_ROWS_COUNT))
+				// FIXME (men) ratios > 100% ->to investigate
 				.withColumn(
 						"NonWrittenRows.Ratio",
 						col(NON_WRITTEN_ROWS_COUNT).divide(col(CHUNK_SIZE_SUM))
@@ -354,23 +363,46 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	private void joinHierarchies(final BuildingContext context) {
+		// TODO (men) make copper joins work properly -> requires datastore changes -> Visitor changes
+		
+		//coPPer join to get data from Cube levels
+		joinLevelsToChunks(context);		
+		//coPPer join to get data from Store fields
 		joinFieldToChunks(context);
-		joinIndexesToChunks(context);
-		joinRefsToChunks(context);
-		joinLevelsToChunks(context);
+		
+		//joinIndexesToChunks(context);
+		//joinRefsToChunks(context);
+	
 	}
 
+	/**
+	 * Performs a CoPPer join between the Chunk store and the Chunk_To_Levels store
+	 * The join mapping is the following : 
+	 *  - Chunk_Parent_ID 
+	 *  - Chunk_Parent_Type
+	 *  
+	 * This join creates the following Analysis Hierarchies on the cube :
+	 *  - fieldName
+	 *  - storeName
+	 *  since those are key fields of the joined store
+	 * @param context
+	 */
 	private void joinFieldToChunks(BuildingContext context) {
 		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_FIELD_STORE);
-		context.createDatasetFromFacts()
+		context.withFormatter(ByteFormatter.KEY)
+		.createDatasetFromFacts()
 				.join(
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.sf").withinFolder(BLACK_MAGIC_FOLDER))
+				
+				.groupBy(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
+//.withColumn(DatastoreConstants.CHUNK_TO_FIELD__FIELD, col(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
+				.agg(Columns.count(DatastoreConstants.CHUNK_ID).as("cc").as("-cc.groupByField").withinFolder(BLACK_MAGIC_FOLDER))
+				.doNotAggregateAbove()
 				.publish();
 	}
-
+	
 	private void joinRefsToChunks(BuildingContext context) {
 		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_REF_STORE);
 		context.createDatasetFromFacts()
@@ -378,30 +410,51 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE))
-				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.ref").withinFolder(BLACK_MAGIC_FOLDER))
+				.withColumn(DatastoreConstants.CHUNK_TO_REF__REF_ID, col(DatastoreConstants.CHUNK_TO_REF__REF_ID).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
+				.agg(sum(DatastoreConstants.CHUNK__PARENT_ID).as("-ofh.ref").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
 
 	private void joinIndexesToChunks(BuildingContext context) {
-		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE);
+		final StoreDataset indexDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE);
+
 		context.createDatasetFromFacts()
 				.join(
-						fieldDataset,
+						indexDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE))
+				.withColumn(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, col(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.idx").withinFolder(BLACK_MAGIC_FOLDER))
-				.publish();
+				.publish();	
 	}
+	
 
+	/**
+	 * Performs a CoPPer join between the Chunk store and the Chunk_To_Levels store
+	 * The join mapping is the following : 
+	 *  - Chunk_Parent_ID 
+	 *  - Chunk_Parent_Type
+	 *  
+	 * This join creates the following Analysis Hierarchies on the cube :
+	 *  - managerId
+	 *  - pivotId
+	 *  - dimension
+	 *  - hierarchy
+	 *  - level
+	 *  since those are key fields of the joined store
+	 * @param context
+	 */
 	private void joinLevelsToChunks(BuildingContext context) {
-		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE);
+		// TODO (men) : hack copper to allow multiple renaming of analysis hierarchies ??
+		final StoreDataset levelsDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE);
 		context.createDatasetFromFacts()
 				.join(
-						fieldDataset,
+						levelsDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE))
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("-ofh.lvl").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
+
 
 }

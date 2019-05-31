@@ -71,9 +71,9 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 	protected ParentType directParentType;
 	protected String directParentId;
 
-	/** The name of the store of the visited statistic */
-	protected Integer partitionId = null;
 	/** The partition id of the visited statistic */
+	protected Integer partitionId = null;
+	/** The name of the store of the visited statistic */
 	protected String store = null;
 	protected String field = null;
 	private IndexType indexType = null;
@@ -443,6 +443,9 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 			final ParentType type,
 			final String id) {
 		if (this.store != null && this.field != null) {
+			if (store.equalsIgnoreCase("risk")){
+				System.out.println("DatastoreFeederVisitor ->"+this.field+"+"+type+"+"+id);
+			}
 			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_FIELD_STORE);
 			final Object[] tuple = new Object[format.getFieldCount()];
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);

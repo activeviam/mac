@@ -45,10 +45,7 @@ public class MacSpringBootApp {
 
 	/* Before anything else we statically initialize the Quartet FS Registry. */
 	{
-		Registry.setContributionProvider(new ClasspathContributionProvider(
-				"com.qfs",
-				"com.quartetfs",
-				"com.activeviam"));
+		Registry.setContributionProvider(new ClasspathContributionProvider());
 	}
 
 	public static void main(final String[] args) {

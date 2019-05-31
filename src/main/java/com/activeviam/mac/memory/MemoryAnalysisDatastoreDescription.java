@@ -106,18 +106,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	/**
 	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
 	 */
-	protected IStoreDescription chunkToIndexStore() {
-		return new StoreDescriptionBuilder()
-				.withStoreName(DatastoreConstants.CHUNK_TO_INDEX_STORE)
-				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID).asKeyField()
-				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
-				.withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG).asKeyField()
-				.build();
-	}
-
-	/**
-	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
-	 */
 	protected IStoreDescription chunkToReferenceStore() {
 		return new StoreDescriptionBuilder()
 				.withStoreName(DatastoreConstants.CHUNK_TO_REF_STORE)
@@ -144,7 +132,19 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.REFERENCE_CLASS)
 				.build();
 	}
-
+	
+	/**
+	 * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
+	 */
+	protected IStoreDescription chunkToIndexStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.CHUNK_TO_INDEX_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG).asKeyField()
+				.build();
+	}
+	
 	/**
 	 * @return description of {@link DatastoreConstants#INDEX_STORE}
 	 */
@@ -158,6 +158,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
 				.build();
 	}
+	
+
 
 	/**
 	 * @return description of {@link DatastoreConstants#DICTIONARY_STORE}
