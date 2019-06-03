@@ -98,7 +98,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withStoreName(DatastoreConstants.CHUNK_TO_FIELD_STORE)
 				.withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID).asKeyField()
 				.withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, ILiteralType.OBJECT).asKeyField()
-				.withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD)//For a same Parent Id we hold several fields (but records from a single store) 
 				.withField(DatastoreConstants.CHUNK_TO_FIELD__STORE).asKeyField()
 				.build();
 	}
@@ -158,8 +158,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
 				.build();
 	}
-	
-
 
 	/**
 	 * @return description of {@link DatastoreConstants#DICTIONARY_STORE}

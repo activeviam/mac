@@ -104,6 +104,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(DefaultMemoryStatistic stat) {
 		switch (stat.getName()) {
 		case MemoryStatisticConstants.STAT_NAME_DATASTORE:
+		case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
 		case MemoryStatisticConstants.STAT_NAME_STORE:
 			final DatastoreFeederVisitor visitor = new DatastoreFeederVisitor(
 					this.storageMetadata,
@@ -112,6 +113,13 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			visitor.startFrom(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
+		case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+			final PivotFeederVisitor feedmv = new PivotFeederVisitor(
+					this.storageMetadata,
+					this.transaction,
+					this.dumpName);
+			feedmv.startFrom(stat);
+			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
 			final PivotFeederVisitor feed = new PivotFeederVisitor(
 					this.storageMetadata,
@@ -197,7 +205,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				.getRecordFormat();
 	}
 
-	protected static void setTupleElement(Object[] tuple, IRecordFormat format, String field, Object value) {
+	protected static void setTupleElement(Object[] tuple, IRecordFormat format, String field, final Object value) {
 		if(value == null) {
 			throw new RuntimeException("Expected a non-null value for field " + field);
 		}

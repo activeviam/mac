@@ -102,13 +102,15 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
 			final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
-			if (dateAtt == null) {
-				throw new IllegalStateException("First level statistic should contain the export date.");
-			}
-			this.current = Instant.ofEpochSecond(dateAtt.asLong());
+//			if (dateAtt == null) {
+//				throw new IllegalStateException("First level statistic should contain the export date.");
+//			}
+			this.current = Instant.ofEpochSecond(null !=dateAtt ?dateAtt.asLong() : System.currentTimeMillis());
 
 			readEpochAndBranchIfAny(stat);
-			assert this.epochId != null;
+			if (!stat.getName().equalsIgnoreCase(MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE)) {
+				assert this.epochId != null;
+			}
 
 			FeedVisitor.includeApplicationInfoIfAny(
 					this.transaction,

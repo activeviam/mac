@@ -21,7 +21,7 @@
 
     <properties>
         <activepivot.version>5.8.1-SNAPSHOT</activepivot.version>
-        <activeui.version>4.3.0-20190527-093805+36c8a24</activeui.version>
+        <activeui.version>4.3.0-20190531-091822+6b8d68b</activeui.version>
         <tomcat.version>8.5.23</tomcat.version>
 
         <checkstyle.skip>true</checkstyle.skip>

@@ -389,16 +389,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	 */
 	private void joinFieldToChunks(BuildingContext context) {
 		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_FIELD_STORE);
-		context.withFormatter(ByteFormatter.KEY)
-		.createDatasetFromFacts()
+		context.createDatasetFromFacts()
 				.join(
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-				
-				.groupBy(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
-//.withColumn(DatastoreConstants.CHUNK_TO_FIELD__FIELD, col(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
-				.agg(Columns.count(DatastoreConstants.CHUNK_ID).as("cc").as("-cc.groupByField").withinFolder(BLACK_MAGIC_FOLDER))
+				//.withColumn(DatastoreConstants.CHUNK_TO_FIELD__FIELD, col(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
+				.agg(Columns.count(DatastoreConstants.CHUNK_ID).as("-cc.bm").withinFolder(BLACK_MAGIC_FOLDER))
 				.doNotAggregateAbove()
 				.publish();
 	}

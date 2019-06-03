@@ -106,19 +106,25 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final DefaultMemoryStatistic stat) {
-		readEpochAndBranchIfAny(stat);
+	
 
 		switch (stat.getName()) {
 		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
 			processManager(stat);
 			break;
+		case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+			processMultiVersionPivot(stat);
+			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
 			processPivot(stat);
 			break;
+			// Unless said otherwise we assume all providers are partial,safer than the other way
 		case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
-			processFullProvider(stat);
+			processProvider(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
+			processFullProvider(stat);
+			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
 			processProvider(stat);
 			break;
@@ -232,8 +238,25 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		this.manager = null;
 	}
+	
+	private void processMultiVersionPivot(final IMemoryStatistic stat) {
+		final IStatisticAttribute managerAttr = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
+		if (managerAttr != null) {
+			assert this.manager == null;
+			this.manager = managerAttr.asText();
+		}
+
+		visitChildren(stat);
+		if (managerAttr != null) {
+			this.manager = null;
+		}
+
+	}
 
 	private void processPivot(final IMemoryStatistic stat) {
+		
+		readEpochAndBranchIfAny(stat);
+		
 		final IStatisticAttribute idAttr = Objects.requireNonNull(
 				stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID),
 				() -> "No pivot id in " + stat);
@@ -250,6 +273,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		if (managerAttr != null) {
 			this.manager = null;
 		}
+		this.epochId = null;
+		this.branch = null;
 	}
 
 	private void processFullProvider(final IMemoryStatistic stat) {

@@ -7,6 +7,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.builders.FactFilterConditions;
+import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -24,15 +25,19 @@ import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
+import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
+import com.qfs.store.NoTransactionException;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
+import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.store.transaction.ITransactionManager;
 import com.qfs.util.impl.QfsArrays;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.util.impl.ThrowingLambda;
@@ -44,6 +49,7 @@ import com.quartetfs.fwk.AgentException;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import test.scenario.MultipleStores;
 import test.scenario.MultipleStoresData;
@@ -59,9 +65,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -76,8 +85,14 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
+import static org.junit.Assert.assertNotEquals;
 
 public class TestMemoryStatisticLoading {
+	
+	public final static int STORE_PEOPLE_COUNT =10;
+	public final static int STORE_PRODUCT_COUNT = 20;
+	
+	public static AtomicInteger operationsBatch = new AtomicInteger();
 
 	@ClassRule
 	public static final ResourceRule resources = new ResourceRule();
@@ -100,7 +115,7 @@ public class TestMemoryStatisticLoading {
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 			final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
-
+			assertNotEquals(0, storeStats.size());
 			assertLoadsCorrectly(storeStats);
 		});
 	}
@@ -113,7 +128,7 @@ public class TestMemoryStatisticLoading {
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
 			final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
-
+			assertNotEquals(0, pivotStats.size());
 			assertLoadsCorrectly(pivotStats);
 		});
 	}
@@ -126,10 +141,50 @@ public class TestMemoryStatisticLoading {
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportMostRecentVersion("testLoadFullStats");
 			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-
+			assertNotEquals(null, fullStats);
 			assertLoadsCorrectly(fullStats);
 		});
 	}
+	
+	// FIXME : branches export does not work if EpochDimension is not defined in all the Cubes
+	@Ignore 
+	@Test
+	public void testLoadPivotsWithBranchesWithAndWithoutEpochDimensions() {
+		createMinimalApplicationForEpochDimensionFailure((monitoredDatastore,monitoredManager)->{
+			Set<String> branchSet = new HashSet<>();
+			branchSet.add("branch1");
+
+			fillApplicationWithBranches(monitoredDatastore,branchSet,true);
+			
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
+			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+			assertNotEquals(null, fullStats);
+			assertLoadsCorrectly(fullStats);	
+		});
+	}
+	
+	@Test
+	public void testLoadFullStatsWithBranches() {
+		createApplication((monitoredDatastore, monitoredManager) -> {
+			
+			Set<String> branchSet = new HashSet<>();
+			branchSet.add("branch1");
+			branchSet.add("branch2");
+
+			fillApplicationWithBranches(monitoredDatastore,branchSet,false);
+			
+			//Also export master (?)
+			branchSet.add("master");
+
+			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
+			final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
+			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+			assertNotEquals(null, fullStats);
+			assertLoadsCorrectly(fullStats);
+		});
+	}
+
 
 	@Test
 	public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
@@ -140,9 +195,64 @@ public class TestMemoryStatisticLoading {
 	public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
 		doTestLoadMonitoringDatastoreWithVectors(true);
 	}
+	private static void createMinimalApplicationForEpochDimensionFailure(
+			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) 
+	{
+		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
+				.withStore(
+						StartBuilding.store().withStoreName("Sales")
+								.withField("id", ILiteralType.INT).asKeyField()
+								.withField("seller")
+								.withField("buyer")
+								.withField("date", ILiteralType.LOCAL_DATE)
+								.withField("productId", ILiteralType.LONG)
+								.withModuloPartitioning(4, "id")
+								.build())
+				.build();
+		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+				.withSchema()
+				.withSelection(
+						StartBuilding.selection(datastoreSchema).fromBaseStore("Sales")
+								.withAllFields().build())
+				.withCube(
+						StartBuilding.cube("HistoryCube")
+						.withContributorsCount()
+						.withDimension("Operations")
+						.withHierarchy("Sales")
+						.withLevel("Seller").withPropertyName("seller")
+						.withLevel("Buyer").withPropertyName("buyer")
+						.withEpochDimension()
+						.build())
+				.withCube(
+						StartBuilding.cube("HistoryCubeNoEpochDimension")
+						.withContributorsCount()
+						.withDimension("Operations")
+						.withHierarchy("Sales")
+						.withLevel("Seller").withPropertyName("seller")
+						.withLevel("Buyer").withPropertyName("buyer")
+						.build())
+				.build();
+				
+		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
+				.setSchemaDescription(datastoreSchema)
+				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+				.build());
+		final IActivePivotManager manager;
+		try {
+			manager = StartBuilding.manager()
+					.setDescription(managerDescription)
+					.setDatastoreAndDescription(datastore, datastoreSchema)
+					.buildAndStart();
+		} catch (AgentException e) {
+			throw new RuntimeException("Cannot create manager", e);
+		}
+		resources.register(manager::stop);
+
+		actions.accept(datastore, manager);
+	}
 
 	private static void createApplication(
-			final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
+			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) {
 		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
 				.withStore(
 						StartBuilding.store().withStoreName("Sales")
@@ -216,6 +326,7 @@ public class TestMemoryStatisticLoading {
 								.withFilter(
 										FactFilterConditions.not(
 												FactFilterConditions.eq("date", LocalDate.now())))
+								.withEpochDimension()
 								.build())
 				.withCube(
 						StartBuilding.cube("DailyCube")
@@ -231,23 +342,58 @@ public class TestMemoryStatisticLoading {
 								.withLevel("LastName").withPropertyName("buyer_lastName")
 								.withLevel("FirstName").withPropertyName("buyer_firstName")
 								.withFilter(FactFilterConditions.eq("date", LocalDate.now()))
+								.withEpochDimension()
 								.build())
 				.withCube(
-						StartBuilding.cube("OverviewCube")
-								.withContributorsCount()
-								.withSingleLevelDimension("Product").withPropertyName("product")
-								.withSingleLevelDimension("Date").withPropertyName("date")
-								.withDimension("Operations")
-								.withHierarchy("Sales")
-								.withLevel("Seller").withPropertyName("seller_company")
-								.withLevel("Buyer").withPropertyName("buyer_company")
-								.withHierarchy("Purchases")
-								.withLevel("Buyer").withPropertyName("buyer_company")
-								.withLevel("Seller").withPropertyName("seller_company")
-								.build())
+						StartBuilding.cube("OverviewJITCube")
+						.withContributorsCount()
+						.withSingleLevelDimension("Product").withPropertyName("product")
+						.withSingleLevelDimension("Date").withPropertyName("date")
+						.withDimension("Operations")
+						.withHierarchy("Sales")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withHierarchy("Purchases")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withEpochDimension()
+						.withAggregateProvider().jit()
+						.build())
+				.withCube(
+						StartBuilding.cube("OverviewBitmapCube")
+						.withContributorsCount()
+						.withSingleLevelDimension("Product").withPropertyName("product")
+						.withSingleLevelDimension("Date").withPropertyName("date")
+						.withDimension("Operations")
+						.withHierarchy("Sales")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withHierarchy("Purchases")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withEpochDimension()
+						.withAggregateProvider().bitmap()
+						.build())
+				.withCube(
+						StartBuilding.cube("OverviewCubeWithPartialProvider")
+						.withContributorsCount()
+						.withSingleLevelDimension("Product").withPropertyName("product")
+						.withSingleLevelDimension("Date").withPropertyName("date")
+						.withDimension("Operations")
+						.withHierarchy("Sales")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withHierarchy("Purchases")
+						.withLevel("Buyer").withPropertyName("buyer_company")
+						.withLevel("Seller").withPropertyName("seller_company")
+						.withEpochDimension()
+						.withAggregateProvider().bitmap()
+						.withPartialProvider()
+						.excludingHierarchy("Operations","Sales").and("Date", "Date").end()
+						.build())
 				.build();
 
-		final IDatastore datastore = resources.create(() -> StartBuilding.datastore()
+		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
 				.setSchemaDescription(datastoreSchema)
 				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
 				.build());
@@ -264,24 +410,18 @@ public class TestMemoryStatisticLoading {
 
 		actions.accept(datastore, manager);
 	}
-
+	
 	/**
-	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
+	 * Fills the datastore created by {@link #createMinimalApplicationForEpochDimensionFailure(ThrowingLambda.ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
 	 */
-	private static void fillApplication(final IDatastore datastore) {
+	private static void fillApplicationMinimal(final Datastore datastore) {
 		datastore.edit(tm -> {
-			final int peopleCount = 10;
-			IntStream.range(0, peopleCount).forEach(i -> {
-				tm.add("People", String.valueOf(i), "FN" + (i % 4), "LN" + i, "Corp" + (i + 1 % 3));
-			});
-			final int productCount = 20;
-			LongStream.range(0, productCount).forEach(i -> {
-				tm.add("Products", i, "p" + i);
-			});
+			final int peopleCount = STORE_PEOPLE_COUNT;
+			final int productCount = STORE_PRODUCT_COUNT;
 
 			final Random r = new Random(47605);
-			IntStream.range(0, 1000).forEach(i -> {
+			IntStream.range(operationsBatch.getAndIncrement(), 1000*operationsBatch.get()).forEach(i -> {
 				final int seller = r.nextInt(peopleCount);
 				int buyer;
 				do { buyer = r.nextInt(peopleCount); } while (buyer == seller);
@@ -296,9 +436,82 @@ public class TestMemoryStatisticLoading {
 		});
 	}
 
+	/**
+	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
+	 * @param datastore datastore to fill
+	 */
+	private static void fillApplication(final Datastore datastore) {
+		datastore.edit(tm -> {
+			final int peopleCount = STORE_PEOPLE_COUNT;
+			IntStream.range(0, peopleCount).forEach(i -> {
+				tm.add("People", String.valueOf(i), "FN" + (i % 4), "LN" + i, "Corp" + (i + 1 % 3));
+			});
+			final int productCount = STORE_PRODUCT_COUNT;
+			LongStream.range(0, productCount).forEach(i -> {
+				tm.add("Products", i, "p" + i);
+			});
+
+			final Random r = new Random(47605);
+			IntStream.range(operationsBatch.getAndIncrement(), 1000*operationsBatch.get()).forEach(i -> {
+				final int seller = r.nextInt(peopleCount);
+				int buyer;
+				do { buyer = r.nextInt(peopleCount); } while (buyer == seller);
+				tm.add(
+						"Sales",
+				       i,
+						String.valueOf(seller),
+						String.valueOf(buyer),
+						LocalDate.now().plusDays(-r.nextInt(7)),
+						(long) r.nextInt(productCount));
+			});
+		});
+	}
+	
+	/**
+	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)} and add some data on another branch tha "master"
+	 * @param datastore datastore to fill
+	 * @throws DatastoreTransactionException 
+	 * @throws IllegalArgumentException 
+	 */
+	private static void fillApplicationWithBranches(final Datastore datastore, Collection<String> branches,boolean minimalFilling)
+			throws IllegalArgumentException, DatastoreTransactionException {
+		datastore.printStoresSizes();
+		if (minimalFilling) {
+			fillApplicationMinimal(datastore);}
+		else {
+			fillApplication(datastore);
+		}
+		datastore.printStoresSizes();
+		branches.forEach(br_string -> {
+			ITransactionManager tm = datastore.getTransactionManager();
+			try {
+				tm.startTransactionOnBranch(br_string, "Sales");
+			} catch (IllegalArgumentException | DatastoreTransactionException e) {
+				throw new RuntimeException(e);
+			}
+			final Random r = new Random(47605);
+			IntStream.range(operationsBatch.getAndIncrement(), 1000*operationsBatch.get()).forEach(i -> {
+				final int seller = r.nextInt(STORE_PEOPLE_COUNT);
+				int buyer;
+				do {
+					buyer = r.nextInt(STORE_PEOPLE_COUNT);
+				} while (buyer == seller);
+				tm.add("Sales", i, String.valueOf(seller), String.valueOf(buyer),
+						LocalDate.now().plusDays(-r.nextInt(7)), (long) r.nextInt(STORE_PRODUCT_COUNT));
+			});
+			try {
+				tm.commitTransaction();
+			} catch (NoTransactionException | DatastoreTransactionException e) {
+				throw new RuntimeException(e);
+			}
+		});
+		datastore.printStoresSizes();
+	}
+
+
 	private static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
 		final Path dumpDirectory = QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
-		return new MemoryAnalysisService(
+		return new HackedMemoryAnalysisService(
 				datastore,
 				manager,
 				datastore.getEpochManager(),
@@ -426,14 +639,18 @@ public class TestMemoryStatisticLoading {
 	}
 
 	protected void assertLoadsCorrectly(final Collection<? extends IMemoryStatistic> statistics) {
+		System.out.println("Started loading check");
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 		monitoringDatastore.edit(tm -> {
-			statistics.forEach(stat -> stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test")));
+			statistics.forEach(stat -> {
+				System.out.println("Processing "+stat.getName());
+				stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));				
+			});
 		});
 
 		final StatisticsSummary statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(
-				new MemoryStatisticBuilder()
+				new TestMemoryStatisticBuilder()
 						.withCreatorClasses(getClass())
 						.withChildren(statistics)
 						.build());
@@ -544,14 +761,14 @@ public class TestMemoryStatisticLoading {
 	private static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) throws IOException {
 		final IMemoryStatistic allStat = loadMemoryStatFromFolder(
 				folderPath,
-				path -> path.getFileName().startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
+				path -> path.getFileName().toString().startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
 		return (Collection<IMemoryStatistic>) allStat.getChildren();
 	}
 
 	private static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) throws IOException {
 		final IMemoryStatistic allStat = loadMemoryStatFromFolder(
 				folderPath,
-				path -> path.getFileName().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
+				path -> path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
 		return (Collection<IMemoryStatistic>) allStat.getChildren();
 	}
 
