@@ -114,12 +114,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
 		case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
-			final PivotFeederVisitor feedmv = new PivotFeederVisitor(
-					this.storageMetadata,
-					this.transaction,
-					this.dumpName);
-			feedmv.startFrom(stat);
-			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
 			final PivotFeederVisitor feed = new PivotFeederVisitor(
 					this.storageMetadata,

@@ -169,7 +169,7 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 		// Complete chunk info regarding size and usage if not defined by a parent
 		if (!this.visitingVectorBlock) {
 			if (this.chunkSize != null) {
-				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSetId);
+				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSize);
 			}
 			if (this.freeRows != null) {
 				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, this.freeRows);

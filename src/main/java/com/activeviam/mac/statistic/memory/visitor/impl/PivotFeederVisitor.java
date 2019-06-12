@@ -106,8 +106,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final DefaultMemoryStatistic stat) {
-	
-
 		switch (stat.getName()) {
 		case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
 			processManager(stat);
@@ -119,8 +117,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 			processPivot(stat);
 			break;
 			// Unless said otherwise we assume all providers are partial,safer than the other way
+			// FIXME (men) say something, do the contrary (Needed to launch the app!) -> Partial VS Full providers must be fixed 
 		case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
-			processProvider(stat);
+			processFullProvider(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
 			processFullProvider(stat);

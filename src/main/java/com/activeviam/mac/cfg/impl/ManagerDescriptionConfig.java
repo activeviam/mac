@@ -33,6 +33,7 @@ import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
+import com.qfs.literal.impl.LiteralType;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.Types;
@@ -339,14 +340,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						sum(CHUNK_SIZE_SUM).withFormatter(NUMBER_FORMATTER).as(CHUNK_SIZE_SUM),
 						sum(NON_WRITTEN_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(NON_WRITTEN_ROWS_COUNT),
 						sum(DELETED_ROWS_COUNT).withFormatter(NUMBER_FORMATTER).as(DELETED_ROWS_COUNT))
-				// FIXME (men) ratios > 100% ->to investigate
 				.withColumn(
 						"NonWrittenRows.Ratio",
-						col(NON_WRITTEN_ROWS_COUNT).divide(col(CHUNK_SIZE_SUM))
+						col(NON_WRITTEN_ROWS_COUNT).cast(LiteralType.DOUBLE).divide(col(CHUNK_SIZE_SUM))
 								.withFormatter(PERCENT_FORMATTER))
 				.withColumn(
 						"DeletedRows.Ratio",
-						col(DELETED_ROWS_COUNT).divide(col(CHUNK_SIZE_SUM))
+						col(DELETED_ROWS_COUNT).cast(LiteralType.DOUBLE).divide(col(CHUNK_SIZE_SUM))
 								.withFormatter(PERCENT_FORMATTER))
 				.publish();
 	}
@@ -370,8 +370,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		//coPPer join to get data from Store fields
 		joinFieldToChunks(context);
 		
-		//joinIndexesToChunks(context);
-		//joinRefsToChunks(context);
+		joinIndexesToChunks(context);
+		joinRefsToChunks(context);
 	
 	}
 

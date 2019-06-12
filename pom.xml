@@ -12,7 +12,7 @@
 
     <groupId>com.activeviam.sandbox</groupId>
     <artifactId>monitoring-server</artifactId>
-    <version>5.8.1-SNAPSHOT</version>
+    <version>5.8.2-SNAPSHOT</version>
     <name>ActivePivot Memory Analysis Cube</name>
 
     <prerequisites>
@@ -20,7 +20,7 @@
     </prerequisites>
 
     <properties>
-        <activepivot.version>5.8.1-SNAPSHOT</activepivot.version>
+        <activepivot.version>5.8.2-SNAPSHOT</activepivot.version>
         <activeui.version>4.3.0-20190531-091822+6b8d68b</activeui.version>
         <tomcat.version>8.5.23</tomcat.version>
 
@@ -62,7 +62,10 @@
             <artifactId>composer-impl</artifactId>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.activeviam.tech</groupId>
+            <artifactId>datastore-test</artifactId>
+        </dependency>
         <!-- The following artifact allows to expose the Rest API of the content
             service -->
         <dependency>
