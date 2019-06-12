@@ -63,10 +63,10 @@ import com.quartetfs.fwk.query.UnsupportedQueryException;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 
-public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic{
+public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 	
 	/**
-	 * Tests the consitency between the chunks of an ActivePivot application and its the monitoring data obtained by loading exported data.
+	 * Tests the consistency between the chunks of an ActivePivot application and its the monitoring data obtained by loading exported data.
 	 */
 	@Test
 	public void testDatastoreMonitoringValues() {

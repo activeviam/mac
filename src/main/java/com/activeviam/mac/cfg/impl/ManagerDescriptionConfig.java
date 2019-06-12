@@ -29,10 +29,12 @@ import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.google.common.base.Objects;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.fwk.format.impl.EpochFormatter;
 import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
+import com.qfs.literal.ILiteralType;
 import com.qfs.literal.impl.LiteralType;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
@@ -176,7 +178,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 								.build())
 
 				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
-
+				
 //				.withSharedDrillthroughProperties()
 //				.hideColumn(DatastoreConstants.FIELDS)
 //				.withCalculatedColumn()
@@ -300,9 +302,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		context.withFormatter(NUMBER_FORMATTER)
 				.createDatasetFromFacts()
 				.filter(
-						col(DatastoreConstants.CHUNK__OWNER).equalTo(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-								.or(col(DatastoreConstants.CHUNK__COMPONENT).equalTo(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-								.or(col(DatastoreConstants.CHUNK__PARTITION_ID).equalTo(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS)))
+						Columns.combine(
+								col(DatastoreConstants.CHUNK__OWNER)
+								,col(DatastoreConstants.CHUNK__COMPONENT)
+								,col(DatastoreConstants.CHUNK__PARTITION_ID))
+						.map(arr -> 
+							(Objects.equal(arr.read(0), MemoryAnalysisDatastoreDescription.SHARED_OWNER) ||
+							Objects.equal(arr.read(1), MemoryAnalysisDatastoreDescription.SHARED_COMPONENT) ||
+							Objects.equal(arr.read(2), MemoryAnalysisDatastoreDescription.MANY_PARTITIONS)? 1 : 0))
+						.mapToBoolean(a-> a.equals(1) ? true : false))
+								
 				.agg(
 						Columns.count(DatastoreConstants.CHUNK_ID).as("Shared.COUNT"))
 				.publish();

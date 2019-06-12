@@ -117,15 +117,13 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 			processPivot(stat);
 			break;
 			// Unless said otherwise we assume all providers are partial,safer than the other way
-			// FIXME (men) say something, do the contrary (Needed to launch the app!) -> Partial VS Full providers must be fixed 
+			// FIXME (men) say something, do the contrary (Needed to launch the app!)  providers must be fixed 
 		case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
-			processFullProvider(stat);
+		case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
+			processProvider(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
 			processFullProvider(stat);
-			break;
-		case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
-			processProvider(stat);
 			break;
 		case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER_PARTITION:
 			processPartition(stat);
@@ -144,7 +142,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 				visitChildren(stat);
 			}
 		}
-
 		return null;
 	}
 
@@ -172,7 +169,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.pivot);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
-
 		this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
 		visitChildren(stat);

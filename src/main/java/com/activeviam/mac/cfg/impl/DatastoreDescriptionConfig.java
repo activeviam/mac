@@ -28,6 +28,7 @@ public class DatastoreDescriptionConfig implements IDatastoreDescriptionConfig {
 	@Bean
 	public IDatastoreSchemaDescription schemaDescription() {
 		return new MemoryAnalysisDatastoreDescription();
+		
 	}
 
 	@Override

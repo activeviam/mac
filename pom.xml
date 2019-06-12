@@ -62,10 +62,6 @@
             <artifactId>composer-impl</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.activeviam.tech</groupId>
-            <artifactId>datastore-test</artifactId>
-        </dependency>
         <!-- The following artifact allows to expose the Rest API of the content
             service -->
         <dependency>

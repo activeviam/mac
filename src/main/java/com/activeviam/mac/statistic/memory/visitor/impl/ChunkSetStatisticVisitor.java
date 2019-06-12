@@ -214,9 +214,6 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 			final String id) {
 		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
 		if (this.store != null && this.field != null) {
-			if (store.equalsIgnoreCase("desk")){
-				System.out.println("ChunkSetStatisticVisitor ->"+this.field+"+"+type+"+"+id);
-			}
 			final IRecordFormat format = this.chunkToFieldFormat;
 			final Object[] tuple = new Object[format.getFieldCount()];
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);

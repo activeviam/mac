@@ -70,7 +70,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				/* Foreign keys */
 				.withField(DatastoreConstants.CHUNK__OWNER).dictionarized()
 				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT).dictionarized()
-				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
+				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION).dictionarized()
 				.withField(DatastoreConstants.CHUNK__PARENT_ID)
 				.withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
 

@@ -141,8 +141,6 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 		});
 	}
 
-
-
 	@Test
 	public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
 		doTestLoadMonitoringDatastoreWithVectors(false);

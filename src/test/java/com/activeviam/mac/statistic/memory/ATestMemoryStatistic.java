@@ -37,6 +37,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
+import com.qfs.chunk.direct.impl.SlabDirectChunkAllocator;
 import com.qfs.chunk.impl.Chunks;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
@@ -104,7 +105,7 @@ public abstract class ATestMemoryStatistic {
 		 * because on some servers (alto), it seems not enough.
 		 * Plus, MemUtils relies on on heap memory....
 		 */
-		final SlabDirectChunkAllocatorWithCounter allocator = (SlabDirectChunkAllocatorWithCounter) Chunks.allocator();
+		final SlabDirectChunkAllocator allocator = (SlabDirectChunkAllocator) Chunks.allocator();
 		for (int i = 0; i < MAX_GC_STEPS; i++) {
 			try {
 				System.gc();
@@ -674,6 +675,38 @@ public abstract class ATestMemoryStatistic {
 						StartBuilding.cube("Cube")
 						.withContributorsCount()
 						.withSingleLevelDimension("id").asDefaultHierarchy().build())
+				.build();
+		IDatastore datastore = (Datastore) resources.create(() -> new UnitTestDatastoreBuilder()
+				.setSchemaDescription(schemaDescription)
+				.setEpochManagementPolicy(new KeepLastEpochPolicy())
+				.build());
+		return new Pair<IDatastore,IActivePivotManager>(
+				datastore
+				, StartBuilding.manager()
+				.setDescription(managerDescription)
+				.setDatastoreAndDescription(datastore, schemaDescription)
+				.buildAndStart());
+	}
+	
+	static Pair<IDatastore,IActivePivotManager>  createMicroApplicationWithLeafBitmap() throws AgentException {
+
+		
+		final IDatastoreSchemaDescription schemaDescription = StartBuilding.datastoreSchema()
+				.withStore(
+						StartBuilding.store().withStoreName("A")
+								.withField("id", ILiteralType.INT).asKeyField()
+								.withChunkSize(MICROAPP_CHUNK_SIZE)
+								.build())
+				.build();
+				
+				final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+				.withSchema().withSelection(
+						StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
+				.withCube(
+						StartBuilding.cube("Cube")
+						.withContributorsCount()
+						.withSingleLevelDimension("id").asDefaultHierarchy()
+						.withAggregateProvider().leaf().build())
 				.build();
 		IDatastore datastore = (Datastore) resources.create(() -> new UnitTestDatastoreBuilder()
 				.setSchemaDescription(schemaDescription)

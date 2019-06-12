@@ -1,80 +1,41 @@
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-
 import java.io.IOException;
-import java.lang.management.BufferPoolMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.activeviam.mac.Tools;
 import com.activeviam.mac.cfg.impl.DatastoreDescriptionConfig;
-import com.activeviam.mac.cfg.impl.LocalContentServiceConfig;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.cfg.impl.SourceConfig;
-import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
-import com.activeviam.properties.IActiveViamProperty;
-import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;
 import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyRuleBuilder;
-import com.qfs.chunk.impl.Chunks;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.memory.impl.PlatformOperations;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.offheap.SlabDirectChunkAllocatorWithCounter;
-import com.qfs.monitoring.offheap.SlabDirectChunkAllocatorWithCounter.SlabMemoryAllocatorWithCounter;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
-import com.qfs.server.cfg.impl.ActivePivotConfig;
-import com.qfs.server.cfg.impl.DatastoreConfig;
-import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
-import com.qfs.store.query.IDictionaryCursor;
-import com.qfs.store.query.impl.DatastoreQueryHelper;
 import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.cellset.ICellSet;
-import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
-import com.quartetfs.biz.pivot.query.impl.ActivePivotQueryRunner;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -83,8 +44,6 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import com.quartetfs.fwk.query.UnsupportedQueryException;
-
-import test.util.impl.DatastoreTestUtils;
 
 /**
  * Test class verifying the results obtained by the Measures provided
@@ -125,7 +84,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	
 	@Before
 	public void setup() throws AgentException, IOException {
-		SlabDirectChunkAllocatorWithCounter.configureThis();
 		monitoredApp = createMicroApplication();
 		// Add 100 records
 		monitoredApp.getLeft().edit(tm -> {
@@ -152,16 +110,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		performGC();
 		final HackedMemoryAnalysisService analysisService = (HackedMemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");
-		Tools.extractSnappyFile(exportPath.toString()+"\\store_A.json.sz");
+//		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");
+//		Tools.extractSnappyFile(exportPath.toString()+"\\store_A.json.sz");
 		
-		
-		Map<String, Long> a1 = analysisService.collectGlobalMemoryStatus();
+
 
 		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 		statsSumm =MemoryStatisticsTestUtils.getStatisticsSummary(stats);
-
-		Map<String, Long> a2 = analysisService.collectGlobalMemoryStatus();
 
 		// Start a monitoring datastore with the exported data
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
@@ -261,6 +216,19 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		// Check that the summed value corresponds to the Exported sum
 		Assertions.assertThat(statsSumm.offHeapMemory).isEqualTo(value);
 	}
+	
+	@Test
+	public void testSharedCount() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+				
+		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		final MDXQuery query = new MDXQuery("SELECT" + 
+				"  NON EMPTY [Measures].[Shared.COUNT] ON COLUMNS" + 
+				"  FROM [MemoryCube]");
+		CellSetDTO res = pivot.execute(query);
+
+		Long value = extractValueFromSingleCellDTO(res);
+		Assertions.assertThat(value).isEqualTo(2);
+		}
 
 	@Test
 	public void testOnHeapMemorySum() throws AgentException, IOException, UnsupportedQueryException, QueryException {

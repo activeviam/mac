@@ -9,6 +9,7 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
+import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.server.cfg.IActivePivotConfig;
@@ -149,7 +150,8 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public JMXEnabler JMXDatastoreEnabler() {
-		return new JMXEnabler(datastoreConfig.datastore());
+		// Force the add of a Ref data in the datastore
+		return new JMXEnabler(datastoreConfig.datastore().edit(tm->tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L)));		
 	}
 
 	/**
