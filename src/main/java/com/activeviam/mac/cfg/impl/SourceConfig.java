@@ -32,6 +32,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -84,7 +85,7 @@ public class SourceConfig {
 			// Load stat
 			final Collection<? extends ICsvDataProvider<Path>> providers = event.created();
 
-			final String dumpName = "autoload-" + LocalDate.now().toString().replaceAll("\\.[^.]*$", "");
+			final String dumpName = "autoload-" + LocalTime.now().toString().replaceAll("\\.[^.]*$", "");
 			try {
 				final Stream<IMemoryStatistic> inputs = providers.stream()
 						.map(provider -> provider.getFileInfo().getIdentifier().toFile())

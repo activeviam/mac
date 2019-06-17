@@ -245,12 +245,14 @@ public class HackedMemoryAnalysisService implements IMemoryAnalysisService {
 		}
 
 		for (final IMultiVersionActivePivot pivot : this.activePivotManager.getActivePivots().values()) {
-			final Collection<IMemoryMonitored> pivotBranches = selectedBranches.stream()
-					.map(branch -> pivot.getHead(branch))
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
-			if (!pivotBranches.isEmpty()) {
-				selection.put(pivot, pivotBranches);
+			if (pivot.getBranches().containsAll(selectedBranches)) {
+				final Collection<IMemoryMonitored> pivotBranches = selectedBranches.stream()
+						.map(branch -> pivot.getHead(branch))
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList());
+				if (!pivotBranches.isEmpty()) {
+					selection.put(pivot, pivotBranches);
+				}
 			}
 		}
 

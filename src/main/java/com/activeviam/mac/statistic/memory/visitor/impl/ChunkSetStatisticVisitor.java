@@ -23,18 +23,16 @@ import com.qfs.store.transaction.IOpenedTransaction;
 
 import java.time.Instant;
 
-public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
+public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** The record format of the store that stores the chunks. */
 	protected final IRecordFormat chunkRecordFormat;
 	/** The record format of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
 
-	protected final IRecordFormat chunkToFieldFormat;
 
 	/** The export date, found on the first statistics we read */
 	protected final Instant current;
-	/** The name of the store of the visited statistic */
-	protected final String store;
+
 	private final ParentType rootComponent;
 	private final ParentType directParentType;
 	private final String directParentId;
@@ -43,16 +41,12 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 
 	/** ID of the current {@link ChunkSet}. */
 	protected Long chunkSetId = null;
-	protected String field = null;
 	protected boolean visitingRowMapping = false;
 	protected boolean visitingVectorBlock = false;
 
 	protected Integer chunkSize;
 	protected Integer freeRows;
 	protected Integer nonWrittenRows;
-
-	private final Long referenceId;
-	private final Long indexId;
 
 	public ChunkSetStatisticVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
@@ -78,10 +72,6 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 
 		this.chunkRecordFormat = this.storageMetadata
 				.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-				.getStoreFormat()
-				.getRecordFormat();
-		this.chunkToFieldFormat = this.storageMetadata
-				.getStoreMetadata(DatastoreConstants.CHUNK_TO_FIELD_STORE)
 				.getStoreFormat()
 				.getRecordFormat();
 	}
@@ -208,51 +198,4 @@ public class ChunkSetStatisticVisitor extends AFeedVisitor<Void> {
 	public Void visit(DictionaryStatistic dictionaryStatistic) {
 		throw new UnsupportedOperationException();
 	}
-
-	private void recordFieldForStructure(
-			final ParentType type,
-			final String id) {
-		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
-		if (this.store != null && this.field != null) {
-			final IRecordFormat format = this.chunkToFieldFormat;
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, this.field);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
-		}
-	}
-
-	private void recordIndexForStructure(
-			final ParentType type,
-			final String id) {
-		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
-		if (this.indexId != null) {
-			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_INDEX_STORE);
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, this.indexId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, tuple);
-		}
-	}
-
-	private void recordRefForStructure(
-			final ParentType type,
-			final String id) {
-		// FIXME(ope) duplicated from com.activeviam.mac.statistic.memory.visitor.impl.DatastoreFeederVisitor
-		if (this.referenceId != null) {
-			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_REF_STORE);
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__REF_ID, this.referenceId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_REF_STORE, tuple);
-		}
-	}
-
 }

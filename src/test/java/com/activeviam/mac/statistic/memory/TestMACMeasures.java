@@ -2,6 +2,7 @@ package com.activeviam.mac.statistic.memory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
@@ -10,6 +11,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.activeviam.mac.Tools;
 import com.activeviam.mac.cfg.impl.DatastoreDescriptionConfig;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
@@ -27,7 +30,7 @@ import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyR
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.offheap.SlabDirectChunkAllocatorWithCounter;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.IMemoryStatistic;import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
@@ -53,7 +56,7 @@ import com.quartetfs.fwk.query.UnsupportedQueryException;
  *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(properties = { "contentServer.security.calculatedMemberRole=zob", "contentServer.security.kpiRole=zob"})
+@SpringBootTest(properties = { "contentServer.security.calculatedMemberRole=empty", "contentServer.security.kpiRole=empty"})
 @ContextConfiguration(classes = {
 		DatastoreDescriptionConfig.class, 
 		ManagerDescriptionConfig.class,
@@ -389,5 +392,12 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		{
 			Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i]/chunkSizes[i]);
 		}
+	}
+	
+	@Ignore
+	@Test
+	public void export() {
+		Path path = Paths.get("C:\\Users\\m.ennaime\\AppData\\Local\\Temp\\DumpSandbox2", "");
+		Tools.extractSnappyFile(path+"\\pivot_EquityDerivativesCubeDist.json.sz");
 	}
 }

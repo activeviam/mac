@@ -6,19 +6,31 @@
  */
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.mac.Tools;
+import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.dic.IDictionary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
+import com.qfs.store.NoTransactionException;
 import com.qfs.store.impl.Datastore;
+import com.qfs.store.transaction.DatastoreTransactionException;
+import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.quartetfs.fwk.AgentException;
+import com.quartetfs.fwk.QuartetRuntimeException;
+import com.quartetfs.fwk.impl.Pair;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.IntStream;
+
 import static org.junit.Assert.assertNotEquals;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
@@ -79,8 +91,6 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 		});
 	}
 	
-	// FIXME : branches export does not properly work if EpochDimension is not defined in all the Cubes
-	@Ignore
 	@Test
 	public void testLoadPivotsWithInconsistantEpochDimensions() {
 		createMinimalApplicationForEpochDimensionFailure((monitoredDatastore,monitoredManager)->{
@@ -91,6 +101,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
+			//Tools.extractSnappyFile(exportPath.toString()+"\\MultiVersionPivot_HistoryCubeNoEpochDimension.json.sz");
 			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
 			assertNotEquals(null, fullStats);
 			assertLoadsCorrectly(fullStats);	
@@ -128,10 +139,9 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			fillApplication(monitoredDatastore);
 			fillApplicationWithBranches(monitoredDatastore,branchSet,true);
 			
-			//Also export master (?)
 			long epochs[] = new long[2];
 			epochs[0]=1L;
-			epochs[1]=100L;
+			epochs[1]=2L;
 
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportVersions("testLoadFullStats", epochs);
@@ -150,7 +160,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 	public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
 		doTestLoadMonitoringDatastoreWithVectors(true);
 	}
-	
+		
 	/**
 	 * Asserts the chunks number and off-heap memory as computed from the loaded datastore are consistent
 	 * with the ones computed by visiting the statistic.

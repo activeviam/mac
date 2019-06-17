@@ -49,6 +49,7 @@ import com.qfs.monitoring.offheap.SlabDirectChunkAllocatorWithCounter;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
+import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.qfs.multiversion.impl.KeepLastEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
@@ -385,6 +386,7 @@ public abstract class ATestMemoryStatistic {
 				
 		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
 				.setSchemaDescription(datastoreSchema)
+				.setEpochManagementPolicy(new KeepAllEpochPolicy())
 				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
 				.build());
 		final IActivePivotManager manager;

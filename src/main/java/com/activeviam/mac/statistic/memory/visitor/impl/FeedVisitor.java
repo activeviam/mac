@@ -57,7 +57,10 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			final IRecordFormat format,
 			final ChunkStatistic stat) {
 		final Object[] tuple = new Object[format.getFieldCount()];
-
+		if (stat.getAttribute("creatorClass").asText().contains("Offset"))
+		{
+			System.out.println(stat.getAttribute("Hello"+MemoryStatisticConstants.ATTR_NAME_CHUNK_ID));
+		}
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();

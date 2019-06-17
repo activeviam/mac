@@ -117,7 +117,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 			processPivot(stat);
 			break;
 			// Unless said otherwise we assume all providers are partial,safer than the other way
-			// FIXME (men) say something, do the contrary (Needed to launch the app!)  providers must be fixed 
 		case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
 		case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
 			processProvider(stat);
@@ -437,6 +436,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		if (indexAttr != null) {
 			tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__INDEX)] = indexAttr.asText();
 		}
+		
 		tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__PROVIDER_ID)] = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID).asLong();
 		tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__TYPE)] = stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE).asText(); // JIT, BITMAP, LEAF
 		tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__CATEGORY)] = getProviderCategory(stat);

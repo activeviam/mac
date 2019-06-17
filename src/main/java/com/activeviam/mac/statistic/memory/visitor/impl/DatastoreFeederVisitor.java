@@ -37,7 +37,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
  *
  * @author ActiveViam
  */
-public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
+public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** Class logger */
 	private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
@@ -73,9 +73,7 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 
 	/** The partition id of the visited statistic */
 	protected Integer partitionId = null;
-	/** The name of the store of the visited statistic */
-	protected String store = null;
-	protected String field = null;
+
 	private IndexType indexType = null;
 
 	protected StatisticTreePrinter printer;
@@ -432,51 +430,4 @@ public class DatastoreFeederVisitor extends AFeedVisitor<Void> {
 
 		return tuple;
 	}
-
-	private void recordStructureParent(final ParentType type, final String id) {
-		recordFieldForStructure(type, id);
-		recordIndexForStructure(type, id);
-		recordRefForStructure(type, id);
-	}
-
-	private void recordFieldForStructure(final ParentType type, final String id) {
-		if (this.store != null && this.field != null) {
-			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata,
-					DatastoreConstants.CHUNK_TO_FIELD_STORE);
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, this.field);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, tuple);
-		}
-	}
-
-	private void recordIndexForStructure(final ParentType type, final String id) {
-		if (this.indexId != null) {
-			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata,
-					DatastoreConstants.CHUNK_TO_INDEX_STORE);
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, this.indexId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, tuple);
-		}
-	}
-
-	private void recordRefForStructure(final ParentType type, final String id) {
-		if (this.referenceId != null) {
-			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata,
-					DatastoreConstants.CHUNK_TO_REF_STORE);
-			final Object[] tuple = new Object[format.getFieldCount()];
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__REF_ID, this.referenceId);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, type);
-			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_REF__PARENT_ID, id);
-
-			this.transaction.add(DatastoreConstants.CHUNK_TO_REF_STORE, tuple);
-		}
-	}
-
 }

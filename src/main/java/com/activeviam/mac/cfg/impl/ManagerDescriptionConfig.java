@@ -100,9 +100,78 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	@Override
 	public IActivePivotManagerDescription managerDescription() {
 		return StartBuilding.managerDescription()
+				.withCatalog("Memory Analysis").containingCubes("MemoryCube")
+				.withCatalog("Additional Data").containingCubes("Indexes","Dictionaries","Providers","Fields","Levels")
 				.withSchema("MemorySchema")
-				.withSelection(createSelection())
-				.withCube(createCube())
+					.withSelection(createSelection())
+					.withCube(createCube())
+				.withSchema("IndexSchema")
+				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+						.fromBaseStore(DatastoreConstants.INDEX_STORE)
+						.withAllFields()
+						.build())
+				.withCube(StartBuilding.cube("Indexes")
+						.withDimension("Indexes")
+						.withHierarchyOfSameName()
+						.withLevel(DatastoreConstants.INDEX_TYPE).withProperty(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE)
+						.withLevel(DatastoreConstants.INDEX_CLASS).withProperty(DatastoreConstants.INDEX_STORE,DatastoreConstants.INDEX_CLASS)
+						.withHierarchy("Indexed Fields")
+						.withLevel(DatastoreConstants.INDEX__FIELDS).withProperty(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX__FIELDS)
+						.build())
+				.withSchema("DictionarySchema")
+				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+						.fromBaseStore(DatastoreConstants.DICTIONARY_STORE)
+						.withAllFields()
+						.build())
+				.withCube(StartBuilding.cube("Dictionaries")
+						.withAggregatedMeasure()
+						.sum(DatastoreConstants.DICTIONARY_SIZE)
+						.withDimension("Dictionary classes")
+						.withHierarchyOfSameName()
+						.withLevel(DatastoreConstants.DICTIONARY_CLASS)
+						.build())
+				.withSchema("Provider Schema")
+				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+						.fromBaseStore(DatastoreConstants.PROVIDER_STORE)
+						.withAllFields()
+						.build())
+				.withCube(StartBuilding.cube("Providers")
+						.withDimension("Providers")
+						.withHierarchyOfSameName()
+						.withLevel(DatastoreConstants.PROVIDER__MANAGER_ID)
+						.withLevel(DatastoreConstants.PROVIDER__PIVOT_ID)
+						.withDimension("Provider indexes")
+						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__INDEX)
+						.withDimension("Provider Type")
+						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__TYPE)
+						.withDimension("Provider category")
+						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__CATEGORY)
+						.build())
+				.withSchema("Field Schema")
+				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+						.fromBaseStore(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+						.withAllFields()
+						.build())
+				.withCube(StartBuilding.cube("Fields")
+						.withDimension("Fields")
+						.withHierarchyOfSameName()
+						.withLevel(DatastoreConstants.CHUNK_TO_FIELD__STORE)
+						.withLevel(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
+						.build())
+				.withSchema("Level Schema")
+				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+						.fromBaseStore(DatastoreConstants.LEVEL_STORE)
+						.withAllFields()
+						.build())
+				.withCube(StartBuilding.cube("Levels")
+						.withDimension("Fields")
+						.withHierarchyOfSameName()
+						.withLevels(DatastoreConstants.LEVEL__MANAGER_ID,
+								DatastoreConstants.LEVEL__PIVOT_ID,
+								DatastoreConstants.LEVEL__DIMENSION,
+								DatastoreConstants.LEVEL__HIERARCHY,
+								DatastoreConstants.LEVEL__LEVEL)
+						.build())
 				.build();
 	}
 
@@ -121,41 +190,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 					return result;
 				})
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_SETS)
-//				.withAllFields()
-//				.except(DatastoreConstants.CHUNKSET_ID)
-//				.withAlias(DatastoreConstants.CHUNK_SET_CLASS, prefixField(DatastoreConstants.CHUNKSET_STORE, DatastoreConstants.CHUNK_SET_CLASS))
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_REF)
-//				.withAllFields()
-//				.except(DatastoreConstants.REFERENCE_ID)
-//				.withAlias(DatastoreConstants.REFERENCE_CLASS, prefixField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_CLASS))
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_INDICES)
-//				.withAllFields()
-//				.except(DatastoreConstants.INDEX_ID)
-//				.withAlias(DatastoreConstants.INDEX_TYPE, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_TYPE))
-//				.withAlias(DatastoreConstants.INDEX_CLASS, prefixField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_CLASS))
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER)
-//				.withAllFields()
-//				.except(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-//				.withAlias(DatastoreConstants.PROVIDER_COMPONENT__CLASS, prefixField(DatastoreConstants.PROVIDER_COMPONENT_STORE, DatastoreConstants.PROVIDER_COMPONENT__CLASS))
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_PROVIDER, MemoryAnalysisDatastoreDescription.PROVIDER_COMPONENT_TO_PROVIDER)
-//				.withAllFields()
-//				.except(DatastoreConstants.PROVIDER__PROVIDER_ID)
-//				.withAlias(DatastoreConstants.PROVIDER__INDEX, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__INDEX))
-//				.withAlias(DatastoreConstants.PROVIDER__TYPE, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__TYPE))
-//				.withAlias(DatastoreConstants.PROVIDER__CATEGORY, prefixField(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__CATEGORY))
-
-//				.usingReference(MemoryAnalysisDatastoreDescription.CHUNK_TO_DICS)
-//				.withAllFields()
-//				.except(DatastoreConstants.DICTIONARY_ID)
-//				.withAlias(DatastoreConstants.DICTIONARY_CLASS, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_CLASS))
-//				.withAlias(DatastoreConstants.DICTIONARY_SIZE, prefixField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_SIZE))
-
 				.build();
 	}
 
@@ -165,12 +199,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 				.withDimensions(this::defineDimensions)
 
-				.withEpochDimension()
-					.withEpochsLevel()
-						.withComparator(ReverseEpochComparator.TYPE)
-						.withFormatter(EpochFormatter.TYPE + "[HH:mm:ss]")
-						.end()
-
 				.withDescriptionPostProcessor(
 						StartBuilding
 								.copperCalculations()
@@ -178,14 +206,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 								.build())
 
 				.withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
-				
-//				.withSharedDrillthroughProperties()
-//				.hideColumn(DatastoreConstants.FIELDS)
-//				.withCalculatedColumn()
-//				.withName("Field names")
-//				.withPluginKey(FieldsColumn.PLUGIN_KEY)
-//				.withUnderlyingFields(DatastoreConstants.FIELDS)
-//				.end().end()
 
 				.build();
 	}
@@ -238,7 +258,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withDimension("Pivot")
 				.withHierarchy("Manager").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
 				.withHierarchy("Pivot").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
-				// The hierarchy calles "hierarchy" will be created by coPPer join as an Analysis hierarchy
+				// The hierarchy called "hierarchy" will be created by coPPer join as an Analysis hierarchy
 //				.withHierarchy("hierarchy").withLevelOfSameName().withPropertyName(DatastoreConstants.LEVEL__HIERARCHY)
 				.withHierarchy("ProviderType").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
 //				.withHierarchy("ProviderClass").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
@@ -262,29 +282,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.withUpdateTimestamp()
 				.withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
 
-//				.withPostProcessor(DIRECT_CHUNKS_COUNT)
-//				.withPluginKey(DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
-//				.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID)
-//				.withProperty(
-//						IPostProcessorConstants.DYNAMIC_AGGREGATION_PARAM_LEAF_LEVELS,
-//						CHUNK_CLASS_LEVEL + "@" + CHUNK_CLASS_LEVEL)
-//				.withProperty(
-//						DirectMemoryOnlyPostProcessor.MEASURE_KEY, DIRECT_MEMORY_SUM)
-//				.withFormatter(NUMBER_FORMATTER)
-//
-//				.withPostProcessor(HEAP_CHUNKS_COUNT)
-//					.withPluginKey(ArithmeticFormulaPostProcessor.PLUGIN_KEY)
-//					.withProperty(
-//							ArithmeticFormulaPostProcessor.FORMULA_PROPERTY,
-//							"aggregatedValue[" + IMeasureHierarchy.COUNT_ID  + "],aggregatedValue[" + DIRECT_CHUNKS_COUNT + "],-")
-//					.withUnderlyingMeasures(IMeasureHierarchy.COUNT_ID, DIRECT_CHUNKS_COUNT);
 	}
 
 	private void copperCalculations(final BuildingContext context) {
 		memoryMeasures(context);
 		chunkMeasures(context);
 		applicationMeasure(context);
-		joinHierarchies(context);
+	// FIXME : Cannot be done properly with current datastore structure
+	//	joinHierarchies(context);
 	}
 	
 
@@ -298,7 +303,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.publish();
 
 		// TODO(ope) may need to optimize this as we don't need to go to chunkId to just get the count
-		// FIXME(ope) this is not working
 		context.withFormatter(NUMBER_FORMATTER)
 				.createDatasetFromFacts()
 				.filter(
@@ -371,17 +375,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.publish();
 	}
 
-	private void joinHierarchies(final BuildingContext context) {
-		// TODO (men) make copper joins work properly -> requires datastore changes -> Visitor changes
-		
-		//coPPer join to get data from Cube levels
+	private void joinHierarchies(final BuildingContext context) {	
 		joinLevelsToChunks(context);		
-		//coPPer join to get data from Store fields
-		joinFieldToChunks(context);
-		
-		joinIndexesToChunks(context);
-		joinRefsToChunks(context);
-	
+		joinFieldToChunks(context);		
+		joinIndexesToChunks(context);		
+		joinRefsToChunks(context);	
 	}
 
 	/**
