@@ -33,10 +33,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
  *
  * @author ActiveViam
  */
-/*
-@SpringBootApplication
-/*/
-//*/
 @Configuration
 @EnableAutoConfiguration
 @EnableWebMvc
@@ -48,12 +44,21 @@ public class MacSpringBootApp {
 		Registry.setContributionProvider(new ClasspathContributionProvider());
 	}
 
+	/**
+	 * Starts the Memory Analysis Cube application
+	 * @param args additional CLI arguments
+	 */
 	public static void main(final String[] args) {
 		SpringApplication.run(MacSpringBootApp.class, args);
 	}
 
 	/**
-	 * Special beans to make AP work in SpringBoot https://github.com/spring-projects/spring-boot/issues/15373
+	 * Provides a customized {@link DispatcherServletRegistrationBean} with a specific servlet path.
+	 * <p>
+	 * This bean is required to make AP work in SpringBoot; see : {@linkplain https://github.com/spring-projects/spring-boot/issues/15373}
+	 * @param dispatcherServlet the dispatcher servlet
+	 * @param multipartConfig the dispatcher servlet properties
+	 * @return a customized {@link DispatcherServletRegistrationBean}
 	 */
 	@Bean
 	public DispatcherServletRegistrationBean dispatcherServletRegistration(
@@ -67,6 +72,7 @@ public class MacSpringBootApp {
 		multipartConfig.ifAvailable(registration::setMultipartConfig);
 		return registration;
 	}
+
 
 	// TODO(ope) how to properly register a filter in SpringBoot
 	@Bean

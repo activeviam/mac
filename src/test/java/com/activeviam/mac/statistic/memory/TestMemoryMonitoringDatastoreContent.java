@@ -65,7 +65,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 
 public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
-	
+
 	/**
 	 * Tests the consistency between the chunks of an ActivePivot application and its the monitoring data obtained by loading exported data.
 	 */
@@ -76,29 +76,28 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
 			fillApplicationMinimal(monitoredDatastore);
 			performGC();
-			
+
 			final IMemoryAnalysisService analysisService = TestMemoryStatisticLoading.createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportApplication("testLoadComplete");
 
 			final IMemoryStatistic fullStats = TestMemoryStatisticLoading.loadMemoryStatFromFolder(exportPath);
 			final Datastore monitoringDatastore = (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
-			
+
 			IDictionary<Object> dic = monitoredDatastore.getDictionaries().getDictionary("Sales", "id");
-			
+
 			final long[] chunkIds = new long[2];
 			final long[] chunkSizes = new long[2];
-			
+
 			AtomicInteger rnk = new AtomicInteger();
-			
 			final long[] monitoredChunkSizes = new long[2];
-			
-			// Check all the chunks held by the Dictionary of that key field of the store			
+
+			// Check all the chunks held by the Dictionary of that key field of the store
 			IMemoryStatistic stat = dic.getMemoryStatistic();
 
 			stat.getChildren().forEach((c_st)->{
 				c_st.getChildren().forEach((c_c_st)->{
 					c_c_st.getChildren().forEach((c_c_c_st)->{
-						chunkSizes[rnk.get()]=c_c_c_st.getAttribute("length").asLong();						
+						chunkSizes[rnk.get()]=c_c_c_st.getAttribute("length").asLong();
 						chunkIds[rnk.get()]=c_c_c_st.getAttribute("chunkId").asLong();
 						rnk.getAndIncrement();
 					});
@@ -118,18 +117,18 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 								DatastoreConstants.CHUNK__CLASS,
 								DatastoreConstants.CHUNK__SIZE));
 				Object keys[] = new Object[2];
-				
+
 				int chunkDumpNameFieldIdx = monitoringDatastore.getSchema().getStore(DatastoreConstants.CHUNK_STORE).getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME);
 
 				for (int i=0;i<chunkIds.length;i++)
 				{
 				keys[0] =  chunkIds[i];
 				keys[1] =  monitoringDatastore.getSchema().getStore(DatastoreConstants.CHUNK_STORE).getDictionaryProvider().getDictionary(chunkDumpNameFieldIdx).read(1);
-				
+
 				Object[] top_obj = query.runInTransaction(keys, true).toTuple();
 				monitoredChunkSizes[i] = Long.valueOf(top_obj[3].toString());
 				}
-			
+
 			});
 			// Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring Cube are identical
 			assertArrayEquals(chunkSizes, monitoredChunkSizes);
@@ -139,8 +138,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
 	@Test
 	public void testChunkStructureFieldsWithSingleRecord( ) throws IOException, AgentException {
-	final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication(); 
-	
+	final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
+
 	// Add a single record
 	monitoredApp.getLeft().edit(tm -> {
 		IntStream.range(0, 1).forEach(i -> {
@@ -154,14 +153,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 	final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
 	final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 	final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
-	
+
 	//Make sure there is only one loaded store
 	Assert.assertEquals(1, storeStats.size());
-	
-	// Start a monitoring datastore with the exported data 
+
+	// Start a monitoring datastore with the exported data
 	final IDatastore monitoringDatastore = createAnalysisDatastore();
 monitoringDatastore.edit(tm -> {
-		storeStats.forEach((stats) -> {			
+		storeStats.forEach((stats) -> {
 				stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA"));
 			});
 		});
@@ -182,7 +181,7 @@ monitoringDatastore.edit(tm -> {
 		Object[] data = record.toTuple();
 		list.add(data);
 		});
-	// Expect 3 Chunks : 
+	// Expect 3 Chunks :
 	// - 1 Chunk for versions : directChunkLong
 	// - 2 Chunks for the actual records
 	//         * 1 Wrapper chunk (DirectChunkPositiveInteger) -> Verify that the offHeap size equal to Zero
@@ -190,31 +189,31 @@ monitoringDatastore.edit(tm -> {
 	Assertions.assertThat(list.size()).isEqualTo(3);
 	Assertions.assertThat(list).containsExactly(new Object[] {0,255,256,0L},new Object[] {0,255,256,0L},new Object[] {0,255,256,2048L});
 	}
-	
+
 	@Test
 	public void testChunkStructureFieldsWithFullChunk( ) throws IOException, AgentException {
-		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication(); 
-		
+		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
+
 		// Add a full chunk
 		monitoredApp.getLeft().edit(tm -> {
 			IntStream.range(0, 256).forEach(i -> {
 				tm.add("A", i*i*i);
 			});
 		});
-		
+
 		// Force to discard all versions
 		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 		final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
-		
+
 
 		final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 		final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
-		
+
 		//Make sure there is only one loaded store
 		Assert.assertEquals(1, storeStats.size());
-		
-		// Start a monitoring datastore with the exported data 
+
+		// Start a monitoring datastore with the exported data
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 			storeStats.forEach((stats) -> {
@@ -240,38 +239,38 @@ monitoringDatastore.edit(tm -> {
 			Object[] data = record.toTuple();
 			list.add(data);
 			});
-		// Expect 2 Chunks : 
+		// Expect 2 Chunks :
 		// - 1 Chunk for versions : directChunkLong
 		// - 1 Chunks for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored offheap
 		Assertions.assertThat(list.size()).isEqualTo(2);
 		Assertions.assertThat(list).containsExactly(new Object[] {0,0,256,256L},new Object[] {0,0,256,2048L});
 	}
-	
-	
+
+
 	@Test
 	public void testChunkStructureFieldsWithTwoChunks( ) throws IOException, AgentException {
-		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication(); 
-		
+		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
+
 		// Add a full chunk + 10 records on the second chunk
 		monitoredApp.getLeft().edit(tm -> {
 			IntStream.range(0, 266).forEach(i -> {
 				tm.add("A", i*i*i);
 			});
 		});
-		
+
 		// Force to discard all versions
 		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 		final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
-		
+
 
 		final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 		final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
-		
+
 		//Make sure there is only one loaded store
 		Assert.assertEquals(1, storeStats.size());
-		
-		// Start a monitoring datastore with the exported data 
+
+		// Start a monitoring datastore with the exported data
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 			storeStats.forEach((stats) -> {
@@ -297,10 +296,10 @@ monitoringDatastore.edit(tm -> {
 			Object[] data = record.toTuple();
 			list.add(data);
 			});
-		// Expect 5 Chunks : 
+		// Expect 5 Chunks :
 		// - 2 Chunk for versions : directChunkLong
 		// - 3 Chunks for the actual records
-		//		   * 1 Wrapping chunk 
+		//		   * 1 Wrapping chunk
 		//         * 2 Content Chunk
 		Assertions.assertThat(list.size()).isEqualTo(5);
 		Assertions.assertThat(list).containsExactlyInAnyOrder(
@@ -315,10 +314,10 @@ monitoringDatastore.edit(tm -> {
 				new Object[] {0,246,256,512L}
 				);
 	}
-	
+
 	@Test
 	public void testChunkStructureFieldsWithFreedRows( ) throws IOException, AgentException {
-	
+
 		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
 		// Add 100 records
 		monitoredApp.getLeft().edit(tm -> {
@@ -337,7 +336,6 @@ monitoringDatastore.edit(tm -> {
 				}
 			});
 		});
-				
 		// Force to discard all versions
 		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 		final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
@@ -346,7 +344,7 @@ monitoringDatastore.edit(tm -> {
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
 		final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
-		// Start a monitoring datastore with the exported data 
+		// Start a monitoring datastore with the exported data
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 			storeStats.forEach((stats) -> {
@@ -372,10 +370,10 @@ monitoringDatastore.edit(tm -> {
 			Object[] data = record.toTuple();
 			list.add(data);
 			});
-		// Expect 3 Chunks : 
+		// Expect 3 Chunks :
 		// - 1 Chunk for versions : directChunkLong
 		// - 2 Chunks for the actual records
-		//		   * 1 Wrapping chunk 
+		//		   * 1 Wrapping chunk
 		//         * 1 Content Chunk
 		Assertions.assertThat(list.size()).isEqualTo(3);
 		Assertions.assertThat(list).containsExactlyInAnyOrder(
@@ -387,33 +385,32 @@ monitoringDatastore.edit(tm -> {
 				new Object[] {20,156,256,256L}
 				);
 	}
-	
+
 
 	@Test
 	public void testLevelStoreContent() throws AgentException, IOException, UnsupportedQueryException, QueryException {
-		
-		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication(); 
-		
+
+		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
+
 		// Add 10 records
 		monitoredApp.getLeft().edit(tm -> {
 			IntStream.range(0, 10).forEach(i -> {
 				tm.add("A", i*i*i);
 			});
 		});
-		
+
 		// Force to discard all versions
 		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 		final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
-		
 
 		final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 		final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
-		
+
 		//Make sure there is only one loaded store
 		Assert.assertEquals(1, pivotStats.size());
-		
-		// Start a monitoring datastore with the exported data 
+
+		// Start a monitoring datastore with the exported data
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 		monitoringDatastore.edit(tm -> {
 			pivotStats.forEach((stats) -> {
@@ -437,10 +434,10 @@ monitoringDatastore.edit(tm -> {
 			});
 		Assertions.assertThat(list.size()).isEqualTo(1);
 	}
-	
+
 	 @Test
 	 public void testCompareDumpsOfDifferentEpochs() throws IOException, AgentException {
-			
+
 			final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplication();
 			final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
@@ -474,7 +471,7 @@ monitoringDatastore.edit(tm -> {
 			stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "appAInit"));
 			statsEpoch2.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "appAEpoch2"));
 		});
-		// Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice 
+		// Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice
 		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(BaseConditions.TRUE)
@@ -485,8 +482,7 @@ monitoringDatastore.edit(tm -> {
 			list.add(data[0]);
 		});
 		Assertions.assertThat(list).allMatch(o -> Collections.frequency(list, o) == 2);
-		
-		// Verify that the changes between dumps have been registered 
+		// Verify that the changes between dumps have been registered
 		final IDictionaryCursor cursor2 = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "appAInit"))
@@ -510,7 +506,6 @@ monitoringDatastore.edit(tm -> {
 		Assertions.assertThat(list3).contains(new Object[] { 10 });
 	}
 
-	 
 	 @Test
 	 public void testCompareDumpsOfDifferentApps() throws IOException, AgentException {
 		 //Create First App
@@ -524,7 +519,6 @@ monitoringDatastore.edit(tm -> {
 		//Export first app
 		Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-		
 		//Create second app
 		final Pair<IDatastore, IActivePivotManager> monitoredAppWithBitmap = createMicroApplicationWithLeafBitmap();
 		final IMemoryAnalysisService analysisServiceWithBitmap = createService(monitoredAppWithBitmap.getLeft(),monitoredAppWithBitmap.getRight());
@@ -537,8 +531,8 @@ monitoringDatastore.edit(tm -> {
 		exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
 
 		final IMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
-		System.out.println(exportPath.toString());
-		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");
+//		System.out.println(exportPath.toString());
+//		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 		monitoringDatastore.edit(tm -> {
 			stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "App"));
@@ -555,9 +549,8 @@ monitoringDatastore.edit(tm -> {
 		cursor.forEach((record) -> {
 			Object[] data = record.toTuple();
 			list.add(data);
-		});		
+		});
 		Assertions.assertThat(list).isEmpty();
-		
 		final IDictionaryCursor cursor2 = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(
@@ -569,7 +562,52 @@ monitoringDatastore.edit(tm -> {
 		cursor2.forEach((record) -> {
 			Object[] data = record.toTuple();
 			list2.add(data);
-		});		
+		});
 		Assertions.assertThat(list2).isNotEmpty();
 	}
+
+	@Test
+	public void testChunkToReferencesDatastoreContentWithReference() throws AgentException, IOException {
+		final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithReference();
+		final IMemoryAnalysisService analysisService = createService(monitoredApp.getLeft(), monitoredApp.getRight());
+
+		monitoredApp.getLeft().edit(tm -> {
+			IntStream.range(0, 100).forEach(i -> {
+				tm.add("A", i * i, i);
+				tm.add("B", i);
+			});
+		});
+		// Export first app
+		Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
+		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+		final IDatastore monitoringDatastore = createAnalysisDatastore();
+		monitoringDatastore.edit(tm -> {
+			stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "App"));
+		});
+
+		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
+				.forStore(DatastoreConstants.REFERENCE_STORE).withCondition(BaseConditions.TRUE)
+				.selecting(DatastoreConstants.REFERENCE_ID).onCurrentThread().run();
+		final List<Object[]> list = new ArrayList<>();
+		cursor.forEach((record) -> {
+			Object[] data = record.toTuple();
+			list.add(data);
+		});
+		Assertions.assertThat(list).isNotEmpty();
+
+		final IDictionaryCursor cursor2 = monitoringDatastore.getHead().getQueryRunner()
+				.forStore(DatastoreConstants.CHUNK_TO_REF_STORE).withCondition(BaseConditions.TRUE)
+				.selecting(DatastoreConstants.CHUNK_TO_REF__REF_ID).onCurrentThread().run();
+		final List<Object[]> list2 = new ArrayList<>();
+		cursor2.forEach((record) -> {
+			Object[] data = record.toTuple();
+			list2.add(data);
+		});
+		// A default record is added in all the Chunk_TO_XXX stores in order to make sure no hierarchy is empty
+		//(we want to be able to make MDX queries even if there is no references )
+		// Therefore, we need to check if the size is >1
+		Assertions.assertThat(list2.size()).isGreaterThan(1);
+	}
+	
+	//TODO Test content of all stores similarly
 }

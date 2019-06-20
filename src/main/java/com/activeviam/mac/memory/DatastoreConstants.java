@@ -51,26 +51,37 @@ public class DatastoreConstants {
 	public static final String CHUNK__FREE_ROWS = "freeRows";
 
 	public static final String PROVIDER__PROVIDER_ID = PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
-	public static final String PROVIDER__PIVOT_ID = "pivotId";
-	public static final String PROVIDER__MANAGER_ID = "managerId";
-	public static final String PROVIDER__INDEX = "index";
+	public static final String PROVIDER__PIVOT_ID = "pivotId"+ "prov";
+	public static final String PROVIDER__MANAGER_ID = "managerId"+ "prov";
+	public static final String PROVIDER__INDEX = "index"+ "prov";
 	public static final String PROVIDER__TYPE = "type";
 	public static final String PROVIDER__CATEGORY = "category";
+	
+	public static final String FIELD_SUFFIX = "Fld";
+	public static final String INDEX_SUFFIX = "Idx";
+	public static final String DICO_SUFFIX = "Dic";
+	public static final String REFERENCE_SUFFIX = "Ref";
+	public static final String LEVEL_SUFFIX = "Lvl";
 
 	public static final String CHUNK_TO_FIELD_STORE = "ChunkToField";
-	public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId";
-	public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId"+ FIELD_SUFFIX;
+	public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType"+ FIELD_SUFFIX;
 	public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
 	public static final String CHUNK_TO_FIELD__STORE = "storeName";
 
 	public static final String CHUNK_TO_INDEX_STORE = "ChunkToIndex";
-	public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId";
-	public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId"+ INDEX_SUFFIX;
+	public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType"+ INDEX_SUFFIX;
 	public static final String CHUNK_TO_INDEX__INDEX_ID = "indexId";
+	
+	public static final String CHUNK_TO_DICO_STORE = "ChunkToDico";
+	public static final String CHUNK_TO_DICO__PARENT_ID = "parentId"+ DICO_SUFFIX;
+	public static final String CHUNK_TO_DICO__PARENT_TYPE = "parentType"+DICO_SUFFIX;
+	public static final String CHUNK_TO_DICO__DICO_ID = "dictionaryId";
 
 	public static final String CHUNK_TO_REF_STORE = "ChunkToReference";
-	public static final String CHUNK_TO_REF__PARENT_ID = "parentId";
-	public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_REF__PARENT_ID = "parentId" + REFERENCE_SUFFIX;
+	public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType"+ REFERENCE_SUFFIX;
 	public static final String CHUNK_TO_REF__REF_ID = "refId";
 
 	// store and partition info.
@@ -112,13 +123,13 @@ public class DatastoreConstants {
 	public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
 	public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
-	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
-	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId";
-	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
-	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
+	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId"+ LEVEL_SUFFIX;
+	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId" + LEVEL_SUFFIX;
+	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension"+ LEVEL_SUFFIX;
+	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy"+ LEVEL_SUFFIX;
 	public static final String CHUNK_TO_LEVEL__LEVEL = "level";
-	public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId";
-	public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType";
+	public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId"+LEVEL_SUFFIX;
+	public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType"+ LEVEL_SUFFIX;
 
 	public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 	public static final String PROVIDER_COMPONENT__CLASS = "class";

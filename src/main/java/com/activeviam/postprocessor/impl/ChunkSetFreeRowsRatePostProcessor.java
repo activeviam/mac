@@ -19,7 +19,7 @@ import com.quartetfs.fwk.QuartetExtendedPluginValue;
 public class ChunkSetFreeRowsRatePostProcessor extends ADynamicAggregationPostProcessor<Double, Double> {
 
 	/** post processor plugin key */
-	public final static String PLUGIN_KEY = "FREE_ROWS_RATE";
+	public static final String PLUGIN_KEY = "FREE_ROWS_RATE";
 
 	public ChunkSetFreeRowsRatePostProcessor(String name, IPostProcessorCreationContext creationContext) {
 		super(name, creationContext);

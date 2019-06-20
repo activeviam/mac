@@ -120,12 +120,16 @@ public class QFSFormatter extends Formatter {
 		return builder.toString();
 	}
 
+	/**
+	 * Returns the name of the current Thread.
+	 * @return the name of the thread on which this method was invoked.
+	 */
 	public String getCurrentThread() {
 		return Thread.currentThread().getName();
 	}
 
 	/**
-	 * Retrieve the current user authenticated with the current thread.
+	 * Retrieves the current user authenticated with the current thread.
 	 * @return current authenticated user, or null if no user is authenticated
 	 * with the current thread.
 	 */

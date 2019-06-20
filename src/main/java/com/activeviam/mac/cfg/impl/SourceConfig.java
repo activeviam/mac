@@ -17,6 +17,7 @@ import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
 import com.qfs.msg.impl.WatcherService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
+import com.qfs.store.impl.Datastore;
 import com.qfs.store.impl.StoreUtils;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -26,12 +27,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Optional;
@@ -47,6 +46,7 @@ public class SourceConfig {
 	/** Logger */
 	private static final Logger LOGGER = MessagesDatastore.getLogger(SourceConfig.class);
 
+	/** Autowired {@link Datastore} to be fed by this source*/
 	@Autowired
 	protected IDatastore datastore;
 
@@ -54,9 +54,17 @@ public class SourceConfig {
 	@Autowired
 	protected Environment env;
 
+	/**
+	 * Provides a {@link DirectoryCSVTopic topic}.
+	 * <p>
+	 * The provided topic is based on the content of the folder defined by the {@code statistic.folder} environment property.
+	 * By default, the property is defined in the {@code ./src/main/resources/application.yml }  ressource file.
+	 * @return a topic based on the content of the directory.
+	 * @throws IllegalStateException if the required {@code statistic.folder} property is not defined in the environment
+	 */
 	@Bean
 	@Lazy
-	public DirectoryCSVTopic statisticTopic() {
+	public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
 		return new DirectoryCSVTopic(
 				"StatisticTopic",
 				null,
@@ -66,20 +74,29 @@ public class SourceConfig {
 				new WatcherService());
 	}
 
+	/**
+	 * Triggers the reload of the entire directory and the processing of any new file in it.
+	 */
 	public void loadStatistics() {
 		final IFileEvent<Path> initialEvent = statisticTopic().fullReload();
 		processEvent(initialEvent);
 	}
 
 	/**
-	 * Start to watch the folder that contains statistics.
+	 * Starts to watch the folder that contains statistics.
 	 *
-	 * @return {@link Void}
 	 */
 	public void watchStatisticDirectory() {
 		statisticTopic().listen((__, event) -> processEvent(event));
 	}
 
+	/**
+	 * Processes file events.
+	 * <p>
+	 * Only file creations/additions to the directory watched are processed.
+	 * File modifications and deletions are not supported.
+	 * @param event event to be processed
+	 */
 	public void processEvent(final IFileEvent<Path> event) {
 		if (event != null && event.created() != null) {
 			// Load stat
@@ -107,7 +124,9 @@ public class SourceConfig {
 	}
 
 	/**
+	 * Feeds the {@link SourceConfig#datastore datastore} with a stream of {@link IMemoryStatistic}.
 	 * @param memoryStatistics {@link IMemoryStatistic} to load.
+	 * @param dumpName name of the statistics {@code dumpName} field value
 	 * @return message to the user
 	 */
 	public String feedDatastore(final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
@@ -117,8 +136,6 @@ public class SourceConfig {
 
 
 		if (info.isPresent()) {
-//			SchemaPrinter.printStore(this.datastore, DatastoreConstants.DICTIONARY_STORE);
-//			SchemaPrinter.printStore(this.datastore, DatastoreConstants.PROVIDER_STORE);
 			return "Commit successful at epoch "
 					+ info.get().getId()
 					+ ". Datastore size "
@@ -128,6 +145,13 @@ public class SourceConfig {
 		}
 	}
 
+	/**
+	 * Loads a statistics file into the application datastore.
+	 *
+	 * @param path path to the statistics file
+	 * @return message to the user
+	 * @throws IOException if an If an I/O error occurred during the file reading.
+	 */
 	@JmxOperation(
 			desc = "Load statistic from file.",
 			name = "Load a IMemoryStatistic",

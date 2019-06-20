@@ -17,7 +17,6 @@ import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
@@ -26,7 +25,6 @@ import com.qfs.content.service.impl.HibernateContentService;
 import com.qfs.pivot.content.IActivePivotContentService;
 import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
-import com.qfs.server.cfg.impl.JwtRestServiceConfig;
 import com.qfs.util.impl.QfsProperties;
 import com.quartetfs.biz.pivot.context.IContextValue;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
@@ -54,6 +52,7 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
 	 */
 	public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
 
+	/** Instance of the Spring context environment */
 	@Autowired
 	public Environment env;
 

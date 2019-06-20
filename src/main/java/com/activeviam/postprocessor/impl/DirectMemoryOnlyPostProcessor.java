@@ -24,9 +24,9 @@ import com.quartetfs.fwk.QuartetRuntimeException;
 public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProcessor<Long, Long> {
 
 	/** post processor plugin key */
-	public final static String PLUGIN_KEY = "DIRECT_MEMORY_ONLY";
+	public static final String PLUGIN_KEY = "DIRECT_MEMORY_ONLY";
 
-	public final static String MEASURE_KEY = "evaluatedMeasure";
+	public static final String MEASURE_KEY = "evaluatedMeasure";
 
 	private int index;
 

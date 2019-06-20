@@ -25,23 +25,23 @@ import com.quartetfs.fwk.impl.Pair;
 public class TestSharedMemory extends ATestMemoryStatistic {
 
 	/**
-	 * Tests that importing an application with a store and a pivot containing a level named after a field
-	 * sets some chunks as "shared" (the Dictionary chunks)  as expected
-	 * 
+	 * Tests that importing an application with a store and a pivot containing a
+	 * level named after a field sets some chunks as "shared" (the Dictionary
+	 * chunks) as expected
 	 * @throws AgentException
 	 * @throws IOException
 	 */
 	@Test
 	public void testShared() throws AgentException, IOException {
-		final Pair<IDatastore,IActivePivotManager> monitoredApp = createMicroApplicationWithLeafBitmap(); 
-		
+		final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithLeafBitmap();
+
 		// Add records
 		monitoredApp.getLeft().edit(tm -> {
 			IntStream.range(0, 100).forEach(i -> {
-				tm.add("A",i*i);
+				tm.add("A", i * i);
 			});
 		});
-		
+
 		performGC();
 
 		// Force to discard all versions
@@ -58,17 +58,12 @@ public class TestSharedMemory extends ATestMemoryStatistic {
 		});
 		// Query record chunks data :
 		final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner().forStore(CHUNK_STORE)
-				.withCondition(
-					BaseConditions.TRUE
-					)
-			.selecting(
-					DatastoreConstants.CHUNK__OWNER)
-			.onCurrentThread().run();
-	final List<Object[]> list = new ArrayList<>();
-	cursor.forEach((record)->{
-		Object[] data = record.toTuple();
-		list.add(data);
+				.withCondition(BaseConditions.TRUE).selecting(DatastoreConstants.CHUNK__OWNER).onCurrentThread().run();
+		final List<Object[]> list = new ArrayList<>();
+		cursor.forEach((record) -> {
+			Object[] data = record.toTuple();
+			list.add(data);
 		});
-	Assertions.assertThat(list).contains(new Object[] {"A"},new Object[] {"Cube"},new Object[] {"shared"});
+		Assertions.assertThat(list).contains(new Object[] { "A" }, new Object[] { "Cube" }, new Object[] { "shared" });
 	}
 }

@@ -19,6 +19,7 @@ import com.quartetfs.fwk.format.IFormatter;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
 public class ClassFormatter implements IFormatter {
 
+	private static final long serialVersionUID = 1L;
 	/** Plugin key */
 	public static final String KEY = "ClassFormatter";
 

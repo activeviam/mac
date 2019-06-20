@@ -66,6 +66,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic stat) {
+
 		recordLevelForStructure(this.directParentType, this.directParentId);
 
 		final IRecordFormat format = getChunkFormat(this.storageMetadata);
@@ -100,6 +101,17 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
+		
+		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
+
+		if (directParentId !=null && directParentType != null ) {
+			FeedVisitor.add(
+					stat,
+					transaction,
+					DatastoreConstants.CHUNK_TO_DICO_STORE,
+					FeedVisitor.buildDicoTupleForStructure(this.directParentType, this.directParentId, this.dictionaryId,joinStoreFormat)
+					);
+		}
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 		this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -162,6 +174,25 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID, id);
 
 		this.transaction.add(DatastoreConstants.CHUNK_TO_LEVEL_STORE, tuple);
+	}
+	
+	/**
+	 * Adds dictionary parent data to the join store
+	 * @param type {@code ParentType} of the owner of the dictionary-related chunk
+	 * @param id id of the owner of the dictionary-related chunk
+	 */
+	protected void recordDicoForStructure(final ParentType type, final String id) {
+		if (dictionaryId != null) {
+			System.out.println("fill dicos join store");
+			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata,
+					DatastoreConstants.CHUNK_TO_DICO_STORE);
+			final Object[] tuple = new Object[format.getFieldCount()];
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, this.dictionaryId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, id);
+
+			this.transaction.add(DatastoreConstants.CHUNK_TO_DICO_STORE, tuple);
+		}
 	}
 
 }

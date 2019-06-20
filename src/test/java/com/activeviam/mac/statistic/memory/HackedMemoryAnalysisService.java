@@ -364,7 +364,7 @@ public class HackedMemoryAnalysisService implements IMemoryAnalysisService {
 					.withName(PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT)
 
 					.withCreatorClasses(HackedMemoryAnalysisService.class);
-					
+
 
 				for (final IMemoryMonitored v : history.getValue()) {
 					final IMemoryStatistic memoryStatistic = v.getMemoryStatistic();

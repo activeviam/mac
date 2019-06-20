@@ -22,8 +22,18 @@ public class FieldsColumn extends ASimpleCalculatedDrillthroughColumn {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Key of the plugin enabling the calculated drillthrough column returning the field of the column
+	 */
 	public static final String PLUGIN_KEY = "FieldsColumn";
 
+	/**
+	 *  Full contructor
+	 *  <p>
+	 * @param name name of the column.
+	 * @param fields fields needed to compute this calculated column.
+	 * @param properties additional properties.
+	 */
 	public FieldsColumn(String name, String fields, Properties properties) {
 		super(name, fields, properties);
 	}

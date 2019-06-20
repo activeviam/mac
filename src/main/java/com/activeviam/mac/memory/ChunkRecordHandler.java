@@ -1,7 +1,12 @@
+/*
+ * (C) ActiveViam 2007-2019
+ * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
+ * property of ActiveViam. Any unauthorized use,
+ * reproduction or transfer of this material is strictly prohibited
+ */
 package com.activeviam.mac.memory;
 
 import com.qfs.desc.IDuplicateKeyHandler;
-import com.qfs.dic.IDictionary;
 import com.qfs.dic.IWritableDictionary;
 import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
@@ -9,6 +14,13 @@ import com.qfs.store.record.IRecordReader;
 import com.qfs.store.record.IWritableRecord;
 import com.qfs.store.record.impl.Records;
 
+/**
+ * {@link IDuplicateKeyHandler} implementation defining the process of dealing with duplicated entries of the
+ * same Chunk in the Memory Analysis Cube application.
+ *
+ * @author ActiveViam
+ *
+ */
 public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
 	private int sharedOwnerValue = -1;
@@ -74,9 +86,8 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 			final Records.IDictionaryProvider dictionaryProvider,
 			final int[] primaryIndexFields,
 			final int partitionId) {
-		// TODO(ope) complete the error
 		throw new IllegalStateException(
-				"Cannot override an existing record. Consider deleting first the records by dumpName before inserting new ones");
+				"A record with an identical key (ChunkId + dumpName) is already in the datastore. Consider deleting first the records by dumpName before inserting new ones");
 	}
 
 	private void init(

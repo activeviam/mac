@@ -34,11 +34,11 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertNotEquals;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
-	
+
 	/**
-	 * Assert the number of offheap chunks by filling the datastore used
-	 * for monitoring AND doing a query on it for counting. Comparing
-	 * the value from counting from {@link IMemoryStatistic}.
+	 * Assert the number of offheap chunks by filling the datastore used for
+	 * monitoring AND doing a query on it for counting. Comparing the value from
+	 * counting from {@link IMemoryStatistic}.
 	 */
 	@Test
 	public void testLoadDatastoreStats() {
@@ -49,19 +49,20 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 			final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 			assertNotEquals(0, storeStats.size());
-			assertLoadsCorrectly(storeStats,getClass());
+			assertLoadsCorrectly(storeStats, getClass());
 		});
 	}
-	
+
 	public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
 		createApplicationWithVector(duplicateVectors, (monitoredDatastore, monitoredManager) -> {
 			commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
 
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
-			final Path exportPath = analysisService.exportMostRecentVersion("doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
+			final Path exportPath = analysisService
+					.exportMostRecentVersion("doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
 			final Collection<IMemoryStatistic> datastoreStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
-			assertLoadsCorrectly(datastoreStats,getClass());
+			assertLoadsCorrectly(datastoreStats, getClass());
 		});
 	}
 
@@ -74,7 +75,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
 			final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
 			assertNotEquals(0, pivotStats.size());
-			assertLoadsCorrectly(pivotStats,getClass());
+			assertLoadsCorrectly(pivotStats, getClass());
 		});
 	}
 
@@ -90,35 +91,35 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			assertLoadsCorrectly(fullStats);
 		});
 	}
-	
+
 	@Test
 	public void testLoadPivotsWithInconsistantEpochDimensions() {
-		createMinimalApplicationForEpochDimensionFailure((monitoredDatastore,monitoredManager)->{
+		createMinimalApplicationForEpochDimensionFailure((monitoredDatastore, monitoredManager) -> {
 			Set<String> branchSet = new HashSet<>();
 			branchSet.add("branch1");
 
-			fillApplicationWithBranches(monitoredDatastore,branchSet,true);
-			
+			fillApplicationWithBranches(monitoredDatastore, branchSet, true);
+
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
-			//Tools.extractSnappyFile(exportPath.toString()+"\\MultiVersionPivot_HistoryCubeNoEpochDimension.json.sz");
+			// Tools.extractSnappyFile(exportPath.toString()+"\\MultiVersionPivot_HistoryCubeNoEpochDimension.json.sz");
 			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
 			assertNotEquals(null, fullStats);
-			assertLoadsCorrectly(fullStats);	
+			assertLoadsCorrectly(fullStats);
 		});
 	}
-	
+
 	@Test
 	public void testLoadFullStatsWithBranches() {
 		createApplication((monitoredDatastore, monitoredManager) -> {
-			
+
 			Set<String> branchSet = new HashSet<>();
 			branchSet.add("branch1");
 			branchSet.add("branch2");
 
-			fillApplicationWithBranches(monitoredDatastore,branchSet,false);
-			
-			//Also export master (?)
+			fillApplicationWithBranches(monitoredDatastore, branchSet, false);
+
+			// Also export master (?)
 			branchSet.add("master");
 
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
@@ -128,20 +129,20 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 			assertLoadsCorrectly(fullStats);
 		});
 	}
-	
+
 	@Test
 	public void testLoadFullStatsWithEpochs() {
 		createApplication((monitoredDatastore, monitoredManager) -> {
-			
+
 			Set<String> branchSet = new HashSet<>();
 			branchSet.add("branch1");
 			branchSet.add("branch2");
 			fillApplication(monitoredDatastore);
-			fillApplicationWithBranches(monitoredDatastore,branchSet,true);
-			
+			fillApplicationWithBranches(monitoredDatastore, branchSet, true);
+
 			long epochs[] = new long[2];
-			epochs[0]=1L;
-			epochs[1]=2L;
+			epochs[0] = 1L;
+			epochs[1] = 2L;
 
 			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
 			final Path exportPath = analysisService.exportVersions("testLoadFullStats", epochs);
@@ -160,15 +161,14 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 	public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
 		doTestLoadMonitoringDatastoreWithVectors(true);
 	}
-		
+
 	/**
-	 * Asserts the chunks number and off-heap memory as computed from the loaded datastore are consistent
-	 * with the ones computed by visiting the statistic.
+	 * Asserts the chunks number and off-heap memory as computed from the loaded
+	 * datastore are consistent with the ones computed by visiting the statistic.
 	 * @param statistic
 	 */
 	protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
-		assertLoadsCorrectly(Collections.singleton(statistic),getClass());
+		assertLoadsCorrectly(Collections.singleton(statistic), getClass());
 	}
-
 
 }

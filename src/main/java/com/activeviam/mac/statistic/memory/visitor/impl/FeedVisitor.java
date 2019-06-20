@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -57,10 +58,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			final IRecordFormat format,
 			final ChunkStatistic stat) {
 		final Object[] tuple = new Object[format.getFieldCount()];
-		if (stat.getAttribute("creatorClass").asText().contains("Offset"))
-		{
-			System.out.println(stat.getAttribute("Hello"+MemoryStatisticConstants.ATTR_NAME_CHUNK_ID));
-		}
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
 		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
@@ -95,8 +92,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			logger.warning("Dictionary does not state its class " + stat);
 			dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
 		}
+		//
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
-
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
 		tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
 
@@ -216,6 +213,25 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				throw new RuntimeException("Unexpected null value for field " + field + " in tuple: " + Arrays.toString(tuple));
 			}
 		}
+	}
+
+	/**
+	 * Adds dictionary parent data to the join store
+	 * 
+	 * @param type {@code ParentType} of the owner of the dictionary-related chunk
+	 * @param id   id of the owner of the dictionary-related chunk
+	 * @return the built tuple corresponding to the dictionary
+	 */
+	protected static Object[] buildDicoTupleForStructure(final ParentType type, final String id,
+			final Long dictionaryId, final IRecordFormat format) {
+		final Object[] tuple = new Object[format.getFieldCount()];
+		if (dictionaryId != null) {
+			System.out.println("fill dicos join store");
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, dictionaryId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, type);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, id);
+		}
+		return tuple;
 	}
 
 }

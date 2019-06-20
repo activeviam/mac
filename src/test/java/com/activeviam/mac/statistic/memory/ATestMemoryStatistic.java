@@ -75,18 +75,18 @@ import com.quartetfs.fwk.impl.Pair;
 import test.util.impl.DatastoreTestUtils;
 
 public abstract class ATestMemoryStatistic {
-	
-	public static final int STORE_PEOPLE_COUNT =10;
+
+	public static final int STORE_PEOPLE_COUNT = 10;
 	public static final int STORE_PRODUCT_COUNT = 20;
-	
-	public static final int SINGLE_VALUE =10;
-	
-	public static final int MICROAPP_CHUNK_SIZE = 256;	
-	
+
+	public static final int SINGLE_VALUE = 10;
+
+	public static final int MICROAPP_CHUNK_SIZE = 256;
+
 	public static final int MAX_GC_STEPS = 10;
-	
+
 	protected static final String VECTOR_STORE_NAME = "vectorStore";
-	
+
 	public static AtomicInteger operationsBatch = new AtomicInteger();
 
 	@ClassRule
@@ -124,10 +124,9 @@ public abstract class ATestMemoryStatistic {
 			}
 		}
 	}
-		
-	
+
 	static void createMinimalApplicationForEpochDimensionFailure(
-			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) 
+			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions)
 	{
 		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
 				.withStore(
@@ -163,7 +162,7 @@ public abstract class ATestMemoryStatistic {
 						.withLevel("Buyer").withPropertyName("buyer")
 						.build())
 				.build();
-				
+
 		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
 				.setSchemaDescription(datastoreSchema)
 				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
@@ -341,11 +340,10 @@ public abstract class ATestMemoryStatistic {
 
 		actions.accept(datastore, manager);
 	}
-	
-	
+
 	static void createMinimalApplication(
-			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) 
-	
+			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions)
+
 	{
 		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
 				.withStore(
@@ -383,7 +381,7 @@ public abstract class ATestMemoryStatistic {
 						.withAggregateProvider().leaf()
 						.build())
 				.build();
-				
+
 		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
 				.setSchemaDescription(datastoreSchema)
 				.setEpochManagementPolicy(new KeepAllEpochPolicy())
@@ -402,7 +400,7 @@ public abstract class ATestMemoryStatistic {
 
 		actions.accept(datastore, manager);
 	}
-	
+
 	/**
 	 * Fills the datastore created by {@link #createMinimalApplicationForEpochDimensionFailure(ThrowingLambda.ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
@@ -427,8 +425,6 @@ public abstract class ATestMemoryStatistic {
 			});
 		});
 	}
-	
-	
 
 	/**
 	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
@@ -460,7 +456,7 @@ public abstract class ATestMemoryStatistic {
 			});
 		});
 	}
-	
+
 	/**
 	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
@@ -468,7 +464,7 @@ public abstract class ATestMemoryStatistic {
 	static void fillApplicationMinimalWithSingleValue(final Datastore datastore) {
 		datastore.edit(tm -> {
 			final int peopleCount = STORE_PEOPLE_COUNT;
-			
+
 			final Random r = new Random(47605);
 			IntStream.range(operationsBatch.getAndIncrement(), 1000*operationsBatch.get()).forEach(i -> {
 				final int seller = r.nextInt(peopleCount);
@@ -484,7 +480,7 @@ public abstract class ATestMemoryStatistic {
 			});
 		});
 	}
-	
+
 	/**
 	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
@@ -508,12 +504,12 @@ public abstract class ATestMemoryStatistic {
 			});
 		});
 	}
-	
+
 	/**
 	 * Fills the datastore created by {@link #createApplication(ThrowingLambda.ThrowingBiConsumer)} and add some data on another branch tha "master"
 	 * @param datastore datastore to fill
-	 * @throws DatastoreTransactionException 
-	 * @throws IllegalArgumentException 
+	 * @throws DatastoreTransactionException
+	 * @throws IllegalArgumentException
 	 */
 	static void fillApplicationWithBranches(final Datastore datastore, Collection<String> branches,boolean minimalFilling)
 			throws IllegalArgumentException, DatastoreTransactionException {
@@ -567,7 +563,7 @@ public abstract class ATestMemoryStatistic {
 			// Make sure the analysis hierarchies created by coPPer are not empty by adding a "default" record to the joined stores
 		 // This is necessary to ensure a dimensions have a least a member, which is required for the MDX engine to work properly
 		 d.edit(tm->tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L));
-		
+
 		 return d;
 	}
 
@@ -661,7 +657,7 @@ public abstract class ATestMemoryStatistic {
 
 	static Pair<IDatastore,IActivePivotManager>  createMicroApplication() throws AgentException {
 
-				
+
 		final IDatastoreSchemaDescription schemaDescription = StartBuilding.datastoreSchema()
 				.withStore(
 						StartBuilding.store().withStoreName("A")
@@ -669,7 +665,7 @@ public abstract class ATestMemoryStatistic {
 								.withChunkSize(MICROAPP_CHUNK_SIZE)
 								.build())
 				.build();
-				
+
 				final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
 				.withSchema().withSelection(
 						StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
@@ -689,10 +685,49 @@ public abstract class ATestMemoryStatistic {
 				.setDatastoreAndDescription(datastore, schemaDescription)
 				.buildAndStart());
 	}
-	
+
+	static Pair<IDatastore,IActivePivotManager>  createMicroApplicationWithReference() throws AgentException {
+
+
+		final IDatastoreSchemaDescription schemaDescription = StartBuilding.datastoreSchema()
+				.withStore(
+						StartBuilding.store().withStoreName("A")
+								.withField("id", ILiteralType.INT).asKeyField()
+								.withField("val",ILiteralType.INT)
+								.withChunkSize(MICROAPP_CHUNK_SIZE)
+								.build())
+				.withStore(StartBuilding.store().withStoreName("B")
+								.withField("tgt_id", ILiteralType.INT).asKeyField()
+								.withChunkSize(MICROAPP_CHUNK_SIZE)
+								.build())
+				.withReference(StartBuilding.reference().fromStore("A").toStore("B")
+						.withName("AToB").withMapping("val", "tgt_id")
+						.build())
+				.build();
+
+				final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+				.withSchema().withSelection(
+						StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllReachableFields().build())
+				.withCube(
+						StartBuilding.cube("Cube")
+						.withContributorsCount()
+						.withSingleLevelDimension("id").asDefaultHierarchy().build())
+				.build();
+		IDatastore datastore = (Datastore) resources.create(() -> new UnitTestDatastoreBuilder()
+				.setSchemaDescription(schemaDescription)
+				.setEpochManagementPolicy(new KeepLastEpochPolicy())
+				.build());
+		return new Pair<IDatastore,IActivePivotManager>(
+				datastore
+				, StartBuilding.manager()
+				.setDescription(managerDescription)
+				.setDatastoreAndDescription(datastore, schemaDescription)
+				.buildAndStart());
+	}
+
 	static Pair<IDatastore,IActivePivotManager>  createMicroApplicationWithLeafBitmap() throws AgentException {
 
-		
+
 		final IDatastoreSchemaDescription schemaDescription = StartBuilding.datastoreSchema()
 				.withStore(
 						StartBuilding.store().withStoreName("A")
@@ -700,7 +735,6 @@ public abstract class ATestMemoryStatistic {
 								.withChunkSize(MICROAPP_CHUNK_SIZE)
 								.build())
 				.build();
-				
 				final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
 				.withSchema().withSelection(
 						StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
@@ -727,7 +761,7 @@ public abstract class ATestMemoryStatistic {
 
 		monitoringDatastore.edit(tm -> {
 			statistics.forEach(stat -> {
-				stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));				
+				stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
 			});
 		});
 

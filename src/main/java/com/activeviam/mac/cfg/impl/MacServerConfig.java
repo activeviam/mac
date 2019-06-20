@@ -25,8 +25,6 @@ import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -104,6 +102,7 @@ public class MacServerConfig {
 	@Autowired
 	protected IActivePivotContentServiceConfig apCSConfig;
 
+	/** Spring configuration of the source files of the Memory Analysis Cube application*/
 	@Autowired
 	protected SourceConfig sourceConfig;
 
@@ -113,13 +112,9 @@ public class MacServerConfig {
 	 * ActivePivot plug-ins.
 	 *
 	 * @return void
-	 * @throws Exception any exception that occurred during the manager's start up
 	 */
 	@Bean
 	public Void startManager() {
-
-//		new JungSchemaPrinter(true).print("", datastoreConfig.datastore());
-
 
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
@@ -138,6 +133,10 @@ public class MacServerConfig {
 		return null;
 	}
 
+	/**
+	 * Enables JMX Monitoring for the Source
+	 * @return the {@link JMXEnabler} attached to the source
+	 */
 	@Bean
 	public JMXEnabler JMXMonitoringConnectorEnabler() {
 		return new JMXEnabler("StatisticSource", sourceConfig);
@@ -151,8 +150,15 @@ public class MacServerConfig {
 	@Bean
 	public JMXEnabler JMXDatastoreEnabler() {
 		// Force the add of a Ref data in the datastore
-		return new JMXEnabler(datastoreConfig.datastore().edit(tm->tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L)));		
-	}
+		return new JMXEnabler(datastoreConfig.datastore()
+				.edit(tm->{
+					tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
+					tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
+					tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+
+					})
+				);
+		}
 
 	/**
 	 * Enable JMX Monitoring for ActivePivot Components
@@ -166,6 +172,11 @@ public class MacServerConfig {
 		return new JMXEnabler(apConfig.activePivotManager());
 	}
 
+	/**
+	 * Enable JMX Monitoring for the ContentService
+	 *
+	 * @return the {@link JMXEnabler} attached to the Content Service
+	 */
 	@Bean
 	public JMXEnabler JMXActivePivotContentServiceEnabler() {
 		// to allow operations from the JMX bean

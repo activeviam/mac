@@ -21,11 +21,11 @@ public class ByteFormatter implements IFormatter {
 	public static final String KEY = "ByteFormatter";
 
 	/** 1 GiB */
-	protected final static long GB = 1 << 30;
+	protected static final long GB = 1 << 30;
 	/** 1 MiB */
-	protected final static long MB = 1 << 20;
+	protected static final long MB = 1 << 20;
 	/** 1 KiB */
-	protected final static long KB = 1 << 10;
+	protected static final long KB = 1 << 10;
 
 	@Override
 	public String getType() {

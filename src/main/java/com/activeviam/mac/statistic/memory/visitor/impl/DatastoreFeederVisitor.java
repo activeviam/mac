@@ -60,12 +60,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** ID of the current {@link ChunkSet}. */
 	protected Long chunkSetId = null;
-	/** ID of the current reference. */
-	protected Long referenceId = null;
-	/** ID of the current index. */
-	protected Long indexId = null;
-	/** ID of the current dictionary. */
-	protected Long dictionaryId = null;
 
 	protected ParentType rootComponent;
 	protected ParentType directParentType;
@@ -97,9 +91,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
 			final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
-//			if (dateAtt == null) {
-//				throw new IllegalStateException("First level statistic should contain the export date.");
-//			}
+
 			this.current = Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
 
 			readEpochAndBranchIfAny(stat);
@@ -221,6 +213,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 				.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] = referenceStatistic
 				.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
+		FeedVisitor.setTupleElement(tuple, refStoreFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+
 		FeedVisitor.add(referenceStatistic, this.transaction, DatastoreConstants.REFERENCE_STORE, tuple);
 
 		final ParentType previousParentType = this.directParentType;
@@ -251,6 +245,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		}
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
@@ -278,8 +273,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 	@Override
 	public Void visit(final DictionaryStatistic stat) {
 		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
+		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
+
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
+		if (directParentId !=null && directParentType != null ) {
+			FeedVisitor.add(
+					stat,
+					transaction,
+					DatastoreConstants.CHUNK_TO_DICO_STORE,
+					FeedVisitor.buildDicoTupleForStructure(this.directParentType, this.directParentId, this.dictionaryId,joinStoreFormat)
+					);
+		}
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 

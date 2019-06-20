@@ -147,7 +147,7 @@ public abstract class ASecurityConfig {
 	 *
 	 * @author Quartet FS
 	 */
-	public static abstract class AWebSecurityConfigurer extends WebSecurityConfigurerAdapter {
+	public abstract static class AWebSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
 		/** {@code true} to enable the logout URL */
 		protected final boolean logout;
@@ -225,7 +225,7 @@ public abstract class ASecurityConfig {
 	 * @author Quartet FS
 	 * @see HttpStatusEntryPoint
 	 */
-	public static abstract class AJwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
+	public abstract static class AJwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
 		@Autowired
 		protected ApplicationContext context;
@@ -284,7 +284,7 @@ public abstract class ASecurityConfig {
 	 * @author Quartet FS
 	 * @see HttpStatusEntryPoint
 	 */
-	public static abstract class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
+	public abstract static class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
 
 		@Override
 		protected void doConfigure(HttpSecurity http) throws Exception {

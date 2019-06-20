@@ -25,7 +25,7 @@ public class TotalMemoryUsagePostProcessor extends ABasicPostProcessor<Long> {
 	private static final long serialVersionUID = 1L;
 
 	/** post processor plugin key */
-	public final static String PLUGIN_KEY = "TOTAL_MEMORY_USAGE";
+	public static final String PLUGIN_KEY = "TOTAL_MEMORY_USAGE";
 
 	/**
 	 * Constructor of {@link TotalMemoryUsagePostProcessor}.
