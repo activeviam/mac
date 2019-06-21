@@ -196,7 +196,7 @@
         <dependency>
             <groupId>com.activeviam.activepivot</groupId>
             <artifactId>activepivot-server-test</artifactId>
-            <version>5.8.0-SNAPSHOT</version>
+            <version>${activepivot.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

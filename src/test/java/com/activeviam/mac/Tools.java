@@ -27,14 +27,14 @@ import java.util.Objects;
  */
 public class Tools {
 
-	public static void main(final String[] args) {
-//		if ("extract".equals(args[0])) {
-			extractSnappyFile(args[0]);
-//			return 0;
-//		} else {
-//			System.err.println("Unsupported command. Got " + Arrays.toString(args));
-////			return 1;
-//		}
+	public static int main(final String[] args) {
+		if ("extract".equals(args[0])) {
+			extractSnappyFile(args[1]);
+			return 0;
+		} else {
+			System.err.println("Unsupported command. Got " + Arrays.toString(args));
+			return 1;
+		}
 	}
 
 	public static void extractSnappyFile(final String path) {

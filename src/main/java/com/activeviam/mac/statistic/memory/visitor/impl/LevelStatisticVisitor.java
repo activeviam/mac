@@ -183,7 +183,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 	 */
 	protected void recordDicoForStructure(final ParentType type, final String id) {
 		if (dictionaryId != null) {
-			System.out.println("fill dicos join store");
 			final IRecordFormat format = FeedVisitor.getRecordFormat(this.storageMetadata,
 					DatastoreConstants.CHUNK_TO_DICO_STORE);
 			final Object[] tuple = new Object[format.getFieldCount()];

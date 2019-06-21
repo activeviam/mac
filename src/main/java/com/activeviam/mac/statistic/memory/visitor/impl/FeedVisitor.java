@@ -226,7 +226,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 			final Long dictionaryId, final IRecordFormat format) {
 		final Object[] tuple = new Object[format.getFieldCount()];
 		if (dictionaryId != null) {
-			System.out.println("fill dicos join store");
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, dictionaryId);
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, type);
 			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, id);

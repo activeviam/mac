@@ -45,7 +45,6 @@ import com.qfs.junit.ResourceRule;
 import com.qfs.literal.ILiteralType;
 import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.SlabDirectChunkAllocatorWithCounter;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;

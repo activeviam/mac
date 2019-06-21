@@ -425,7 +425,7 @@ monitoringDatastore.edit(tm -> {
 						BaseConditions.TRUE
 						)
 				.selecting(
-						DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
+						DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
 				.onCurrentThread().run();
 		final List<Object[]> list = new ArrayList<>();
 		cursor.forEach((record)->{

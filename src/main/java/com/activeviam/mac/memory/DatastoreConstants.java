@@ -123,10 +123,10 @@ public class DatastoreConstants {
 	public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
 	public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
-	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId"+ LEVEL_SUFFIX;
-	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId" + LEVEL_SUFFIX;
-	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension"+ LEVEL_SUFFIX;
-	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy"+ LEVEL_SUFFIX;
+	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
+	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId" ;
+	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
+	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
 	public static final String CHUNK_TO_LEVEL__LEVEL = "level";
 	public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId"+LEVEL_SUFFIX;
 	public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType"+ LEVEL_SUFFIX;

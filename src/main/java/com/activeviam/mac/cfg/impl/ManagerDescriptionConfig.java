@@ -436,8 +436,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE))
-				//.withColumn(DatastoreConstants.CHUNK_TO_FIELD__FIELD, col(DatastoreConstants.CHUNK_TO_FIELD__FIELD).map(i->i).as("nanii").asHierarchy().inDimension("Fields"))
-				//.withColumn(DatastoreConstants.CHUNK_TO_FIELD__STORE, col(DatastoreConstants.CHUNK_TO_FIELD__STORE).map(i->i).as("__b").asHierarchy().inDimension("Fields"))
+				.withColumn(DatastoreConstants.CHUNK_TO_FIELD__FIELD, col(DatastoreConstants.CHUNK_TO_FIELD__FIELD).asHierarchy().inDimension("Fields"))
+				.withColumn(DatastoreConstants.CHUNK_TO_FIELD__STORE, col(DatastoreConstants.CHUNK_TO_FIELD__STORE).asHierarchy().inDimension("Fields"))
 				.agg(Columns.sum(DatastoreConstants.CHUNK_ID).as("___a").withinFolder(BLACK_MAGIC_FOLDER))
 				.doNotAggregateAbove()
 				.publish();
@@ -455,10 +455,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE))
-				//.withColumn(DatastoreConstants.CHUNK_TO_REF__REF_ID, col(DatastoreConstants.CHUNK_TO_REF__REF_ID).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
+				.withColumn(DatastoreConstants.CHUNK_TO_REF__REF_ID, col(DatastoreConstants.CHUNK_TO_REF__REF_ID).asHierarchy().inDimension("References"))
 				.groupBy(Columns.col(DatastoreConstants.CHUNK_TO_REF__REF_ID))
 				.agg(customAgg(DatastoreConstants.CHUNK__PARENT_ID, CopyFunction.PLUGIN_KEY).as("___b").withinFolder(BLACK_MAGIC_FOLDER))
-				//.agg(sum(DatastoreConstants.CHUNK__PARENT_ID)
 				.doNotAggregateAbove()
 				.publish();
 	}
@@ -475,7 +474,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						indexDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE))
-				//.withColumn(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, col(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID).asHierarchy().inDimension(BLACK_MAGIC_HIERARCHY))
+				.withColumn(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, col(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID).asHierarchy().inDimension("Indexes"))
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___c").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
@@ -503,10 +502,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						levelsDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
 								.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE))
-//				.withColumn("pivotId" + DatastoreConstants.CHUNK_TO_LEVEL_STORE, col(DatastoreConstants")
-//						.asHierarchy("pivotId" + DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-//						.inDimension("pivotId" + DatastoreConstants.CHUNK_TO_LEVEL_STORE))
-				//.withColumn("zob", Columns.col(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID))
+				.withColumn(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION, col(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION).asHierarchy().inDimension("Levels"))
+				.withColumn(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY, col(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY).asHierarchy().inDimension("Levels"))
+				.withColumn(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, col(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL).asHierarchy().inDimension("Levels"))
+				.withColumn(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, col(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID).asHierarchy().inDimension("Levels"))
+				.withColumn(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, col(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID).asHierarchy().inDimension("Levels"))
+
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___d").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
@@ -522,6 +523,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 					dicosDataset,
 					Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_DICO__PARENT_ID)
 					.and(DatastoreConstants.CHUNK__PARENT_TYPE).to(DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE))
+			.withColumn(DatastoreConstants.CHUNK_TO_DICO__DICO_ID, col(DatastoreConstants.CHUNK_TO_DICO__DICO_ID).asHierarchy().inDimension("Dictionaries"))
 			.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___e").withinFolder(BLACK_MAGIC_FOLDER))
 			.publish();
 	}
