@@ -104,7 +104,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public IActivePivotManagerDescription managerDescription() {
 		return StartBuilding.managerDescription()
 				.withCatalog("Memory Analysis").containingCubes(MONITORING_CUBE)
-				.withCatalog("Additional Data").containingCubes("Indexes","Dictionaries","Providers","Fields","Levels","References")
+				.withCatalog("Additional Data").containingCubes("Indexes","Dictionaries","Providers","References")
 				.withSchema("MemorySchema")
 					.withSelection(createSelection())
 					.withCube(createCube())
@@ -194,24 +194,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.withDimension("Provider category")
 						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__CATEGORY)
 						.build())
-				.withSchema("Level Schema")
-				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
-						.fromBaseStore(DatastoreConstants.LEVEL_STORE)
-						.withAllFields()
-						.build())
-				.withCube(StartBuilding.cube("Levels")
-						.withDimension("Data feed")
-						.withHierarchyOfSameName()
-						.slicing()
-						.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
-						.withDimension("Fields")
-						.withHierarchyOfSameName()
-						.withLevels(DatastoreConstants.LEVEL__MANAGER_ID,
-								DatastoreConstants.LEVEL__PIVOT_ID,
-								DatastoreConstants.LEVEL__DIMENSION,
-								DatastoreConstants.LEVEL__HIERARCHY,
-								DatastoreConstants.LEVEL__LEVEL)
-						.build())
 				.build();
 	}
 
@@ -289,13 +271,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 					.withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
 					.withFormatter(PartitionIdFormatter.KEY)
 
-				.withDimension("Dump")
+				.withDimension("Imported Data")
 				.withHierarchyOfSameName()
 				.slicing()
 				.withLevelOfSameName().withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
 				.withComparator(ReverseOrderComparator.type)
 
-				.withDimension("Pivot")
+				.withDimension("Aggregate Provider")
 				.withHierarchy("Manager").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
 				.withHierarchy("Pivot").withLevelOfSameName().withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
 				.withHierarchy("ProviderType").withLevelOfSameName().withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)

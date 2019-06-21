@@ -790,7 +790,6 @@ public class CastingCubeBuildFoundry implements CubeBuildFoundry {
 				String store = procedure.getProperties().getProperty(JoinAnalysisAggregationProcedure.STORE);
 				joinProceduresByStore.computeIfAbsent(store, __ -> new HashSet<>()).add(procedure);
 			}
-			Map<LevelCoordinate, Object> modifiedHierarchies = new ConcurrentHashMap<>();
 
 			Map<String, IAnalysisAggregationProcedureDescription> newJoinProcedureByStore = new HashMap<>();
 			for (Entry<String, Set<IAnalysisAggregationProcedureDescription>> joinProceduresByStoreEntry : joinProceduresByStore.entrySet()) {
@@ -800,6 +799,7 @@ public class CastingCubeBuildFoundry implements CubeBuildFoundry {
 						mergeProcedure = procedure;
 						continue;
 					}
+					Map<LevelCoordinate, Object> modifiedHierarchies = new ConcurrentHashMap<>();
 					// Make sure the properties are the same. We don't support other cases for the time being.
 					Properties properties = new Properties();
 					properties.putAll(mergeProcedure.getProperties());
