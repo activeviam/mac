@@ -47,4 +47,4 @@ qfs:
 
 # The name of the folder containing statistic files in .json format
 statistic:
-  folder: C:\AP-Repo\MAC\monitoring-server\test_MAC
+  folder: statistics

@@ -80,13 +80,21 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 	 *                        the visited data
 	 * @param dumpName        The name of the off-heap dump. Can be null.
 	 */
-	public DatastoreFeederVisitor(final IDatastoreSchemaMetadata storageMetadata, final IOpenedTransaction transaction,
+	public DatastoreFeederVisitor(final IDatastoreSchemaMetadata storageMetadata,
+			final IOpenedTransaction transaction,
 			final String dumpName) {
 		super(transaction, storageMetadata, dumpName);
-		this.chunkRecordFormat = this.storageMetadata.getStoreMetadata(DatastoreConstants.CHUNK_STORE).getStoreFormat()
+		this.chunkRecordFormat = this.storageMetadata.
+				getStoreMetadata(DatastoreConstants.CHUNK_STORE)
+				.getStoreFormat()
 				.getRecordFormat();
 	}
 
+	/**
+	 * Starts navigating the tree of chunk statistics from the input entry point
+	 *
+	 * @param stat Entry point for the traversal of the memory statistics tree
+	 */
 	public void startFrom(final IMemoryStatistic stat) {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
@@ -195,9 +203,17 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkSetStatistic stat) {
-		return new ChunkSetStatisticVisitor(this.storageMetadata, this.transaction, this.dumpName, this.current,
-				this.store, this.rootComponent, this.directParentType, this.directParentId, this.partitionId,
-				this.indexId, this.referenceId).visit(stat);
+		return new ChunkSetStatisticVisitor(this.storageMetadata,
+				this.transaction,
+				this.dumpName,
+				this.current,
+				this.store,
+				this.rootComponent,
+				this.directParentType,
+				this.directParentId,
+				this.partitionId,
+				this.indexId,
+				this.referenceId).visit(stat);
 	}
 
 	@Override
@@ -209,10 +225,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		this.referenceId = referenceStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_REFERENCE_ID).asLong();
 
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_ID)] = this.referenceId;
-		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_NAME)] = referenceStatistic
-				.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
-		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] = referenceStatistic
-				.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_NAME)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_NAME).asText();
+		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_CLASS)] = referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
 		FeedVisitor.setTupleElement(tuple, refStoreFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.add(referenceStatistic, this.transaction, DatastoreConstants.REFERENCE_STORE, tuple);

@@ -81,12 +81,6 @@ public class SimpleColumnResolver implements ColumnResolver, Serializable {
 					if (operator instanceof JoinDatasetOperator) {
 						return ((JoinDatasetOperator) operator).missingColumnNamesFromRight.contains(resolved.name());
 					} else {
-//						if (operator instanceof ColumnMapDatasetOperator
-//								&& ((BaseCalculatedDataset) (SimpleColumnResolver.java).operator instanceof JoinDatasetOperator) {
-//							return ((JoinDatasetOperator) ((BaseCalculatedDataset) (((UnaryDatasetOperator) operator).operand)).operator).missingColumnNamesFromRight
-//									.contains(resolved.name());
-//						}
-//						return false;
 						return (((UnaryDatasetOperator) operator).operand).accept(this);
 					}
 				}

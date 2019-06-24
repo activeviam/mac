@@ -91,7 +91,6 @@ public class LoggingConfiguration {
 
 		//Example on how to configure  File Handler
 		//Make sure to update the path to target existing directory or the logging configuration will fail silently
-		// TODO -> put in the doc/readme ?
 //		Handler fileHandler = new FileHandler("logs/activepivot-sandbox.log");
 //		fileHandler.setLevel(Level.ALL);
 //		fileHandler.setFormatter(new QFSFormatter());

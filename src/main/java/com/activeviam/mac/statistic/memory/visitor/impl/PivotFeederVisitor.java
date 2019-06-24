@@ -70,9 +70,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
 			final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
-//			if (dateAtt == null) {
-//				throw new IllegalStateException("First level statistic should contain the export date.");
-//			}
+
 			this.current = Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
 
 			readEpochAndBranchIfAny(stat);
@@ -182,10 +180,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 			final IRecordFormat cpnFormat = getProviderCpnFormat();
 			final Object[] cpnTuple = buildProviderComponentTupleFrom(cpnFormat, stat);
-			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
-					this.providerId);
-			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__TYPE,
-					this.providerCpnType.toString());
+			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,this.providerId);
+			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__TYPE,this.providerCpnType.toString());
 
 			this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
 		}
