@@ -51,8 +51,12 @@ import com.quartetfs.fwk.query.UnsupportedQueryException;
 /**
  * Test class verifying the results obtained by the Measures provided in the
  * MemoryAnalysisCube
- * @author ActiveViam
+ * 
+ * Export tool : 
+ * 
+ * Tools.extractSnappyFile(path + "\pivot_EquityDerivativesCubeDist.json.sz");
  *
+ * 
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "contentServer.security.calculatedMemberRole=empty",
@@ -363,12 +367,5 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		for (int i = 0; i < chunkSizes.length; i++) {
 			Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i] / chunkSizes[i]);
 		}
-	}
-
-	@Ignore
-	@Test
-	public void export() {
-		Path path = Paths.get("C:\\Users\\m.ennaime\\AppData\\Local\\Temp\\DumpSandbox2", "");
-		Tools.extractSnappyFile(path + "\\pivot_EquityDerivativesCubeDist.json.sz");
 	}
 }

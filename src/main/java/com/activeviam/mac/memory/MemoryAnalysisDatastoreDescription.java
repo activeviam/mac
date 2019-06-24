@@ -344,12 +344,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 								.fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE).toStore(DatastoreConstants.PROVIDER_STORE)
 								.withName(PROVIDER_COMPONENT_TO_PROVIDER)
 								.withMapping(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, DatastoreConstants.PROVIDER__PROVIDER_ID)
+								.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 								.build(),
 						// Provider partitions refs
 						StartBuilding.reference()
 								.fromStore(DatastoreConstants.PROVIDER_STORE).toStore(DatastoreConstants.PIVOT_STORE)
 								.withName("ProviderToPivot")
 								.withMapping(DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
+								.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 								.withMapping(DatastoreConstants.PROVIDER__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
 								.build()))
 				.flatMap(Collection::stream)
@@ -364,6 +366,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 						.withName(CHUNK_TO_PROVIDER)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+						.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+
 						.build(),
 				StartBuilding.reference()
 						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.APPLICATION_STORE)
