@@ -30,6 +30,7 @@ import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyR
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
@@ -109,7 +110,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
 		// perform GCs before exporting the store data
 		performGC();
-		final HackedMemoryAnalysisService analysisService = (HackedMemoryAnalysisService) createService(
+		final MemoryAnalysisService analysisService =  (MemoryAnalysisService) createService(
 				monitoredApp.getLeft(), monitoredApp.getRight());
 		final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 //		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");

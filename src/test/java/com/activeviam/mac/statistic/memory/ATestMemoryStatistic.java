@@ -545,7 +545,7 @@ public abstract class ATestMemoryStatistic {
 
 	static IMemoryAnalysisService createService(final IDatastore datastore, final IActivePivotManager manager) {
 		final Path dumpDirectory = QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
-		return new HackedMemoryAnalysisService(
+		return new MemoryAnalysisService(
 				datastore,
 				manager,
 				datastore.getEpochManager(),
