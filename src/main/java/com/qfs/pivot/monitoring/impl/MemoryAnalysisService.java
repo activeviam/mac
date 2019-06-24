@@ -1,10 +1,11 @@
+package com.qfs.pivot.monitoring.impl;
+
 /*
  * (C) ActiveViam 2016
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.qfs.pivot.monitoring.impl;
 
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DATE;
 
@@ -54,6 +55,7 @@ import com.qfs.multiversion.IEpochManager;
 import com.qfs.multiversion.IMultiVersion;
 import com.qfs.multiversion.IVersionHistory;
 import com.qfs.multiversion.impl.AEpochManager;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.IDatastoreSchemaMetadata;
@@ -243,12 +245,14 @@ public class MemoryAnalysisService implements IMemoryAnalysisService {
 		}
 
 		for (final IMultiVersionActivePivot pivot : this.activePivotManager.getActivePivots().values()) {
-			final Collection<IMemoryMonitored> pivotBranches = selectedBranches.stream()
-					.map(branch -> pivot.getHead(branch))
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
-			if (!pivotBranches.isEmpty()) {
-				selection.put(pivot, pivotBranches);
+			if (pivot.getBranches().containsAll(selectedBranches)) {
+				final Collection<IMemoryMonitored> pivotBranches = selectedBranches.stream()
+						.map(branch -> pivot.getHead(branch))
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList());
+				if (!pivotBranches.isEmpty()) {
+					selection.put(pivot, pivotBranches);
+				}
 			}
 		}
 
@@ -358,13 +362,18 @@ public class MemoryAnalysisService implements IMemoryAnalysisService {
 				final IMultiVersionActivePivot mvPivot = (IMultiVersionActivePivot) multiVersion;
 				final IMemoryStatisticBuilder statisticBuilder = new MemoryStatisticBuilder()
 					.withName(PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT)
+
 					.withCreatorClasses(MemoryAnalysisService.class);
+
 
 				for (final IMemoryMonitored v : history.getValue()) {
 					final IMemoryStatistic memoryStatistic = v.getMemoryStatistic();
 					statisticBuilder.withChild(memoryStatistic);
 				}
 				final IMemoryStatistic stat = statisticBuilder.build();
+				stat.getAttributes().putIfAbsent(
+						PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID,
+						new StringStatisticAttribute(this.activePivotManager.getName()));
 				completeWithGlobalMemoryStats(stat, globalReport);
 				final String statisticFileName = PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT + "_"
 						+ mvPivot.getId().replaceAll("\\s+", "_");
