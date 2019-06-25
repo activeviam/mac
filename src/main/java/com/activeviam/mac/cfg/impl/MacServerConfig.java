@@ -24,6 +24,7 @@ import com.qfs.server.cfg.impl.DatastoreConfig;
 import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
+import com.qfs.store.IDatastore;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,6 +116,13 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
+		// Force the add of a Ref data in the datastore
+		final IDatastore datastore = datastoreConfig.datastore();
+		datastore.edit(tm->{
+			tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+		});
 
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
@@ -149,16 +157,8 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public JMXEnabler JMXDatastoreEnabler() {
-		// Force the add of a Ref data in the datastore
-		return new JMXEnabler(datastoreConfig.datastore()
-				.edit(tm->{
-					tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-					tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-					tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
-
-					})
-				);
-		}
+		return new JMXEnabler(datastoreConfig.datastore());
+	}
 
 	/**
 	 * Enable JMX Monitoring for ActivePivot Components
