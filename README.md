@@ -61,7 +61,7 @@ It is possible to configure your application to expose the export methods of the
 ```
  
 
-Additional tools
+### Additional tools
 -----
 
 ### Uncompress generated files
@@ -70,8 +70,14 @@ ActivePivot memory tools will generate reports compressed with [Snappy](https://
 to easily decompress such files, this project provides a command to do so.  
 Run `mvn exec:java@unsnappy -Dunsnappy.file=<path/to/your/file>` to extract the content.
 
-Known limitations
+### Known limitations
 -----
 
  * This tool does not support projects with multiple datastores.
  * On-heap memory analysis is currently not fully implemented. Please directly refer to the JMX beans of your application. 
+
+### Planned Improvements
+------
+
+ * `VectorBlocks` should be considered as a Component Type on their own
+ 

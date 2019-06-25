@@ -53,6 +53,9 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
 @EnableWebSecurity
 public class SecurityConfig extends ASecurityConfig {
 
+	/**
+	 * Name of the Cookies of the MAC application
+	 */
 	public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
 	/**
@@ -76,6 +79,9 @@ public class SecurityConfig extends ASecurityConfig {
 	@Configuration
 	public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {
 
+		/**
+		 * The autowired Spring configuration for ActivePivot
+		 */
 		@Autowired
 		protected IActivePivotConfig activePivotConfig;
 
@@ -130,6 +136,10 @@ public class SecurityConfig extends ASecurityConfig {
 
 	}
 
+	/**
+	 * Returns a bean initializing the Cookies name in the Servlet Spring context
+	 * @return the bean initializing the Cookies name in the Servlet Spring context
+	 */
 	@Bean
 	public ServletContextInitializer servletContextInitializer() {
 		return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);

@@ -24,6 +24,8 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
+import com.qfs.store.IStore;
+import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
@@ -207,7 +209,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ReferenceStatistic referenceStatistic) {
-		final Object[] tuple = buildPartOfReferenceStatisticTuple(this.storageMetadata, referenceStatistic);
+		final Object[] tuple = buildPartOfReferenceStatisticTuple(referenceStatistic);
 		final IRecordFormat refStoreFormat = getReferenceFormat(this.storageMetadata);
 
 		// fill out the tuple
@@ -315,12 +317,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		return null;
 	}
 
+	/**
+	 * Processes the statistic of a {@link DictionaryManager}
+	 * @param stat statistic to be processed
+	 */
 	protected void processDictionaryManager(final IMemoryStatistic stat) {
 		this.rootComponent = ParentType.DICTIONARY;
 		visitChildren(stat);
 		this.rootComponent = null;
 	}
 
+	/**
+	 * Processes the statistic of a {@link IStore}
+	 * @param stat statistic to be processed
+	 */
 	protected void processStoreStat(final IMemoryStatistic stat) {
 		final IStatisticAttribute nameAttr = Objects.requireNonNull(
 				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
@@ -333,6 +343,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		this.store = null;
 	}
 
+	/**
+	 * Processes the statistic of a store partition
+	 * @param stat statistic to be processed
+	 */
 	protected void processStorePartition(final IMemoryStatistic stat) {
 		final IStatisticAttribute partitionAttr = Objects.requireNonNull(
 				stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PARTITION_ID),
@@ -418,14 +432,12 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/**
 	 * Build an object array that represents a reference.
-	 *
 	 * @param referenceStatistic the {@link ReferenceStatistic} from which the array
 	 *                           must be built.
 	 * @return the object array.
 	 */
-	protected Object[] buildPartOfReferenceStatisticTuple(final IDatastoreSchemaMetadata storageMetadata,
-			final ReferenceStatistic referenceStatistic) {
-		final IRecordFormat refStoreFormat = getReferenceFormat(storageMetadata);
+	protected Object[] buildPartOfReferenceStatisticTuple(final ReferenceStatistic referenceStatistic) {
+		final IRecordFormat refStoreFormat = getReferenceFormat(this.storageMetadata);
 
 		final Object[] tuple = new Object[refStoreFormat.getFieldCount()];
 		tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_FROM_STORE)] = referenceStatistic

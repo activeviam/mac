@@ -6,6 +6,7 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 
 import java.util.ArrayList;
@@ -13,7 +14,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
+/**
+ *  Statistics tree printer utility class
+ * 
+ * @author ActiveViam
+ *
+ */
 public class StatisticTreePrinter {
 
 	/**
@@ -21,6 +27,10 @@ public class StatisticTreePrinter {
 	 */
 	protected List<Tree> trees = new ArrayList<>();
 
+	/**
+	 * Adds the statistic and all its childen to the tree
+	 * @param statistic statistic to add
+	 */
 	public void add(IMemoryStatistic statistic) {
 		List<IMemoryStatistic> ascendingTree = getAscendingTree(statistic);
 		IMemoryStatistic root = ascendingTree.get(0);
@@ -61,6 +71,10 @@ public class StatisticTreePrinter {
 		}
 	}
 
+	/**
+	 * returns the memory statistic Trees as a string
+	 * @return the string displaying the tree
+	 */
 	public String getTreesAsString() {
 		StringBuilder sb = new StringBuilder();
 		for (Tree tree : trees) {
@@ -73,10 +87,19 @@ public class StatisticTreePrinter {
 		return sb.toString();
 	}
 
+	/**
+	 * Prints the tree of {@link IMemoryStatistic}
+	 */
 	public void print() {
 		System.out.println(getTreesAsString());
 	}
 
+	/**
+	 * Prints the descending tree of {@link IMemoryStatistic memory statistics} from the n {@link Node} and downwards
+	 * @param sb {@link StringBuilder} on which the append the data
+	 * @param depth current depth
+	 * @param n current {@link Node}
+ 	 */
 	protected static void print(StringBuilder sb, int depth, Node n) {
 		depth++;
 		for (Node child : n.children.values()) {
@@ -90,6 +113,11 @@ public class StatisticTreePrinter {
 		depth--;
 	}
 
+	/**
+	 * Returns the parent {@link IMemoryStatistic} of the input statistic
+	 * @param child statistic
+	 * @return tree List of the parents of the child statistic
+	 */
 	public static List<IMemoryStatistic> getAscendingTree(IMemoryStatistic child) {
 		IMemoryStatistic s = child;
 		List<IMemoryStatistic> tree = new LinkedList<>();
@@ -101,16 +129,32 @@ public class StatisticTreePrinter {
 		return tree;
 	}
 
+	/**
+	 * Returns the memory statistic Trees of the children of the input statistic
+	 * @param child memory statistic which children are to be displayed
+	 * @return the string displaying the tree
+	 */
 	public static String getTreeAsString(IMemoryStatistic child) {
 		StatisticTreePrinter p = new StatisticTreePrinter();
 		p.add(child);
 		return p.getTreesAsString();
 	}
 
+	/**
+	 * Checks is two {@link IMemoryStatistic} are equal
+	 * @param s1 first statistic
+	 * @param s2 second statistic
+	 * @return {@link <code>true</code> if the statistics are equal <code>false</code> elsewhere}
+	 */
 	protected static boolean areEquals(IMemoryStatistic s1, IMemoryStatistic s2) {
 		return getId(s1) == getId(s2);
 	}
 
+	/**
+	 * Returns the debug ID of a statistic
+	 * @param statistic memory statistic
+	 * @return the {@link DatastoreConstants#CHUNK__DEBUG_TREE} id of the statistic
+	 */
 	protected static long getId(IMemoryStatistic statistic) {
 		return statistic.getAttributes().get(DebugVisitor.ID_KEY).asLong();
 	}
@@ -119,30 +163,30 @@ public class StatisticTreePrinter {
 	// Very basic tree structure  //
 	////////////////////////////////
 
-	protected static class Tree {
+	private static class Tree {
 
 		final Node root;
 
-		protected Tree(Node root) {
+		private Tree(Node root) {
 			this.root = root;
 		}
 
 	}
 
-	protected static class Node {
+	private static class Node {
 
 		final HashMap<Long, Node> children = new HashMap<>();
 		final IMemoryStatistic item;
 
-		protected Node(final IMemoryStatistic item) {
+		private Node(final IMemoryStatistic item) {
 			this.item = item;
 		}
 
-		protected Node addChild(final Node node) {
+		private Node addChild(final Node node) {
 			return children.put(getId(node.item), node);
 		}
 
-		protected Node getChild(final IMemoryStatistic key) {
+		private Node getChild(final IMemoryStatistic key) {
 			return children.get(getId(key));
 		}
 

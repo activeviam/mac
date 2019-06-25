@@ -23,13 +23,25 @@ import com.quartetfs.fwk.QuartetRuntimeException;
 @QuartetExtendedPluginValue(intf = IPostProcessor.class, key = DirectMemoryOnlyPostProcessor.PLUGIN_KEY)
 public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProcessor<Long, Long> {
 
+	/**
+	 * Serialization ID
+	 */
+	private static final long serialVersionUID = 5_8_2L;
+
 	/** post processor plugin key */
 	public static final String PLUGIN_KEY = "DIRECT_MEMORY_ONLY";
 
+	/** Key of the measure */
 	public static final String MEASURE_KEY = "evaluatedMeasure";
 
 	private int index;
 
+	/**
+	 * Constuctor of the {@link DirectMemoryOnlyPostProcessor}
+	 *
+	 * @param name name of the postprocesssor
+	 * @param creationContext Container for additional parameters
+	 */
 	public DirectMemoryOnlyPostProcessor(String name, IPostProcessorCreationContext creationContext) {
 		super(name, creationContext);
 	}

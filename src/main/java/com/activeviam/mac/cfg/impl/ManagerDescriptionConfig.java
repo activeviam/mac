@@ -7,7 +7,6 @@
 package com.activeviam.mac.cfg.impl;
 
 import static com.activeviam.copper.columns.Columns.col;
-import static com.activeviam.copper.columns.Columns.count;
 import static com.activeviam.copper.columns.Columns.customAgg;
 import static com.activeviam.copper.columns.Columns.sum;
 
@@ -56,38 +55,120 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
+	/**
+	 * The main monitoring cube
+	 * <p>
+	 * This Cube is based from Chunk facts
+	 */
 	public static final String MONITORING_CUBE = "MemoryCube";
+	/**
+	 * The index-related cube
+	 */
 	public static final String INDEX_CUBE = "Indexes";
+	/**
+	 * The dictionary related cube
+	 */
 	public static final String DICTIONARY_CUBE = "Dictionaries";
+	/**
+	 * The provider related cube
+	 */
 	public static final String PROVIDER_CUBE = "Providers";
+	/**
+	 * The references related Cube
+	 */
 	public static final String REFERENCE_CUBE = "References";
 
+	/**
+	 * Measure of the summed off-heap memory footprint
+	 */
 	public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
+	/**
+	 * Measure of the summed on-heap memory footprint
+	 * <p>
+	 * This measure only sums the on-heap memory held by chunk, and therefore do not
+	 * contains the entire on-heap footprint of the entire ActivePivot Application
+	 */
 	public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
+
+	/**
+	 * Java class of the chunk
+	 */
 	public static final String CHUNK_CLASS_LEVEL = "Class";
+	/**
+	 * Type of the structure owning the chunk
+	 */
 	public static final String CHUNK_TYPE_LEVEL = "Type";
+	/**
+	 * Measure counting the number of off-Heap Chunks
+	 */
 	public static final String DIRECT_CHUNKS_COUNT = "DirectChunks.COUNT";
+	/**
+	 * Measure counting the number of on-Heap Chunks
+	 */
 	public static final String HEAP_CHUNKS_COUNT = "HeapChunks.COUNT";
+
+
+	/**
+	 * Name of the Chunk Hierarchy
+	 */
 	public static final String CHUNK_HIERARCHY = "Chunks";
 
+	/**
+	 * Total on-heap memory footprint of the application
+	 */
 	public static final String USED_HEAP = "UsedHeapMemory";
+	/**
+	 * Total on-heap memory committed by the JVM
+	 */
 	public static final String COMMITTED_HEAP = "CommittedHeapMemory";
+	/**
+	 * Total off-heap memory footprint of the application
+	 */
 	public static final String USED_DIRECT = "UsedDirectMemory";
+	/**
+	 * Total off-heap memory committed by the JVM
+	 */
 	public static final String MAX_DIRECT = "MaxDirectMemory";
 
+	/**
+	 * Name of the folder in which "hidden" copper measures will be hidden
+	 * <p>
+	 * Measures contained in this folder should never be used
+	 */
 	public static final String BLACK_MAGIC_FOLDER = "BlackMagic";
+	/**
+	 * Name of the hierarchy used to perform join
+	 */
 	public static final String BLACK_MAGIC_HIERARCHY = "BlackMagic";
 
-	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
-	public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+	/**
+	 * Measure of the size of Chunks (in Bytes)
+	 */
 	public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
+
+	/**
+	 * Measure of the the non written rows in Chunks
+	 */
 	public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
+
+	/**
+	 * Measure of the deleted rows in Chunks
+	 */
 	public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
+
+	/**
+	 * Formatter for Numbers
+	 */
+	public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
+	/**
+	 * Formatter for Percentages
+	 */
+	public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+
 
 	/** The datastore schema {@link IDatastoreSchemaDescription description}.  */
 	@Autowired
 	private IDatastoreDescriptionConfig datastoreDescriptionConfig;
-
 	@Bean
 	@Override
 	public IActivePivotManagerDescription managerDescription() {
@@ -217,6 +298,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.build();
 	}
 
+	/**
+	 * Prefixes a field by another string
+	 * @param prefix string to prepend
+	 * @param field field to be prefixed
+	 * @return the prefixed string
+	 */
 	protected static String prefixField(String prefix, String field) {
 		return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
 	}
@@ -529,5 +616,4 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 			.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___e").withinFolder(BLACK_MAGIC_FOLDER))
 			.publish();
 	}
-
 }

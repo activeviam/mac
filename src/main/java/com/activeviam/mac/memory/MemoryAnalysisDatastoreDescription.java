@@ -22,7 +22,6 @@ import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.util.impl.QfsArrays;
-import com.quartetfs.biz.xmla.ILiteral;
 import com.quartetfs.fwk.format.IParser;
 
 /**
@@ -32,27 +31,78 @@ import com.quartetfs.fwk.format.IParser;
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
+	/**
+	 * Name of the chunk <-> provider linking store
+	 */
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
+	/**
+	 * Name of the provider component <-> provider store
+	 */
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
+	/**
+	 * Name of the chunk <-> application linking store
+	 */
 	public static final String CHUNK_TO_APP = "ChunkToApp";
 
+	/**
+	 * Owner value for a chunk held by multiple components
+	 */
 	public static final String SHARED_OWNER = "shared";
+	/**
+	 * Component value for a chunk held by multiple components
+	 */
 	public static final String SHARED_COMPONENT = "shared";
 
+	/**
+	 * Partition value for chunks held by no partitions
+	 */
 	public static final int NO_PARTITION = -3;
+	/**
+	 * Partition value for chunks held by multiple partitions
+	 */
 	public static final int MANY_PARTITIONS = -2;
 
 	/** Type of the parent structure holding the {@link IChunk chunk}*/
 	public enum ParentType {
+		/**
+		 * Records structure
+		 */
 		RECORDS,
+		/**
+		 * Vector block structure
+		 */
 		VECTOR_BLOCK,
+		/**
+		 * Dictionary structure
+		 */
 		DICTIONARY,
+		/**
+		 * Reference structure
+		 */
 		REFERENCE,
+		/**
+		 * Index structure
+		 */
 		INDEX,
+		/**
+		 * Point mapping structure
+		 */
 		POINT_MAPPING,
+		/**
+		 * Point index structure
+		 */
 		POINT_INDEX,
+		/**
+		 * Aggregate store structure
+		 */
 		AGGREGATE_STORE,
+		/**
+		 * Bitmap Matcher structure
+		 */
 		BITMAP_MATCHER,
+		/**
+		 * Level structure
+		 */
 		LEVEL
 	}
 
@@ -144,10 +194,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG).asKeyField()
 				.build();
 	}
-
 	/**
 	 * Returns the description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
-	 * @return
+	 * @return description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
+	 * 
 	 */
 	protected IStoreDescription chunkToDictionaryStore() {
 		return new StoreDescriptionBuilder()
@@ -236,8 +286,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 		return StartBuilding.store().withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
 				.withField(DatastoreConstants.APPLICATION__DUMP_NAME).asKeyField()
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG).asKeyField()
-				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE).asKeyField()
 				/* Attributes */
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE).asKeyField()
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
 				.build();
 	}

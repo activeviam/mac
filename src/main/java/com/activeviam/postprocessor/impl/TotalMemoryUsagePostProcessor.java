@@ -30,8 +30,8 @@ public class TotalMemoryUsagePostProcessor extends ABasicPostProcessor<Long> {
 	/**
 	 * Constructor of {@link TotalMemoryUsagePostProcessor}.
 	 *
-	 * @param name
-	 * @param creationContext
+	 * @param name name of the postprocesssor
+	 * @param creationContext Container for additional parameters
 	 */
 	public TotalMemoryUsagePostProcessor(String name, IPostProcessorCreationContext creationContext) {
 		super(name, creationContext);

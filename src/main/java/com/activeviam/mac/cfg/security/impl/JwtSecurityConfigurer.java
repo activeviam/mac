@@ -30,6 +30,9 @@ import com.qfs.server.cfg.impl.JwtRestServiceConfig;
 @Order(2) // Must be done before ContentServerSecurityConfigurer (because they match common URLs)
 public class JwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
+	/**
+	 * The autowired Spring @link {@link ApplicationContext}
+	 */
 	@Autowired
 	protected ApplicationContext context;
 

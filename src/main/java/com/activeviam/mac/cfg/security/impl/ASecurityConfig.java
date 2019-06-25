@@ -61,16 +61,37 @@ public abstract class ASecurityConfig {
 	/** Set to true to allow anonymous access */
 	public static final boolean useAnonymous = true;
 
+	/**
+	 * Name of the Authentification bean
+	 */
 	public static final String BASIC_AUTH_BEAN_NAME = "basicAuthenticationEntryPoint";
 
+	/**
+	 * Name of the standard user role
+	 */
 	public static final String ROLE_USER = "ROLE_USER";
+	/**
+	 * Name of the administrator user role
+	 */
 	public static final String ROLE_ADMIN = "ROLE_ADMIN";
+	/**
+	 * Name of the tech user role
+	 */
 	public static final String ROLE_TECH = "ROLE_TECH";
+	/**
+	 * Name of the root user role for Content Service
+	 */
 	public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
+	/**
+	 * Autowired user configuration
+	 */
 	@Autowired
 	protected UserConfig userDetailsConfig;
 
+	/**
+	 * Autowired jwt configuration
+	 */
 	@Autowired
 	protected IJwtConfig jwtConfig;
 
@@ -88,6 +109,7 @@ public abstract class ASecurityConfig {
 	 * <p>
 	 * More information can be found in the <a href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding />
 	 * Spring documentation</a>
+	 * @return the Password Encoder
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -108,6 +130,11 @@ public abstract class ASecurityConfig {
 		return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
 	}
 
+	/**
+	 * Configures a {@link AuthenticationManagerBuilder} to perform authentification
+	 * @param auth builder to setup
+	 * @throws Exception when an error occurs when enriching the builder
+	 */
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 		auth
@@ -154,9 +181,15 @@ public abstract class ASecurityConfig {
 		/** The name of the cookie to clear */
 		protected final String cookieName;
 
+		/**
+		 * The autowired Spring environment
+		 */
 		@Autowired
 		protected Environment env;
 
+		/**
+		 * The autowired Spring context
+		 */
 		@Autowired
 		protected ApplicationContext context;
 
@@ -210,6 +243,8 @@ public abstract class ASecurityConfig {
 
 		/**
 		 * @see #configure(HttpSecurity)
+		 * @param http the {@link HttpSecurity} to modify
+		 * @throws Exception if an error occurs
 		 */
 		protected abstract void doConfigure(HttpSecurity http) throws Exception;
 
@@ -227,6 +262,9 @@ public abstract class ASecurityConfig {
 	 */
 	public abstract static class AJwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
+		/**
+		 * The autowired Spring context
+		 */
 		@Autowired
 		protected ApplicationContext context;
 
@@ -259,6 +297,9 @@ public abstract class ASecurityConfig {
 	 */
 	public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
+		/**
+		 * The autowired Spring context
+		 */
 		@Autowired
 		protected ApplicationContext context;
 

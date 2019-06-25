@@ -50,6 +50,13 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		this.dumpName = dumpName;
 	}
 
+	/**
+	 * 
+	 * @param statistic
+	 * @param transaction
+	 * @param store
+	 * @param tuple
+	 */
 	protected static void add(IMemoryStatistic statistic, IOpenedTransaction transaction, String store, Object... tuple) {
 		transaction.add(store, tuple);
 	}

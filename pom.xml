@@ -12,7 +12,7 @@
 
     <groupId>com.activeviam.sandbox</groupId>
     <artifactId>monitoring-server</artifactId>
-    <version>5.8.2-SNAPSHOT</version>
+    <version>${activepivot.version}</version>
     <name>ActivePivot Memory Analysis Cube</name>
 
     <prerequisites>
@@ -20,13 +20,13 @@
     </prerequisites>
 
     <properties>
-        <activepivot.version>5.8.2-SNAPSHOT</activepivot.version>
+        <activepivot.version>5.8.2-jdk8-20190621</activepivot.version>
         <activeui.version>4.3.0-alpha</activeui.version>
         <tomcat.version>8.5.23</tomcat.version>
 
         <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
 
-        <checkstyle.maxAllowedViolations>263</checkstyle.maxAllowedViolations>
+        <checkstyle.maxAllowedViolations>130</checkstyle.maxAllowedViolations>
         <checkstyle.console>false</checkstyle.console>
 
         <!-- CLI args, meant to be overridden by each call -->

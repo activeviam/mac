@@ -1,11 +1,10 @@
-package com.qfs.pivot.monitoring.impl;
-
 /*
  * (C) ActiveViam 2016
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+package com.qfs.pivot.monitoring.impl;
 
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DATE;
 
@@ -103,6 +102,7 @@ public class MemoryAnalysisService implements IMemoryAnalysisService {
 	 * @param datastore datastore to consider
 	 * @param activePivotManager ActivePivot manoger to consider.
 	 * @param epochManager the epoch manager to export stats on specific epochs
+	 * @param exportDirectory Path to the exported files
 	 */
 	public MemoryAnalysisService(
 			final IDatastore datastore,
@@ -384,6 +384,11 @@ public class MemoryAnalysisService implements IMemoryAnalysisService {
 		return path;
 	}
 
+	/**
+	 * Creates a folder for the exported files if it does not exist
+	 * @param folderSuffix suffix to append to the resolved {@link #exportDirectory}
+	 * @return the path to the created folder
+	 */
 	protected Path createExportFolder(final String folderSuffix) {
 		final String dumpFolder = getDumpFolder();
 		Path path = Paths.get(dumpFolder, folderSuffix);

@@ -23,6 +23,11 @@ import com.qfs.store.transaction.IOpenedTransaction;
 
 import java.time.Instant;
 
+/**
+ *  Implementation of the {@link IMemoryStatisticVisitor} class for {@link ChunkSetStatistic}
+ * @author ActiveViam
+ *
+ */
 public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** The record format of the store that stores the chunks. */
@@ -41,13 +46,28 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** ID of the current {@link ChunkSet}. */
 	protected Long chunkSetId = null;
-	protected boolean visitingRowMapping = false;
-	protected boolean visitingVectorBlock = false;
+	@SuppressWarnings("unused")
+	private boolean visitingRowMapping = false;
+	private boolean visitingVectorBlock = false;
 
-	protected Integer chunkSize;
-	protected Integer freeRows;
-	protected Integer nonWrittenRows;
+	private Integer chunkSize;
+	private Integer freeRows;
+	private Integer nonWrittenRows;
 
+	/**
+	 * Constructor
+	 * @param storageMetadata metadata of the application datastore
+	 * @param transaction ongoing transaction
+	 * @param dumpName name of the ongoing import
+	 * @param current current time
+	 * @param store store being visited
+	 * @param rootComponent highest component holding the ChunkSet
+	 * @param parentType structure type of the parent of the Chunkset
+	 * @param parentId id of the parent of the ChunkSet
+	 * @param partitionId partition id of the parent if the chunkSet
+	 * @param indexId index id of the Chunkset
+	 * @param referenceId reference id of the chunkset
+	 */
 	public ChunkSetStatisticVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction transaction,

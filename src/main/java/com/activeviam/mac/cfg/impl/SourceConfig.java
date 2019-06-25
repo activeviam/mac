@@ -24,10 +24,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.jmx.JmxOperation;
-import com.qfs.logging.MessagesDatastore;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.msg.csv.ICsvDataProvider;
 import com.qfs.msg.csv.IFileEvent;
@@ -36,7 +34,6 @@ import com.qfs.msg.impl.WatcherService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
 import com.qfs.store.impl.Datastore;
-import com.qfs.store.impl.StoreUtils;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import com.quartetfs.fwk.QuartetRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +79,12 @@ public class SourceConfig {
 				new WatcherService());
 	}
 
+	/**
+	 * Resolve the directory path
+	 *
+	 * @param name the path name
+	 * @return the corresponding path object
+	 */
 	protected Path resolveDirectory(String name) {
 		Path directory = Paths.get(name);
 		if (!Files.isDirectory(directory)) {
