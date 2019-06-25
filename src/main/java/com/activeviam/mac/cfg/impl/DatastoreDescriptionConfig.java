@@ -32,7 +32,6 @@ public class DatastoreDescriptionConfig implements IDatastoreDescriptionConfig {
 
 	@Override
 	public IEpochManagementPolicy epochManagementPolicy() {
-		// TODO(ope) discuss this: we want to see the change after a GC, how to do the initial load of many exports
 		return new KeepAllEpochPolicy();
 	}
 }

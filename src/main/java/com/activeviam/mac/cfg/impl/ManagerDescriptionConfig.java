@@ -64,20 +64,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 	public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
 	public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
-	public static final String HEAP_MEMORY_CHUNK_USAGE_SUM = "HeapMemoryChunkUsage.SUM";
 	public static final String CHUNK_CLASS_LEVEL = "Class";
 	public static final String CHUNK_TYPE_LEVEL = "Type";
 	public static final String DIRECT_CHUNKS_COUNT = "DirectChunks.COUNT";
 	public static final String HEAP_CHUNKS_COUNT = "HeapChunks.COUNT";
-	public static final String CHUNK_CLASS_FIELD = "ChunkClass";
-	public static final String CHUNKSET_CLASS_FIELD = "ChunkSetClass";
-	public static final String INDEX_CLASS_FIELD = "IndexClass";
-	public static final String DICTIONARY_CLASS_FIELD = "DictionaryClass";
-	public static final String REFERENCE_CLASS_FIELD = "ReferenceClass";
 	public static final String CHUNK_HIERARCHY = "Chunks";
-	public static final String DIRECT_MEMORY_CHUNK_USAGE_SUM = "DirectMemoryChunkUsage.SUM";
-	public static final String CHUNKSET_SIZE_FIELD = "ChunkSetSize";
-	public static final String DICTIONARY_SIZE_FIELD = "DictionarySize";
 
 	public static final String USED_HEAP = "UsedHeapMemory";
 	public static final String COMMITTED_HEAP = "CommittedHeapMemory";
@@ -96,7 +87,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	/** The datastore schema {@link IDatastoreSchemaDescription description}.  */
 	@Autowired
 	private IDatastoreDescriptionConfig datastoreDescriptionConfig;
-// TODO Add dumpname & ids as slicing hierarchies for the isolated stores
+
 	@Bean
 	@Override
 	public IActivePivotManagerDescription managerDescription() {
@@ -538,4 +529,5 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 			.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___e").withinFolder(BLACK_MAGIC_FOLDER))
 			.publish();
 	}
+
 }
