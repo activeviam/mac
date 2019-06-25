@@ -6,6 +6,24 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.jmx.JmxOperation;
@@ -27,27 +45,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 /**
  * @author Quartet FS
  */
@@ -55,7 +52,7 @@ import java.util.stream.Stream;
 public class SourceConfig {
 
 	/** Logger */
-	private static final Logger LOGGER = MessagesDatastore.getLogger(SourceConfig.class);
+	private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
 	/** Autowired {@link Datastore} to be fed by this source*/
 	@Autowired
@@ -84,7 +81,7 @@ public class SourceConfig {
 				FileSystems.getDefault().getPathMatcher("glob:**.json*"),
 				new WatcherService());
 	}
-	
+
 	protected Path resolveDirectory(String name) {
 		Path directory = Paths.get(name);
 		if (!Files.isDirectory(directory)) {
@@ -178,12 +175,8 @@ public class SourceConfig {
 			memoryStatistics.forEach(stat -> stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName)));
 		});
 
-
 		if (info.isPresent()) {
-			return "Commit successful at epoch "
-					+ info.get().getId()
-					+ ". Datastore size "
-					+ StoreUtils.getSize(datastore.getHead(), DatastoreConstants.CHUNK_STORE);
+			return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
 		} else {
 			return "Issue during the commit";
 		}
