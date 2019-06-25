@@ -116,14 +116,6 @@ public class MacServerConfig {
 	 */
 	@Bean
 	public Void startManager() {
-		// Force the add of a Ref data in the datastore
-		final IDatastore datastore = datastoreConfig.datastore();
-		datastore.edit(tm->{
-			tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-			tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-			tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
-		});
-
 		/* *********************************************** */
 		/* Initialize the ActivePivot Manager and start it */
 		/* *********************************************** */
@@ -134,6 +126,13 @@ public class MacServerConfig {
 			throw new IllegalStateException("Cannot start the application", e);
 		}
 
+		// Force the add of a Ref data in the datastore
+		final IDatastore datastore = datastoreConfig.datastore();
+		datastore.edit(tm->{
+			tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+		});
 
 		// Connect the real-time updates
 		sourceConfig.watchStatisticDirectory();
