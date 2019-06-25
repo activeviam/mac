@@ -6,12 +6,15 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import java.nio.file.Paths;
+
 import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
@@ -183,6 +186,20 @@ public class MacServerConfig {
 				new DynamicActivePivotContentServiceMBean(
 						apCSConfig.activePivotContentService(),
 						apConfig.activePivotManager()));
+	}
+
+	/**
+	 * Enable Memory JMX Monitoring
+	 *
+	 * @return the {@link JMXEnabler} attached to the memory analysis service.
+	 */
+	@Bean
+	public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
+		return new JMXEnabler(new MemoryAnalysisService(
+				this.datastoreConfig.datastore(),
+				this.apConfig.activePivotManager(),
+				this.datastoreConfig.datastore().getEpochManager(),
+				Paths.get(System.getProperty("java.io.tmpdir"))));
 	}
 
 }
