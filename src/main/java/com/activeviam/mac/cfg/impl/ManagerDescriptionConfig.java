@@ -16,9 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.builders.BuildingContext;
-import com.activeviam.copper.builders.ColumnMapping;
 import com.activeviam.copper.builders.dataset.Datasets.StoreDataset;
-import com.activeviam.copper.columns.Column;
 import com.activeviam.copper.columns.Columns;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -34,9 +32,6 @@ import com.google.common.base.Objects;
 import com.qfs.agg.impl.CopyFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.fwk.format.impl.EpochFormatter;
-import com.qfs.fwk.ordering.impl.ReverseEpochComparator;
-import com.qfs.literal.ILiteralType;
 import com.qfs.literal.impl.LiteralType;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreDescriptionConfig;
@@ -49,8 +44,6 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
-import com.sun.jna.platform.unix.X11.XClientMessageEvent.Data;
-import com.sun.tools.rngom.digested.DAttributePattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -64,6 +57,11 @@ import org.springframework.context.annotation.Configuration;
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
 	public static final String MONITORING_CUBE = "MemoryCube";
+	public static final String INDEX_CUBE = "Indexes";
+	public static final String DICTIONARY_CUBE = "Dictionaries";
+	public static final String PROVIDER_CUBE = "Providers";
+	public static final String REFERENCE_CUBE = "References";
+
 	public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
 	public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
 	public static final String HEAP_MEMORY_CHUNK_USAGE_SUM = "HeapMemoryChunkUsage.SUM";
@@ -104,96 +102,127 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	public IActivePivotManagerDescription managerDescription() {
 		return StartBuilding.managerDescription()
 				.withCatalog("Memory Analysis").containingCubes(MONITORING_CUBE)
-				.withCatalog("Additional Data").containingCubes("Indexes","Dictionaries","Providers","References")
+				.withCatalog("Additional Data").containingCubes(INDEX_CUBE, DICTIONARY_CUBE, PROVIDER_CUBE, REFERENCE_CUBE)
 				.withSchema("MemorySchema")
-					.withSelection(createSelection())
-					.withCube(createCube())
+					.withSelection(memorySelection())
+					.withCube(memoryCube())
 				.withSchema("References Schema")
-				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
-						.fromBaseStore(DatastoreConstants.REFERENCE_STORE)
-						.withAllFields()
-						.build())
-					.withCube(StartBuilding.cube("References")
-							.withDimension("Reference Id")
-							.withHierarchyOfSameName()
-							.withLevel(DatastoreConstants.REFERENCE_ID)
-							.withDimension("Data feed")
-							.withHierarchyOfSameName()
-							.slicing()
-							.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
-							.withSingleLevelDimension(DatastoreConstants.REFERENCE_CLASS)
-							.withSingleLevelDimension(DatastoreConstants.REFERENCE_NAME)
-							.withDimension("Base stores")
-							.withHierarchyOfSameName()
-							.withLevel(DatastoreConstants.REFERENCE_FROM_STORE)
-							.withLevel(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID)
-							.withDimension("Target stores")
-							.withHierarchyOfSameName()
-							.withLevel(DatastoreConstants.REFERENCE_TO_STORE)
-							.withLevel(DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID)
-							.build())
-
+				.withSelection(referenceSelection())
+					.withCube(referenceCube())
 				.withSchema("IndexSchema")
-				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
-						.fromBaseStore(DatastoreConstants.INDEX_STORE)
-						.withAllFields()
-						.build())
-				.withCube(StartBuilding.cube("Indexes")
-						.withDimension("Index Id")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.INDEX_ID)
-						.withDimension("Data feed")
-						.withHierarchyOfSameName()
-						.slicing()
-						.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
-						.withDimension("Index Type")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.INDEX_TYPE)
-						.withLevel(DatastoreConstants.INDEX_CLASS)
-						.withDimension("Indexed Fields")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.INDEX__FIELDS)
-						.build())
+				.withSelection(indexSelection())
+				.withCube(indexCube())
 				.withSchema("DictionarySchema")
-				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
-						.fromBaseStore(DatastoreConstants.DICTIONARY_STORE)
-						.withAllFields()
-						.build())
-				.withCube(StartBuilding.cube("Dictionaries")
-						.withAggregatedMeasure()
-						.sum(DatastoreConstants.DICTIONARY_SIZE)
-						.withDimension("Dictionary Id")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.DICTIONARY_ID)
-						.withDimension("Data feed")
-						.withHierarchyOfSameName()
-						.slicing()
-						.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
-						.withDimension("Dictionary classes")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.DICTIONARY_CLASS)
-						.build())
+				.withSelection(dictionarySelection())
+				.withCube(dictionaryCube())
 				.withSchema("Provider Schema")
-				.withSelection(StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
-						.fromBaseStore(DatastoreConstants.PROVIDER_STORE)
-						.withAllFields()
-						.build())
-				.withCube(StartBuilding.cube("Providers")
-						.withDimension("Providers")
-						.withHierarchyOfSameName()
-						.withLevel(DatastoreConstants.PROVIDER__MANAGER_ID)
-						.withLevel(DatastoreConstants.PROVIDER__PIVOT_ID)
-						.withDimension("Data feed")
-						.withHierarchyOfSameName()
-						.slicing()
-						.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
-						.withDimension("Provider indexes")
-						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__INDEX)
-						.withDimension("Provider Type")
-						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__TYPE)
-						.withDimension("Provider category")
-						.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__CATEGORY)
-						.build())
+				.withSelection(providerSelection())
+				.withCube(providerCube())
+				.build();
+	}
+
+	private ISelectionDescription referenceSelection() {
+		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+				.fromBaseStore(DatastoreConstants.REFERENCE_STORE)
+				.withAllFields()
+				.build();
+	}
+
+	private IActivePivotInstanceDescription referenceCube() {
+		return StartBuilding.cube(REFERENCE_CUBE)
+				.withDimension("Reference Id")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.REFERENCE_ID)
+				.withDimension("Data feed")
+				.withHierarchyOfSameName()
+				.slicing()
+				.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.withSingleLevelDimension(DatastoreConstants.REFERENCE_CLASS)
+				.withSingleLevelDimension(DatastoreConstants.REFERENCE_NAME)
+				.withDimension("Base stores")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.REFERENCE_FROM_STORE)
+				.withLevel(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID)
+				.withDimension("Target stores")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.REFERENCE_TO_STORE)
+				.withLevel(DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID)
+				.build();
+	}
+
+	private ISelectionDescription indexSelection() {
+		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+				.fromBaseStore(DatastoreConstants.INDEX_STORE)
+				.withAllFields()
+				.build();
+	}
+
+	private IActivePivotInstanceDescription indexCube() {
+		return StartBuilding.cube(INDEX_CUBE)
+				.withDimension("Index Id")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.INDEX_ID)
+				.withDimension("Data feed")
+				.withHierarchyOfSameName()
+				.slicing()
+				.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.withDimension("Index Type")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.INDEX_TYPE)
+				.withLevel(DatastoreConstants.INDEX_CLASS)
+				.withDimension("Indexed Fields")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.INDEX__FIELDS)
+				.build();
+	}
+
+	private ISelectionDescription dictionarySelection() {
+		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+				.fromBaseStore(DatastoreConstants.DICTIONARY_STORE)
+				.withAllFields()
+				.build();
+	}
+
+	private IActivePivotInstanceDescription dictionaryCube() {
+		return StartBuilding.cube(DICTIONARY_CUBE)
+				.withAggregatedMeasure()
+				.sum(DatastoreConstants.DICTIONARY_SIZE)
+				.withDimension("Dictionary Id")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.DICTIONARY_ID)
+				.withDimension("Data feed")
+				.withHierarchyOfSameName()
+				.slicing()
+				.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.withDimension("Dictionary classes")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.DICTIONARY_CLASS)
+				.build();
+	}
+
+	private ISelectionDescription providerSelection() {
+		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
+				.fromBaseStore(DatastoreConstants.PROVIDER_STORE)
+				.withAllFields()
+				.build();
+	}
+
+	private IActivePivotInstanceDescription providerCube() {
+		return StartBuilding.cube(PROVIDER_CUBE)
+				.withDimension("Providers")
+				.withHierarchyOfSameName()
+				.withLevel(DatastoreConstants.PROVIDER__MANAGER_ID)
+				.withLevel(DatastoreConstants.PROVIDER__PIVOT_ID)
+				.withDimension("Data feed")
+				.withHierarchyOfSameName()
+				.slicing()
+				.withLevel(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.withDimension("Provider indexes")
+				.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__INDEX)
+				.withDimension("Provider Type")
+				.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__TYPE)
+				.withDimension("Provider category")
+				.withSingleLevelHierarchy(DatastoreConstants.PROVIDER__CATEGORY)
 				.build();
 	}
 
@@ -201,7 +230,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
 	}
 
-	private ISelectionDescription createSelection() {
+	private ISelectionDescription memorySelection() {
 		return StartBuilding.selection(this.datastoreDescriptionConfig.schemaDescription())
 				.fromBaseStore(DatastoreConstants.CHUNK_STORE)
 				.withAllReachableFields(allReachableFields -> {
@@ -215,7 +244,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.build();
 	}
 
-	private IActivePivotInstanceDescription createCube() {
+	private IActivePivotInstanceDescription memoryCube() {
 		return StartBuilding.cube(MONITORING_CUBE)
 				.withMeasures(this::measures)
 
@@ -306,7 +335,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 		chunkMeasures(context);
 		applicationMeasure(context);
 		joinHierarchies(context);
-		
+
 	}
 
 
@@ -426,13 +455,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	/**
-	 * Performs a coPPer join between the Chunk store and the Chunks_to_References store 
+	 * Performs a coPPer join between the Chunk store and the Chunks_to_References store
 	 * @param context
 	 */
 	private void joinRefsToChunks(BuildingContext context) {
 		final StoreDataset fieldDataset = context.createDatasetFromStore(DatastoreConstants.CHUNK_TO_REF_STORE);
 		context.createDatasetFromFacts()
-		
+
 				.join(
 						fieldDataset,
 						Columns.mapping(DatastoreConstants.CHUNK__PARENT_ID).to(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
@@ -445,7 +474,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 	}
 
 	/**
-	 * Performs a coPPer join between the Chunk store and the Chunks_to_Indexes store 
+	 * Performs a coPPer join between the Chunk store and the Chunks_to_Indexes store
 	 * @param context
 	 */
 	private void joinIndexesToChunks(BuildingContext context) {
@@ -493,9 +522,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 				.agg(sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE).as("___d").withinFolder(BLACK_MAGIC_FOLDER))
 				.publish();
 	}
-	
+
 	/**
-	 * Performs a coPPer join between the Chunk store and the Chunks_to_Dicos store 
+	 * Performs a coPPer join between the Chunk store and the Chunks_to_Dicos store
 	 * @param context
 	 */
 	private void joinDicosToChunks(BuildingContext context) {
