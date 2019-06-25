@@ -24,8 +24,10 @@
         <activeui.version>4.3.0-alpha</activeui.version>
         <tomcat.version>8.5.23</tomcat.version>
 
-        <checkstyle.skip>true</checkstyle.skip>
         <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
+
+        <checkstyle.maxAllowedViolations>263</checkstyle.maxAllowedViolations>
+        <checkstyle.console>false</checkstyle.console>
 
         <!-- CLI args, meant to be overridden by each call -->
         <unsnappy.file>not-a-file.txt</unsnappy.file>
@@ -236,6 +238,70 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                    <violationSeverity>warning</violationSeverity>
+                    <linkXRef>false</linkXRef>
+                    <checkstyleRules>
+                        <module name="Checker">
+                            <property name="severity" value="warning" />
+                            <module name="TreeWalker">
+                                <property name="fileExtensions" value="java" />
+                                <!-- Required for disabling comments, later in the rules -->
+                                <module name="JavadocType">
+                                    <property name="scope" value="package"/>
+                                </module>
+                                <module name="JavadocMethod">
+                                    <property name="scope" value="protected" />
+                                    <property name="validateThrows" value="true" />
+                                    <property name="allowedAnnotations"
+                                              value="Override, Test, Before, BeforeClass, After, AfterClass" />
+                                    <property name="allowThrowsTagsForSubclasses" value="true" />
+                                </module>
+                                <module name="JavadocVariable">
+                                    <property name="scope" value="protected" />
+                                    <property name="ignoreNamePattern" value="log|logger" />
+                                </module>
+                                <module name="MissingOverride" />
+                                <module name="MissingDeprecated" />
+                                <module name="AvoidStarImport" />
+                                <module name="UnusedImports">
+                                    <property name="processJavadoc" value="true" />
+                                </module>
+                                <module name="ModifierOrder" />
+                                <module name="RedundantModifier">
+                                    <property name="tokens" value="INTERFACE_DEF" />
+                                </module>
+                                <module name="OneTopLevelClass" />
+                            </module>
+                            <module name="Header">
+                                <property name="header" value="/*" />
+                                <property name="fileExtensions" value="java" />
+                            </module>
+                            <module name="RegexpSingleline">
+                                <property name="severity" value="info" />
+                                <property name="message" value="Line has trailing spaces." />
+                                <property name="format" value="\s+$" />
+                                <property name="fileExtensions" value="java" />
+                            </module>
+                        </module>
+                    </checkstyleRules>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>verify-style</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
