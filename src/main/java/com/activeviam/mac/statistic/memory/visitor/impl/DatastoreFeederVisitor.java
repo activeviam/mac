@@ -58,18 +58,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 	/** Branch owning {@link #epochId}. */
 	protected String branch = null;
 
-	/** ID of the current {@link ChunkSet}. */
-	protected Long chunkSetId = null;
-
+	/** Type of the root component visited. */
 	protected ParentType rootComponent;
+	/** Types of the direct parent component owning the chunk. */
 	protected ParentType directParentType;
+	/** Id of the direct parent owning the chunk. */
 	protected String directParentId;
 
 	/** The partition id of the visited statistic */
 	protected Integer partitionId = null;
 
+	/** Type of the currently visited index. */
 	private IndexType indexType = null;
 
+	/** Printer displaying the tree of a given statistic. */
 	protected StatisticTreePrinter printer;
 
 	/**
@@ -143,18 +145,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partitionId;
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter
 				.getTreeAsString(chunkStatistic);
-
-		/*
-		 * // FIXME(ope) restore this if needed if (this.store != null) { final
-		 * IByteRecordFormat f =
-		 * this.storageMetadata.getStoreMetadata(DatastoreConstants.
-		 * CHUNK_AND_STORE__STORE_NAME).getStoreFormat().getRecordFormat(); final
-		 * Object[] tupleChunkAndStore = FeedVisitor.buildChunkToFieldTuple(f,
-		 * chunkStatistic, this.store); FeedVisitor.setTupleElement(tupleChunkAndStore,
-		 * f, DatastoreConstants.CHUNK_AND_STORE__STORE, this.store);
-		 * FeedVisitor.add(chunkStatistic, this.transaction,
-		 * DatastoreConstants.CHUNK_AND_STORE__STORE_NAME, tupleChunkAndStore); } //
-		 */
 
 		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
@@ -450,4 +440,5 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 		return tuple;
 	}
+
 }

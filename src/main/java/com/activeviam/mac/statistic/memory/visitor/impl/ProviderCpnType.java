@@ -6,15 +6,26 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+/**
+ * Enum listing all components being part of an Aggregate Provider.
+ */
 public enum ProviderCpnType {
-
+	/** Provider Point Index. */
 	POINT_INDEX("PointIndex"),
+	/** Provider mapping from Points to Aggregated values. */
 	POINT_MAPPING("PointMapping"),
+	/** Provider Aggregate Store. */
 	AGGREGATE_STORE("AggregateStore"),
-	BITMAP_MATCHER("BitmapMatcher");
+	/** Provider Point matcher, using Bitmaps. */
+	BITMAP_MATCHER("PointMatcher");
 
+	/** User-friendly name of the Provider component. */
 	final String friendlyName;
 
+	/**
+	 * Full constructor.
+	 * @param friendlyName user-friendly name of the component.
+	 */
 	ProviderCpnType(String friendlyName) {
 		this.friendlyName = friendlyName;
 	}

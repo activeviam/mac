@@ -51,12 +51,12 @@ import com.quartetfs.fwk.query.UnsupportedQueryException;
 /**
  * Test class verifying the results obtained by the Measures provided in the
  * MemoryAnalysisCube
- * 
- * Export tool : 
- * 
+ *
+ * Export tool :
+ *
  * Tools.extractSnappyFile(path + "\pivot_EquityDerivativesCubeDist.json.sz");
  *
- * 
+ *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "contentServer.security.calculatedMemberRole=empty",
@@ -78,7 +78,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
 	public static final int ADDED_DATA_SIZE = 100;
 	public static final int REMOVED_DATA_SIZE = 10;
-	public static final int MAX_GC_STEPS = 10;
+
 	@ClassRule
 	public static ActiveViamPropertyRule propertyRule = new ActiveViamPropertyRuleBuilder()
 			.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true).build();
@@ -186,7 +186,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testDirectMemorySum() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+	public void testDirectMemorySum() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -217,7 +217,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testSharedCount() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+	public void testSharedCount() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -230,7 +230,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testOnHeapMemorySum() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+	public void testOnHeapMemorySum() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -265,7 +265,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testChunkSize() throws UnsupportedQueryException, QueryException {
+	public void testChunkSize() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -279,7 +279,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testNonWrittenCount() throws UnsupportedQueryException, QueryException {
+	public void testNonWrittenCount() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -293,7 +293,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testApplicationMeasures() throws UnsupportedQueryException, QueryException {
+	public void testApplicationMeasures() throws QueryException {
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -305,7 +305,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testFreedCount() throws UnsupportedQueryException, QueryException {
+	public void testFreedCount() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -318,7 +318,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testNonWrittenRatio() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+	public void testNonWrittenRatio() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -344,7 +344,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testDeletedRatio() throws AgentException, IOException, UnsupportedQueryException, QueryException {
+	public void testDeletedRatio() throws QueryException {
 
 		final IMultiVersionActivePivot pivot = monitoringApp.getRight().getActivePivots()
 				.get(ManagerDescriptionConfig.MONITORING_CUBE);
