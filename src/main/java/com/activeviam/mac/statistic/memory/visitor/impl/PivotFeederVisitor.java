@@ -6,6 +6,7 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import java.beans.FeatureDescriptor;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -188,7 +189,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
 
-		if (directParentId !=null && directParentType != null ) {
+		if (directParentId != null && directParentType != null ) {
 			FeedVisitor.add(
 					stat,
 					transaction,
@@ -199,6 +200,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 		this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);

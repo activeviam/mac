@@ -101,7 +101,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 		final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
-		
+
 		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
 
 		if (directParentId !=null && directParentType != null ) {
@@ -112,6 +112,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 					FeedVisitor.buildDicoTupleForStructure(this.directParentType, this.directParentId, this.dictionaryId,joinStoreFormat)
 					);
 		}
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
 
 		this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 		this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -175,7 +176,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 		this.transaction.add(DatastoreConstants.CHUNK_TO_LEVEL_STORE, tuple);
 	}
-	
+
 	/**
 	 * Adds dictionary parent data to the join store
 	 * @param type {@code ParentType} of the owner of the dictionary-related chunk
