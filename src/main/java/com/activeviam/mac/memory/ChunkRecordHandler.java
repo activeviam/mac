@@ -25,7 +25,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
 	private int sharedOwnerValue = -1;
 	private int sharedComponentValue = -1;
-	private final int sharedPartitionId = MemoryAnalysisDatastoreDescription.MANY_PARTITIONS;
+	private int sharedPartitionId = MemoryAnalysisDatastoreDescription.MANY_PARTITIONS;
 
 	@Override
 	public IRecordReader selectDuplicateKeyWithinTransaction(
@@ -103,6 +103,12 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 			@SuppressWarnings("unchecked")
 			final IWritableDictionary<Object> componentDictionary = (IWritableDictionary<Object>) dictionaryProvider.getDictionary(componentIdx);
 			sharedComponentValue = componentDictionary.map(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT);
+		}
+		if (sharedPartitionId <0 ) {
+			final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
+			@SuppressWarnings("unchecked")
+			final IWritableDictionary<Object> partitionDictionary = (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
+			sharedPartitionId = partitionDictionary.map(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS);
 		}
 	}
 
