@@ -32,10 +32,6 @@ import com.quartetfs.fwk.format.IParser;
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
-	public static final String CHUNK_TO_REF = "chunkToReferences";
-	public static final String CHUNK_TO_INDICES = "chunkToIndices";
-	public static final String CHUNK_TO_SETS = "chunkToChunkSet";
-	public static final String CHUNK_TO_DICS = "chunkToDic";
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 	public static final String CHUNK_TO_APP = "ChunkToApp";
@@ -148,7 +144,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG).asKeyField()
 				.build();
 	}
-	
+
 	/**
 	 * Returns the description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
 	 * @return
@@ -238,11 +234,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	 */
 	protected IStoreDescription providerComponentStore() {
 		return StartBuilding.store().withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-				.withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.APPLICATION__DUMP_NAME).asKeyField()
-
-				/* Attributes */
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG).asKeyField()
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE).asKeyField()
+				/* Attributes */
 				.withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
 				.build();
 	}
@@ -320,15 +315,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
 		return Stream.of(
 				getChunkReferences(),
-				getChunksetReferences(),
 				Arrays.asList(
-						// Level refs
-//						StartBuilding.reference()
-//								.fromStore(DatastoreConstants.LEVEL_STORE).toStore(DatastoreConstants.PIVOT_STORE)
-//								.withName("LevelToPivot")
-//								.withMapping(DatastoreConstants.LEVEL__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-//								.withMapping(DatastoreConstants.LEVEL__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
-//								.build(),
 						// Level refs
 						StartBuilding.reference()
 								.fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE).toStore(DatastoreConstants.LEVEL_STORE)
@@ -351,8 +338,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 								.fromStore(DatastoreConstants.PROVIDER_STORE).toStore(DatastoreConstants.PIVOT_STORE)
 								.withName("ProviderToPivot")
 								.withMapping(DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-								.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 								.withMapping(DatastoreConstants.PROVIDER__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
+								.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 								.build()))
 				.flatMap(Collection::stream)
 				.collect(Collectors.toList());
@@ -360,24 +347,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 	private Collection<IReferenceDescription> getChunkReferences() {
 		return Arrays.asList(
-
 				StartBuilding.reference()
 						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
 						.withName(CHUNK_TO_PROVIDER)
+						.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
 						.withMapping(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE, DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-						.withMapping(DatastoreConstants.APPLICATION__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
-
 						.build(),
 				StartBuilding.reference()
 						.fromStore(DatastoreConstants.CHUNK_STORE).toStore(DatastoreConstants.APPLICATION_STORE)
 						.withName(CHUNK_TO_APP)
 						.withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
 						.build());
-	}
-
-	private Collection<IReferenceDescription> getChunksetReferences() {
-		return Collections.emptyList();
 	}
 
 	@Override
