@@ -47,7 +47,7 @@ import com.quartetfs.fwk.ordering.impl.CustomComparator;
  * This class contains methods:
  * <ul>
  * <li>To define authorized users</li>,
- * <li>To enable anomymous user access</li>,
+ * <li>To enable anonymous user access</li>,
  * <li>To configure the JWT filter</li>,
  * <li>To configure the security for Version service</li>.
  * </ul>

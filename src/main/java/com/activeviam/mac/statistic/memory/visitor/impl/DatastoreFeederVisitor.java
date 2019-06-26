@@ -41,6 +41,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** Class logger */
+	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
 	/**

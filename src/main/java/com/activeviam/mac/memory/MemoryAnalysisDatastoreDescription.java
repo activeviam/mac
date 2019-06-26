@@ -62,7 +62,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	 */
 	public static final int MANY_PARTITIONS = -2;
 
-	/** Type of the parent structure holding the {@link IChunk chunk}*/
+	/** Enum listing the types of parent structures that hold the {@link IChunk chunks}*/
 	public enum ParentType {
 		/**
 		 * Records structure

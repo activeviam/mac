@@ -6,7 +6,6 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import java.beans.FeatureDescriptor;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -15,7 +14,6 @@ import com.activeviam.copper.HierarchyCoordinate;
 import com.activeviam.copper.LevelCoordinate;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -27,46 +25,84 @@ import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
+import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
-import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
-import com.quartetfs.biz.pivot.cube.hierarchy.measures.IMeasureHierarchy;
+import com.quartetfs.biz.pivot.impl.ActivePivotManager;
 import com.quartetfs.fwk.QuartetRuntimeException;
 
+/**
+ * Implementation of {@link IMemoryStatisticVisitor} for pivot statistics
+
+ * @author ActiveViam
+ *
+ */
 public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 	/** Class logger */
+	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(Loggers.ACTIVEPIVOT_LOADING);
 
 	/** The export date, found on the first statistics we read */
 	protected Instant current = null;
 	/** The epoch id we are currently reading statistics for */
 	protected Long epochId = null;
+	/**
+	 * The branch of the pivot we're currently reading statistics
+	 */
 	protected String branch = null;
-
+	/** current {@link ActivePivotManager} */
 	protected String manager;
+	/** currently visited Pivot */
 	protected String pivot;
+	/** Aggregate provider being currently visited */
 	protected Long providerId;
+	/** Partition being currently visited */
 	protected Integer partition;
+	/** Dictionary being currently visited */
 	protected Long dictionaryId;
+	/** ChunkSet being visited */
 	protected Long chunkSetId;
+	/** dimension being currently visited */
 	protected String dimension;
+	/** hierarchy being currently visited */
 	protected String hierarchy;
+	/** level being currently visited */
 	protected String level;
+	/** Type of the aggregate Provider being currently visited */
 	protected ProviderCpnType providerCpnType;
-
+	/** Type of the root structure */
 	protected ParentType rootComponent;
+	/** Type of the direct parent structure */
 	protected ParentType directParentType;
+	/** id of the direct parent structure */
 	protected String directParentId;
 
+	/** Tree Printer */
 	protected StatisticTreePrinter printer;
 
+	/**
+	 * Constructor
+	 *
+	 * @param storageMetadata datastore schema metadata
+	 * @param tm              ongoing transaction
+	 * @param dumpName        name of the current import
+	 */
 	public PivotFeederVisitor(final IDatastoreSchemaMetadata storageMetadata, final IOpenedTransaction tm,
 			final String dumpName) {
 		super(tm, storageMetadata, dumpName);
 	}
 
+	/**
+	 * Initializes the visit of the statistics of an entire pivot
+	 *
+	 * @param stat Entry point of the tree creation, should be a
+	 *             {@link PivotMemoryStatisticConstants#STAT_NAME_MULTIVERSION_PIVOT}
+	 *             , a {@link PivotMemoryStatisticConstants#STAT_NAME_PIVOT} or
+	 *             {@link PivotMemoryStatisticConstants#STAT_NAME_MANAGER} named
+	 *             statistic
+	 */
 	public void startFrom(final IMemoryStatistic stat) {
 		this.printer = DebugVisitor.createDebugPrinter(stat);
 		if (this.current == null) {
@@ -181,21 +217,21 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 			final IRecordFormat cpnFormat = getProviderCpnFormat();
 			final Object[] cpnTuple = buildProviderComponentTupleFrom(cpnFormat, stat);
-			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,this.providerId);
-			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__TYPE,this.providerCpnType.toString());
+			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
+					this.providerId);
+			FeedVisitor.setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__TYPE,
+					this.providerCpnType.toString());
 
 			this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
 		}
 
-		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
+		final IRecordFormat joinStoreFormat = FeedVisitor.getRecordFormat(storageMetadata,
+				DatastoreConstants.CHUNK_TO_DICO_STORE);
 
-		if (directParentId != null && directParentType != null ) {
-			FeedVisitor.add(
-					stat,
-					transaction,
-					DatastoreConstants.CHUNK_TO_DICO_STORE,
-					FeedVisitor.buildDicoTupleForStructure(this.directParentType, this.directParentId, this.dictionaryId,joinStoreFormat)
-					);
+		if (directParentId != null && directParentType != null) {
+			FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_DICO_STORE,
+					FeedVisitor.buildDicoTupleForStructure(this.directParentType, this.directParentId,
+							this.dictionaryId, joinStoreFormat));
 		}
 
 		final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
@@ -408,6 +444,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 		}
 	}
 
+	/**
+	 * Returns the generic ParentType for a given Aggregate Provider component type
+	 * @param type  Aggregate Provider component type
+	 * @return the corresponding  generic {@link ParentType}
+	 */
 	protected ParentType getCorrespondingParentType(final ProviderCpnType type) {
 		switch (type) {
 		case POINT_INDEX:

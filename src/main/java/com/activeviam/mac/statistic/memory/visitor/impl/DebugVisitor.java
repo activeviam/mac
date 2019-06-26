@@ -20,20 +20,45 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Debug implementation of {@link IMemoryStatisticVisitor}
+ *
+ * @author ActiveViam
+ *
+ */
 public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
-	protected static final String DEPTH_KEY = "debug-depth";
+
+	private static final String DEPTH_KEY = "debug-depth";
+	/**
+	 * key string for the debug-id attribute
+	 */
 	protected static final String ID_KEY = "debug-id";
 
+	/**
+	 * Debug Id of the current {@link IMemoryStatistic}
+	 */
 	protected final AtomicLong id = new AtomicLong(0);
 
+	/**
+	 * Depth of the current memory statistic in the treee
+	 */
 	protected int depth = 0;
 
+	/**
+	 * Created a {@link StatisticTreePrinter printer} of the tree created from the input {@link IMemoryStatistic}
+	 * @param root Memory statistic being the root of the printed tree
+	 * @return the generated TreePrinter
+	 */
 	public static StatisticTreePrinter createDebugPrinter(IMemoryStatistic root) {
 		root.accept(new DebugVisitor());
 		return new StatisticTreePrinter();
 	}
 
+	/**
+	 * Enriches a statistic and its childred with debug attributes
+	 * @param parent root parent of the {@link IMemoryStatistic} to be enriched
+	 */
 	protected void enrichStatisticWithDebugAttributes(IMemoryStatistic parent) {
 		addDebugAttributes(parent);
 		if (parent.getChildren() == null) {
@@ -48,6 +73,10 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 		depth--;
 	}
 
+	/**
+	 * Adds debug attributes to a {@link IMemoryStatistic}
+	 * @param statistic to be enriched
+	 */
 	protected void addDebugAttributes(IMemoryStatistic statistic) {
 		IntegerStatisticAttribute depthValue = new IntegerStatisticAttribute(this.depth);
 		IStatisticAttribute old = statistic.getAttributes().put(DEPTH_KEY, depthValue);

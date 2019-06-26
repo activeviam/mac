@@ -6,31 +6,15 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.mac.Tools;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.qfs.dic.IDictionary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.NoTransactionException;
-import com.qfs.store.impl.Datastore;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.QuartetRuntimeException;
-import com.quartetfs.fwk.impl.Pair;
-
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.IntStream;
-
 import static org.junit.Assert.assertNotEquals;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {

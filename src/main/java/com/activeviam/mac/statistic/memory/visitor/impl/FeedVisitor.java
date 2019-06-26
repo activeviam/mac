@@ -32,6 +32,11 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
+/**
+ * 
+ * @author ActiveViam
+ *
+ */
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
 	/** Class logger */
@@ -41,6 +46,12 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	private final IOpenedTransaction transaction;
 	private final String dumpName;
 
+	/**
+	 * Contructor
+	 * @param storageMetadata metadata of the Datastore schema
+	 * @param tm ongoing transaction
+	 * @param dumpName name of the import being currently executed
+	 */
 	public FeedVisitor(
 			final IDatastoreSchemaMetadata storageMetadata,
 			final IOpenedTransaction tm,
@@ -51,11 +62,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	}
 
 	/**
-	 * 
-	 * @param statistic
-	 * @param transaction
-	 * @param store
-	 * @param tuple
+	 * Adds a tuple to the current transaction
+	 * @param statistic statistic
+	 * @param transaction ongoing transaction
+	 * @param store store being appended
+	 * @param tuple tuple-ized data to add to the store
 	 */
 	protected static void add(IMemoryStatistic statistic, IOpenedTransaction transaction, String store, Object... tuple) {
 		transaction.add(store, tuple);
@@ -206,6 +217,13 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 				.getRecordFormat();
 	}
 
+	/**
+	 * Adds a value to a given field of a tuple
+	 * @param tuple tuple to be filled
+	 * @param format {@link IRecordFormat} the tuple must match
+	 * @param field field we're inserting data on
+	 * @param value data to insert
+	 */
 	protected static void setTupleElement(Object[] tuple, IRecordFormat format, String field, final Object value) {
 		if(value == null) {
 			throw new RuntimeException("Expected a non-null value for field " + field);
@@ -213,6 +231,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 		tuple[format.getFieldIndex(field)] = value;
 	}
 
+	/**
+	 * Checks the format of a tuple correspond to the given input
+	 * @param tuple tuple to be checked
+	 * @param format format the tuple must match
+	 */
 	protected static void checkTuple(Object[] tuple, IRecordFormat format) {
 		for (int i = 0; i < tuple.length; i++) {
 			if (tuple[i] == null) {
@@ -226,7 +249,9 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 	 * Adds dictionary parent data to the join store
 	 *
 	 * @param type {@code ParentType} of the owner of the dictionary-related chunk
-	 * @param id   id of the owner of the dictionary-related chunk
+	 * @param id   id of the owner of the dictionary-related chun
+	 * @param  dictionaryId id of the dictionary
+	 * @param format format of the dictionary store
 	 * @return the built tuple corresponding to the dictionary
 	 */
 	protected static Object[] buildDicoTupleForStructure(

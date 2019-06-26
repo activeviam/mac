@@ -17,13 +17,18 @@ import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
+import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.query.ICompiledGetByKey;
-import com.qfs.store.record.IByteRecordFormat;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 
+/**
+ * {@link IMemoryStatisticVisitor} implementation for visiting {@link PivotMemoryStatisticConstants.STAT_NAME_LEVEL} named statistics
+ * @author ActiveViam
+ *
+ */
 public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
 	private final PivotFeederVisitor parent;
@@ -37,6 +42,13 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 	Integer memberCount;
 	Long dictionaryId;
 
+	/**
+	 * Constuctor
+	 * @param parent Parent pivot statistic visitor
+	 * @param transaction current transaction
+	 * @param storageMetadata datastore metadata schema
+	 * @param dumpName name of the import being processsed
+	 */
 	public LevelStatisticVisitor(
 			final PivotFeederVisitor parent,
 			final IOpenedTransaction transaction,
@@ -55,6 +67,10 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 				DatastoreConstants.CHUNK__DUMP_NAME);
 	}
 
+	/**
+	 * Initialize the visit of the children {@link IMemoryStatistic}
+	 * @param root parent of the children to ve visited
+	 */
 	public void analyse(final IMemoryStatistic root) {
 		visitChildren(root);
 	}
