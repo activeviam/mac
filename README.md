@@ -6,6 +6,7 @@ This project builds as a stand-alone SpringBoot jar file that with an embedded A
 
 Features
 --------
+
 Off Heap memory usage monitoring 
 - Store/Field related memory footprint
 - Overview of structure-related memory footprint
@@ -15,31 +16,32 @@ Loading and comparing several ActivePivot applications' exported memory dumpFile
 ###  Cube structure
 
 #### Memory Cube
+
 This is the main cube, and is the entry point for data investigation.
 This cube is based on Chunk facts, which atomically contain all the off-heap data used by ActivePivot.
 Some important measures are provided :
 - Off Heap memory footprint
-- On heap memory footprint ( Warning, this measure only aggregates data on chunks, but not all on-heap objects held by ActivePivot on heap are using chunks, do not use this measure to assume total on-heap memory usage by Active Pivot)
+- On heap memory footprint _(Warning, this measure only aggregates data on chunks, but not all on-heap objects held by ActivePivot on heap are using chunks, do not use this measure to assume total on-heap memory usage by Active Pivot)_
 - Amount/Ratio of free rows in chunks
-- Amount/Ration of deleted rows in chunks
+- Amount/Ratio of deleted rows in chunks
 - Total direct memory footprint of an application
 - Total on-heap memory footprint of an application 
 
-Multi-dimentionnal analysis can be done of the loaded data through the following dimensions :
-- Owner : Chunks are raw data, but they are always held by an underlying structure
-- Component
-- Class
+Multi-dimentional analysis can be done on the loaded data through the following hierarchies:
+- Owner: Chunks are raw data, but they are always held by a high-level structure. This can be a Store of the Datastore or an ActivePivot. Some structures are shared by multiple Stores or a Store and a Pivot. In this case, the chunk is marked as **shared**.
+- Component: Stores and ActivePivots are made of several components - Indexes, References, PointIndex, etc. This hierarchy describes these components. As for the owner, a chunk belonging to several components is marked as **shared**.
+- Class: the actual class of the chunk.
 
 #### Additional Cubes
-These cubes can provide additionnal information about specific structures such as references, indices or dictionaries.
 
+These cubes can provide additionnal information about specific structures such as References, Indexes or Dictionaries.
 
 ### Data Import
 
- The import path of the application can be configured through the `application.yml` configuration file . The `statistic.folder` property defines the folder being watched by the application, the path can either be relative of absolute.
+ The import path of the application can be configured through the _application.yml_ configuration file . The `statistic.folder` property defines the folder being watched by the application, the path can either be relative of absolute.
 
  `.json` files present in the specified folder and all its child directories will be read by the application.
-Imported data will be added separately in the `Imported Data` hierarchy between each folder, the root of the `statistic.folder` path will be given the name `autoload+ LocalTime.now().toString()`
+Imported data will be added separately in the `Imported Data` hierarchy between each folder. Note that files located at the root of the `statistic.folder` path will be given the name `autoload+ LocalTime.now().toString()`.
 
 It is not required to manually uncompress the export files before using them in the application.
 
@@ -61,23 +63,25 @@ It is possible to configure your application to expose the export methods of the
 ```
  
 
-### Additional tools
------
+Additional tools
+----------------
 
 ### Uncompress generated files
 
-ActivePivot memory tools will generate reports compressed with [Snappy](https://google.github.io/snappy/). As there are no standalone tool
-to easily decompress such files, this project provides a command to do so.  
+ActivePivot memory tools will generate reports compressed with [Snappy](https://google.github.io/snappy/). As there are no standalone tool to easily decompress such files, this project provides a command to do so.  
 Run `mvn exec:java@unsnappy -Dunsnappy.file=<path/to/your/file>` to extract the content.
 
-### Known limitations
------
+Known limitations
+-----------------
 
- * This tool does not support projects with multiple datastores.
- * On-heap memory analysis is currently not fully implemented. Please directly refer to the JMX beans of your application. 
+ * This tool does not support projects with multiple datastores. It is possible to import data from multiple datastores,
+ but there are no ways to assign a store to a given datastore nor prevent conflicts between store names.
+ * On-heap memory analysis is currently not fully implemented. The application only sums the memory used by Chunks.
+   Please directly refer to the JMX beans of your application or other analysis tools for a deeper investigation.
 
-### Planned Improvements
-------
+Planned Improvements
+--------------------
 
- * `VectorBlocks` should be considered as a Component Type on their own
+ [ ] `VectorBlocks` should be considered as a Component Type on their own.
+ [ ] Display and use the consumed On-heap memory reported by the Memory Analysis.
  
