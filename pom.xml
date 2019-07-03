@@ -20,7 +20,7 @@
     </prerequisites>
 
     <properties>
-        <activepivot.version>5.8.2-jdk8-20190621</activepivot.version>
+        <activepivot.version>5.8.2-jdk8</activepivot.version>
         <activeui.version>4.3.0-alpha</activeui.version>
         <tomcat.version>8.5.23</tomcat.version>
 
