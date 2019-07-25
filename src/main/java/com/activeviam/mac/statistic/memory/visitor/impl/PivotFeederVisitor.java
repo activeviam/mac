@@ -125,8 +125,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
 			try {
 				stat.accept(this);
-			} finally {
+			} catch (RuntimeException e){
 				this.printer.print();
+				throw e;
 			}
 		} else {
 			throw new RuntimeException("Cannot reuse a feed instance");

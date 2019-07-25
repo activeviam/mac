@@ -506,8 +506,6 @@ monitoringDatastore.edit(tm -> {
 		exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
 
 		final IMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
-//		System.out.println(exportPath.toString());
-//		Tools.extractSnappyFile(exportPath.toString()+"\\pivot_Cube.json.sz");
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 		monitoringDatastore.edit(tm -> {
 			stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "App"));
@@ -583,6 +581,6 @@ monitoringDatastore.edit(tm -> {
 		// Therefore, we need to check if the size is >1
 		Assertions.assertThat(list2.size()).isGreaterThan(1);
 	}
-	
+
 	//TODO Test content of all stores similarly
 }
