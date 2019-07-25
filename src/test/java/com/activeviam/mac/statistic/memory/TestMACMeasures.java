@@ -48,12 +48,12 @@ import com.quartetfs.fwk.query.UnsupportedQueryException;
 /**
  * Test class verifying the results obtained by the Measures provided in the
  * MemoryAnalysisCube
- * 
- * Export tool usage: 
- * 
+ *
+ * Export tool usage:
+ *
  * Tools.extractSnappyFile(path to file);
  *
- * 
+ *
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = { "contentServer.security.calculatedMemberRole=empty",
@@ -193,8 +193,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
 		Long value = extractValueFromSingleCellDTO(res);
 
-		System.out.println(value);
-
 		final MDXQuery query2 = new MDXQuery(
 				"SELECT" + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
 		CellSetDTO res2 = pivot.execute(query2);
@@ -236,8 +234,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 		CellSetDTO res = pivot.execute(query);
 
 		Long value = extractValueFromSingleCellDTO(res);
-
-		System.out.println(value);
 
 		final MDXQuery query2 = new MDXQuery(
 				"SELECT" + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
