@@ -1,1 +1,6 @@
 *.db
+
+# Statistic folder to drop exported reports
+# Keep the folder for the README but ignore everything else
+/statistics/*
+!/statistics/README.txt
