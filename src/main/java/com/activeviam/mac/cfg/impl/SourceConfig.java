@@ -70,10 +70,16 @@ public class SourceConfig {
 	@Bean
 	@Lazy
 	public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
+		final String statisticFolder = env.getRequiredProperty("statistic.folder");
+		if (LOGGER.isLoggable(Level.CONFIG)) {
+			final Path folderPath = Paths.get(statisticFolder);
+			LOGGER.config("Using directory `" + folderPath.toAbsolutePath().toString() + "` to load data into the application");
+		}
+
 		return new DirectoryCSVTopic(
 				"StatisticTopic",
 				null,
-				env.getRequiredProperty("statistic.folder"),
+				statisticFolder,
 				// Process json files, compressed or not
 				FileSystems.getDefault().getPathMatcher("glob:**.json*"),
 				new WatcherService());
@@ -97,7 +103,6 @@ public class SourceConfig {
 			} catch (Exception e) {
 				// PIVOT-3965 Some class loaders (e.g. spring-boot LaunchedURLClassLoader) may throw this
 				// exception when encountering absolute paths on Windows, instead of returning null.
-				// TODO 5.9: First search the file system, then the classpath to avoid this workaround.
 				if (LOGGER.isLoggable(Level.FINEST)) {
 					LOGGER.log(Level.FINEST, "Suppressed an exception because directory '" + directory + "' was not found in the classpath.", e);
 				}
