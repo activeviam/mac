@@ -20,8 +20,8 @@
     </prerequisites>
 
     <properties>
-        <activepivot.version>               5.8.2-jdk8                </activepivot.version>
-        <activeui.version>                  4.3.0-alpha2              </activeui.version>
+        <activepivot.version>               5.8.3-jdk8                </activepivot.version>
+        <activeui.version>                  4.3.0-rc                  </activeui.version>
         <tomcat.version>                    8.5.23                    </tomcat.version>
 
         <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
