@@ -116,8 +116,6 @@
             <version>1.1</version>
         </dependency>
 
-        <!-- Test dependencies -->
-
         <!-- Connection pool. Scope test to use import it only when using Jetty
             Server. Automatically provided when the application is deployed in a tomcat. -->
         <dependency>
@@ -126,14 +124,18 @@
             <version>${tomcat.version}</version>
         </dependency>
 
+        <!-- Test dependencies -->
+
         <dependency>
             <groupId>com.activeviam.activepivot</groupId>
             <artifactId>activepivot-test</artifactId>
+            <version>${activepivot.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.activeviam.activepivot</groupId>
             <artifactId>activepivot-server-test</artifactId>
+            <version>${activepivot.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -147,41 +149,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-webapp</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-client</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>javax-websocket-server-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-servlet</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-annotations</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -189,12 +156,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.activeviam.activepivot</groupId>
-            <artifactId>activepivot-server-test</artifactId>
-            <version>${activepivot.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
