@@ -162,7 +162,10 @@ monitoringDatastore.edit(tm -> {
 	//         * 1 Wrapper chunk (DirectChunkPositiveInteger) -> Verify that the offHeap size equal to Zero
 	//         * 1 Content Chunk (ChunkSingleInteger) -> Verify that no data is stored offheap
 	Assertions.assertThat(list.size()).isEqualTo(3);
-	Assertions.assertThat(list).containsExactly(new Object[] {0,255,256,0L},new Object[] {0,255,256,0L},new Object[] {0,255,256,2048L});
+	Assertions.assertThat(list).containsExactly(
+			new Object[] {0L,255L,256L,0L},
+			new Object[] {0L,255L,256L,0L},
+			new Object[] {0L,255L,256L,2048L});
 	}
 
 	@Test
@@ -218,7 +221,9 @@ monitoringDatastore.edit(tm -> {
 		// - 1 Chunk for versions : directChunkLong
 		// - 1 Chunks for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored offheap
 		Assertions.assertThat(list.size()).isEqualTo(2);
-		Assertions.assertThat(list).containsExactly(new Object[] {0,0,256,256L},new Object[] {0,0,256,2048L});
+		Assertions.assertThat(list).containsExactly(
+				new Object[] {0L,0L,256L,256L},
+				new Object[] {0L,0L,256L,2048L});
 	}
 
 
@@ -279,14 +284,14 @@ monitoringDatastore.edit(tm -> {
 		Assertions.assertThat(list.size()).isEqualTo(5);
 		Assertions.assertThat(list).containsExactlyInAnyOrder(
 				//Version chunks
-				new Object[] {0,0,256,2048L},
-				new Object[] {0,246,256,2048L},
+				new Object[] {0L,0L,256L,2048L},
+				new Object[] {0L,246L,256L,2048L},
 				//Content chunks
 				//Chunk full (not wrapped)
-				new Object[] {0,0,256,256L},
+				new Object[] {0L,0L,256L,256L},
 				// Partially full chunk (wrapper+data)
-				new Object[] {0,246,256,0L},
-				new Object[] {0,246,256,512L}
+				new Object[] {0L,246L,256L,0L},
+				new Object[] {0L,246L,256L,512L}
 				);
 	}
 
@@ -353,11 +358,11 @@ monitoringDatastore.edit(tm -> {
 		Assertions.assertThat(list.size()).isEqualTo(3);
 		Assertions.assertThat(list).containsExactlyInAnyOrder(
 				//Version chunks
-				new Object[] {0,156,256,2048L},
+				new Object[] {0L,156L,256L,2048L},
 				//Content chunks
 				// Partially full chunk (wrapper+data)
-				new Object[] {20,156,256,0L},
-				new Object[] {20,156,256,256L}
+				new Object[] {20L,156L,256L,0L},
+				new Object[] {20L,156L,256L,256L}
 				);
 	}
 
@@ -467,7 +472,7 @@ monitoringDatastore.edit(tm -> {
 			Object[] data = record.toTuple();
 			list2.add(data);
 		});
-		Assertions.assertThat(list2).containsOnly(new Object[] {0});
+		Assertions.assertThat(list2).containsOnly(new Object[] {0L});
 
 		final IDictionaryCursor cursor3 = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(DatastoreConstants.CHUNK_STORE)
@@ -478,7 +483,7 @@ monitoringDatastore.edit(tm -> {
 			Object[] data = record.toTuple();
 			list3.add(data);
 		});
-		Assertions.assertThat(list3).contains(new Object[] { 10 });
+		Assertions.assertThat(list3).contains(new Object[] { 10L });
 	}
 
 	 @Test
