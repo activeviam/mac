@@ -129,9 +129,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__CLASS)
 				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
-				.withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.INT)
-				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.INT)
+				.withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
 
 				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
@@ -197,7 +197,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	/**
 	 * Returns the description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
 	 * @return description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
-	 * 
+	 *
 	 */
 	protected IStoreDescription chunkToDictionaryStore() {
 		return new StoreDescriptionBuilder()
@@ -235,7 +235,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.APPLICATION__DUMP_NAME).asKeyField()
 
 				/* Attributes */
-				.withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.INT)
+				.withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
 				.withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
 				.withField(DatastoreConstants.DICTIONARY_CLASS)
 				.build();
