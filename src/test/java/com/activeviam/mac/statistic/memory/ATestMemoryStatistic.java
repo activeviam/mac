@@ -761,7 +761,7 @@ public abstract class ATestMemoryStatistic {
 				.buildAndStart());
 	}
 
-	static void assertLoadsCorrectly(final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
+	static IDatastore assertLoadsCorrectly(final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
 		final IDatastore monitoringDatastore = createAnalysisDatastore();
 
 		monitoringDatastore.edit(tm -> {
@@ -780,6 +780,8 @@ public abstract class ATestMemoryStatistic {
 
 		checkForUnclassifiedChunks(monitoringDatastore);
 		checkForUnrootedChunks(monitoringDatastore);
+
+		return monitoringDatastore;
 	}
 
 	static void checkForUnclassifiedChunks(IDatastore monitoringDatastore) {

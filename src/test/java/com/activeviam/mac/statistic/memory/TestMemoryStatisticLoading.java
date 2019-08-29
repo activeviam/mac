@@ -6,16 +6,30 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import org.junit.Test;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
+import static org.junit.Assert.assertNotEquals;
 
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import static org.junit.Assert.assertNotEquals;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.qfs.condition.impl.BaseConditions;
+import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
+import com.qfs.service.monitoring.IMemoryAnalysisService;
+import com.qfs.store.IDatastore;
+import com.qfs.store.query.IDictionaryCursor;
+import com.quartetfs.fwk.util.impl.TruePredicate;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 
@@ -46,7 +60,35 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 					.exportMostRecentVersion("doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
 			final Collection<IMemoryStatistic> datastoreStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
-			assertLoadsCorrectly(datastoreStats, getClass());
+			final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+
+			// Test that we have the correct count of vector blocks
+			final IDictionaryCursor cursor = monitoringDatastore.getHead().getQueryRunner()
+					.forStore(CHUNK_STORE)
+					.withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
+					.selecting(CHUNK_ID)
+					.onCurrentThread().run();
+			final Set<Long> storeIds = StreamSupport.stream(cursor.spliterator(), false)
+					.map(record -> record.readLong(0))
+					.collect(Collectors.toSet());
+			Assertions.assertThat(storeIds).isNotEmpty();
+
+			final Set<Long> statIds = new HashSet<>();
+			datastoreStats.forEach(stat -> stat.accept(new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
+				@Override
+				protected Void getResult() {
+					return null;
+				}
+
+				@Override
+				protected boolean match(final IMemoryStatistic statistic) {
+					if (statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+						statIds.add(statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong());
+					}
+					return true; // Iterate over every item
+				}
+			}));
+			Assertions.assertThat(storeIds).isEqualTo(statIds);
 		});
 	}
 

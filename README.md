@@ -102,6 +102,6 @@ Known limitations
 Planned Improvements
 --------------------
 
- [ ] `VectorBlocks` should be considered as a Component Type on their own.
+ [ ] Create a new store for Vectors, to have statistics on their size, ref count, ...
  [ ] Display and use the consumed On-heap memory reported by the Memory Analysis.
  
