@@ -31,6 +31,9 @@ import com.quartetfs.fwk.format.IParser;
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
+	/** Constant enabling the creation of Debug tree for each info, stored in the Datastore. */
+	public static final boolean ADD_DEBUG_TREE = false;
+
 	/**
 	 * Name of the chunk <-> provider linking store
 	 */
@@ -133,7 +136,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
 
-				.withField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
+				.withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
 
 				.withDuplicateKeyHandler(new ChunkRecordHandler())
 				.build();

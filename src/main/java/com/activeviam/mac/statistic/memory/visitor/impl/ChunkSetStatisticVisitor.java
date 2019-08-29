@@ -6,8 +6,11 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import java.time.Instant;
+
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -22,8 +25,6 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
-
-import java.time.Instant;
 
 /**
  *  Implementation of the {@link IMemoryStatisticVisitor} class for {@link ChunkSetStatistic}
@@ -50,7 +51,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 	protected Long chunkSetId = null;
 	@SuppressWarnings("unused")
 	private boolean visitingRowMapping = false;
-	private boolean visitingVectorBlock = false;
 
 	private Integer chunkSize;
 	private Integer freeRows;
@@ -99,13 +99,26 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 	}
 
 	@Override
-	public Void visit(DefaultMemoryStatistic memoryStatistic) {
+	public Void visit(final DefaultMemoryStatistic memoryStatistic) {
 		if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_ROW_MAPPING)) {
 			this.visitingRowMapping = true;
 
 			FeedVisitor.visitChildren(this, memoryStatistic);
 
 			this.visitingRowMapping = false;
+		} else if (VectorStatisticVisitor.isVector(memoryStatistic)) {
+			final VectorStatisticVisitor subVisitor = new VectorStatisticVisitor(
+					this.storageMetadata,
+					this.transaction,
+					this.dumpName,
+					this.current,
+					this.store,
+					this.rootComponent,
+					this.directParentType,
+					this.directParentId,
+					this.partitionId
+			);
+			subVisitor.process(memoryStatistic);
 		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
 			this.visitingRowMapping = false;
 
@@ -151,35 +164,34 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
-		recordIndexForStructure(this.directParentType, this.directParentId);
-		recordRefForStructure(this.directParentType, this.directParentId);
+		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+			throw new UnsupportedOperationException(
+					"We should be in " + VectorStatisticVisitor.class.getSimpleName() + " for such blocks");
+		} else {
+			recordIndexForStructure(this.directParentType, this.directParentId);
+			recordRefForStructure(this.directParentType, this.directParentId);
 
-		final String previousField = this.field;
-		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
-			final IStatisticAttribute fieldAttribute = chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-			this.field = fieldAttribute.asText();
+			final String previousField = this.field;
+			if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
+				final IStatisticAttribute fieldAttribute = chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+				this.field = fieldAttribute.asText();
 
-			recordFieldForStructure(this.directParentType, this.directParentId);
-		} else if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-			this.visitingVectorBlock = true;
-			// TODO(ope) Somehow invert the logic for to be able to assign a vector to its parent block
-			// Currently, vectors are first discovered as part of a ChunkObject and then the vector block is visited
-		}
+				recordFieldForStructure(this.directParentType, this.directParentId);
+			}
 
-		final IRecordFormat format = this.chunkRecordFormat;
-		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
+			final IRecordFormat format = this.chunkRecordFormat;
+			final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.store);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.store);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
+			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
-		// Complete chunk info regarding size and usage if not defined by a parent
-		if (!this.visitingVectorBlock) {
+			// Complete chunk info regarding size and usage if not defined by a parent
 			if (this.chunkSize != null) {
 				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSize);
 			}
@@ -189,18 +201,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			if (this.nonWrittenRows != null) {
 				FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, this.nonWrittenRows);
 			}
+
+			// Debug
+			if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+				tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter.getTreeAsString(chunkStatistic);
+			}
+
+			FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+
+			visitChildren(chunkStatistic);
+
+			this.field = previousField;
 		}
-
-		// Debug
-		tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter.getTreeAsString(chunkStatistic);
-
-		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
-
-		visitChildren(chunkStatistic);
-
-		this.field = previousField;
-		this.visitingVectorBlock = false;
-
 		return null;
 	}
 

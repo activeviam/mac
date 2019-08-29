@@ -145,8 +145,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
 		FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
 		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partitionId;
-		tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter
-				.getTreeAsString(chunkStatistic);
+		if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+			tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter
+					.getTreeAsString(chunkStatistic);
+		}
 
 		FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
