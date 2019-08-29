@@ -6,8 +6,10 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.Workaround;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -121,7 +123,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			this.freeRows = previousFree;
 			this.nonWrittenRows = previousNonWritten;
 		} else {
-			throw new RuntimeException("unexpected statistic " + memoryStatistic);
+			handleUnknownDefaultStatistic(memoryStatistic);
 		}
 
 		return null;
@@ -200,6 +202,20 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 		this.visitingVectorBlock = false;
 
 		return null;
+	}
+
+	@Workaround(
+			jira = "PIVOT-4041",
+			solution = "Some attributes were missing, causing a bad classification of the chunk." +
+					"We cannot properly re-classify as mandatory attributes are still missing.")
+	private void handleUnknownDefaultStatistic(final DefaultMemoryStatistic statistic) {
+		if (statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS).asText().contains("com.qfs.chunk.direct.impl.Direct")) {
+			throw new InternalServiceException(
+					"A default statistic is representing a chunk. This is a known issue when export statistics using ActivePivot 5.8.x in JDK11." +
+							" This was solved in 5.8.4.\nStatistic: " + statistic);
+		} else {
+			throw new RuntimeException("unexpected statistic " + statistic);
+		}
 	}
 
 	// NOT RELEVANT
