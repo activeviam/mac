@@ -155,9 +155,17 @@ public class SourceConfig {
 			try {
 				final Stream<IMemoryStatistic> inputs = entry.stream()
 						.map(provider -> provider.getFileInfo().getIdentifier().toFile())
-						.map(file -> {
+						.parallel()
+            .map(file -> {
 							try {
-								return MemoryStatisticSerializerUtil.readStatisticFile(file);
+								if (LOGGER.isLoggable(Level.FINE)) {
+                  LOGGER.fine("Reading statistics from " + file.getAbsolutePath());
+                }
+                final IMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file);
+                if (LOGGER.isLoggable(Level.FINE)) {
+                  LOGGER.fine("Statistics read from " + file.getAbsolutePath());
+                }
+                return read;
 							} catch (final IOException ioe) {
 								throw new RuntimeException("Cannot read statistics from " + file);
 							}
@@ -180,8 +188,18 @@ public class SourceConfig {
 	 */
 	public String feedDatastore(final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
 		final Optional<IDatastoreSchemaTransactionInformation> info = this.datastore.edit(tm -> {
-			memoryStatistics.forEach(stat -> stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName)));
-		});
+			memoryStatistics.forEach(stat -> {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Starting feed the application with " + stat);
+        }
+
+        stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName));
+
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Application processed " + stat);
+        }
+      });
+    });
 
 		if (info.isPresent()) {
 			return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
