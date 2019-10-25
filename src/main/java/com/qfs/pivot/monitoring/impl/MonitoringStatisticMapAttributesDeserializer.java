@@ -4,12 +4,14 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.qfs.pivot.monitoring.impl;
 
 import static com.qfs.pivot.monitoring.impl.MonitoringStatisticMapAttributesSerializer.CLASS_INFO;
 import static com.qfs.pivot.monitoring.impl.MonitoringStatisticMapAttributesSerializer.CONTENT_TYPE_INFO;
 import static com.qfs.pivot.monitoring.impl.MonitoringStatisticMapAttributesSerializer.PARSER_INFO;
 
+import com.activeviam.mac.Workaround;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -48,12 +50,13 @@ import java.util.Objects;
  *
  * @author ActiveViam
  */
-public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializer<Map<String, IStatisticAttribute>> {
+@Workaround(jira = "PIVOT-4093", solution = "Waiting for the next version with the fix")
+public class MonitoringStatisticMapAttributesDeserializer
+		extends JsonDeserializer<Map<String, IStatisticAttribute>> {
 
 	/**
-	 * {@link ObjectMapper} of this deserializer for the field
-	 * "attributes". It can be use to change/customize the
-	 * deserialization process.
+	 * {@link ObjectMapper} of this deserializer for the field "attributes". It can be use to
+	 * change/customize the deserialization process.
 	 */
 	protected ObjectMapper attributesObjectMapper;
 
@@ -67,15 +70,16 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 	}
 
 	@Override
-	public Map<String, IStatisticAttribute> deserialize(JsonParser parser, DeserializationContext ctxt)
+	public Map<String, IStatisticAttribute> deserialize(
+			final JsonParser parser,
+			final DeserializationContext ctxt)
 			throws IOException {
 		if (!JsonToken.START_OBJECT.equals(parser.currentToken())) {
 			throw new IllegalArgumentException("Should be called at the start of an object");
 		}
 
 		final Map<String, IStatisticAttribute> result = new HashMap<>();
-		for (
-				JsonToken token = parser.nextToken();
+		for (JsonToken token = parser.nextToken();
 				!Objects.equals(token, JsonToken.END_OBJECT);
 				token = parser.nextToken()) {
 			if (!Objects.equals(token, JsonToken.FIELD_NAME)) {
@@ -84,7 +88,9 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 			final String key = parser.getText();
 
 			final String[] keys;
-			String parserPlugin = null, klassName = null, type = null;
+			String parserPlugin = null;
+			String klassName = null;
+			String type = null;
 			if (key.contains(CONTENT_TYPE_INFO)) {
 				keys = key.split(CONTENT_TYPE_INFO);
 				type = keys[1];
@@ -120,9 +126,11 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 	}
 
 	/**
+	 * Deserializes a JSON value into a custom object based on its class name.
+	 *
 	 * @param klassName class name of the object
-	 * @param node object's node
-	 * @return object
+	 * @param parser    parser providing the JSON input
+	 * @return object deserialized object
 	 * @throws IOException If an I/O error occurs
 	 */
 	protected Object deserializedWithClassName(
@@ -138,8 +146,10 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 	}
 
 	/**
+	 * Deserializes a JSON value into a statistics using a Parser Plugin.
+	 *
 	 * @param parserPlugin plugin key of the {@link IParser}
-	 * @param node object's node
+	 * @param parser       parser providing the JSON input
 	 * @return object
 	 * @throws IOException If an I/O error occurs
 	 */
@@ -151,9 +161,11 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 	}
 
 	/**
-	 * @param node object's node
+	 * Deserializes a JSON value into a statistics using a Parser Plugin.
+	 *
+	 * @param parser       parser providing the JSON input
 	 * @param parserPlugin plugin key of the {@link IParser}
-	 * @param klassName class name of the object
+	 * @param klassName    class name of the object
 	 * @return object
 	 * @throws IOException If an I/O error occurs
 	 */
@@ -163,13 +175,12 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 			final String klassName) throws IOException {
 		if (Objects.equals(parser.currentToken(), JsonToken.START_ARRAY)) {
 			final List<Object> stats = new ArrayList<>();
-			for (
-					JsonToken token = parser.nextToken();
+			for (JsonToken token = parser.nextToken();
 					!Objects.equals(token, JsonToken.END_ARRAY);
 					token = parser.nextToken()) {
 				final Object stat = klassName != null
-								? deserializedWithClassName(klassName, parser)
-								: deserializedWithParser(parserPlugin, parser);
+						? deserializedWithClassName(klassName, parser)
+						: deserializedWithParser(parserPlugin, parser);
 				stats.add(stat);
 			}
 			return new ObjectArrayStatisticAttribute(stats.toArray());
@@ -181,9 +192,11 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 	}
 
 	/**
-	 * @param node object's node
+	 * Deserializes a JSON value into a statistic based on its content type.
+	 *
+	 * @param parser      parser providing the JSON input
 	 * @param contentType the content type
-	 * @return object
+	 * @return object the deserialized object
 	 * @throws IOException If an I/O error occurs
 	 */
 	protected IStatisticAttribute deserializedWithContentType(
@@ -191,140 +204,132 @@ public class MonitoringStatisticMapAttributesDeserializer extends JsonDeserializ
 			final int contentType) throws IOException {
 		if (Objects.equals(parser.currentToken(), JsonToken.START_ARRAY)) {
 			switch (contentType) {
-			case Types.CONTENT_INT: {
-				int[] values = new int[16];
-				int i = 0;
-				int capacity = values.length - 1;
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final int value = parser.getValueAsInt();
-					if (i == capacity) {
-						values = Arrays.copyOf(values, values.length * 2);
-						capacity = values.length - 1;
+				case Types.CONTENT_INT: {
+					int[] values = new int[16];
+					int i = 0;
+					int capacity = values.length - 1;
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final int value = parser.getValueAsInt();
+						if (i == capacity) {
+							values = Arrays.copyOf(values, values.length * 2);
+							capacity = values.length - 1;
+						}
+						values[i] = value;
+						i += 1;
 					}
-					values[i] = value;
-					i += 1;
+					values = Arrays.copyOf(values, i);
+					return new IntegerArrayStatisticAttribute(values);
 				}
-				values = Arrays.copyOf(values, i);
-				return new IntegerArrayStatisticAttribute(values);
-			}
-			case Types.CONTENT_LONG: {
-				long[] values = new long[16];
-				int i = 0;
-				int capacity = values.length - 1;
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final long value = parser.getValueAsLong();
-					if (i == capacity) {
-						values = Arrays.copyOf(values, values.length * 2);
-						capacity = values.length - 1;
+				case Types.CONTENT_LONG: {
+					long[] values = new long[16];
+					int i = 0;
+					int capacity = values.length - 1;
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final long value = parser.getValueAsLong();
+						if (i == capacity) {
+							values = Arrays.copyOf(values, values.length * 2);
+							capacity = values.length - 1;
+						}
+						values[i] = value;
+						i += 1;
 					}
-					values[i] = value;
-					i += 1;
+					values = Arrays.copyOf(values, i);
+					return new LongArrayStatisticAttribute(values);
 				}
-				values = Arrays.copyOf(values, i);
-				return new LongArrayStatisticAttribute(values);
-			}
-			case Types.CONTENT_FLOAT: {
-				float[] values = new float[16];
-				int i = 0;
-				int capacity = values.length - 1;
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final float value = parser.getFloatValue();
-					if (i == capacity) {
-						values = Arrays.copyOf(values, values.length * 2);
-						capacity = values.length - 1;
+				case Types.CONTENT_FLOAT: {
+					float[] values = new float[16];
+					int i = 0;
+					int capacity = values.length - 1;
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final float value = parser.getFloatValue();
+						if (i == capacity) {
+							values = Arrays.copyOf(values, values.length * 2);
+							capacity = values.length - 1;
+						}
+						values[i] = value;
+						i += 1;
 					}
-					values[i] = value;
-					i += 1;
+					values = Arrays.copyOf(values, i);
+					return new FloatArrayStatisticAttribute(values);
 				}
-				values = Arrays.copyOf(values, i);
-				return new FloatArrayStatisticAttribute(values);
-			}
-			case Types.CONTENT_DOUBLE: {
-				double[] values = new double[16];
-				int i = 0;
-				int capacity = values.length - 1;
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final double value = parser.getDoubleValue();
-					if (i == capacity) {
-						values = Arrays.copyOf(values, values.length * 2);
-						capacity = values.length - 1;
+				case Types.CONTENT_DOUBLE: {
+					double[] values = new double[16];
+					int i = 0;
+					int capacity = values.length - 1;
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final double value = parser.getDoubleValue();
+						if (i == capacity) {
+							values = Arrays.copyOf(values, values.length * 2);
+							capacity = values.length - 1;
+						}
+						values[i] = value;
+						i += 1;
 					}
-					values[i] = value;
-					i += 1;
+					values = Arrays.copyOf(values, i);
+					return new DoubleArrayStatisticAttribute(values);
 				}
-				values = Arrays.copyOf(values, i);
-				return new DoubleArrayStatisticAttribute(values);
-			}
-			case Types.CONTENT_BOOLEAN: {
-				boolean[] values = new boolean[16];
-				int i = 0;
-				int capacity = values.length - 1;
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final boolean value = parser.getBooleanValue();
-					if (i == capacity) {
-						values = Arrays.copyOf(values, values.length * 2);
-						capacity = values.length - 1;
+				case Types.CONTENT_BOOLEAN: {
+					boolean[] values = new boolean[16];
+					int i = 0;
+					int capacity = values.length - 1;
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final boolean value = parser.getBooleanValue();
+						if (i == capacity) {
+							values = Arrays.copyOf(values, values.length * 2);
+							capacity = values.length - 1;
+						}
+						values[i] = value;
+						i += 1;
 					}
-					values[i] = value;
-					i += 1;
+					values = Arrays.copyOf(values, i);
+					return new BooleanArrayStatisticAttribute(values);
 				}
-				values = Arrays.copyOf(values, i);
-				return new BooleanArrayStatisticAttribute(values);
-			}
-			case Types.CONTENT_STRING: {
-				final List<String> values = new ArrayList<>();
-				for (
-						JsonToken token = parser.nextToken();
-						!Objects.equals(token, JsonToken.END_ARRAY);
-						token = parser.nextToken()) {
-					final String value = parser.getText();
-					values.add(value);
+				case Types.CONTENT_STRING: {
+					final List<String> values = new ArrayList<>();
+					for (JsonToken token = parser.nextToken();
+							!Objects.equals(token, JsonToken.END_ARRAY);
+							token = parser.nextToken()) {
+						final String value = parser.getText();
+						values.add(value);
+					}
+					return new StringArrayStatisticAttribute(values.toArray(new String[0]));
 				}
-				return new StringArrayStatisticAttribute(values.toArray(new String[0]));
-			}
-			default:
-				throw new QuartetRuntimeException(
-						"Unsupported array type " + Types.toString(contentType) + "(" + contentType + ")");
+				default:
+					throw new QuartetRuntimeException(
+							"Unsupported array type " + Types.toString(contentType) + "(" + contentType + ")");
 			}
 		} else {
-			final IStatisticAttribute attribute = createPrimitiveAttribute(parser, contentType);
-			return attribute;
+			return createPrimitiveAttribute(parser, contentType);
 		}
 	}
 
 	private IStatisticAttribute createPrimitiveAttribute(JsonParser parser, int contentType)
 			throws IOException {
 		switch (contentType) {
-
-		case Types.CONTENT_INT:
-			return new IntegerStatisticAttribute(parser.getIntValue());
-		case Types.CONTENT_LONG:
-			return new LongStatisticAttribute(parser.getLongValue());
-		case Types.CONTENT_DOUBLE:
-			return new DoubleStatisticAttribute(parser.getDoubleValue());
-		case Types.CONTENT_FLOAT:
-			return new FloatStatisticAttribute(parser.getFloatValue());
-		case Types.CONTENT_BOOLEAN:
-			return new BooleanStatisticAttribute(parser.getBooleanValue());
-		case Types.CONTENT_STRING:
-			return new StringStatisticAttribute(parser.getText());
-		default:
-			throw new QuartetRuntimeException("Unsupported type " + contentType);
+			case Types.CONTENT_INT:
+				return new IntegerStatisticAttribute(parser.getIntValue());
+			case Types.CONTENT_LONG:
+				return new LongStatisticAttribute(parser.getLongValue());
+			case Types.CONTENT_DOUBLE:
+				return new DoubleStatisticAttribute(parser.getDoubleValue());
+			case Types.CONTENT_FLOAT:
+				return new FloatStatisticAttribute(parser.getFloatValue());
+			case Types.CONTENT_BOOLEAN:
+				return new BooleanStatisticAttribute(parser.getBooleanValue());
+			case Types.CONTENT_STRING:
+				return new StringStatisticAttribute(parser.getText());
+			default:
+				throw new QuartetRuntimeException("Unsupported type " + contentType);
 		}
 	}
 

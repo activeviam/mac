@@ -4,8 +4,10 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.qfs.pivot.monitoring.impl;
 
+import com.activeviam.mac.Workaround;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.qfs.jackson.impl.JacksonSerializer;
@@ -34,12 +36,13 @@ import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutp
  *
  * @author ActiveViam
  */
+@Workaround(jira = "PIVOT-4093", solution = "Waiting for the next version with the fix")
 public class MemoryStatisticSerializerUtil {
 
-	/** Extension of the files that contain the dumped memory statistics*/
+	/** Extension of the files that contain the dumped memory statistics. */
 	public static final String JSON_FILE_EXTENSION = "json";
 
-	/** Extension of the compressed files */
+	/** Extension of the compressed files. */
 	public static final String COMPRESSED_FILE_EXTENSION = "sz";
 
 	private MemoryStatisticSerializerUtil() {}
@@ -48,7 +51,7 @@ public class MemoryStatisticSerializerUtil {
 		final SimpleModule deserializeModule = new SimpleModule();
 		deserializeModule.addDeserializer(
 				IMonitoringStatistic.class,
-				new MonitoringStatisticDeserializer<>(IMonitoringStatistic.class));
+				new MonitoringStatisticDeserializer());
 		deserializeModule.addDeserializer(
 				IMemoryStatistic.class,
 				new MemoryStatisticDeserializer());
@@ -56,37 +59,46 @@ public class MemoryStatisticSerializerUtil {
 	}
 
 	/**
+	 * Serializes a statistic into a given writer.
 	 * @param activeStatistic the {@link IMonitoringStatistic} to serialize.
 	 * @param writer the writer in which the data will be serialized.
 	 */
 	public static void serialize(IMonitoringStatistic activeStatistic, Writer writer) {
 		try {
-			JacksonSerializer.serialize(new MonitoringStatisticAdapter(activeStatistic), new BufferedWriter(writer));
+			JacksonSerializer.serialize(
+					new MonitoringStatisticAdapter(activeStatistic),
+					new BufferedWriter(writer));
 		} catch (SerializerException e) {
 			throw new QuartetRuntimeException(e);
 		}
 	}
 
 	/**
+	 * Serializes a statistic into a given writer.
 	 * @param statistic the {@link IMemoryStatistic} to serialize.
 	 * @param writer the writer in which the data will be serialized.
 	 */
 	public static void serialize(IMemoryStatistic statistic, Writer writer) {
 		try {
-			JacksonSerializer.serialize(statistic.accept(new SerializerVisitor()), new BufferedWriter(writer));
+			JacksonSerializer.serialize(
+					statistic.accept(new SerializerVisitor()),
+					new BufferedWriter(writer));
 		} catch (SerializerException e) {
 			throw new QuartetRuntimeException(e);
 		}
 	}
 
 	/**
+	 * Deserializes a statistic from a reader into a given type.
+	 *
+	 * @param <T> The type of the statistic.
 	 * @param statistic the {@link IMonitoringStatistic} to deserialize.
 	 * @param klass the type of {@link IMonitoringStatistic}.
 	 * @return the deserialized statistic
-	 *
-	 * @param <T> The type of the statistic.
 	 */
-	public static <T extends IMonitoringStatistic> T deserialize(Reader statistic, Class<T> klass) {
+	public static <T extends IMonitoringStatistic> T deserialize(
+			final Reader statistic,
+			final Class<T> klass) {
 		ObjectReader reader = JacksonSerializer.getObjectMapper().readerFor(klass);
 		try {
 			return reader.readValue(new BufferedReader(statistic));
@@ -110,10 +122,14 @@ public class MemoryStatisticSerializerUtil {
 		final String fileName = name + "." + MemoryStatisticSerializerUtil.JSON_FILE_EXTENSION
 				+ "." + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
 
-		try (final FileOutputStream fos = new FileOutputStream(
-				directory.resolve(fileName).toFile());
-		     final FramedSnappyCompressorOutputStream compressorOS = new FramedSnappyCompressorOutputStream(fos);
-		     final OutputStreamWriter writer = new OutputStreamWriter(compressorOS, StandardCharsets.UTF_8)) {
+		try (
+				final FileOutputStream fos =
+						new FileOutputStream(directory.resolve(fileName).toFile());
+				final FramedSnappyCompressorOutputStream compressorOS =
+						new FramedSnappyCompressorOutputStream(fos);
+				final OutputStreamWriter writer = new OutputStreamWriter(
+						compressorOS,
+						StandardCharsets.UTF_8)) {
 			MemoryStatisticSerializerUtil.serialize(stat, writer);
 			writer.flush();
 			compressorOS.finish();
@@ -121,7 +137,7 @@ public class MemoryStatisticSerializerUtil {
 	}
 
 	/**
-	 * Reads the statistics store if the
+	 * Reads the file for statistics.
 	 * @param file the file to load.
 	 * @return the {@link IMemoryStatistic} contains in the file
 	 * @throws IOException If an I/O error occurs
@@ -134,7 +150,8 @@ public class MemoryStatisticSerializerUtil {
 			inputStream = new FramedSnappyCompressorInputStream(inputStream);
 		}
 
-		try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+		try (final InputStreamReader reader =
+				new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
 			return deserialize(reader, IMemoryStatistic.class);
 		}
 	}
