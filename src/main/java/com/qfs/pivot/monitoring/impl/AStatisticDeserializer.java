@@ -21,6 +21,7 @@ import com.qfs.monitoring.statistic.IMonitoringStatistic;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -100,10 +101,15 @@ public abstract class AStatisticDeserializer<T extends IMonitoringStatistic>
 		}
 
 		parser.nextToken(); // Consume the array start
-		final Iterator<T> it = parser.readValuesAs(klass);
-		final List<T> children = new ArrayList<>();
-		it.forEachRemaining(children::add);
-		assert Objects.equals(parser.currentToken(), JsonToken.END_ARRAY);
+		final List<T> children;
+		if (parser.currentToken() != JsonToken.END_ARRAY) {
+			final Iterator<T> it = parser.readValuesAs(klass);
+			children = new ArrayList<>();
+			it.forEachRemaining(children::add);
+			assert Objects.equals(parser.currentToken(), JsonToken.END_ARRAY);
+		} else {
+			children = Collections.emptyList();
+		}
 		parser.nextToken(); // Consume the array end
 
 		return children;
