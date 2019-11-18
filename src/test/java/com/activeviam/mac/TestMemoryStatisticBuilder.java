@@ -18,120 +18,109 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.quartetfs.fwk.QuartetRuntimeException;
-
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-/**
- * @author ActiveViam
- */
-public class TestMemoryStatisticBuilder extends GenericMonitoringStatisticBuilder<IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder> implements IMemoryStatisticBuilder {
+/** @author ActiveViam */
+public class TestMemoryStatisticBuilder
+    extends GenericMonitoringStatisticBuilder<
+        IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
+    implements IMemoryStatisticBuilder {
 
-	/**
-	 * Name of the statistic
-	 */
-	protected String name;
+  /** Name of the statistic */
+  protected String name;
 
-	/**
-	 * Offheap mem. footprint, in bytes
-	 */
-	protected long offHeap;
+  /** Offheap mem. footprint, in bytes */
+  protected long offHeap;
 
-	/**
-	 * Onheap mem. footprint, in bytes
-	 */
-	protected long onHeap;
+  /** Onheap mem. footprint, in bytes */
+  protected long onHeap;
 
-	/**
-	 * Default constructor.
-	 */
-	public TestMemoryStatisticBuilder() {
-		this.offHeap = 0;
-		this.onHeap = 0;
-	}
+  /** Default constructor. */
+  public TestMemoryStatisticBuilder() {
+    this.offHeap = 0;
+    this.onHeap = 0;
+  }
 
-	@Override
-	public IMemoryStatistic build() {
-		IStatisticAttribute parentClass = attributes.get(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS);
-		if (parentClass == null) {
-			throw new QuartetRuntimeException("It is mandatory to add a parent class to statistic with name '" + name + "'");
-		}
+  @Override
+  public IMemoryStatistic build() {
+    IStatisticAttribute parentClass =
+        attributes.get(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS);
+    if (parentClass == null) {
+      throw new QuartetRuntimeException(
+          "It is mandatory to add a parent class to statistic with name '" + name + "'");
+    }
 
-		if (name == null) {
-			// Default name
-			name = parentClass.asText();
-		}
+    if (name == null) {
+      // Default name
+      name = parentClass.asText();
+    }
 
-		IMemoryStatistic statistic;
-		switch (name) {
-			case MemoryStatisticConstants.STAT_NAME_CHUNK:
-				statistic = new ChunkStatistic();
-				break;
-			case MemoryStatisticConstants.STAT_NAME_CHUNKSET:
-				statistic = new ChunkSetStatistic();
-				break;
-			case MemoryStatisticConstants.STAT_NAME_DICTIONARY:
-				statistic = new DictionaryStatistic();
-				break;
-			case MemoryStatisticConstants.STAT_NAME_INDEX:
-				statistic = new IndexStatistic();
-				break;
-			case MemoryStatisticConstants.STAT_NAME_REFERENCE:
-				statistic = new ReferenceStatistic();
-				break;
-			default:
-				statistic = new DefaultMemoryStatistic();
+    IMemoryStatistic statistic;
+    switch (name) {
+      case MemoryStatisticConstants.STAT_NAME_CHUNK:
+        statistic = new ChunkStatistic();
+        break;
+      case MemoryStatisticConstants.STAT_NAME_CHUNKSET:
+        statistic = new ChunkSetStatistic();
+        break;
+      case MemoryStatisticConstants.STAT_NAME_DICTIONARY:
+        statistic = new DictionaryStatistic();
+        break;
+      case MemoryStatisticConstants.STAT_NAME_INDEX:
+        statistic = new IndexStatistic();
+        break;
+      case MemoryStatisticConstants.STAT_NAME_REFERENCE:
+        statistic = new ReferenceStatistic();
+        break;
+      default:
+        statistic = new DefaultMemoryStatistic();
+    }
+    statistic.setShallowOffHeap(offHeap);
+    statistic.setShallowOnHeap(onHeap);
+    statistic.setName(name);
+    statistic.setAttributes(attributes);
+    IMemoryStatistic delegateParent = null;
+    if (this.children != null && !this.children.isEmpty()) {
+      // The children should have a distinct name, see setChildren method.
+      statistic.setChildren(this.children);
+      for (final IMemoryStatistic child : this.children) {
+        if (child.getParent() != null && child.getParent() != statistic) {
+          if (delegateParent == null) {
+            delegateParent = child.getParent();
+          } else {
+            if (delegateParent != child.getParent()) {
+              throw new IllegalStateException("Inconsistency in stistics parenthood...Bad.");
+            }
+          }
 
-		}
-		statistic.setShallowOffHeap(offHeap);
-		statistic.setShallowOnHeap(onHeap);
-		statistic.setName(name);
-		statistic.setAttributes(attributes);
-		IMemoryStatistic delegateParent = null;
-		if (this.children != null && !this.children.isEmpty()) {
-			// The children should have a distinct name, see setChildren method.
-			statistic.setChildren(this.children);
-			for (final IMemoryStatistic child : this.children) {
-				if (child.getParent() != null && child.getParent() != statistic) {
-					if (delegateParent == null) {
-						delegateParent = child.getParent();
-					} else {
-						if (delegateParent != child.getParent()) {
-							throw new IllegalStateException("Inconsistency in stistics parenthood...Bad.");
-						}
-					}
+        } else {
+          child.setParent(statistic);
+        }
+      }
+    }
+    if (delegateParent == null) return statistic;
+    else return delegateParent;
+  }
 
-				}
-				else {
-				child.setParent(statistic);
-				}
-			}
-		}
-		if (delegateParent == null)
-			return statistic;
-		else
-			return delegateParent;
-	}
+  @Override
+  public IMemoryStatisticBuilder withName(String name) {
+    this.name = name;
+    return this;
+  }
 
-	@Override
-	public IMemoryStatisticBuilder withName(String name) {
-		this.name = name;
-		return this;
-	}
+  @Override
+  public IMemoryStatisticBuilder withCreatorClasses(Class<?>... parentClass) {
+    withAttribute(
+        MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS,
+        Arrays.stream(parentClass).map(Class::getName).collect(Collectors.joining(",")));
+    return this;
+  }
 
-	@Override
-	public IMemoryStatisticBuilder withCreatorClasses(Class<?>... parentClass) {
-		withAttribute(
-				MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS,
-				Arrays.stream(parentClass).map(Class::getName).collect(Collectors.joining(",")));
-		return this;
-	}
-
-	@Override
-	public IMemoryStatisticBuilder withMemoryFootPrint(long offHeap, long onHeap) {
-		this.onHeap = onHeap;
-		this.offHeap = offHeap;
-		return this;
-	}
-
+  @Override
+  public IMemoryStatisticBuilder withMemoryFootPrint(long offHeap, long onHeap) {
+    this.onHeap = onHeap;
+    this.offHeap = offHeap;
+    return this;
+  }
 }

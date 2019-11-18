@@ -15,23 +15,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- *
  * Spring configuration of the Datastore.
  *
  * @author ActiveViam
- *
  */
 @Configuration
 public class DatastoreDescriptionConfig implements IDatastoreDescriptionConfig {
 
-	@Override
-	@Bean
-	public IDatastoreSchemaDescription schemaDescription() {
-		return new MemoryAnalysisDatastoreDescription();
-	}
+  @Override
+  @Bean
+  public IDatastoreSchemaDescription schemaDescription() {
+    return new MemoryAnalysisDatastoreDescription();
+  }
 
-	@Override
-	public IEpochManagementPolicy epochManagementPolicy() {
-		return new KeepAllEpochPolicy();
-	}
+  @Override
+  public IEpochManagementPolicy epochManagementPolicy() {
+    return new KeepAllEpochPolicy();
+  }
 }
