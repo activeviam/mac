@@ -4,9 +4,8 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import java.time.Instant;
+package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -22,39 +21,32 @@ import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import java.time.Instant;
 
 /**
- *  Implementation of the {@link IMemoryStatisticVisitor} class for Vectors.
- * @author ActiveViam
+ * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
+ * class for Vectors.
  *
+ * @author ActiveViam
  */
 public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** The record format of the store that stores the chunks. */
 	protected final IRecordFormat chunkRecordFormat;
 
-	/** The export date, found on the first statistics we read */
+	/** The export date, found on the first statistics we read. */
 	protected final Instant current;
 
-	/** Root component owning the vector. */
-	private final ParentType rootComponent;
-	/** Type of the parent holding the instance of Vector. */
-	private final ParentType directParentType;
-	/** Id of the parent holding the instance of Vector. */
-	private final String directParentId;
-	/** The partition id of the visited statistic */
+	/** The partition id of the visited statistic. */
 	protected final int partitionId;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 * @param storageMetadata metadata of the application datastore
 	 * @param transaction ongoing transaction
 	 * @param dumpName name of the ongoing import
 	 * @param current current time
 	 * @param store store being visited
-	 * @param rootComponent highest component holding the ChunkSet
-	 * @param parentType structure type of the parent of the Chunkset
-	 * @param parentId id of the parent of the ChunkSet
 	 * @param partitionId partition id of the parent if the chunkSet
 	 */
 	public VectorStatisticVisitor(
@@ -63,16 +55,10 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			final String dumpName,
 			final Instant current,
 			final String store,
-			final ParentType rootComponent,
-			final ParentType parentType,
-			final String parentId,
 			final int partitionId) {
 		super(transaction, storageMetadata, dumpName);
 		this.current = current;
 		this.store = store;
-		this.rootComponent = rootComponent;
-		this.directParentType = parentType;
-		this.directParentId = parentId;
 		this.partitionId = partitionId;
 
 		this.chunkRecordFormat = this.storageMetadata
@@ -87,8 +73,10 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 	 * @return true for a Vector, that this Visitor must handle
 	 */
 	static boolean isVector(final IMemoryStatistic statistic) {
-		return statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
-				&& statistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT);
+		return (statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
+				&& statistic.getAttributes().containsKey(
+						MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT))
+				|| statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK);
 	}
 
 	/**
@@ -112,8 +100,8 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			visitVectorBlock(chunkStatistic);
 		} else {
 			throw new IllegalStateException(
-					"Unexpected statistics for chunks. Got " + chunkStatistic +
-							"from " + StatisticTreePrinter.getTreeAsString(chunkStatistic));
+					"Unexpected statistics for chunks. Got " + chunkStatistic
+							+ "from " + StatisticTreePrinter.getTreeAsString(chunkStatistic));
 		}
 		return null;
 	}
@@ -142,9 +130,10 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/**
 	 * Visits a chunk containing only vectors.
-	 * <p>
-	 * This is the actual block containing all the data stored in various vectors, not the objects representing vectors.
-	 * </p>
+	 *
+	 * <p>This is the actual block containing all the data stored in various vectors, not the objects
+	 * representing vectors.
+	 *
 	 * @param statistic statistics about a block of vector items.
 	 */
 	protected void visitVectorBlock(final ChunkStatistic statistic) {
@@ -153,18 +142,30 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 		final IRecordFormat format = this.chunkRecordFormat;
 		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, ParentType.VECTOR_BLOCK);
+		FeedVisitor.setTupleElement(tuple,
+				format,
+				DatastoreConstants.CHUNK__PARENT_TYPE,
+				ParentType.VECTOR_BLOCK);
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
 		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.store);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
-		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+		FeedVisitor.setTupleElement(
+				tuple,
+				format,
+				DatastoreConstants.CHUNK__COMPONENT,
+				ParentType.VECTOR_BLOCK);
+		FeedVisitor.setTupleElement(
+				tuple,
+				format,
+				DatastoreConstants.CHUNK__PARTITION_ID,
+				this.partitionId);
 
 		// Debug
 		if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
-			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] = StatisticTreePrinter.getTreeAsString(statistic);
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
+					StatisticTreePrinter.getTreeAsString(statistic);
 		}
 
 		FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);

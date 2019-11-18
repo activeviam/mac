@@ -436,9 +436,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 					this.dumpName,
 					this.current,
 					this.pivot,
-					this.rootComponent,
-					this.directParentType,
-					this.directParentId,
 					this.partition);
 			subVisitor.process(statistic);
 		} else {

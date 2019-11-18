@@ -12,6 +12,7 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
+import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
@@ -102,19 +103,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			FeedVisitor.visitChildren(this, memoryStatistic);
 
     } else if (VectorStatisticVisitor.isVector(memoryStatistic)) {
-      final VectorStatisticVisitor subVisitor = new VectorStatisticVisitor(
-          this.storageMetadata,
-          this.transaction,
-          this.dumpName,
-          this.current,
-          this.store,
-          this.rootComponent,
-          this.directParentType,
-          this.directParentId,
-          this.partitionId
-      );
-      subVisitor.process(memoryStatistic);
-    } else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
+			@Workaround(jira = "PIVOT-4127", solution = "Support for 5.8.4- versions")
+			final IMemoryStatistic vectorStat = memoryStatistic;
+			visitVectorBlock(vectorStat);
+		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
       final String previousField = this.field;
       if (memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD)) {
         final IStatisticAttribute fieldAttribute =
@@ -147,6 +139,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 		return null;
 	}
 
+	private void visitVectorBlock(final IMemoryStatistic memoryStatistic) {
+		final VectorStatisticVisitor subVisitor = new VectorStatisticVisitor(
+				this.storageMetadata,
+				this.transaction,
+				this.dumpName,
+				this.current,
+				this.store,
+				this.partitionId
+		);
+		subVisitor.process(memoryStatistic);
+	}
+
 	@Override
 	public Void visit(final ChunkSetStatistic statistic) {
 		recordFieldForStructure(this.directParentType, this.directParentId);
@@ -169,9 +173,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
-		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-			throw new UnsupportedOperationException(
-					"We should be in " + VectorStatisticVisitor.class.getSimpleName() + " for such blocks");
+		if (VectorStatisticVisitor.isVector(chunkStatistic)) {
+			visitVectorBlock(chunkStatistic);
 		} else {
 			recordIndexForStructure(this.directParentType, this.directParentId);
 			recordRefForStructure(this.directParentType, this.directParentId);
