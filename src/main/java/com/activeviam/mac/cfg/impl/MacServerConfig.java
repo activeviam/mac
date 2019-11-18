@@ -6,8 +6,6 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import java.nio.file.Paths;
-
 import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
@@ -30,6 +28,7 @@ import com.qfs.server.cfg.impl.JwtRestServiceConfig;
 import com.qfs.store.IDatastore;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
+import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -128,19 +127,31 @@ public class MacServerConfig {
 		} catch (AgentException e) {
 			throw new IllegalStateException("Cannot start the application", e);
 		}
-
-		// Force the add of a Ref data in the datastore
-		final IDatastore datastore = datastoreConfig.datastore();
-		datastore.edit(tm->{
-			tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-			tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-			tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
-		});
+		createDefaultRowsForJoinStores();
 
 		// Connect the real-time updates
 		sourceConfig.watchStatisticDirectory();
 
 		return null;
+	}
+
+	/**
+	 * Creates default rows for the stores joined with Copper.
+	 * <p>This avoids empty dimensions, preventing any query on the cube.
+	 */
+	private void createDefaultRowsForJoinStores() {
+		final IDatastore datastore = datastoreConfig.datastore();
+		datastore.edit(tm -> {
+			tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
+			tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+			tm.add(
+					DatastoreConstants.CHUNK_TO_LEVEL_STORE,
+					"N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A");
+			tm.add(
+					DatastoreConstants.CHUNK_TO_FIELD_STORE,
+					"N/A", "N/A", "N/A", "N/A");
+		});
 	}
 
 	/**
