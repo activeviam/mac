@@ -6,6 +6,19 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import com.activeviam.mac.Loggers;
+import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.qfs.jmx.JmxOperation;
+import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.msg.csv.ICsvDataProvider;
+import com.qfs.msg.csv.IFileEvent;
+import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
+import com.qfs.msg.impl.WatcherService;
+import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
+import com.qfs.store.IDatastore;
+import com.qfs.store.impl.Datastore;
+import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
+import com.quartetfs.fwk.QuartetRuntimeException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -22,20 +35,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.activeviam.mac.Loggers;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.qfs.jmx.JmxOperation;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.msg.csv.ICsvDataProvider;
-import com.qfs.msg.csv.IFileEvent;
-import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
-import com.qfs.msg.impl.WatcherService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.store.IDatastore;
-import com.qfs.store.impl.Datastore;
-import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,26 +42,27 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 /**
- * @author Quartet FS
+ * Configuration for the loading of data.
+ * @author ActiveViam
  */
 @Configuration
 public class SourceConfig {
 
-	/** Logger */
+	/** Logger. */
 	private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
-	/** Autowired {@link Datastore} to be fed by this source*/
+	/** Autowired {@link Datastore} to be fed by this source. */
 	@Autowired
 	protected IDatastore datastore;
 
-	/** Spring environment, automatically wired */
+	/** Spring environment, automatically wired. */
 	@Autowired
 	protected Environment env;
 
 	/**
 	 * Provides a {@link DirectoryCSVTopic topic}.
-	 * <p>
-	 * The provided topic is based on the content of the folder defined by the {@code statistic.folder} environment property.
+	 *
+	 * <p>The provided topic is based on the content of the folder defined by the {@code statistic.folder} environment property.
 	 * By default, the property is defined in the {@code ./src/main/resources/application.yml }  ressource file.
 	 * @return a topic based on the content of the directory.
 	 * @throws IllegalStateException if the required {@code statistic.folder} property is not defined in the environment
@@ -127,13 +127,13 @@ public class SourceConfig {
 	 *
 	 */
 	public void watchStatisticDirectory() {
-		statisticTopic().listen((__, event) -> processEvent(event));
+		statisticTopic().listen((topic, event) -> processEvent(event));
 	}
 
 	/**
 	 * Processes file events.
-	 * <p>
-	 * Only file creations/additions to the directory watched are processed.
+	 *
+	 * <p>Only file creations/additions to the directory watched are processed.
 	 * File modifications and deletions are not supported.
 	 * @param event event to be processed
 	 */
@@ -141,34 +141,45 @@ public class SourceConfig {
 		if (event != null && event.created() != null) {
 			// Load stat
 			final Collection<? extends ICsvDataProvider<Path>> providers = event.created();
-			Path path = resolveDirectory(env.getRequiredProperty("statistic.folder"));
-			Map<String, List<ICsvDataProvider<Path>>> dumpNames = providers.stream().collect(Collectors.groupingBy(e -> {
-				Path pathEvent = Paths.get(e.getFileInfo().getFullName());
-				// we assume this is a file
-				String currentRelFolder = path.relativize(pathEvent.getParent()).toString();
-				return currentRelFolder.equalsIgnoreCase("")
-						? "autoload-" + LocalTime.now().toString().replaceAll("\\.[^.]*$", "")
-						: currentRelFolder;
-			}));
+			final Path path = resolveDirectory(env.getRequiredProperty("statistic.folder"));
+			final Map<String, List<ICsvDataProvider<Path>>> dumpNames = providers.stream()
+					.collect(Collectors.groupingBy(e -> {
+						Path pathEvent = Paths.get(e.getFileInfo().getFullName());
+						// we assume this is a file
+						String currentRelFolder = path.relativize(pathEvent.getParent()).toString();
+						return currentRelFolder.equalsIgnoreCase("")
+								? "autoload-" + LocalTime.now().toString().replaceAll("\\.[^.]*$", "")
+								: currentRelFolder;
+					}));
 
-			dumpNames.forEach((dumpName,entry)->{
-			try {
-				final Stream<IMemoryStatistic> inputs = entry.stream()
-						.map(provider -> provider.getFileInfo().getIdentifier().toFile())
-						.map(file -> {
-							try {
-								return MemoryStatisticSerializerUtil.readStatisticFile(file);
-							} catch (final IOException ioe) {
-								throw new RuntimeException("Cannot read statistics from " + file);
-							}
-						});
-				final String message = feedDatastore(
-						inputs,
-						dumpName);
-				LOGGER.info(message);
-			} catch (Exception e) {
-				throw new QuartetRuntimeException(e);
-			}});
+			dumpNames.forEach((dumpName, entry) -> {
+				try {
+					final Stream<IMemoryStatistic> inputs = entry.stream()
+							.map(provider -> provider.getFileInfo().getIdentifier().toFile())
+							.parallel()
+							.map(file -> {
+								try {
+									if (LOGGER.isLoggable(Level.FINE)) {
+										LOGGER.fine("Reading statistics from " + file.getAbsolutePath());
+									}
+									final IMemoryStatistic read = MemoryStatisticSerializerUtil
+											.readStatisticFile(file);
+									if (LOGGER.isLoggable(Level.FINE)) {
+										LOGGER.fine("Statistics read from " + file.getAbsolutePath());
+									}
+									return read;
+								} catch (final IOException ioe) {
+									throw new RuntimeException("Cannot read statistics from " + file);
+								}
+							});
+					final String message = feedDatastore(
+							inputs,
+							dumpName);
+					LOGGER.info(message);
+				} catch (Exception e) {
+					throw new QuartetRuntimeException(e);
+				}
+			});
 		}
 	}
 
@@ -180,8 +191,18 @@ public class SourceConfig {
 	 */
 	public String feedDatastore(final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
 		final Optional<IDatastoreSchemaTransactionInformation> info = this.datastore.edit(tm -> {
-			memoryStatistics.forEach(stat -> stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName)));
-		});
+			memoryStatistics.forEach(stat -> {
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Starting feed the application with " + stat);
+        }
+
+        stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName));
+
+        if (LOGGER.isLoggable(Level.FINE)) {
+          LOGGER.fine("Application processed " + stat);
+        }
+      });
+    });
 
 		if (info.isPresent()) {
 			return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";

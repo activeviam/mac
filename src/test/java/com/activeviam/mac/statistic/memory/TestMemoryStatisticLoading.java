@@ -119,23 +119,6 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testLoadPivotsWithInconsistantEpochDimensions() {
-		createMinimalApplicationForEpochDimensionFailure((monitoredDatastore, monitoredManager) -> {
-			Set<String> branchSet = new HashSet<>();
-			branchSet.add("branch1");
-
-			fillApplicationWithBranches(monitoredDatastore, branchSet, true);
-
-			final IMemoryAnalysisService analysisService = createService(monitoredDatastore, monitoredManager);
-			final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
-			// Tools.extractSnappyFile(exportPath.toString()+"\\MultiVersionPivot_HistoryCubeNoEpochDimension.json.sz");
-			final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-			assertNotEquals(null, fullStats);
-			assertLoadsCorrectly(fullStats);
-		});
-	}
-
-	@Test
 	public void testLoadFullStatsWithBranches() {
 		createApplication((monitoredDatastore, monitoredManager) -> {
 

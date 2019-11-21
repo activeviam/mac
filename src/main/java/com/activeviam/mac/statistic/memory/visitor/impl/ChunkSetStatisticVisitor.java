@@ -6,14 +6,13 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import java.time.Instant;
-
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
+import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
@@ -25,18 +24,18 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import java.time.Instant;
 
 /**
- *  Implementation of the {@link IMemoryStatisticVisitor} class for {@link ChunkSetStatistic}
- * @author ActiveViam
+ * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
+ * class for {@link ChunkSetStatistic}
  *
+ * @author ActiveViam
  */
 public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	/** The record format of the store that stores the chunks. */
 	protected final IRecordFormat chunkRecordFormat;
-	/** The record format of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
-
 
 	/** The export date, found on the first statistics we read */
 	protected final Instant current;
@@ -47,10 +46,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 	/** The partition id of the visited statistic */
 	protected final int partitionId;
 
-	/** ID of the current {@link ChunkSet}. */
-	protected Long chunkSetId = null;
-	@SuppressWarnings("unused")
-	private boolean visitingRowMapping = false;
+	/** ID of the current {@link ChunkSet}.
+   */
+  protected Long chunkSetId = null;
 
 	private Integer chunkSize;
 	private Integer freeRows;
@@ -98,29 +96,28 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 				.getRecordFormat();
 	}
 
-	@Override
-	public Void visit(final DefaultMemoryStatistic memoryStatistic) {
-		if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_ROW_MAPPING)) {
-			this.visitingRowMapping = true;
+  @Override
+  public Void visit(final DefaultMemoryStatistic memoryStatistic) {
+    if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_ROW_MAPPING)) {
 
 			FeedVisitor.visitChildren(this, memoryStatistic);
 
-			this.visitingRowMapping = false;
-		} else if (VectorStatisticVisitor.isVector(memoryStatistic)) {
-			final VectorStatisticVisitor subVisitor = new VectorStatisticVisitor(
-					this.storageMetadata,
-					this.transaction,
-					this.dumpName,
-					this.current,
-					this.store,
-					this.rootComponent,
-					this.directParentType,
-					this.directParentId,
-					this.partitionId
-			);
-			subVisitor.process(memoryStatistic);
-		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
-			this.visitingRowMapping = false;
+    } else if (VectorStatisticVisitor.isVector(memoryStatistic)) {
+			@Workaround(jira = "PIVOT-4127", solution = "Support for 5.8.4- versions")
+			final IMemoryStatistic vectorStat = memoryStatistic;
+			visitVectorBlock(vectorStat);
+		} else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
+      final String previousField = this.field;
+      if (memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD)) {
+        final IStatisticAttribute fieldAttribute =
+            memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+        this.field = fieldAttribute.asText();
+      }
+
+      FeedVisitor.visitChildren(this, memoryStatistic);
+
+      this.field = previousField;
+    } else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
 
 			// Remove this stat for a subchunk, particularly for vector chunks
 			final Integer previousSize = this.chunkSize;
@@ -140,6 +137,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 		}
 
 		return null;
+	}
+
+	private void visitVectorBlock(final IMemoryStatistic memoryStatistic) {
+		final VectorStatisticVisitor subVisitor = new VectorStatisticVisitor(
+				this.storageMetadata,
+				this.transaction,
+				this.dumpName,
+				this.current,
+				this.store,
+				this.partitionId
+		);
+		subVisitor.process(memoryStatistic);
 	}
 
 	@Override
@@ -164,9 +173,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
 	@Override
 	public Void visit(final ChunkStatistic chunkStatistic) {
-		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-			throw new UnsupportedOperationException(
-					"We should be in " + VectorStatisticVisitor.class.getSimpleName() + " for such blocks");
+		if (VectorStatisticVisitor.isVector(chunkStatistic)) {
+			visitVectorBlock(chunkStatistic);
 		} else {
 			recordIndexForStructure(this.directParentType, this.directParentId);
 			recordRefForStructure(this.directParentType, this.directParentId);
@@ -221,9 +229,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 			solution = "Some attributes were missing, causing a bad classification of the chunk." +
 					"We cannot properly re-classify as mandatory attributes are still missing.")
 	private void handleUnknownDefaultStatistic(final DefaultMemoryStatistic statistic) {
-		if (statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS).asText().contains("com.qfs.chunk.direct.impl.Direct")) {
+		if (statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS).asText()
+        .contains("com.qfs.chunk.direct.impl.Direct")) {
 			throw new InternalServiceException(
-					"A default statistic is representing a chunk. This is a known issue when export statistics using ActivePivot 5.8.x in JDK11." +
+					"A default statistic is representing a chunk. This is a known issue when export " +
+              "statistics using ActivePivot 5.8.x in JDK11." +
 							" This was solved in 5.8.4.\nStatistic: " + statistic);
 		} else {
 			throw new RuntimeException("unexpected statistic " + statistic);

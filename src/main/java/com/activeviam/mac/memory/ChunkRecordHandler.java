@@ -13,6 +13,7 @@ import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.record.IWritableRecord;
 import com.qfs.store.record.impl.Records;
+import com.qfs.store.record.impl.Records.IDictionaryProvider;
 
 /**
  * {@link IDuplicateKeyHandler} implementation defining the process of dealing with duplicated entries of the
@@ -35,7 +36,24 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 			final Records.IDictionaryProvider dictionaryProvider,
 			final int[] primaryIndexFields,
 			final int partitionId) {
-		init(storeMetadata, dictionaryProvider);
+		return createMergedRecord(duplicateRecord, previousRecord, storeMetadata, dictionaryProvider);
+  }
+
+  @Override
+  public IRecordReader selectDuplicateKeyInDatastore(
+      final IRecordReader duplicateRecord,
+      final IRecordReader previousRecord,
+      final IStoreMetadata storeMetadata,
+      final Records.IDictionaryProvider dictionaryProvider,
+      final int[] primaryIndexFields,
+      final int partitionId) {
+    return createMergedRecord(duplicateRecord, previousRecord, storeMetadata, dictionaryProvider);
+  }
+
+  private IRecordReader createMergedRecord(IRecordReader duplicateRecord,
+      IRecordReader previousRecord, IStoreMetadata storeMetadata,
+      IDictionaryProvider dictionaryProvider) {
+    init(storeMetadata, dictionaryProvider);
 
 		final int currentOwner = getDicOwner(previousRecord);
 		final int currentComponent = getDicComponent(previousRecord);
@@ -78,26 +96,14 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 		}
 	}
 
-	@Override
-	public IRecordReader selectDuplicateKeyInDatastore(
-			final IRecordReader duplicateRecord,
-			final IRecordReader previousRecord,
-			final IStoreMetadata storeMetadata,
-			final Records.IDictionaryProvider dictionaryProvider,
-			final int[] primaryIndexFields,
-			final int partitionId) {
-		throw new IllegalStateException(
-				"A record with an identical key (ChunkId + dumpName) is already in the datastore. Consider deleting first the records by dumpName before inserting new ones");
-	}
-
 	private void init(
-			final IStoreMetadata storeMetadata,
-			final Records.IDictionaryProvider dictionaryProvider) {
-		if (sharedComponentValue < 0) {
-			final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
-			@SuppressWarnings("unchecked")
-			final IWritableDictionary<Object> ownerDictionary = (IWritableDictionary<Object>) dictionaryProvider.getDictionary(ownerIdx);
-			sharedOwnerValue = ownerDictionary.map(MemoryAnalysisDatastoreDescription.SHARED_OWNER);
+      final IStoreMetadata storeMetadata,
+      final Records.IDictionaryProvider dictionaryProvider) {
+    if (sharedComponentValue < 0) {
+      final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
+      @SuppressWarnings("unchecked")
+      final IWritableDictionary<Object> ownerDictionary = (IWritableDictionary<Object>) dictionaryProvider.getDictionary(ownerIdx);
+      sharedOwnerValue = ownerDictionary.map(MemoryAnalysisDatastoreDescription.SHARED_OWNER);
 
 			final int componentIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__COMPONENT);
 			@SuppressWarnings("unchecked")

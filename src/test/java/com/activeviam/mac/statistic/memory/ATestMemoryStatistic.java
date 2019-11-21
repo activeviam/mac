@@ -15,6 +15,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
 
+import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -128,62 +129,6 @@ public abstract class ATestMemoryStatistic {
 				}
 			}
 		}
-	}
-
-	static void createMinimalApplicationForEpochDimensionFailure(
-			final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions)
-	{
-		final IDatastoreSchemaDescription datastoreSchema = StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store().withStoreName("Sales")
-								.withField("id", ILiteralType.INT).asKeyField()
-								.withField("seller")
-								.withField("buyer")
-								.withField("date", ILiteralType.LOCAL_DATE)
-								.withField("productId", ILiteralType.LONG)
-								.withModuloPartitioning(4, "id")
-								.build())
-				.build();
-		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(
-						StartBuilding.selection(datastoreSchema).fromBaseStore("Sales")
-								.withAllFields().build())
-				.withCube(
-						StartBuilding.cube("HistoryCube")
-						.withContributorsCount()
-						.withDimension("Operations")
-						.withHierarchy("Sales")
-						.withLevel("Seller").withPropertyName("seller")
-						.withLevel("Buyer").withPropertyName("buyer")
-						.withEpochDimension()
-						.build())
-				.withCube(
-						StartBuilding.cube("HistoryCubeNoEpochDimension")
-						.withContributorsCount()
-						.withDimension("Operations")
-						.withHierarchy("Sales")
-						.withLevel("Seller").withPropertyName("seller")
-						.withLevel("Buyer").withPropertyName("buyer")
-						.build())
-				.build();
-
-		final Datastore datastore = (Datastore) resources.create(() -> StartBuilding.datastore()
-				.setSchemaDescription(datastoreSchema)
-				.addSchemaDescriptionPostProcessors(ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-				.build());
-		final IActivePivotManager manager;
-		try {
-			manager = StartBuilding.manager()
-					.setDescription(managerDescription)
-					.setDatastoreAndDescription(datastore, datastoreSchema)
-					.buildAndStart();
-		} catch (AgentException e) {
-			throw new RuntimeException("Cannot create manager", e);
-		}
-		resources.register(manager::stop);
-
-		actions.accept(datastore, manager);
 	}
 
 	static void createApplication(
@@ -407,7 +352,7 @@ public abstract class ATestMemoryStatistic {
 	}
 
 	/**
-	 * Fills the datastore created by {@link #createMinimalApplicationForEpochDimensionFailure(ThrowingLambda.ThrowingBiConsumer)}.
+	 * Fills the datastore created by {@link #createMinimalApplication(ThrowingBiConsumer)}.
 	 * @param datastore datastore to fill
 	 */
 	static void fillApplicationMinimal(final Datastore datastore) {
