@@ -12,326 +12,317 @@ import com.quartetfs.biz.pivot.impl.ActivePivotManager;
 
 /**
  * List of constants used by stores storing the off-heap memory analysis results.
+ *
  * @author ActiveViam
  */
 public class DatastoreConstants {
 
-	// Default values
-	/**
-	 * Default long value
-	 */
-	public static final long LONG_IF_NOT_EXIST = -1L;
-	/**
-	 * Default int value
-	 */
-	public static final int INT_IF_NOT_EXIST = -1;
+  // Default values
+  /** Default long value */
+  public static final long LONG_IF_NOT_EXIST = -1L;
+  /** Default int value */
+  public static final int INT_IF_NOT_EXIST = -1;
 
-	// ALL STORES
+  // ALL STORES
 
-	/** Name of the Store containing chunk-related facts */
-	public static final String CHUNK_STORE = MemoryStatisticConstants.STAT_NAME_CHUNK;
+  /** Name of the Store containing chunk-related facts */
+  public static final String CHUNK_STORE = MemoryStatisticConstants.STAT_NAME_CHUNK;
 
-	/** Name of the store containing reference related facts */
-	public static final String REFERENCE_STORE = MemoryStatisticConstants.STAT_NAME_REFERENCE;
+  /** Name of the store containing reference related facts */
+  public static final String REFERENCE_STORE = MemoryStatisticConstants.STAT_NAME_REFERENCE;
 
-	/** Name of the store containing index-related facts */
-	public static final String INDEX_STORE = MemoryStatisticConstants.STAT_NAME_INDEX;
+  /** Name of the store containing index-related facts */
+  public static final String INDEX_STORE = MemoryStatisticConstants.STAT_NAME_INDEX;
 
-	/** Name of the store containing dictionary related facts*/
-	public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
+  /** Name of the store containing dictionary related facts */
+  public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
 
-	/** Name of the store containing level related facts */
-	public static final String LEVEL_STORE = "Levels";
+  /** Name of the store containing level related facts */
+  public static final String LEVEL_STORE = "Levels";
 
-	/** Name of the store containing facts related to the component of the aggregate provider */
-	public static final String PROVIDER_COMPONENT_STORE = "ProviderComponent";
+  /** Name of the store containing facts related to the component of the aggregate provider */
+  public static final String PROVIDER_COMPONENT_STORE = "ProviderComponent";
 
-	/** Name of the store containing facts related to the aggregate provider */
-	public static final String PROVIDER_STORE = "Provider";
+  /** Name of the store containing facts related to the aggregate provider */
+  public static final String PROVIDER_STORE = "Provider";
 
-	/** Name of the store containing pivot -related facts */
-	public static final String PIVOT_STORE = "ActivePivot";
+  /** Name of the store containing pivot -related facts */
+  public static final String PIVOT_STORE = "ActivePivot";
 
-	/** Name of the store related to the application */
-	public static final String APPLICATION_STORE = "Application";
+  /** Name of the store related to the application */
+  public static final String APPLICATION_STORE = "Application";
 
-	// Field names
+  // Field names
 
+  /** Field containing debug data for the memory statistics */
+  public static final String CHUNK__DEBUG_TREE = "chunkDebugTree";
 
-	/** Field containing debug data for the memory statistics */
-	public static final String CHUNK__DEBUG_TREE = "chunkDebugTree";
+  /** Date field */
+  public static final String DATE_PATTERN = MemoryStatisticConstants.DATE_PATTERN;
 
-	/** Date field */
-	public static final String DATE_PATTERN = MemoryStatisticConstants.DATE_PATTERN;
+  // Ids of different stores used as key.
 
-	// Ids of different stores used as key.
+  /** Chunk ID field */
+  public static final String CHUNK_ID = MemoryStatisticConstants.ATTR_NAME_CHUNK_ID;
 
-	/** Chunk ID field */
-	public static final String CHUNK_ID = MemoryStatisticConstants.ATTR_NAME_CHUNK_ID;
+  /** Reference id field */
+  public static final String REFERENCE_ID = "referenceId";
 
-	/** Reference id field */
-	public static final String REFERENCE_ID = "referenceId";
+  /** Index id field */
+  public static final String INDEX_ID = "indexId";
 
-	/** Index id field */
-	public static final String INDEX_ID = "indexId";
+  /** Field name field */
+  public static final String FIELDS = "fields";
 
-	/** Field name field */
-	public static final String FIELDS = "fields";
+  /** Dictionary id field */
+  public static final String DICTIONARY_ID = "dicId";
 
-	/** Dictionary id field */
-	public static final String DICTIONARY_ID = "dicId";
+  /** Field for the name owner of the chunk */
+  public static final String CHUNK__OWNER = "owner";
 
+  /** Field for the component type of the owner of the chunk */
+  public static final String CHUNK__COMPONENT = "component";
 
-	/** Field for the name owner of the chunk */
-	public static final String CHUNK__OWNER = "owner";
+  /** Field for the Id of the direct parent of the chunk */
+  public static final String CHUNK__PARENT_ID = "parentId";
 
-	/**  Field for the component type of the owner of the chunk */
-	public static final String CHUNK__COMPONENT = "component";
+  /** Field for the structure type of the direct parent of the chunk */
+  public static final String CHUNK__PARENT_TYPE = "parentType";
 
-	/** Field for the Id of the direct parent of the chunk */
-	public static final String CHUNK__PARENT_ID = "parentId";
+  /** Field for the size of the chunk */
+  public static final String CHUNK__SIZE = "size";
 
-	/** Field for the structure type of the direct parent of the chunk */
-	public static final String CHUNK__PARENT_TYPE = "parentType";
+  /** Field for the amount of non written rows in the chunk */
+  public static final String CHUNK__NON_WRITTEN_ROWS = "nonWrittenRows";
 
-	/** Field for the size of the chunk */
-	public static final String CHUNK__SIZE = "size";
+  /** Field for the amount of freed rows in a chunk */
+  public static final String CHUNK__FREE_ROWS = "freeRows";
 
-	/** Field for the amount of non written rows in the chunk */
-	public static final String CHUNK__NON_WRITTEN_ROWS = "nonWrittenRows";
+  /** Field for the id of the aggregate provider */
+  public static final String PROVIDER__PROVIDER_ID =
+      PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
 
-	/** Field for the amount of freed rows in a chunk */
-	public static final String CHUNK__FREE_ROWS = "freeRows";
+  /** Field for the id of the pivot */
+  public static final String PROVIDER__PIVOT_ID = "pivotId_prov";
 
-	/** Field for the id of the aggregate provider */
-	public static final String PROVIDER__PROVIDER_ID = PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
+  /** Field for the id of the {@link ActivePivotManager} */
+  public static final String PROVIDER__MANAGER_ID = "managerId_prov";
 
-	/** Field for the id of the pivot */
-	public static final String PROVIDER__PIVOT_ID = "pivotId_prov";
+  /** Field for the index of the aggregate provider */
+  public static final String PROVIDER__INDEX = "index_prov";
 
-	/** Field for the id of the {@link ActivePivotManager} */
-	public static final String PROVIDER__MANAGER_ID = "managerId_prov";
+  /** Field for the type of the aggregate provider */
+  public static final String PROVIDER__TYPE = "type";
 
-	/** Field for the index of the aggregate provider */
-	public static final String PROVIDER__INDEX = "index_prov";
+  /** Field for the category of aggregate provider */
+  public static final String PROVIDER__CATEGORY = "category";
 
-	/** Field for the type of the aggregate provider */
-	public static final String PROVIDER__TYPE = "type";
+  private static final String FIELD_SUFFIX = "Fld";
+  private static final String INDEX_SUFFIX = "Idx";
+  private static final String DICO_SUFFIX = "Dic";
+  private static final String REFERENCE_SUFFIX = "Ref";
+  private static final String LEVEL_SUFFIX = "Lvl";
 
-	/** Field for the category of aggregate provider */
-	public static final String PROVIDER__CATEGORY = "category";
+  /** Name of the store for joining field store and chunk store */
+  public static final String CHUNK_TO_FIELD_STORE = "ChunkToField";
 
-	private static final String FIELD_SUFFIX = "Fld";
-	private static final String INDEX_SUFFIX = "Idx";
-	private static final String DICO_SUFFIX = "Dic";
-	private static final String REFERENCE_SUFFIX = "Ref";
-	private static final String LEVEL_SUFFIX = "Lvl";
+  /** Field for the parent id of the chunk */
+  public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId_" + FIELD_SUFFIX;
 
-	/** Name of the store for joining field store and chunk store */
-	public static final String CHUNK_TO_FIELD_STORE = "ChunkToField";
+  /** Field for the parent type of the chunk */
+  public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType_" + FIELD_SUFFIX;
 
-	/** Field for the parent id of the chunk */
-	public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId_"+ FIELD_SUFFIX;
+  /** Field for the store field names */
+  public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
 
-	/** Field for the parent type of the chunk */
-	public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType_"+ FIELD_SUFFIX;
+  /** Field for the store names */
+  public static final String CHUNK_TO_FIELD__STORE = "storeName";
 
-	/** Field for the store field names */
-	public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
+  /** Name of the store for joning indexes and chunks */
+  public static final String CHUNK_TO_INDEX_STORE = "ChunkToIndex";
 
-	/** Field for the store names */
-	public static final String CHUNK_TO_FIELD__STORE = "storeName";
+  /** Field for the parent id of the chunk */
+  public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId_" + INDEX_SUFFIX;
 
+  /** Field for the parent type of the chunk */
+  public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType_" + INDEX_SUFFIX;
 
-	/** Name of the store for joning indexes and chunks */
-	public static final String CHUNK_TO_INDEX_STORE = "ChunkToIndex";
+  /** Field for the id of the index */
+  public static final String CHUNK_TO_INDEX__INDEX_ID = "indexId";
 
-	/** Field for the parent id of the chunk */
-	public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId_"+ INDEX_SUFFIX;
+  /** Name of the store for joining dictionaries and chunks */
+  public static final String CHUNK_TO_DICO_STORE = "ChunkToDico";
 
-	/** Field for the parent type of the chunk */
-	public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType_"+ INDEX_SUFFIX;
+  /** Field for the parent id of the chunk */
+  public static final String CHUNK_TO_DICO__PARENT_ID = "parentId_" + DICO_SUFFIX;
 
-	/** Field for the id of the index */
-	public static final String CHUNK_TO_INDEX__INDEX_ID = "indexId";
+  /** Field for the parent type of the chunk */
+  public static final String CHUNK_TO_DICO__PARENT_TYPE = "parentType_" + DICO_SUFFIX;
 
-	/** Name of the store for joining dictionaries and chunks */
-	public static final String CHUNK_TO_DICO_STORE = "ChunkToDico";
+  /** Field for the dictionary id */
+  public static final String CHUNK_TO_DICO__DICO_ID = "dictionaryId";
 
-	/** Field for the parent id of the chunk */
-	public static final String CHUNK_TO_DICO__PARENT_ID = "parentId_"+ DICO_SUFFIX;
+  /** Name of the store for joining references to chunks */
+  public static final String CHUNK_TO_REF_STORE = "ChunkToReference";
 
-	/** Field for the parent type of the chunk */
-	public static final String CHUNK_TO_DICO__PARENT_TYPE = "parentType_"+DICO_SUFFIX;
+  /** Field for the parent id of the chunk */
+  public static final String CHUNK_TO_REF__PARENT_ID = "parentId_" + REFERENCE_SUFFIX;
 
-	/** Field for the dictionary id */
-	public static final String CHUNK_TO_DICO__DICO_ID = "dictionaryId";
+  /** Field for the parent type of the chunk */
+  public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType_" + REFERENCE_SUFFIX;
 
+  /** Field for the id of the reference */
+  public static final String CHUNK_TO_REF__REF_ID = "refId";
 
-	/** Name of the store for joining references to chunks */
-	public static final String CHUNK_TO_REF_STORE = "ChunkToReference";
+  // store and partition info.
 
-	/** Field for the parent id of the chunk */
-	public static final String CHUNK_TO_REF__PARENT_ID = "parentId_" + REFERENCE_SUFFIX;
+  /** Partition id field */
+  public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
 
-	/** Field for the parent type of the chunk */
-	public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType_"+ REFERENCE_SUFFIX;
+  /** Aggregate provider id field */
+  public static final String CHUNK__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 
-	/** Field for the id of the reference */
-	public static final String CHUNK_TO_REF__REF_ID = "refId";
+  /** Aggregate provider component type field */
+  public static final String CHUNK__PROVIDER_COMPONENT_TYPE = "providerCpnType";
 
-	// store and partition info.
+  // ## CHUNK_STORE ## Field names of the chunk store
 
-	/** Partition id field */
-	public static final String CHUNK__PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_PARTITION_ID;
+  /** Chunk class field */
+  public static final String CHUNK__CLASS = "class";
 
-	/** Aggregate provider id field */
-	public static final String CHUNK__PROVIDER_ID = PROVIDER__PROVIDER_ID;
+  /** Direct memory footprint size field */
+  public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
 
-	/** Aggregate provider component type field */
-	public static final String CHUNK__PROVIDER_COMPONENT_TYPE = "providerCpnType";
+  /** On heap memory footprint size field */
+  public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
 
-	// ## CHUNK_STORE ## Field names of the chunk store
+  /** Import name field */
+  public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 
-	/** Chunk class field */
-	public static final String CHUNK__CLASS = "class";
+  // ## REFERENCES_STORE ## Field names of the Reference store
 
-	/** Direct memory footprint size field */
-	public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
+  /** Reference name field */
+  public static final String REFERENCE_NAME = MemoryStatisticConstants.ATTR_NAME_REFERENCE_NAME;
 
-	/** On heap memory footprint size field */
-	public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
+  /** Field for the name of the base field of the reference */
+  public static final String REFERENCE_FROM_STORE = MemoryStatisticConstants.ATTR_NAME_FROM_STORE;
 
-	/** Import name field */
-	public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
+  /** Field for the partition id in the base of the reference */
+  public static final String REFERENCE_FROM_STORE_PARTITION_ID =
+      MemoryStatisticConstants.ATTR_NAME_FROM_STORE_PARTITION_ID;
 
-	// ## REFERENCES_STORE ## Field names of the Reference store
+  /** Field for the name of the target fields of the reference */
+  public static final String REFERENCE_TO_STORE = MemoryStatisticConstants.ATTR_NAME_TO_STORE;
 
-	/** Reference name field */
-	public static final String REFERENCE_NAME = MemoryStatisticConstants.ATTR_NAME_REFERENCE_NAME;
+  /** Field for the partition id of the target store */
+  public static final String REFERENCE_TO_STORE_PARTITION_ID =
+      MemoryStatisticConstants.ATTR_NAME_TO_STORE_PARTITION_ID;
 
-	/** Field for the name of the base field of the reference */
-	public static final String REFERENCE_FROM_STORE = MemoryStatisticConstants.ATTR_NAME_FROM_STORE;
+  /** Reference class field */
+  public static final String REFERENCE_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 
-	/** Field for the partition id in the base of the reference */
-	public static final String REFERENCE_FROM_STORE_PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_FROM_STORE_PARTITION_ID;
+  // ## INDEX_STORE ## Field names of the Index store
 
-	/** Field for the name of the target fields of the reference */
-	public static final String REFERENCE_TO_STORE = MemoryStatisticConstants.ATTR_NAME_TO_STORE;
+  /** Index type field */
+  public static final String INDEX_TYPE = "type";
 
-	/** Field for the partition id of the target store */
-	public static final String REFERENCE_TO_STORE_PARTITION_ID = MemoryStatisticConstants.ATTR_NAME_TO_STORE_PARTITION_ID;
+  /** Index class field */
+  public static final String INDEX_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 
-	/** Reference class field */
-	public static final String REFERENCE_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+  /** Field for the name of the indexed fields (by an index) */
+  public static final String INDEX__FIELDS = "fields";
 
-	// ## INDEX_STORE ## Field names of the Index store
+  // ## DICTIONARY_STORE ## Field names of the Dictionary store
 
-	/** Index type field */
-	public static final String INDEX_TYPE = "type";
+  /** Field for the size of a dictionary */
+  public static final String DICTIONARY_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
 
-	/** Index class field */
-	public static final String INDEX_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+  /** Dictionary size field */
+  public static final String DICTIONARY_ORDER = "order";
 
-	/** Field for the name of the indexed fields (by an index) */
-	public static final String INDEX__FIELDS = "fields";
+  /** Dictionary class field */
+  public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 
-	// ## DICTIONARY_STORE ## Field names of the Dictionary store
+  /** Field for the {@link ActivePivotManager} name */
+  public static final String LEVEL__MANAGER_ID = "managerId";
 
-	/** Field for the size of a dictionary */
-	public static final String DICTIONARY_SIZE = MemoryStatisticConstants.ATTR_NAME_LENGTH;
+  /** Field for the Pivot name */
+  public static final String LEVEL__PIVOT_ID = "pivotId";
 
-	/** Dictionary size field */
-	public static final String DICTIONARY_ORDER = "order";
+  /** Field for the dimension name */
+  public static final String LEVEL__DIMENSION = "dimension";
 
-	/** Dictionary class field */
-	public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
+  /** Field for the hierarchy name */
+  public static final String LEVEL__HIERARCHY = "hierarchy";
 
+  /** Field for the level name */
+  public static final String LEVEL__LEVEL = "level";
 
-	/** Field for the {@link ActivePivotManager} name */
-	public static final String LEVEL__MANAGER_ID = "managerId";
+  /** Field for the on-heap footprint of levels */
+  public static final String LEVEL__ON_HEAP_SIZE = "onHeap";
 
-	/** Field for the Pivot name */
-	public static final String LEVEL__PIVOT_ID = "pivotId";
+  /** Field for the direct memory footprint of levels */
+  public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
 
-	/** Field for the dimension name */
-	public static final String LEVEL__DIMENSION = "dimension";
+  /** member count field */
+  public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
-	/** Field for the hierarchy name */
-	public static final String LEVEL__HIERARCHY = "hierarchy";
+  /** Name of the store for joining chunk and level data */
+  public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
 
-	/** Field for the level name */
-	public static final String LEVEL__LEVEL = "level";
+  /** {@link ActivePivotManager} id field */
+  public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
 
-	/** Field for the on-heap footprint of levels */
-	public static final String LEVEL__ON_HEAP_SIZE = "onHeap";
+  /** Pivot id field */
+  public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId";
 
-	/** Field for the direct memory footprint of levels */
-	public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
+  /** Dimension field */
+  public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
 
-	/** member count field */
-	public static final String LEVEL__MEMBER_COUNT = "memberCount";
+  /** Hierarchy field */
+  public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
 
-	/** Name of the store for joining chunk and level data */
-	public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
+  /** level field */
+  public static final String CHUNK_TO_LEVEL__LEVEL = "level";
 
-	/** {@link ActivePivotManager} id field */
-	public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
+  /** parent id field */
+  public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId" + LEVEL_SUFFIX;
 
-	/** Pivot id field */
-	public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId" ;
+  /** Parent type in the chunk to level store */
+  public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
-	/** Dimension field */
-	public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
+  /** Id of the aggragate provider in the provider component store */
+  public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 
-	/** Hierarchy field */
-	public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
+  /** Class of the aggregate provider compoent */
+  public static final String PROVIDER_COMPONENT__CLASS = "class";
 
-	/** level field */
-	public static final String CHUNK_TO_LEVEL__LEVEL = "level";
+  /** Type of aggregate provider component */
+  public static final String PROVIDER_COMPONENT__TYPE = "providerComponentType";
 
-	/** parent id field */
-	public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId"+LEVEL_SUFFIX;
+  /** Id of the Pivot */
+  public static final String PIVOT__PIVOT_ID = "pivotId";
 
-	/** Parent type in the chunk to level store*/
-	public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType"+ LEVEL_SUFFIX;
+  /** Id of the {@link ActivePivotManager} */
+  public static final String PIVOT__MANAGER_ID = "managerId";
 
+  /** Date */
+  public static final String APPLICATION__DATE = "date";
 
-	/** Id of the aggragate provider in the provider component store */
-	public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
+  /** Name of the import */
+  public static final String APPLICATION__DUMP_NAME = "dumpName";
 
-	/** Class of the aggregate provider compoent */
-	public static final String PROVIDER_COMPONENT__CLASS = "class";
+  /** Used on heap memory */
+  public static final String APPLICATION__USED_ON_HEAP = "usedOnHeap";
 
-	/** Type of aggregate provider component  */
-	public static final String PROVIDER_COMPONENT__TYPE = "providerComponentType";
+  /** Maximum Applicaiton on heap memory */
+  public static final String APPLICATION__MAX_ON_HEAP = "maxOnHeap";
 
+  /** used direct momory */
+  public static final String APPLICATION__USED_OFF_HEAP = "usedOffHeap";
 
-	/** Id of the Pivot */
-	public static final String PIVOT__PIVOT_ID = "pivotId";
+  /** Maximum Application direct memory */
+  public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
 
-	/** Id of the {@link ActivePivotManager} */
-	public static final String PIVOT__MANAGER_ID = "managerId";
-
-
-	/** Date */
-	public static final String APPLICATION__DATE = "date";
-
-	/** Name of the import */
-	public static final String APPLICATION__DUMP_NAME = "dumpName";
-
-	/** Used on heap memory */
-	public static final String APPLICATION__USED_ON_HEAP = "usedOnHeap";
-
-	/** Maximum Applicaiton on heap memory */
-	public static final String APPLICATION__MAX_ON_HEAP = "maxOnHeap";
-
-	/** used direct momory */
-	public static final String APPLICATION__USED_OFF_HEAP = "usedOffHeap";
-
-	/** Maximum Application direct memory */
-	public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
-
-	private DatastoreConstants() {}
-
+  private DatastoreConstants() {}
 }

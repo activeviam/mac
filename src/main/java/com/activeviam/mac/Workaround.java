@@ -8,16 +8,15 @@ package com.activeviam.mac;
 
 /**
  * Annotation marking code handling errors present in the Core Product.
- * <p>
- * When the support for a given version is dropped, all workarounds related to this version will be removed.
- * </p>
+ *
+ * <p>When the support for a given version is dropped, all workarounds related to this version will
+ * be removed.
  */
 public @interface Workaround {
 
-	/** @return Brief explanation of the issue to workaround. */
-	String solution();
+  /** @return Brief explanation of the issue to workaround. */
+  String solution();
 
-	/** @return Jira ticket related to the issue. */
-	String jira() default "";
-
+  /** @return Jira ticket related to the issue. */
+  String jira() default "";
 }

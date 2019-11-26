@@ -9,7 +9,6 @@ package com.activeviam.mac.cfg.security.impl;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
-
 /**
  * To expose the Version REST service.
  *
