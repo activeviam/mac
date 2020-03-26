@@ -6,6 +6,7 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import com.activeviam.fwk.ActiveviamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.jmx.JmxOperation;
@@ -18,7 +19,6 @@ import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
 import com.qfs.store.impl.Datastore;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -188,7 +188,7 @@ public class SourceConfig {
               final String message = feedDatastore(inputs, dumpName);
               LOGGER.info(message);
             } catch (Exception e) {
-              throw new QuartetRuntimeException(e);
+              throw new ActiveviamRuntimeException(e);
             }
           });
     }

@@ -3,7 +3,6 @@ package com.activeviam.mac.statistic.memory;
 import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
-import com.activeviam.mac.cfg.impl.DatastoreDescriptionConfig;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -15,7 +14,6 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.transaction.DatastoreTransactionException;
@@ -64,14 +62,11 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
     })
 @ContextConfiguration(
     classes = {
-      DatastoreDescriptionConfig.class,
       ManagerDescriptionConfig.class,
     })
 public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Autowired IActivePivotManagerDescription managerDescription;
-
-  @Autowired IDatastoreDescriptionConfig datastoreDescriptionConfig;
 
   Pair<IDatastore, IActivePivotManager> monitoredApp;
 
@@ -145,11 +140,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
     // Start a monitoring cube
     IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndDescription(
-                monitoringDatastore, datastoreDescriptionConfig.schemaDescription())
-            .buildAndStart();
+        StartBuilding.manager().setDescription(managerDescription).buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore

@@ -60,7 +60,6 @@ import org.springframework.core.env.Environment;
       ActiveViamPropertyFromSpringConfig.class,
       JwtRestServiceConfig.class,
       JwtConfig.class,
-      DatastoreDescriptionConfig.class,
       ManagerDescriptionConfig.class,
 
       // Pivot

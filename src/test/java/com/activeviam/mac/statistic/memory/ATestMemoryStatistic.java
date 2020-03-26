@@ -335,7 +335,7 @@ public abstract class ATestMemoryStatistic {
       manager =
           StartBuilding.manager()
               .setDescription(managerDescription)
-              .setDatastoreAndDescription(datastore, datastoreSchema)
+              .setDatastoreAndPermissions(datastore)
               .buildAndStart();
     } catch (AgentException e) {
       throw new RuntimeException("Cannot create manager", e);
@@ -408,11 +408,7 @@ public abstract class ATestMemoryStatistic {
                         .build());
     final IActivePivotManager manager;
     try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndDescription(datastore, datastoreSchema)
-              .buildAndStart();
+      manager = StartBuilding.manager().setDescription(managerDescription).buildAndStart();
     } catch (AgentException e) {
       throw new RuntimeException("Cannot create manager", e);
     }
@@ -688,11 +684,7 @@ public abstract class ATestMemoryStatistic {
                     .build());
     final IActivePivotManager manager;
     try {
-      manager =
-          StartBuilding.manager()
-              .setDatastoreAndDescription(datastore, schemaDescription)
-              .setDescription(managerDescription)
-              .buildAndStart();
+      manager = StartBuilding.manager().setDescription(managerDescription).buildAndStart();
     } catch (AgentException e) {
       throw new RuntimeException("Cannot start the manager", e);
     }
@@ -783,11 +775,7 @@ public abstract class ATestMemoryStatistic {
                         .setEpochManagementPolicy(new KeepLastEpochPolicy())
                         .build());
     return new Pair<IDatastore, IActivePivotManager>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndDescription(datastore, schemaDescription)
-            .buildAndStart());
+        datastore, StartBuilding.manager().setDescription(managerDescription).buildAndStart());
   }
 
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReference()
@@ -843,11 +831,7 @@ public abstract class ATestMemoryStatistic {
                         .setEpochManagementPolicy(new KeepLastEpochPolicy())
                         .build());
     return new Pair<IDatastore, IActivePivotManager>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndDescription(datastore, schemaDescription)
-            .buildAndStart());
+        datastore, StartBuilding.manager().setDescription(managerDescription).buildAndStart());
   }
 
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithLeafBitmap()
@@ -889,11 +873,7 @@ public abstract class ATestMemoryStatistic {
                         .setEpochManagementPolicy(new KeepLastEpochPolicy())
                         .build());
     return new Pair<IDatastore, IActivePivotManager>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndDescription(datastore, schemaDescription)
-            .buildAndStart());
+        datastore, StartBuilding.manager().setDescription(managerDescription).buildAndStart());
   }
 
   static IDatastore assertLoadsCorrectly(
