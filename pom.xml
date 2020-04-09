@@ -21,7 +21,7 @@
 
   <properties>
     <activepivot.version>5.8.5-jdk11</activepivot.version>
-    <activeui.version>4.3.2</activeui.version>
+    <activeui.version>4.3.6</activeui.version>
     <tomcat.version>8.5.23</tomcat.version>
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
