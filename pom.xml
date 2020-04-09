@@ -23,6 +23,7 @@
     <activepivot.version>5.8.5-jdk11</activepivot.version>
     <activeui.version>4.3.6</activeui.version>
     <tomcat.version>8.5.23</tomcat.version>
+    <lombok.version>1.18.12</lombok.version>
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
 
@@ -46,6 +47,13 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- ActivePivot Dependencies -->
     <dependency>
       <groupId>com.activeviam.activepivot</groupId>
@@ -294,4 +302,23 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- Including Lombok as a plain dependency to make Intellij happy -->
+      <id>activeInIdea</id>
+      <activation>
+        <property>
+          <name>idea.version</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok</artifactId>
+          <version>${lombok.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

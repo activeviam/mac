@@ -2,6 +2,8 @@ package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 
+import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.SharedOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.condition.impl.BaseConditions;
@@ -72,13 +74,12 @@ public class TestSharedMemory extends ATestMemoryStatistic {
             .selecting(DatastoreConstants.CHUNK__OWNER)
             .onCurrentThread()
             .run();
-    final List<Object[]> list = new ArrayList<>();
+    final List<String> list = new ArrayList<>();
     cursor.forEach(
         (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
+          final ChunkOwner owner = (ChunkOwner) record.read(0);
+          list.add(owner.getName());
         });
-    Assertions.assertThat(list)
-        .contains(new Object[] {"A"}, new Object[] {"Cube"}, new Object[] {"shared"});
+    Assertions.assertThat(list).contains("A", "Cube", SharedOwner.getInstance().getName());
   }
 }
