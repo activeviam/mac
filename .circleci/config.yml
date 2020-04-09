@@ -32,7 +32,7 @@ jobs:
               -v "$PWD:/home/circleci/mac" \
               -w /home/circleci/mac -u root \
               circleci/openjdk:11-jdk-node-browsers \
-              mvn test -s .gitlabci/settings.xml -Dmaven.repo.local=/tmp/repository
+              mvn package --settings .circleci/circleci-settings.xml -Dmaven.repo.local=/tmp/repository
       - save_cache:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
