@@ -1,0 +1,52 @@
+version: 2.1
+
+executors:
+  vm:
+    environment:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    machine:
+      image: ubuntu-1604:201903-01
+      docker_layer_caching: true
+
+jobs:
+  build_and_test:
+    executor: vm
+    resource_class: large
+    working_directory: ~/mac
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - mac-java-{{ .Branch }}-
+            - mac-java-
+      - run:
+          name: "Build and test"
+          command: |
+            sudo sysctl -w vm.overcommit_memory=1
+            mkdir -p "$HOME/.m2/repository"
+            docker run --rm --privileged \
+              -e ACTIVEPIVOT_LICENSE -e ARTIFACTORY_USER -e ARTIFACTORY_PASSWORD \
+              -v "$HOME/.m2/repository:/tmp/repository" \
+              -v "$PWD:/home/circleci/mac" \
+              -w /home/circleci/mac -u root \
+              circleci/openjdk:11-jdk-node-browsers \
+              mvn package --settings .circleci/circleci-settings.xml -Dmaven.repo.local=/tmp/repository
+      - save_cache:
+          paths: [ ~/.m2/repository ]
+          key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+
+
+workflows:
+  version: 2
+  check:
+    triggers:
+    jobs:
+      - build_and_test:
+          filters:
+            branches:
+              ignore:
+                - /5.\d+/
+          context: rnd-server
+
