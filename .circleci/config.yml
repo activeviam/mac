@@ -1,20 +1,19 @@
 version: 2.1
 
 executors:
-  jdk11-docker:
-    docker:
-      - image: circleci/openjdk:11-jdk-node-browsers
+  vm:
     environment:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
+    machine:
+      image: ubuntu-1604:201903-01
+      docker_layer_caching: true
 
 jobs:
   build_and_test:
-    executor: jdk11-docker
+    executor: vm
     resource_class: large
     working_directory: ~/mac
-    environment:
-      JAVA_TOOL_OPTIONS: -DchunkAllocatorClass=com.qfs.chunk.direct.impl.DirectChunkAllocator
     steps:
       - checkout
       - restore_cache:
@@ -23,9 +22,17 @@ jobs:
             - mac-java-{{ .Branch }}-
             - mac-java-
       - run:
-          name: Test project
+          name: "Build and test"
           command: |
-            mvn -T 1C package --settings .circleci/circleci-settings.xml
+            sudo sysctl -w vm.overcommit_memory=1
+            mkdir -p "$HOME/.m2/repository
+            docker run --rm --privileged \
+              -e ACTIVEPIVOT_LICENSE -e ARTIFACTORY_USER -e ARTIFACTORY_PASSWORD \
+              -v "$HOME/.m2/repository:/tmp/repository" \
+              -v "$PWD:/home/circleci/mac" \
+              -w /home/circleci/mac -u root \
+              circleci/openjdk:11-jdk-node-browsers \
+              mvn test -s .gitlabci/settings.xml -Dmaven.repo.local=/tmp/repository
       - save_cache:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
