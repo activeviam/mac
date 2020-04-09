@@ -1,0 +1,45 @@
+version: 2.1
+
+executors:
+  jdk11-docker:
+    docker:
+      - image: circleci/openjdk:11-jdk-node-browsers
+    environment:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+
+jobs:
+  build_artifacts:
+    executor: jdk11-docker
+    resource_class: large
+    working_directory: ~/mac
+    environment:
+      JAVA_TOOL_OPTIONS: -DchunkAllocatorClass=com.qfs.chunk.direct.impl.DirectChunkAllocator
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - mac-java-{{ .Branch }}-
+            - mac-java-
+      - run:
+          name: Test project
+          command: |
+            mvn -T 1C package --settings .circleci/circleci-settings.xml
+      - save_cache:
+          paths: [ ~/.m2/repository ]
+          key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+
+
+workflows:
+  version: 2
+  check:
+    triggers:
+    jobs:
+      - test:
+          filters:
+            branches:
+              ignore:
+                - /5.\d+/
+          context: rnd-server
+
