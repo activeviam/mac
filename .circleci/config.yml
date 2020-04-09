@@ -9,7 +9,7 @@ executors:
       LC_ALL: C.UTF-8
 
 jobs:
-  build_artifacts:
+  build_and_test:
     executor: jdk11-docker
     resource_class: large
     working_directory: ~/mac
@@ -36,7 +36,7 @@ workflows:
   check:
     triggers:
     jobs:
-      - test:
+      - build_and_test:
           filters:
             branches:
               ignore:
