@@ -25,7 +25,7 @@ jobs:
           name: "Build and test"
           command: |
             sudo sysctl -w vm.overcommit_memory=1
-            mkdir -p "$HOME/.m2/repository
+            mkdir -p "$HOME/.m2/repository"
             docker run --rm --privileged \
               -e ACTIVEPIVOT_LICENSE -e ARTIFACTORY_USER -e ARTIFACTORY_PASSWORD \
               -v "$HOME/.m2/repository:/tmp/repository" \
