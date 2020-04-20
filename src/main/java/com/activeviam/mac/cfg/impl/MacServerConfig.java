@@ -6,7 +6,6 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -77,7 +76,6 @@ import org.springframework.core.env.Environment;
 
       // Specific to monitoring server
       SecurityConfig.class,
-      CorsConfig.class,
       UserConfig.class,
       SourceConfig.class,
       ActiveUIResourceServerConfig.class

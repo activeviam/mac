@@ -74,34 +74,4 @@ public class MacSpringBootApp {
     return registration;
   }
 
-  // TODO(ope) how to properly register a filter in SpringBoot
-  /**
-   * Disables the registration of a {@code ContextValueFilter} in the SpringBoot servlet environment
-   *
-   * @param filter Filter not to be registered
-   * @return the non registered Bean
-   */
-  @Bean
-  public FilterRegistrationBean<ContextValueFilter> disableRegisteringContextValueFilter(
-      final ContextValueFilter filter) {
-    final FilterRegistrationBean<ContextValueFilter> registration =
-        new FilterRegistrationBean<>(filter);
-    registration.setEnabled(false);
-    return registration;
-  }
-
-  /**
-   * Disables the registration of a {@code SpringCorsFilter} in the SpringBoot servlet
-   *
-   * @param filter Filter not to be registered
-   * @return the non registered Bean
-   */
-  @Bean
-  public FilterRegistrationBean<SpringCorsFilter> disableRegisteringSpringCorsFilter(
-      final SpringCorsFilter filter) {
-    final FilterRegistrationBean<SpringCorsFilter> registration =
-        new FilterRegistrationBean<>(filter);
-    registration.setEnabled(false);
-    return registration;
-  }
 }

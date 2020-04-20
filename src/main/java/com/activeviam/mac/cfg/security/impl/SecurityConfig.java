@@ -54,13 +54,7 @@ public class SecurityConfig extends ASecurityConfig {
   /** Name of the Cookies of the MAC application */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
-  /**
-   * User details service wrapped into a Quartet interface.
-   *
-   * <p>This bean is used by {@link ActiveMonitorPivotExtensionServiceConfiguration}
-   *
-   * @return a user details service
-   */
+
   @Bean
   public IUserDetailsService qfsUserDetailsService() {
     return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());

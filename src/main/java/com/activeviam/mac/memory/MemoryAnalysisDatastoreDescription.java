@@ -37,6 +37,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
   /** Name of the provider component <-> provider store */
   public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
+
+  /** Name of the
   /** Name of the chunk <-> application linking store */
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
