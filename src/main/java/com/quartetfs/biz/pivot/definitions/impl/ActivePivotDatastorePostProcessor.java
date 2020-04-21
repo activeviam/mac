@@ -560,8 +560,12 @@ public class ActivePivotDatastorePostProcessor implements IDatastoreSchemaDescri
 			Collection<IAnalysisAggregationProcedureDescription> procedures = description
 					.getAggregationProcedures();
 			Collection<IReferenceDescription> result = new ArrayList<>();
-			IUserDatastoreSchemaDescription userDatastoreSchemaDescription = UserDatastoreSchemaDescription
-					.createFromSchemaDescription(datastoreSchemaDescription);
+      if (null == procedures) {
+        return result;
+      }
+
+      IUserDatastoreSchemaDescription userDatastoreSchemaDescription =
+          UserDatastoreSchemaDescription.createFromSchemaDescription(datastoreSchemaDescription);
 
 			for (IAnalysisAggregationProcedureDescription procedure : procedures) {
 				if (AJoinAnalysisAggregationProcedure.JOIN_KEYS.contains(procedure.getPluginKey())) {
