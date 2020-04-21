@@ -302,4 +302,23 @@
 
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <!-- Including Lombok as a plain dependency to make Intellij happy -->
+      <id>activeInIdea</id>
+      <activation>
+        <property>
+          <name>idea.version</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok</artifactId>
+          <version>${lombok.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>
