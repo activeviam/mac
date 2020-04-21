@@ -49,11 +49,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  * server or ActiveMonitor.
  *
  * <p>This class contains methods:
+ *
  * <ul>
- * <li>To define authorized users</li>,
- * <li>To enable anonymous user access</li>,
- * <li>To configure the JWT filter</li>,
- * <li>To configure the security for Version service</li>.
+ *   <li>To define authorized users,
+ *   <li>To enable anonymous user access,
+ *   <li>To configure the JWT filter,
+ *   <li>To configure the security for Version service.
  * </ul>
  *
  * @author ActiveViam
@@ -74,41 +75,38 @@ public abstract class ASecurityConfig implements ICorsConfig {
   public static final String ROLE_TECH = "ROLE_TECH";
   public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
-  @Autowired
-  protected UserConfig userDetailsConfig;
+  @Autowired protected UserConfig userDetailsConfig;
 
-  @Autowired
-  protected IJwtConfig jwtConfig;
+  @Autowired protected IJwtConfig jwtConfig;
 
   /**
-   * As of Spring Security 5.0, the way the passwords are encoded must
-   * be specified. When logging, the input password will be encoded
-   * and compared with the stored encoded password. To determine which
-   * encoding function was used to encode the password, the stored
-   * encoded passwords are prefixed with the id of the encoding function.
-   * <p>
-   * In order to avoid reformatting existing passwords in databases one can
-   * set the default <code>PasswordEncoder</code> to use for stored
-   * passwords that are not prefixed. This is the role of the following
-   * function.
-   * <p>More information can be found in the
-   * <a href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding />
-   * Spring documentation</a>
+   * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
+   * the input password will be encoded and compared with the stored encoded password. To determine
+   * which encoding function was used to encode the password, the stored encoded passwords are
+   * prefixed with the id of the encoding function.
+   *
+   * <p>In order to avoid reformatting existing passwords in databases one can set the default
+   * <code>PasswordEncoder</code> to use for stored passwords that are not prefixed. This is the
+   * role of the following function.
+   *
+   * <p>More information can be found in the <a
+   * href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding
+   * /> Spring documentation</a>
    */
   @Bean
   public PasswordEncoder passwordEncoder() {
     PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    ((DelegatingPasswordEncoder) passwordEncoder).setDefaultPasswordEncoderForMatches(
-        NoOpPasswordEncoder.getInstance());
+    ((DelegatingPasswordEncoder) passwordEncoder)
+        .setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
     return passwordEncoder;
   }
 
   /**
-   * Returns the default {@link AuthenticationEntryPoint} to use
-   * for the fallback basic HTTP authentication.
+   * Returns the default {@link AuthenticationEntryPoint} to use for the fallback basic HTTP
+   * authentication.
    *
-   * @return The default {@link AuthenticationEntryPoint} for the
-   *         fallback HTTP basic authentication.
+   * @return The default {@link AuthenticationEntryPoint} for the fallback HTTP basic
+   *     authentication.
    */
   @Bean(name = BASIC_AUTH_BEAN_NAME)
   public AuthenticationEntryPoint basicAuthenticationEntryPoint() {
@@ -118,18 +116,18 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /**
    * Configures the authentication of the whole application.
    *
-   * <p>This binds the defined user service to the authentication and sets the source
-   * for JWT tokens.
+   * <p>This binds the defined user service to the authentication and sets the source for JWT
+   * tokens.
    *
-   *  @param auth Spring builder to manage authentication
+   * @param auth Spring builder to manage authentication
    * @throws Exception in case of error
    */
   @Autowired
   public void configureGlobal(final AuthenticationManagerBuilder auth) throws Exception {
-    auth
-        .eraseCredentials(false)
+    auth.eraseCredentials(false)
         // Add an LDAP authentication provider instead of this to support LDAP
-        .userDetailsService(this.userDetailsConfig.userDetailsService()).and()
+        .userDetailsService(this.userDetailsConfig.userDetailsService())
+        .and()
         // Required to allow JWT
         .authenticationProvider(jwtConfig.jwtAuthenticationProvider());
   }
@@ -138,17 +136,19 @@ public abstract class ASecurityConfig implements ICorsConfig {
    * [Bean] Comparator for user roles.
    *
    * <p>Defines the comparator used by:
+   *
    * <ul>
    *   <li>com.quartetfs.biz.pivot.security.impl.ContextValueManager#setAuthorityComparator(
-   *   IAuthorityComparator)</li>
-   *   <li>{@link IJwtService}</li>
+   *       IAuthorityComparator)
+   *   <li>{@link IJwtService}
    * </ul>
-   * @return a comparator that indicates which authority/role prevails over another. <b>NOTICE -
-   *         an authority coming AFTER another one prevails over this "previous" authority.</b>
-   *         This authority ordering definition is essential to resolve possible ambiguity when,
-   *         for a given user, a context value has been defined in more than one authority
-   *         applicable to that user. In such case, it is what has been set for the "prevailing"
-   *         authority that will be effectively retained for that context value for that user.
+   *
+   * @return a comparator that indicates which authority/role prevails over another. <b>NOTICE - an
+   *     authority coming AFTER another one prevails over this "previous" authority.</b> This
+   *     authority ordering definition is essential to resolve possible ambiguity when, for a given
+   *     user, a context value has been defined in more than one authority applicable to that user.
+   *     In such case, it is what has been set for the "prevailing" authority that will be
+   *     effectively retained for that context value for that user.
    */
   @Bean
   public IAuthorityComparator authorityComparator() {
@@ -192,22 +192,16 @@ public abstract class ASecurityConfig implements ICorsConfig {
    */
   public abstract static class AWebSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-    /**
-     * {@code true} to enable the logout URL.
-     */
+    /** {@code true} to enable the logout URL. */
     protected final boolean logout;
     /** The name of the cookie to clear. */
     protected final String cookieName;
 
-    @Autowired
-    protected Environment env;
+    @Autowired protected Environment env;
 
-    @Autowired
-    protected ApplicationContext context;
+    @Autowired protected ApplicationContext context;
 
-    /**
-     * This constructor does not enable the logout URL.
-     */
+    /** This constructor does not enable the logout URL. */
     public AWebSecurityConfigurer() {
       this(null);
     }
@@ -224,6 +218,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
     /**
      * {@inheritDoc}
+     *
      * <p>This configures a new firewall accepting `%` in URLs, as none of the core services encode
      * information in URL. This prevents from double-decoding exploits.<br>
      * The firewall is also configured to accept `\` - backslash - as none of ActiveViam APIs offer
@@ -233,7 +228,6 @@ public abstract class ASecurityConfig implements ICorsConfig {
      * extending this method. As far as ActiveViam APIs are concerned, `/` and `.` in URL parameters
      * do not represent any risk. `;` - semi-colon - is also not supported, for various APIs end up
      * target an actual database, and because this character is less likely to be used.
-     * </p>
      */
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -255,8 +249,10 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
       http
           // As of Spring Security 4.0, CSRF protection is enabled by default.
-          .csrf().disable()
-          .cors().and()
+          .csrf()
+          .disable()
+          .cors()
+          .and()
           // To allow authentication with JWT (Required for ActiveUI)
           .addFilterAfter(jwtFilter, SecurityContextPersistenceFilter.class);
 
@@ -280,6 +276,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
     /**
      * Applies the specific configuration for the endpoint.
+     *
      * @see #configure(HttpSecurity)
      */
     protected abstract void doConfigure(HttpSecurity http) throws Exception;
@@ -300,8 +297,10 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
       http.antMatcher(VersionServicesConfig.REST_API_URL_PREFIX + "/**")
           // As of Spring Security 4.0, CSRF protection is enabled by default.
-          .csrf().disable()
-          .cors().and()
+          .csrf()
+          .disable()
+          .cors()
+          .and()
           .authorizeRequests()
           .antMatchers("/**")
           .permitAll();

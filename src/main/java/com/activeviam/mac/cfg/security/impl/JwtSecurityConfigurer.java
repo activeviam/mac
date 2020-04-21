@@ -34,8 +34,10 @@ public class JwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
         context.getBean(ASecurityConfig.BASIC_AUTH_BEAN_NAME, AuthenticationEntryPoint.class);
     http.antMatcher(JwtRestServiceConfig.REST_API_URL_PREFIX + "/**")
         // As of Spring Security 4.0, CSRF protection is enabled by default.
-        .csrf().disable()
-        .cors().and()
+        .csrf()
+        .disable()
+        .cors()
+        .and()
         // Configure CORS
         .authorizeRequests()
         .antMatchers(HttpMethod.OPTIONS, "/**")

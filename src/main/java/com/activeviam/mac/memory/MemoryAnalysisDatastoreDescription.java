@@ -41,8 +41,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   /** Name of the provider component <-> provider store */
   public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
-  /** Name of the
-  /** Name of the chunk <-> application linking store */
+  /** Name of the /** Name of the chunk <-> application linking store */
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
   /** Owner value for a chunk held by multiple components */
@@ -438,7 +437,32 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
                     .withMapping(
                         DatastoreConstants.APPLICATION__DUMP_NAME,
                         DatastoreConstants.APPLICATION__DUMP_NAME)
-                    .build()))
+                    .build(),
+                //ChunkToDico to Dico store reference
+                StartBuilding.reference()
+                .fromStore(DatastoreConstants.CHUNK_TO_DICO_STORE)
+                .toStore(DatastoreConstants.DICTIONARY_STORE)
+                .withName(DatastoreConstants.REF_DICTIONARY)
+                .withMapping(DatastoreConstants.CHUNK_TO_DICO__DICO_ID,
+                    DatastoreConstants.DICTIONARY_ID)
+                .build(),
+                //ChunkToReference to Reference store reference
+                StartBuilding.reference()
+                    .fromStore(DatastoreConstants.CHUNK_TO_REF_STORE)
+                    .toStore(DatastoreConstants.REFERENCE_STORE)
+                    .withName(DatastoreConstants.REF_REFERENCES)
+                    .withMapping(DatastoreConstants.CHUNK_TO_REF__REF_ID,
+                        DatastoreConstants.REFERENCE_ID)
+                    .build(),
+                //ChunkToIndex to Index store reference
+                StartBuilding.reference()
+                    .fromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE)
+                    .toStore(DatastoreConstants.INDEX_STORE)
+                    .withName(DatastoreConstants.REF_INDEX)
+                    .withMapping(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID,
+                        DatastoreConstants.INDEX_ID)
+                    .build()
+                ))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }

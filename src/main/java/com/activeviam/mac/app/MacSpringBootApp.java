@@ -7,8 +7,6 @@
 package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
-import com.qfs.pivot.servlet.impl.ContextValueFilter;
-import com.qfs.security.impl.SpringCorsFilter;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import javax.servlet.MultipartConfigElement;
@@ -17,7 +15,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletRegistrationBean;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -73,5 +70,4 @@ public class MacSpringBootApp {
     multipartConfig.ifAvailable(registration::setMultipartConfig);
     return registration;
   }
-
 }

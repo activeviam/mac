@@ -54,7 +54,6 @@ public class SecurityConfig extends ASecurityConfig {
   /** Name of the Cookies of the MAC application */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
-
   @Bean
   public IUserDetailsService qfsUserDetailsService() {
     return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());

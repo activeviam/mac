@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.1.4.RELEASE</version>
+    <version>2.2.5.RELEASE</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -20,9 +20,9 @@
   </prerequisites>
 
   <properties>
-    <activepivot.version>5.9.0-rc2</activepivot.version>
+    <activepivot.version>5.9.0-RC2</activepivot.version>
     <activeui.version>4.3.6</activeui.version>
-    <tomcat.version>8.5.23</tomcat.version>
+    <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.12</lombok.version>
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>

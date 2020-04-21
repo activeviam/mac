@@ -6,8 +6,8 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.activeviam.copper.HierarchyCoordinate;
-import com.activeviam.copper.LevelCoordinate;
+import com.activeviam.copper.HierarchyIdentifier;
+import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -373,7 +373,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   private void processHierarchy(final IMemoryStatistic stat) {
     String hierarchyDescription =
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_HIERARCHY_ID).asText();
-    HierarchyCoordinate hc = HierarchyCoordinate.fromDescription(hierarchyDescription);
+    HierarchyIdentifier hc = HierarchyIdentifier.fromDescription(hierarchyDescription);
     this.dimension = hc.dimension;
     this.hierarchy = hc.hierarchy;
 
@@ -388,7 +388,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     String levelDescription =
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
-    LevelCoordinate lc = LevelCoordinate.fromDescription(levelDescription);
+    LevelIdentifier lc = LevelIdentifier.fromDescription(levelDescription);
     this.level = lc.level;
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MANAGER_ID, this.manager);

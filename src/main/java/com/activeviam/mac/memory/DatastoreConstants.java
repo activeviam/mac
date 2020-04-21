@@ -324,5 +324,11 @@ public class DatastoreConstants {
   /** Maximum Application direct memory */
   public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
 
+  public static final String REF_DICTIONARY = "DictionaryStoreReference";
+
+  public static final String REF_INDEX ="IndexStoreReference";
+
+  public static final String REF_REFERENCES = "ReferenceStoreReference";
+
   private DatastoreConstants() {}
 }
