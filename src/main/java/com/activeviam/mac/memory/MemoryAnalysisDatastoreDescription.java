@@ -7,6 +7,9 @@
 package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
+import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.NoOwner;
+import com.activeviam.mac.entities.SharedOwner;
 import com.qfs.chunk.IChunk;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IReferenceDescription;
@@ -41,7 +44,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
   /** Owner value for a chunk held by multiple components */
-  public static final String SHARED_OWNER = "shared";
+  public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
   /** Component value for a chunk held by multiple components */
   public static final String SHARED_COMPONENT = "shared";
 
@@ -85,7 +88,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Foreign keys */
-        .withField(DatastoreConstants.CHUNK__OWNER)
+        .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
         .dictionarized()
