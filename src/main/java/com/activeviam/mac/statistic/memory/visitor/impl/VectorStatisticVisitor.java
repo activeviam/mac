@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -155,7 +156,8 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.store);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(

@@ -9,6 +9,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import com.activeviam.copper.HierarchyCoordinate;
 import com.activeviam.copper.LevelCoordinate;
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -206,7 +207,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
         this.providerCpnType.toString());
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.pivot);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.CHUNK__OWNER, new CubeOwner(this.pivot));
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;

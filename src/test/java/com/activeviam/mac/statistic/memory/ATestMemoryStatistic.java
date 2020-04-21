@@ -17,6 +17,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
+import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
@@ -937,7 +938,7 @@ public abstract class ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__OWNER, IRecordFormat.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(CHUNK__OWNER, NoOwner.getInstance()),
                     BaseConditions.Equal(CHUNK__COMPONENT, IRecordFormat.GLOBAL_DEFAULT_STRING)))
             .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER, CHUNK__COMPONENT)
             .onCurrentThread()
