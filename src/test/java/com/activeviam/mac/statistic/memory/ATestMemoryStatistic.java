@@ -631,7 +631,7 @@ public abstract class ATestMemoryStatistic {
     // record to the joined stores
     // This is necessary to ensure a dimensions have a least a member, which is required for the MDX
     // engine to work properly
-    d.edit(tm -> tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L));
+    d.edit(tm -> tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A"));
 
     return d;
   }

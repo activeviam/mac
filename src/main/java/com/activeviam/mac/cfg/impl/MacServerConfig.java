@@ -128,9 +128,9 @@ public class MacServerConfig {
     final IDatastore datastore = datastoreConfig.datastore();
     datastore.edit(
         tm -> {
-          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L, "N/A");
           tm.add(
               DatastoreConstants.CHUNK_TO_LEVEL_STORE,
               "N/A",
@@ -139,8 +139,9 @@ public class MacServerConfig {
               "N/A",
               "N/A",
               "N/A",
+              "N/A",
               "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A", "N/A");
         });
   }
 

@@ -249,7 +249,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
           stat,
           transaction,
           DatastoreConstants.CHUNK_TO_DICO_STORE,
-          FeedVisitor.buildDicoTupleForStructure(
+          FeedVisitor.buildDicoTupleForStructure(this.dumpName,
               this.directParentType, this.directParentId, this.dictionaryId, joinStoreFormat));
     }
 

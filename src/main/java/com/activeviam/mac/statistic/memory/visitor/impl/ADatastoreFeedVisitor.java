@@ -56,6 +56,8 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
               this.storageMetadata, DatastoreConstants.CHUNK_TO_FIELD_STORE);
       final Object[] tuple = new Object[format.getFieldCount()];
       FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+      FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_FIELD__STORE, this.store);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_FIELD__FIELD, this.field);
@@ -80,6 +82,8 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
               this.storageMetadata, DatastoreConstants.CHUNK_TO_INDEX_STORE);
       final Object[] tuple = new Object[format.getFieldCount()];
       FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+      FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, this.indexId);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, type);
@@ -100,6 +104,8 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
       final IRecordFormat format =
           FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_REF_STORE);
       final Object[] tuple = new Object[format.getFieldCount()];
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_REF__REF_ID, this.referenceId);
       FeedVisitor.setTupleElement(
