@@ -67,8 +67,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
     })
 public class TestMACMeasures extends ATestMemoryStatistic {
 
-  @Autowired
-  ManagerDescriptionConfig config;
+  @Autowired ManagerDescriptionConfig config;
 
   Pair<IDatastore, IActivePivotManager> monitoredApp;
 
@@ -87,8 +86,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
           .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
           .build();
 
-  @Rule
-  public final ResourceRule methodResources = new ResourceRule();
+  @Rule public final ResourceRule methodResources = new ResourceRule();
 
   @BeforeClass
   public static void init() {
@@ -142,11 +140,18 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = this.methodResources.create(() ->
-        StartBuilding.datastore().setSchemaDescription(this.config.schemaDescription()).build());
+    final IDatastore monitoringDatastore =
+        this.methodResources.create(
+            () ->
+                StartBuilding.datastore()
+                    .setSchemaDescription(this.config.schemaDescription())
+                    .build());
     // Start a monitoring cube
     IActivePivotManager manager =
-        StartBuilding.manager().setDescription(this.config.managerDescription()).setDatastoreAndPermissions(monitoringDatastore).buildAndStart();
+        StartBuilding.manager()
+            .setDescription(this.config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
