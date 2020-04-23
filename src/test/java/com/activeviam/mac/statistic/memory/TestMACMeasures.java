@@ -9,6 +9,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;
 import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyRuleBuilder;
+import com.qfs.junit.ResourceRule;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -20,7 +21,6 @@ import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
@@ -40,6 +40,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
     })
 public class TestMACMeasures extends ATestMemoryStatistic {
 
-  @Autowired IActivePivotManagerDescription managerDescription;
+  @Autowired
+  ManagerDescriptionConfig config;
 
   Pair<IDatastore, IActivePivotManager> monitoredApp;
 
@@ -84,6 +86,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
       new ActiveViamPropertyRuleBuilder()
           .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
           .build();
+
+  @Rule
+  public final ResourceRule methodResources = new ResourceRule();
 
   @BeforeClass
   public static void init() {
@@ -137,10 +142,11 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IDatastore monitoringDatastore = this.methodResources.create(() ->
+        StartBuilding.datastore().setSchemaDescription(this.config.schemaDescription()).build());
     // Start a monitoring cube
     IActivePivotManager manager =
-        StartBuilding.manager().setDescription(managerDescription).buildAndStart();
+        StartBuilding.manager().setDescription(this.config.managerDescription()).setDatastoreAndPermissions(monitoringDatastore).buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
