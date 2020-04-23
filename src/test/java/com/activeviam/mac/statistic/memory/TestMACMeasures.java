@@ -78,7 +78,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 100;
   public static final int REMOVED_DATA_SIZE = 10;
-  public static final int MAX_GC_STEPS = 10;
 
   @ClassRule
   public static ActiveViamPropertyRule propertyRule =
@@ -152,6 +151,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             .setDescription(this.config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
+    this.methodResources.register(manager::stop);
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
@@ -214,7 +214,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testDirectMemorySum() throws AgentException, IOException, QueryException {
+  public void testDirectMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -253,7 +253,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testSharedCount() throws AgentException, IOException, QueryException {
+  public void testSharedCount() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -267,7 +267,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testOnHeapMemorySum() throws AgentException, IOException, QueryException {
+  public void testOnHeapMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -437,7 +437,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testNonWrittenRatio() throws AgentException, IOException, QueryException {
+  public void testNonWrittenRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -475,7 +475,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testDeletedRatio() throws AgentException, IOException, QueryException {
+  public void testDeletedRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
