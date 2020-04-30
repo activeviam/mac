@@ -9,7 +9,10 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
+import com.activeviam.copper.api.CopperLevelCondition;
+import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
+import com.activeviam.copper.api.Window;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -20,8 +23,14 @@ import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.google.common.base.Objects;
+import com.qfs.agg.impl.CountFunction;
+import com.qfs.agg.impl.SingleValueFunction;
+import com.qfs.agg.impl.SumFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
+import com.qfs.literal.ILiteralType;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
+import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
@@ -35,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** @author Quartet FS */
 @Configuration
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
@@ -188,6 +196,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     return builder
         // FROM ChunkStore
         .withDimension(CHUNK_HIERARCHY)
+        .withHierarchy("ChunkId")
+        .withLevelOfSameName()
+        .withPropertyName(DatastoreConstants.CHUNK_ID)
         .withHierarchy(CHUNK_TYPE_LEVEL)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
@@ -251,9 +262,22 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private void copperCalculations(final ICopperContext context) {
+    memoryMeasure(context);
     joinHierarchies(context);
     chunkMeasures(context);
     applicationMeasure(context);
+  }
+
+  private void memoryMeasure(final ICopperContext context) {
+    Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
+        .as(USED_HEAP).publish(context);
+    Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
+        .as(COMMITTED_HEAP).publish(context);
+    Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
+        .as(USED_DIRECT).publish(context);
+    Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
+        .as(MAX_DIRECT).publish(context);
+
   }
 
   private void joinHierarchies(final ICopperContext context) {
@@ -342,6 +366,43 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(HEAP_MEMORY_SUM)
         .withFormatter(ByteFormatter.KEY)
         .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__SIZE)
+        .as(CHUNK_SIZE_SUM)
+        .withFormatter(NUMBER_FORMATTER)
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
+        .as(NON_WRITTEN_ROWS_COUNT)
+        .withFormatter(NUMBER_FORMATTER)
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__FREE_ROWS)
+        .withFormatter(NUMBER_FORMATTER)
+        .as(DELETED_ROWS_COUNT)
+        .cast(ILiteralType.DOUBLE)
+        .divide(Copper.sum(DatastoreConstants.CHUNK__SIZE))
+        .withFormatter(PERCENT_FORMATTER)
+        .as("DeletedRows.Ratio")
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
+        .withFormatter(NUMBER_FORMATTER)
+        .as(NON_WRITTEN_ROWS_COUNT)
+        .cast(ILiteralType.DOUBLE)
+        .divide(Copper.sum(DatastoreConstants.CHUNK__SIZE))
+        .withFormatter(PERCENT_FORMATTER)
+        .as("NonWrittenRows.Ratio")
+        .publish(context);
+
+    CopperLevelCondition sharedCondition = Copper.level("Owner").eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
+        .and(Copper.level("Owner component").eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
+        .and(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+
+    Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY).filter(sharedCondition)
+        .as("Shared.COUNT")
+        .publish(context);
+
   }
 
   private void applicationMeasure(final ICopperContext context) {}

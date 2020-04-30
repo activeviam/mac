@@ -55,19 +55,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  * <p>Tools.extractSnappyFile(path to file);
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(
-    properties = {
-      "contentServer.security.calculatedMemberRole=empty",
-      "contentServer.security.kpiRole=empty"
-    })
-@ContextConfiguration(
-    classes = {
-      ManagerDescriptionConfig.class,
-    })
 public class TestMACMeasures extends ATestMemoryStatistic {
-
-  @Autowired ManagerDescriptionConfig config;
 
   Pair<IDatastore, IActivePivotManager> monitoredApp;
 
@@ -139,16 +127,17 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
+    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastore monitoringDatastore =
         this.methodResources.create(
             () ->
                 StartBuilding.datastore()
-                    .setSchemaDescription(this.config.schemaDescription())
+                    .setSchemaDescription(config.schemaDescription())
                     .build());
     // Start a monitoring cube
     IActivePivotManager manager =
         StartBuilding.manager()
-            .setDescription(this.config.managerDescription())
+            .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
     this.methodResources.register(manager::stop);
@@ -390,7 +379,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + measure
                                 + "] ON COLUMNS"
                                 + " FROM [MemoryCube]"
-                                + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
+                                + " WHERE ([Chunk Owners].[Owner].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
                     final Long resultValue = extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
