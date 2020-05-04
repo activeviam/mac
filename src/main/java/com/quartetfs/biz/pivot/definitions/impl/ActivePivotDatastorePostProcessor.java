@@ -15,6 +15,7 @@ import com.activeviam.copper.IUserDatastoreSchemaDescription;
 import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.copper.UserDatastoreSchemaDescription;
 import com.activeviam.copper.agg.AJoinAnalysisAggregationProcedure;
+import com.activeviam.mac.Workaround;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IDatastoreSchemaDescriptionPostProcessor;
 import com.qfs.desc.IFieldDescription;
@@ -75,6 +76,10 @@ import java.util.stream.Collectors;
  *
  * @author ActiveViam
  */
+@Workaround(
+    solution =
+        "We need this PostProcessor for "
+            + "com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor.JoinProcedurePostProcessor.processPath")
 public class ActivePivotDatastorePostProcessor implements IDatastoreSchemaDescriptionPostProcessor {
 
   /** Field path separator */

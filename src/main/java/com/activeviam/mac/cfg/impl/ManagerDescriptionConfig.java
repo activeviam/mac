@@ -403,10 +403,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     CopperLevelCondition sharedCondition =
         Copper.level("Owner")
             .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-            .and(
+            .or(
                 Copper.level("Owner component")
                     .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .and(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+            .or(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
 
     Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
         .filter(sharedCondition)
