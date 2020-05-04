@@ -6,13 +6,12 @@
  */
 package com.activeviam.postprocessor.impl;
 
+import com.activeviam.fwk.ActiveviamException;
 import com.quartetfs.biz.pivot.ILocation;
 import com.quartetfs.biz.pivot.cube.hierarchy.measures.IPostProcessorCreationContext;
 import com.quartetfs.biz.pivot.postprocessing.IPostProcessor;
 import com.quartetfs.biz.pivot.postprocessing.impl.ADynamicAggregationPostProcessor;
-import com.quartetfs.fwk.QuartetException;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -44,13 +43,13 @@ public class DirectMemoryOnlyPostProcessor extends ADynamicAggregationPostProces
   }
 
   @Override
-  public void init(Properties properties) throws QuartetException {
+  public void init(Properties properties) throws ActiveviamException {
     super.init(properties);
 
     String underlyingMeasureName = properties.getProperty(MEASURE_KEY);
     if (underlyingMeasureName == null) {
-      throw new QuartetRuntimeException(
-          "Please set a value for the propery key '" + MEASURE_KEY + "'");
+      throw new ActiveviamException(
+          "Please set a value for the property key '" + MEASURE_KEY + "'");
     }
 
     if (underlyingMeasureName.equals(underlyingMeasures[0])) {

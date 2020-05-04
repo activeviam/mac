@@ -3,26 +3,24 @@ package com.activeviam.mac.statistic.memory;
 import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
-import com.activeviam.mac.cfg.impl.DatastoreDescriptionConfig;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;
 import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyRuleBuilder;
+import com.qfs.junit.ResourceRule;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
@@ -42,12 +40,8 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Test class verifying the results obtained by the Measures provided in the MemoryAnalysisCube
@@ -56,22 +50,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  * <p>Tools.extractSnappyFile(path to file);
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(
-    properties = {
-      "contentServer.security.calculatedMemberRole=empty",
-      "contentServer.security.kpiRole=empty"
-    })
-@ContextConfiguration(
-    classes = {
-      DatastoreDescriptionConfig.class,
-      ManagerDescriptionConfig.class,
-    })
 public class TestMACMeasures extends ATestMemoryStatistic {
-
-  @Autowired IActivePivotManagerDescription managerDescription;
-
-  @Autowired IDatastoreDescriptionConfig datastoreDescriptionConfig;
 
   Pair<IDatastore, IActivePivotManager> monitoredApp;
 
@@ -82,13 +61,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 100;
   public static final int REMOVED_DATA_SIZE = 10;
-  public static final int MAX_GC_STEPS = 10;
 
   @ClassRule
   public static ActiveViamPropertyRule propertyRule =
       new ActiveViamPropertyRuleBuilder()
           .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
           .build();
+
+  @Rule public final ResourceRule methodResources = new ResourceRule();
 
   @BeforeClass
   public static void init() {
@@ -142,14 +122,18 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastore monitoringDatastore =
+        this.methodResources.create(
+            () ->
+                StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
     // Start a monitoring cube
     IActivePivotManager manager =
         StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndDescription(
-                monitoringDatastore, datastoreDescriptionConfig.schemaDescription())
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
+    this.methodResources.register(manager::stop);
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
@@ -212,7 +196,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testDirectMemorySum() throws AgentException, IOException, QueryException {
+  public void testDirectMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -251,7 +235,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testSharedCount() throws AgentException, IOException, QueryException {
+  public void testSharedCount() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -265,7 +249,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testOnHeapMemorySum() throws AgentException, IOException, QueryException {
+  public void testOnHeapMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -388,7 +372,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + measure
                                 + "] ON COLUMNS"
                                 + " FROM [MemoryCube]"
-                                + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
+                                + " WHERE ([Chunk Owners].[Owner].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
                     final Long resultValue = extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
@@ -435,7 +419,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testNonWrittenRatio() throws AgentException, IOException, QueryException {
+  public void testNonWrittenRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -473,7 +457,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testDeletedRatio() throws AgentException, IOException, QueryException {
+  public void testDeletedRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);

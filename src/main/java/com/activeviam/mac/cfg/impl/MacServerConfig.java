@@ -6,7 +6,6 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.mac.cfg.security.impl.CorsConfig;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -60,7 +59,6 @@ import org.springframework.core.env.Environment;
       ActiveViamPropertyFromSpringConfig.class,
       JwtRestServiceConfig.class,
       JwtConfig.class,
-      DatastoreDescriptionConfig.class,
       ManagerDescriptionConfig.class,
 
       // Pivot
@@ -78,7 +76,6 @@ import org.springframework.core.env.Environment;
 
       // Specific to monitoring server
       SecurityConfig.class,
-      CorsConfig.class,
       UserConfig.class,
       SourceConfig.class,
       ActiveUIResourceServerConfig.class
@@ -131,9 +128,9 @@ public class MacServerConfig {
     final IDatastore datastore = datastoreConfig.datastore();
     datastore.edit(
         tm -> {
-          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L, "N/A");
           tm.add(
               DatastoreConstants.CHUNK_TO_LEVEL_STORE,
               "N/A",
@@ -142,8 +139,9 @@ public class MacServerConfig {
               "N/A",
               "N/A",
               "N/A",
+              "N/A",
               "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A", "N/A");
         });
   }
 

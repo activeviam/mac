@@ -55,11 +55,10 @@ public class SecurityConfig extends ASecurityConfig {
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
   /**
-   * User details service wrapped into a Quartet interface.
+   * Returns the spring security bean user details service wrapper.
    *
-   * <p>This bean is used by {@link ActiveMonitorPivotExtensionServiceConfiguration}
-   *
-   * @return a user details service
+   * @return the {@link IUserDetailsService} used as spring security bean user details service
+   *     wrapper.
    */
   @Bean
   public IUserDetailsService qfsUserDetailsService() {

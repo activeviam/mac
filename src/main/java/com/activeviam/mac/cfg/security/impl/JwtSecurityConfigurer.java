@@ -6,9 +6,7 @@
  */
 package com.activeviam.mac.cfg.security.impl;
 
-import com.qfs.security.cfg.ICorsFilterConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
-import javax.servlet.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +15,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
 /**
  * To expose the JWT REST service
@@ -33,15 +30,15 @@ public class JwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    final Filter corsFilter = context.getBean(ICorsFilterConfig.class).corsFilter();
     final AuthenticationEntryPoint basicAuthenticationEntryPoint =
         context.getBean(ASecurityConfig.BASIC_AUTH_BEAN_NAME, AuthenticationEntryPoint.class);
     http.antMatcher(JwtRestServiceConfig.REST_API_URL_PREFIX + "/**")
         // As of Spring Security 4.0, CSRF protection is enabled by default.
         .csrf()
         .disable()
+        .cors()
+        .and()
         // Configure CORS
-        .addFilterBefore(corsFilter, SecurityContextPersistenceFilter.class)
         .authorizeRequests()
         .antMatchers(HttpMethod.OPTIONS, "/**")
         .permitAll()

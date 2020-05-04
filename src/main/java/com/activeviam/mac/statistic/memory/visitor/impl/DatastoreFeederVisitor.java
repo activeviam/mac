@@ -310,7 +310,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           transaction,
           DatastoreConstants.CHUNK_TO_DICO_STORE,
           FeedVisitor.buildDicoTupleForStructure(
-              this.directParentType, this.directParentId, this.dictionaryId, joinStoreFormat));
+              this.dumpName,
+              this.directParentType,
+              this.directParentId,
+              this.dictionaryId,
+              joinStoreFormat));
     }
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 

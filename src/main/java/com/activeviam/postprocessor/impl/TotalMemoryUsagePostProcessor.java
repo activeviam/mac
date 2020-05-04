@@ -6,11 +6,11 @@
  */
 package com.activeviam.postprocessor.impl;
 
+import com.activeviam.fwk.ActiveviamException;
 import com.quartetfs.biz.pivot.ILocation;
 import com.quartetfs.biz.pivot.cube.hierarchy.measures.IPostProcessorCreationContext;
 import com.quartetfs.biz.pivot.postprocessing.IPostProcessor;
 import com.quartetfs.biz.pivot.postprocessing.impl.ABasicPostProcessor;
-import com.quartetfs.fwk.QuartetException;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import java.util.Properties;
 
@@ -36,7 +36,7 @@ public class TotalMemoryUsagePostProcessor extends ABasicPostProcessor<Long> {
   }
 
   @Override
-  public void init(Properties properties) throws QuartetException {
+  public void init(Properties properties) throws ActiveviamException {
     properties.put(UNDERLYING_MEASURES, "DirectMemoryChunksUsage.SUM,HeapMemoryChunksUsage.SUM");
     super.init(properties);
   }
