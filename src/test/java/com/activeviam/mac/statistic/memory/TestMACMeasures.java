@@ -42,11 +42,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Test class verifying the results obtained by the Measures provided in the MemoryAnalysisCube
@@ -131,9 +126,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore =
         this.methodResources.create(
             () ->
-                StartBuilding.datastore()
-                    .setSchemaDescription(config.schemaDescription())
-                    .build());
+                StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
     // Start a monitoring cube
     IActivePivotManager manager =
         StartBuilding.manager()
