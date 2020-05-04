@@ -401,55 +401,55 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   @Override
   public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
     return Stream.of(
-        getChunkReferences(),
-        Stream.of(
-            // Level refs
-            StartBuilding.reference()
-                .fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-                .toStore(DatastoreConstants.LEVEL_STORE)
-                .withName("LevelInfo")
-                .withMapping(
-                    DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID,
-                    DatastoreConstants.LEVEL__MANAGER_ID)
-                .withMapping(
-                    DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID,
-                    DatastoreConstants.LEVEL__PIVOT_ID)
-                .withMapping(
-                    DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION,
-                    DatastoreConstants.LEVEL__DIMENSION)
-                .withMapping(
-                    DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY,
-                    DatastoreConstants.LEVEL__HIERARCHY)
-                .withMapping(
-                    DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
-                .build(),
-            // Provider component refs
-            StartBuilding.reference()
-                .fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-                .toStore(DatastoreConstants.PROVIDER_STORE)
-                .withName(PROVIDER_COMPONENT_TO_PROVIDER)
-                .withMapping(
-                    DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
-                    DatastoreConstants.PROVIDER__PROVIDER_ID)
-                .withMapping(
-                    DatastoreConstants.APPLICATION__DUMP_NAME,
-                    DatastoreConstants.APPLICATION__DUMP_NAME)
-                .build(),
-            // Provider partitions refs
-            StartBuilding.reference()
-                .fromStore(DatastoreConstants.PROVIDER_STORE)
-                .toStore(DatastoreConstants.PIVOT_STORE)
-                .withName("ProviderToPivot")
-                .withMapping(
-                    DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-                .withMapping(
-                    DatastoreConstants.PROVIDER__MANAGER_ID,
-                    DatastoreConstants.PIVOT__MANAGER_ID)
-                .withMapping(
-                    DatastoreConstants.APPLICATION__DUMP_NAME,
-                    DatastoreConstants.APPLICATION__DUMP_NAME)
-                .build()),
-        chunkToComponentReferences())
+            getChunkReferences(),
+            Stream.of(
+                // Level refs
+                StartBuilding.reference()
+                    .fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
+                    .toStore(DatastoreConstants.LEVEL_STORE)
+                    .withName("LevelInfo")
+                    .withMapping(
+                        DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID,
+                        DatastoreConstants.LEVEL__MANAGER_ID)
+                    .withMapping(
+                        DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID,
+                        DatastoreConstants.LEVEL__PIVOT_ID)
+                    .withMapping(
+                        DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION,
+                        DatastoreConstants.LEVEL__DIMENSION)
+                    .withMapping(
+                        DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY,
+                        DatastoreConstants.LEVEL__HIERARCHY)
+                    .withMapping(
+                        DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
+                    .build(),
+                // Provider component refs
+                StartBuilding.reference()
+                    .fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+                    .toStore(DatastoreConstants.PROVIDER_STORE)
+                    .withName(PROVIDER_COMPONENT_TO_PROVIDER)
+                    .withMapping(
+                        DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
+                        DatastoreConstants.PROVIDER__PROVIDER_ID)
+                    .withMapping(
+                        DatastoreConstants.APPLICATION__DUMP_NAME,
+                        DatastoreConstants.APPLICATION__DUMP_NAME)
+                    .build(),
+                // Provider partitions refs
+                StartBuilding.reference()
+                    .fromStore(DatastoreConstants.PROVIDER_STORE)
+                    .toStore(DatastoreConstants.PIVOT_STORE)
+                    .withName("ProviderToPivot")
+                    .withMapping(
+                        DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
+                    .withMapping(
+                        DatastoreConstants.PROVIDER__MANAGER_ID,
+                        DatastoreConstants.PIVOT__MANAGER_ID)
+                    .withMapping(
+                        DatastoreConstants.APPLICATION__DUMP_NAME,
+                        DatastoreConstants.APPLICATION__DUMP_NAME)
+                    .build()),
+            chunkToComponentReferences())
         .flatMap(Function.identity())
         .collect(Collectors.toList());
   }
@@ -495,8 +495,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .fromStore(DatastoreConstants.CHUNK_TO_REF_STORE)
             .toStore(DatastoreConstants.REFERENCE_STORE)
             .withName(DatastoreConstants.REF_REFERENCES)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_REF__REF_ID, DatastoreConstants.REFERENCE_ID)
+            .withMapping(DatastoreConstants.CHUNK_TO_REF__REF_ID, DatastoreConstants.REFERENCE_ID)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
             .build(),
         // ChunkToIndex to Index store reference
@@ -504,8 +503,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .fromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE)
             .toStore(DatastoreConstants.INDEX_STORE)
             .withName(DatastoreConstants.REF_INDEX)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, DatastoreConstants.INDEX_ID)
+            .withMapping(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, DatastoreConstants.INDEX_ID)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
             .build());
   }

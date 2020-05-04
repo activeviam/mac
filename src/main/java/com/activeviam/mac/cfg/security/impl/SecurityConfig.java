@@ -54,6 +54,12 @@ public class SecurityConfig extends ASecurityConfig {
   /** Name of the Cookies of the MAC application */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
+  /**
+   * Returns the spring security bean user details service wrapper.
+   *
+   * @return the {@link IUserDetailsService} used as spring security bean user details service
+   *     wrapper.
+   */
   @Bean
   public IUserDetailsService qfsUserDetailsService() {
     return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());

@@ -10,9 +10,7 @@ import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperLevelCondition;
-import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
-import com.activeviam.copper.api.Window;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -23,14 +21,11 @@ import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.google.common.base.Objects;
 import com.qfs.agg.impl.CountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
-import com.qfs.agg.impl.SumFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
-import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
@@ -44,6 +39,12 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Manager Description Config that defines the manager description which contains the cube
+ * dimensions and every CopperMeasure
+ *
+ * @author ActiveViam
+ */
 @Configuration
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
@@ -77,6 +78,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Type of the structure owning the chunk */
   public static final String CHUNK_TYPE_LEVEL = "Type";
 
+  /** Name of the chunk dump level */
   public static final String CHUNK_DUMP_NAME_LEVEL = "Import info";
 
   /** Type of the structure owning the chunk */
@@ -270,14 +272,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private void memoryMeasure(final ICopperContext context) {
     Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(USED_HEAP).publish(context);
+        .as(USED_HEAP)
+        .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(COMMITTED_HEAP).publish(context);
+        .as(COMMITTED_HEAP)
+        .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(USED_DIRECT).publish(context);
+        .as(USED_DIRECT)
+        .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(MAX_DIRECT).publish(context);
-
+        .as(MAX_DIRECT)
+        .publish(context);
   }
 
   private void joinHierarchies(final ICopperContext context) {
@@ -316,8 +321,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     Copper.sum(
-        chunkToDicoStore.field(
-            DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_SIZE))
+            chunkToDicoStore.field(
+                DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_SIZE))
         .as("Dictionary Size")
         .withFormatter(ByteFormatter.KEY)
         .publish(context);
@@ -337,8 +342,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // Reference name
     Copper.newLookupMeasure(
-        chunkToReferenceStore.field(
-            DatastoreConstants.REF_REFERENCES + "/" + DatastoreConstants.REFERENCE_NAME))
+            chunkToReferenceStore.field(
+                DatastoreConstants.REF_REFERENCES + "/" + DatastoreConstants.REFERENCE_NAME))
         .as("Reference Name")
         .publish(context);
 
@@ -395,14 +400,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("NonWrittenRows.Ratio")
         .publish(context);
 
-    CopperLevelCondition sharedCondition = Copper.level("Owner").eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-        .and(Copper.level("Owner component").eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-        .and(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+    CopperLevelCondition sharedCondition =
+        Copper.level("Owner")
+            .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
+            .and(
+                Copper.level("Owner component")
+                    .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
+            .and(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
 
-    Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY).filter(sharedCondition)
+    Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
+        .filter(sharedCondition)
         .as("Shared.COUNT")
         .publish(context);
-
   }
 
   private void applicationMeasure(final ICopperContext context) {}
