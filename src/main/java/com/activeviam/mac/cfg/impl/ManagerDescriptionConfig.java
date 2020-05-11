@@ -333,13 +333,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("Dictionary Size")
         .publish(context);
 
-    Copper.sum(
-        chunkToDicoStore.field(
-            DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_ORDER))
-        .withFormatter(NUMBER_FORMATTER)
-        .as("Dictionary Order")
-        .publish(context);
-
     // 3- Chunk to references
     CopperStore chunkToReferenceStore =
         Copper.store(DatastoreConstants.CHUNK_TO_REF_STORE)

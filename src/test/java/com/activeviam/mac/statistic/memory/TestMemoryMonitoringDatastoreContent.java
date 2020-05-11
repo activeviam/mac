@@ -56,9 +56,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               TestMemoryStatisticLoading.createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportApplication("testLoadComplete");
 
-          final Path debugPath = Paths.get("/home/aymane/mac/statistics/");
           final IMemoryStatistic fullStats =
-              TestMemoryStatisticLoading.loadMemoryStatFromFolder(debugPath);
+              TestMemoryStatisticLoading.loadMemoryStatFromFolder(exportPath);
           final Datastore monitoringDatastore =
               (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
 

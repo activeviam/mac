@@ -73,9 +73,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   static Object[] buildChunkTupleFrom(final IRecordFormat format, final ChunkStatistic stat) {
     final Object[] tuple = new Object[format.getFieldCount()];
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
-    if ((Long) tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] == 3580074){
-      System.out.println("Debug");
-    }
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
         stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
