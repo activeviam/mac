@@ -304,7 +304,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
-    if (this.directParentId != null && directParentType != null) {
+    if (directParentId != null && directParentType != null) {
       FeedVisitor.add(
           stat,
           transaction,
