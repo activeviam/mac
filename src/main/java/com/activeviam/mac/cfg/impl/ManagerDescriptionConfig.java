@@ -6,17 +6,12 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import static com.activeviam.mac.memory.DatastoreConstants.INDEX__FIELDS;
-import static com.activeviam.mac.memory.DatastoreConstants.REF_INDEX;
-
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperLevelCondition;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
-import com.activeviam.copper.impl.DataCubeContext;
-import com.activeviam.copper.measure.CopperMeasureCombination;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -41,13 +36,17 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Manager Description Config that defines the manager description which contains the cube
+ * dimensions and every CopperMeasure
+ *
+ * @author ActiveViam
+ */
 @Configuration
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
@@ -81,6 +80,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Type of the structure owning the chunk */
   public static final String CHUNK_TYPE_LEVEL = "Type";
 
+  /** Name of the chunk dump level */
   public static final String CHUNK_DUMP_NAME_LEVEL = "Import info";
 
   /** Type of the structure owning the chunk */
@@ -329,8 +329,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.sum(
             chunkToDicoStore.field(
                 DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_SIZE))
-        .withFormatter(NUMBER_FORMATTER)
         .as("Dictionary Size")
+        .withFormatter(NUMBER_FORMATTER)
         .publish(context);
 
     // 3- Chunk to references
@@ -466,10 +466,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     CopperLevelCondition sharedCondition =
         Copper.level("Owner")
             .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-            .and(
+            .or(
                 Copper.level("Owner component")
                     .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .and(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+            .or(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
 
     Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
         .filter(sharedCondition)

@@ -251,6 +251,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   /**
    * Adds dictionary parent data to the join store
    *
+   * @param dumpName name of the dumped chunk
    * @param type {@code ParentType} of the owner of the dictionary-related chunk
    * @param id id of the owner of the dictionary-related chun
    * @param dictionaryId id of the dictionary

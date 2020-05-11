@@ -66,17 +66,28 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /** Set to true to allow anonymous access. */
   public static final boolean useAnonymous = false;
 
+  /** Authentication Bean Name. */
   public static final String BASIC_AUTH_BEAN_NAME = "basicAuthenticationEntryPoint";
 
+  /** ActivePivot Cookie Name. */
   public static final String AP_COOKIE_NAME = "AP_JSESSIONID";
 
+  /** Name of the User Role. */
   public static final String ROLE_USER = "ROLE_USER";
+
+  /** Name of the Admin Role. */
   public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
+  /** Name of the Tech Role. */
   public static final String ROLE_TECH = "ROLE_TECH";
+
+  /** Name of the ContentService Root Role. */
   public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
+  /** The User Configuration. */
   @Autowired protected UserConfig userDetailsConfig;
 
+  /** The JWT Configuration. */
   @Autowired protected IJwtConfig jwtConfig;
 
   /**
@@ -92,6 +103,8 @@ public abstract class ASecurityConfig implements ICorsConfig {
    * <p>More information can be found in the <a
    * href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding
    * /> Spring documentation</a>
+   *
+   * @return The {@link PasswordEncoder} to encode passwords with.
    */
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -197,8 +210,10 @@ public abstract class ASecurityConfig implements ICorsConfig {
     /** The name of the cookie to clear. */
     protected final String cookieName;
 
+    /** The name of the Environment to use. */
     @Autowired protected Environment env;
 
+    /** The ApplicationContext which contains the Beans. */
     @Autowired protected ApplicationContext context;
 
     /** This constructor does not enable the logout URL. */
@@ -277,7 +292,9 @@ public abstract class ASecurityConfig implements ICorsConfig {
     /**
      * Applies the specific configuration for the endpoint.
      *
+     * @param http the http endpoint to configure.
      * @see #configure(HttpSecurity)
+     * @throws Exception in case of error.
      */
     protected abstract void doConfigure(HttpSecurity http) throws Exception;
   }
