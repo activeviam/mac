@@ -130,6 +130,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
 
+    if(chunkStatistic.getChunkId() == 3580074){
+      System.out.println("Debug");
+    }
     recordFieldForStructure(this.directParentType, this.directParentId);
     recordIndexForStructure(this.directParentType, this.directParentId);
     recordRefForStructure(this.directParentType, this.directParentId);
@@ -302,9 +305,14 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final IRecordFormat joinStoreFormat =
         FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
 
+    final ParentType previousParentType = this.directParentType;
+    final String previousParentId = this.directParentId;
+    this.directParentType = ParentType.DICTIONARY;
+    this.directParentId = String.valueOf(this.dictionaryId);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
-    if (directParentId != null && directParentType != null) {
+
+    if (this.dictionaryId != null) {
       FeedVisitor.add(
           stat,
           transaction,
@@ -326,10 +334,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       this.field = fieldAttr.asText();
     }
 
-    final ParentType previousParentType = this.directParentType;
-    final String previousParentId = this.directParentId;
-    this.directParentType = ParentType.DICTIONARY;
-    this.directParentId = String.valueOf(this.dictionaryId);
     recordFieldForStructure(this.directParentType, this.directParentId);
     recordIndexForStructure(this.directParentType, this.directParentId);
     recordRefForStructure(this.directParentType, this.directParentId);

@@ -26,6 +26,7 @@ import com.quartetfs.fwk.query.QueryException;
 import com.quartetfs.fwk.query.UnsupportedQueryException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,8 +56,9 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               TestMemoryStatisticLoading.createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportApplication("testLoadComplete");
 
+          final Path debugPath = Paths.get("/home/aymane/mac/statistics/");
           final IMemoryStatistic fullStats =
-              TestMemoryStatisticLoading.loadMemoryStatFromFolder(exportPath);
+              TestMemoryStatisticLoading.loadMemoryStatFromFolder(debugPath);
           final Datastore monitoringDatastore =
               (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
 

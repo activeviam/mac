@@ -6,12 +6,17 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import static com.activeviam.mac.memory.DatastoreConstants.INDEX__FIELDS;
+import static com.activeviam.mac.memory.DatastoreConstants.REF_INDEX;
+
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperLevelCondition;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
+import com.activeviam.copper.impl.DataCubeContext;
+import com.activeviam.copper.measure.CopperMeasureCombination;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -36,6 +41,8 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
@@ -268,15 +275,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void memoryMeasure(final ICopperContext context) {
     Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_HEAP)
+        .withFormatter(ByteFormatter.KEY)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(COMMITTED_HEAP)
+        .withFormatter(ByteFormatter.KEY)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_DIRECT)
+        .withFormatter(ByteFormatter.KEY)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(MAX_DIRECT)
+        .withFormatter(ByteFormatter.KEY)
         .publish(context);
   }
 
@@ -318,8 +329,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.sum(
             chunkToDicoStore.field(
                 DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_SIZE))
+        .withFormatter(NUMBER_FORMATTER)
         .as("Dictionary Size")
-        .withFormatter(ByteFormatter.KEY)
+        .publish(context);
+
+    Copper.sum(
+        chunkToDicoStore.field(
+            DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_ORDER))
+        .withFormatter(NUMBER_FORMATTER)
+        .as("Dictionary Order")
         .publish(context);
 
     // 3- Chunk to references
@@ -342,13 +360,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("Reference Name")
         .publish(context);
 
-    // 4- Chunk to indices
+    // 4- Chunk to indexes
     CopperStore chunkToIndexStore =
         Copper.store(DatastoreConstants.CHUNK_TO_INDEX_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, CHUNK_PARENT_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, CHUNK_TYPE_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    Copper.newSingleLevelHierarchy("Index fields")
+        .from(
+        chunkToIndexStore.field(
+            DatastoreConstants.REF_INDEX+ "/" + DatastoreConstants.INDEX__FIELDS))
+        .publish(context);
 
     // rename the index Id Analysis Hierarchy
     Copper.newSingleLevelHierarchy(INDEX_ID_HIERARCHY)
@@ -395,56 +419,55 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("NonWrittenRows.Ratio")
         .publish(context);
 
-    @Workaround(solution = "Cast To Double")
-    CopperMeasure committedRows =
-        Copper.sum(DatastoreConstants.CHUNK__SIZE)
-            .minus(Copper.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS))
-            .cast(ILiteralType.DOUBLE) // Big
-            .withFormatter(NUMBER_FORMATTER);
+    @Workaround(solution = "Bug with cast, we need to publish this")
+    CopperMeasure workaround = Copper.sum(DatastoreConstants.CHUNK__SIZE)
+        .minus(Copper.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS))
+        .withFormatter(NUMBER_FORMATTER)
+        .cast(ILiteralType.DOUBLE) //Overflow happens if we don't cast it to double
+        .as("CommittedRows")
+        .publish(context);
 
-    committedRows
-        .multiply(Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
+    Copper.measure("CommittedRows")
         .divide(Copper.sum(DatastoreConstants.CHUNK__SIZE))
+        .multiply(Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
         .cast(ILiteralType.LONG)
         .withFormatter(ByteFormatter.KEY)
         .as("CommittedChunk")
         .publish(context);
 
-    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-        .cast(ILiteralType.DOUBLE)
-        .divide(
-            Copper.total(
-                Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE), Copper.hierarchy("Owner")))
-        .withFormatter(PERCENT_FORMATTER)
-        .as("PercentageOfDirectMemory")
-        .publish(context);
+    String[] hierarchies = new String[]{"ChunkId", CHUNK_TYPE_LEVEL, CHUNK_PARENT_ID_LEVEL, CHUNK_CLASS_LEVEL,
+        "Owner component", CHUNK_DUMP_NAME_LEVEL, "Date", "Manager", "Pivot", "ProviderType", "ProviderPartition", "ProviderId",
+        DICO_ID_HIERARCHY, INDEX_ID_HIERARCHY, REF_ID_HIERARCHY, FIELD_NAME_HIERARCHY, STORE_NAME_HIERARCHY, "Index fields"};
+    CopperMeasure grandTotal = Copper.total(Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE), Copper.hierarchy("Owner"));
+    for(String hierarchy : hierarchies){
+      grandTotal = Copper.total(grandTotal, Copper.hierarchy(hierarchy));
+    }
 
-    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-        .cast(ILiteralType.DOUBLE)
-        .divide(
-            Copper.total(
-                Copper.sum(DatastoreConstants.APPLICATION__USED_OFF_HEAP),
-                Copper.hierarchy("Owner")))
-        .withFormatter(PERCENT_FORMATTER)
-        .as("PercentageOfUsedMemory")
-        .publish(context);
-
-    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-        .cast(ILiteralType.DOUBLE)
-        .divide(
-            Copper.total(
-                Copper.sum(DatastoreConstants.APPLICATION__MAX_OFF_HEAP),
-                Copper.hierarchy("Owner")))
-        .withFormatter(PERCENT_FORMATTER)
-        .as("PercentageOfMaxMemory")
-        .publish(context);
-
-    committedRows
+    Copper.measure("CommittedRows")
         .divide(Copper.sum(DatastoreConstants.CHUNK__SIZE))
-        .per(Copper.level("Owner"))
-        .doNotAggregateAbove()
         .withFormatter(PERCENT_FORMATTER)
-        .as("PercentageOfAvailableMemory")
+        .as("CommittedMemory.Ratio")
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+        .cast(ILiteralType.DOUBLE)
+        .divide(grandTotal)
+        .withFormatter(PERCENT_FORMATTER)
+        .as("DirectMemory.Ratio")
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+        .cast(ILiteralType.DOUBLE)
+        .divide(Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY))
+        .withFormatter(PERCENT_FORMATTER)
+        .as("UsedMemory.Ratio")
+        .publish(context);
+
+    Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+        .cast(ILiteralType.DOUBLE)
+        .divide(Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY))
+        .withFormatter(PERCENT_FORMATTER)
+        .as("MaxMemory.Ratio")
         .publish(context);
 
     CopperLevelCondition sharedCondition =
