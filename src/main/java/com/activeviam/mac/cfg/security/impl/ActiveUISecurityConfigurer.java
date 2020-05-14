@@ -18,7 +18,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
  *
  * @author ActiveViam
  */
-
 @Configuration
 @Order(1)
 public class ActiveUISecurityConfigurer extends AWebSecurityConfigurer {
@@ -28,17 +27,16 @@ public class ActiveUISecurityConfigurer extends AWebSecurityConfigurer {
     // Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
     final String pattern = "^(.{0}|\\/|\\/" + ActiveUIResourceServerConfig.NAMESPACE + "(\\/.*)?)$";
     http
-            // Only theses URLs must be handled by this HttpSecurity
-            .regexMatcher(pattern)
-            .authorizeRequests()
-            // The order of the matchers matters
-            .regexMatchers(HttpMethod.OPTIONS, pattern)
-            .permitAll()
-            .regexMatchers(HttpMethod.GET, pattern)
-            .permitAll();
+        // Only theses URLs must be handled by this HttpSecurity
+        .regexMatcher(pattern)
+        .authorizeRequests()
+        // The order of the matchers matters
+        .regexMatchers(HttpMethod.OPTIONS, pattern)
+        .permitAll()
+        .regexMatchers(HttpMethod.GET, pattern)
+        .permitAll();
 
     // Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
     http.headers().frameOptions().disable();
   }
-
 }

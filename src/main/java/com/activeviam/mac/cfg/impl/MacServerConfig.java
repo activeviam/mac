@@ -113,12 +113,17 @@ public class MacServerConfig {
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
-//    createDefaultRowsForJoinStores();
+    //    createDefaultRowsForJoinStores();
     return null;
   }
 
+  /**
+   * Hook called after the application started.
+   *
+   * <p>It performs every operation once the application is up and read, such as loading data, etc.
+   */
   @EventListener(ApplicationReadyEvent.class)
-  public void doSomethingAfterStartup() {
+  public void afterStart() {
     // Connect the real-time updates
     sourceConfig.watchStatisticDirectory();
   }

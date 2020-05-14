@@ -4,25 +4,30 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.formatter;
 
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
-/** @author Quartet FS */
+/**
+ * Formatter displaying byte amounts with units.
+ *
+ * @author ActiveViam
+ */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
 public class ByteFormatter implements IFormatter {
 
   private static final long serialVersionUID = 4778274710157958593L;
 
-  /** Plugin key */
+  /** Plugin key. */
   public static final String KEY = "ByteFormatter";
 
-  /** 1 GiB */
+  /** Number of bytes in 1 GiB. */
   protected static final long GB = 1 << 30;
-  /** 1 MiB */
+  /** Number of bytes in 1 MiB. */
   protected static final long MB = 1 << 20;
-  /** 1 KiB */
+  /** Number of bytes in 1 KiB. */
   protected static final long KB = 1 << 10;
 
   @Override
@@ -78,5 +83,4 @@ public class ByteFormatter implements IFormatter {
       return String.format("%.3f %s", value + 0.001f * decimal, unit);
     }
   }
-
 }

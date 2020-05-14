@@ -53,9 +53,14 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
    */
   public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
 
-  /** Instance of the Spring context environment */
+  /** Instance of the Spring context environment. */
   @Autowired public Environment env;
 
+  /**
+   * [Bean] Configuration for the Content Service database.
+   *
+   * @return configuration properties
+   */
   @ConfigurationProperties(prefix = "content-service.db")
   @Bean
   public Properties contentServiceHibernateProperties() {
