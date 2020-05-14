@@ -51,11 +51,11 @@ public class ByteFormatter implements IFormatter {
     final long kb = (byteCount % MB) / KB;
     final long remaining = (byteCount % KB);
     if (gb > 0) {
-      return pnz(gb, "GiB") + pnz(mb, "MiB");
+      return dec(gb, mb, "GiB");
     } else if (mb > 0) {
-      return pnz(mb, "MiB") + pnz(kb, "KiB");
+      return dec(mb, kb, "MiB");
     } else if (kb > 0) {
-      return pnz(kb, "KiB") + pnz(remaining, "bytes");
+      return dec(kb, remaining, "KiB");
     }
     return pnz(gb, "GiB") + pnz(mb, "MiB") + pnz(kb, "KiB") + pnz(remaining, "bytes");
   }
@@ -70,4 +70,13 @@ public class ByteFormatter implements IFormatter {
   private static String pnz(long value, String suffix) {
     return value != 0 ? value + " " + suffix + " " : "";
   }
+
+  private static String dec(long value, long decimal, String unit) {
+    if (decimal == 0) {
+      return String.format("%d %s", value, unit);
+    } else {
+      return String.format("%.3f %s", value + 0.001f * decimal, unit);
+    }
+  }
+
 }

@@ -48,3 +48,21 @@ qfs:
 # The name of the folder containing statistic files in .json format
 statistic:
   folder: ./statistics
+
+content-service:
+  db:
+    hibernate:
+      dialect: org.hibernate.dialect.H2Dialect
+      format_sql: false
+      #The following line should be removed once the table is created
+      hbm2ddl.auto: update
+      # Connection Provider
+      connection:
+        provider_class: org.hibernate.engine.jdbc.connections.internal.DatasourceConnectionProviderImpl
+
+    # Tomcat connection pool settings. List of properties can be found in org.apache.tomcat.jdbc.pool.DataSourceFactory
+    # or https://tomcat.apache.org/tomcat-8.0-doc/jdbc-pool.html
+    url: jdbc:h2:file:./content_service;DB_CLOSE_DELAY=-1
+    defaultAutoCommit: false
+    driverClassName: org.h2.Driver
+    jdbcInterceptors: org.apache.tomcat.jdbc.pool.interceptor.ConnectionState

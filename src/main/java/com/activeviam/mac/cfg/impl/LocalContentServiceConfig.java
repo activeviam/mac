@@ -13,7 +13,6 @@ import com.qfs.content.service.impl.HibernateContentService;
 import com.qfs.pivot.content.IActivePivotContentService;
 import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
-import com.qfs.util.impl.QfsProperties;
 import com.quartetfs.biz.pivot.context.IContextValue;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.IKpiDescription;
@@ -23,6 +22,7 @@ import javax.sql.DataSource;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -56,6 +56,12 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   /** Instance of the Spring context environment */
   @Autowired public Environment env;
 
+  @ConfigurationProperties(prefix = "content-service.db")
+  @Bean
+  public Properties contentServiceHibernateProperties() {
+    return new Properties();
+  }
+
   /**
    * The content service is a bean which can be used by ActivePivot server to store:
    *
@@ -70,7 +76,7 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   @Override
   @Bean
   public IContentService contentService() {
-    org.hibernate.cfg.Configuration conf = loadConfiguration("hibernate.properties");
+    org.hibernate.cfg.Configuration conf = loadConfiguration(contentServiceHibernateProperties());
     return new AuditableHibernateContentService(conf);
   }
 
@@ -96,11 +102,10 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   /**
    * Loads the Hibernate's configuration from the specified file.
    *
-   * @param fileName The name of the file containing the Hibernate's properties
    * @return the Hibernate's configuration
    */
-  private static org.hibernate.cfg.Configuration loadConfiguration(String fileName) {
-    final Properties hibernateProperties = QfsProperties.loadProperties(fileName);
+  private static org.hibernate.cfg.Configuration loadConfiguration(
+      final Properties hibernateProperties) {
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
     return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
