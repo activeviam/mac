@@ -102,6 +102,14 @@
       <groupId>com.activeviam.activeui</groupId>
       <artifactId>activeui</artifactId>
       <version>${activeui.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.activeviam.tech</groupId>
+      <artifactId>content-server-ui</artifactId>
+      <version>2.0.0</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- SpringBoot dependencies -->

@@ -10,6 +10,7 @@ import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
+import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IActivePivotConfig;
@@ -78,7 +79,8 @@ import org.springframework.core.env.Environment;
       SecurityConfig.class,
       UserConfig.class,
       SourceConfig.class,
-      ActiveUIResourceServerConfig.class
+      ActiveUIResourceServerConfig.class,
+      ContentServerResourceServerConfig.class
     })
 public class MacServerConfig {
 
@@ -90,6 +92,8 @@ public class MacServerConfig {
 
   /** ActivePivot content service spring configuration */
   @Autowired protected IActivePivotContentServiceConfig apCSConfig;
+
+  @Autowired protected LocalContentServiceConfig localContentServiceConfig;
 
   /** Spring configuration of the source files of the Memory Analysis Cube application */
   @Autowired protected SourceConfig sourceConfig;
@@ -174,6 +178,11 @@ public class MacServerConfig {
     startManager();
 
     return new JMXEnabler(apConfig.activePivotManager());
+  }
+
+  @Bean
+  public JMXEnabler JMXBookmarkEnabler() {
+    return new JMXEnabler("Bookmark", localContentServiceConfig);
   }
 
   /**

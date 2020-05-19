@@ -326,7 +326,7 @@ public class DatastoreConstants {
 
   public static final String REF_DICTIONARY = "DictionaryStoreReference";
 
-  public static final String REF_INDEX ="IndexStoreReference";
+  public static final String REF_INDEX = "IndexStoreReference";
 
   public static final String REF_REFERENCES = "ReferenceStoreReference";
 

@@ -6,10 +6,13 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import com.activeviam.bookmark.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
 import com.qfs.content.service.audit.impl.AuditableHibernateContentService;
 import com.qfs.content.service.impl.HibernateContentService;
+import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
+import com.qfs.jmx.JmxOperation;
 import com.qfs.pivot.content.IActivePivotContentService;
 import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
@@ -104,6 +107,17 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
     return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+  }
+
+  @JmxOperation(
+      name = "exportBookMarks",
+      desc = "Export the current bookmark structure",
+      params = {})
+  public void exportBookMarks() {
+    BookmarkTool.exportBookmarks(
+        new ContentServiceSnapshotter(contentService().withRootPrivileges()),
+        "testingBookmarks",
+        null);
   }
 
   /**
