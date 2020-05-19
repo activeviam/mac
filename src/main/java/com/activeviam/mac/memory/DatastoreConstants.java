@@ -87,7 +87,22 @@ public class DatastoreConstants {
   public static final String CHUNK__PARENT_ID = "parentId";
 
   /** Field for the structure type of the direct parent of the chunk */
-  public static final String CHUNK__PARENT_TYPE = "parentType";
+  public static final String CHUNK__CLOSEST_PARENT_TYPE = "parentType";
+
+  /** Field for the id of the closest parent dictionary of the chunk */
+  public static final String CHUNK__PARENT_DICO_ID = "parentDicoId";
+
+  /** Field for the id of the closest parent index of the chunk */
+  public static final String CHUNK__PARENT_INDEX_ID = "parentIndexId";
+
+  /** Field for the id of the closest parent reference of the chunk */
+  public static final String CHUNK__PARENT_REF_ID = "parentRefId";
+
+  /** Field for the name of the closest parent field of the chunk */
+  public static final String CHUNK__PARENT_FIELD_NAME = "parentFieldName";
+
+  /** Field for the name of the closest parent store of the chunk */
+  public static final String CHUNK__PARENT_STORE_NAME = "parentStoreName";
 
   /** Field for the size of the chunk */
   public static final String CHUNK__SIZE = "size";
@@ -117,62 +132,7 @@ public class DatastoreConstants {
   /** Field for the category of aggregate provider */
   public static final String PROVIDER__CATEGORY = "category";
 
-  private static final String FIELD_SUFFIX = "Fld";
-  private static final String INDEX_SUFFIX = "Idx";
-  private static final String DICO_SUFFIX = "Dic";
-  private static final String REFERENCE_SUFFIX = "Ref";
   private static final String LEVEL_SUFFIX = "Lvl";
-
-  /** Name of the store for joining field store and chunk store */
-  public static final String CHUNK_TO_FIELD_STORE = "ChunkToField";
-
-  /** Field for the parent id of the chunk */
-  public static final String CHUNK_TO_FIELD__PARENT_ID = "parentId_" + FIELD_SUFFIX;
-
-  /** Field for the parent type of the chunk */
-  public static final String CHUNK_TO_FIELD__PARENT_TYPE = "parentType_" + FIELD_SUFFIX;
-
-  /** Field for the store field names */
-  public static final String CHUNK_TO_FIELD__FIELD = "fieldName";
-
-  /** Field for the store names */
-  public static final String CHUNK_TO_FIELD__STORE = "storeName";
-
-  /** Name of the store for joning indexes and chunks */
-  public static final String CHUNK_TO_INDEX_STORE = "ChunkToIndex";
-
-  /** Field for the parent id of the chunk */
-  public static final String CHUNK_TO_INDEX__PARENT_ID = "parentId_" + INDEX_SUFFIX;
-
-  /** Field for the parent type of the chunk */
-  public static final String CHUNK_TO_INDEX__PARENT_TYPE = "parentType_" + INDEX_SUFFIX;
-
-  /** Field for the id of the index */
-  public static final String CHUNK_TO_INDEX__INDEX_ID = "indexId";
-
-  /** Name of the store for joining dictionaries and chunks */
-  public static final String CHUNK_TO_DICO_STORE = "ChunkToDico";
-
-  /** Field for the parent id of the chunk */
-  public static final String CHUNK_TO_DICO__PARENT_ID = "parentId_" + DICO_SUFFIX;
-
-  /** Field for the parent type of the chunk */
-  public static final String CHUNK_TO_DICO__PARENT_TYPE = "parentType_" + DICO_SUFFIX;
-
-  /** Field for the dictionary id */
-  public static final String CHUNK_TO_DICO__DICO_ID = "dictionaryId";
-
-  /** Name of the store for joining references to chunks */
-  public static final String CHUNK_TO_REF_STORE = "ChunkToReference";
-
-  /** Field for the parent id of the chunk */
-  public static final String CHUNK_TO_REF__PARENT_ID = "parentId_" + REFERENCE_SUFFIX;
-
-  /** Field for the parent type of the chunk */
-  public static final String CHUNK_TO_REF__PARENT_TYPE = "parentType_" + REFERENCE_SUFFIX;
-
-  /** Field for the id of the reference */
-  public static final String CHUNK_TO_REF__REF_ID = "refId";
 
   // store and partition info.
 
@@ -323,15 +283,6 @@ public class DatastoreConstants {
 
   /** Maximum Application direct memory */
   public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
-
-  /** Name of the Dictionary store reference */
-  public static final String REF_DICTIONARY = "DictionaryStoreReference";
-
-  /** Name of the Index store Reference */
-  public static final String REF_INDEX = "IndexStoreReference";
-
-  /** Name of Reference store Reference */
-  public static final String REF_REFERENCES = "ReferenceStoreReference";
 
   private DatastoreConstants() {}
 }

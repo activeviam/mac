@@ -195,7 +195,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+        tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
@@ -239,22 +239,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
           this.providerCpnType.toString());
 
       this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
-    }
-
-    final IRecordFormat joinStoreFormat =
-        FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
-
-    if (directParentId != null && directParentType != null) {
-      FeedVisitor.add(
-          stat,
-          transaction,
-          DatastoreConstants.CHUNK_TO_DICO_STORE,
-          FeedVisitor.buildDicoTupleForStructure(
-              this.dumpName,
-              this.directParentType,
-              this.directParentId,
-              this.dictionaryId,
-              joinStoreFormat));
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);

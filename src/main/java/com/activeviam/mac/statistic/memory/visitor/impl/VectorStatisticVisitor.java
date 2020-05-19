@@ -151,11 +151,30 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, ParentType.VECTOR_BLOCK);
+        tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-
+    if (this.referenceId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+    }
+    if (this.indexId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+    }
+    if (this.dictionaryId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+    }
+    if (this.field != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+    }
+    if (this.store != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
+    }
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
     FeedVisitor.setTupleElement(
@@ -168,7 +187,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(statistic);
     }
-
+    //Set the chunk data to be added to the Chunk store
     FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
     visitChildren(statistic);

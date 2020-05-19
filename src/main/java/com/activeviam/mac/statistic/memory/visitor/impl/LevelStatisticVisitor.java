@@ -99,7 +99,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+        tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
@@ -137,21 +137,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
-    final IRecordFormat joinStoreFormat =
-        FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
-
-    if (directParentId != null && directParentType != null) {
-      FeedVisitor.add(
-          stat,
-          transaction,
-          DatastoreConstants.CHUNK_TO_DICO_STORE,
-          FeedVisitor.buildDicoTupleForStructure(
-              this.dumpName,
-              this.directParentType,
-              this.directParentId,
-              this.dictionaryId,
-              joinStoreFormat));
-    }
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
 

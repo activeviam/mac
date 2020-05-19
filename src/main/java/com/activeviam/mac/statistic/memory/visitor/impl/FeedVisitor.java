@@ -226,7 +226,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    */
   protected static void setTupleElement(
       Object[] tuple, IRecordFormat format, String field, final Object value) {
-    if (value == null) {
+    if (value == null && format.isPrimitive(format.getFieldIndex(field))) {
       throw new RuntimeException("Expected a non-null value for field " + field);
     }
     tuple[format.getFieldIndex(field)] = value;
@@ -246,33 +246,5 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
             "Unexpected null value for field " + field + " in tuple: " + Arrays.toString(tuple));
       }
     }
-  }
-
-  /**
-   * Adds dictionary parent data to the join store
-   *
-   * @param dumpName name of the dumped chunk
-   * @param type {@code ParentType} of the owner of the dictionary-related chunk
-   * @param id id of the owner of the dictionary-related chun
-   * @param dictionaryId id of the dictionary
-   * @param format format of the dictionary store
-   * @return the built tuple corresponding to the dictionary
-   */
-  protected static Object[] buildDicoTupleForStructure(
-      final String dumpName,
-      final ParentType type,
-      final String id,
-      final Long dictionaryId,
-      final IRecordFormat format) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    if (dictionaryId != null) {
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, dumpName);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, dictionaryId);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, type);
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, id);
-    }
-    return tuple;
   }
 }

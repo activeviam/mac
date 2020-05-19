@@ -13,7 +13,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
@@ -51,6 +51,7 @@ import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.util.impl.ThrowingLambda;
 import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
@@ -183,7 +184,7 @@ public abstract class ATestMemoryStatistic {
                     .withMapping("productId", "id")
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -321,7 +322,7 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
 
     final Datastore datastore =
@@ -365,7 +366,7 @@ public abstract class ATestMemoryStatistic {
                     .withModuloPartitioning(4, "id")
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -398,7 +399,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
 
     final Datastore datastore =
@@ -627,11 +628,6 @@ public abstract class ATestMemoryStatistic {
             () -> {
               return StartBuilding.datastore().setSchemaDescription(desc).build();
             });
-    // Make sure the analysis hierarchies created by coPPer are not empty by adding a "default"
-    // record to the joined stores
-    // This is necessary to ensure a dimensions have a least a member, which is required for the MDX
-    // engine to work properly
-    d.edit(tm -> tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A"));
 
     return d;
   }
@@ -654,7 +650,7 @@ public abstract class ATestMemoryStatistic {
                     .withVectorBlockSize(30)
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -682,7 +678,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
     final IDatastore datastore =
@@ -766,7 +762,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -782,7 +778,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
     IDatastore datastore =
         (Datastore)
@@ -831,7 +827,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -846,7 +842,7 @@ public abstract class ATestMemoryStatistic {
                     .asDefaultHierarchy()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
     IDatastore datastore =
@@ -880,7 +876,7 @@ public abstract class ATestMemoryStatistic {
                     .withChunkSize(MICROAPP_CHUNK_SIZE)
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -897,7 +893,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
     IDatastore datastore =
         (Datastore)
@@ -953,9 +949,9 @@ public abstract class ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(CHUNK__CLOSEST_PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
                     BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)))
-            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__PARENT_TYPE, CHUNK__PARENT_ID)
+            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
             .onCurrentThread()
             .run();
     if (cursor.hasNext()) {

@@ -157,8 +157,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final ChunkSetStatistic statistic) {
-    recordFieldForStructure(this.directParentType, this.directParentId);
-
     this.chunkSize = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
     this.freeRows = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
     this.nonWrittenRows =
@@ -182,23 +180,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     if (VectorStatisticVisitor.isVector(chunkStatistic)) {
       visitVectorBlock(chunkStatistic);
     } else {
-      recordIndexForStructure(this.directParentType, this.directParentId);
-      recordRefForStructure(this.directParentType, this.directParentId);
-
       final String previousField = this.field;
       if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
         final IStatisticAttribute fieldAttribute =
             chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         this.field = fieldAttribute.asText();
-
-        recordFieldForStructure(this.directParentType, this.directParentId);
       }
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+          tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
@@ -211,6 +204,26 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+      if (this.referenceId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+      }
+      if (this.indexId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+      }
+      if (this.dictionaryId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+      }
+      if (this.field != null) {
+        FeedVisitor.setTupleElement(
+            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+      }
+      if (this.store != null) {
+        FeedVisitor.setTupleElement(
+            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
+      }
 
       // Complete chunk info regarding size and usage if not defined by a parent
       if (this.chunkSize != null) {
@@ -230,7 +243,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }
-
+      //Set the chunk data to be added to the Chunk store
       FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
       visitChildren(chunkStatistic);

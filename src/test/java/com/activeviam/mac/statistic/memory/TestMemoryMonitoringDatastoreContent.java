@@ -185,7 +185,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__PARENT_TYPE,
+                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
                     MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
             .selecting(
                 DatastoreConstants.CHUNK__FREE_ROWS,
@@ -262,7 +262,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__PARENT_TYPE,
+                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
                     MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
             .selecting(
                 DatastoreConstants.CHUNK__FREE_ROWS,
@@ -334,7 +334,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__PARENT_TYPE,
+                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
                     MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
             .selecting(
                 DatastoreConstants.CHUNK__FREE_ROWS,
@@ -430,7 +430,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__PARENT_TYPE,
+                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
                     MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
             .selecting(
                 DatastoreConstants.CHUNK__FREE_ROWS,
@@ -677,7 +677,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .withCondition(
                 BaseConditions.And(
                     BaseConditions.Equal(
-                        DatastoreConstants.CHUNK__PARENT_TYPE, ParentType.AGGREGATE_STORE),
+                        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.AGGREGATE_STORE),
                     BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "App")))
             .selecting(DatastoreConstants.CHUNK_ID)
             .onCurrentThread()
@@ -697,7 +697,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .withCondition(
                 BaseConditions.And(
                     BaseConditions.Equal(
-                        DatastoreConstants.CHUNK__PARENT_TYPE, ParentType.AGGREGATE_STORE),
+                        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.AGGREGATE_STORE),
                     BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "AppWithBitmap")))
             .selecting(DatastoreConstants.CHUNK_ID)
             .onCurrentThread()
@@ -755,27 +755,6 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           list.add(data);
         });
     Assertions.assertThat(list).isNotEmpty();
-
-    final IDictionaryCursor cursor2 =
-        monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_TO_REF_STORE)
-            .withCondition(BaseConditions.TRUE)
-            .selecting(DatastoreConstants.CHUNK_TO_REF__REF_ID)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list2 = new ArrayList<>();
-    cursor2.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list2.add(data);
-        });
-    // A default record is added in all the Chunk_TO_XXX stores in order to make sure no hierarchy
-    // is empty
-    // (we want to be able to make MDX queries even if there is no references )
-    // Therefore, we need to check if the size is >1
-    Assertions.assertThat(list2.size()).isGreaterThan(1);
   }
 
   // TODO Test content of all stores similarly

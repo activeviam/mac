@@ -128,31 +128,6 @@ public class MacServerConfig {
     sourceConfig.watchStatisticDirectory();
   }
 
-  /**
-   * Creates default rows for the stores joined with Copper.
-   *
-   * <p>This avoids empty dimensions, preventing any query on the cube.
-   */
-  private void createDefaultRowsForJoinStores() {
-    final IDatastore datastore = datastoreConfig.datastore();
-    datastore.edit(
-        tm -> {
-          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(
-              DatastoreConstants.CHUNK_TO_LEVEL_STORE,
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A", "N/A");
-        });
-  }
 
   /**
    * Enables JMX Monitoring for the Source

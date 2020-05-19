@@ -34,530 +34,510 @@ import java.util.stream.Stream;
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
-  /** Constant enabling the creation of Debug tree for each info, stored in the Datastore. */
-  public static final boolean ADD_DEBUG_TREE = false;
+	/**
+	 * Constant enabling the creation of Debug tree for each info, stored in the Datastore.
+	 */
+	public static final boolean ADD_DEBUG_TREE = false;
 
-  /** Name of the chunk <-> provider linking store */
-  public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
-  /** Name of the provider component <-> provider store */
-  public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
+	/**
+	 * Name of the chunk <-> provider linking store
+	 */
+	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
+	/**
+	 * Name of the provider component <-> provider store
+	 */
+	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
-  /** Name of the /** Name of the chunk <-> application linking store */
-  public static final String CHUNK_TO_APP = "ChunkToApp";
+	/**
+	 * Name of the /** Name of the chunk <-> application linking store
+	 */
+	public static final String CHUNK_TO_APP = "ChunkToApp";
 
-  /** Owner value for a chunk held by multiple components */
-  public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
-  /** Component value for a chunk held by multiple components */
-  public static final String SHARED_COMPONENT = "shared";
+	/**
+	 * Owner value for a chunk held by multiple components
+	 */
+	public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
+	/**
+	 * Component value for a chunk held by multiple components
+	 */
+	public static final String SHARED_COMPONENT = "shared";
 
-  /** Partition value for chunks held by no partitions */
-  public static final int NO_PARTITION = -3;
-  /** Partition value for chunks held by multiple partitions */
-  public static final int MANY_PARTITIONS = -2;
+	/**
+	 * Partition value for chunks held by no partitions
+	 */
+	public static final int NO_PARTITION = -3;
+	/**
+	 * Partition value for chunks held by multiple partitions
+	 */
+	public static final int MANY_PARTITIONS = -2;
 
-  /** Enum listing the types of parent structures that hold the {@link IChunk chunks} */
-  public enum ParentType {
-    /** Records structure */
-    RECORDS,
-    /** Vector block structure */
-    VECTOR_BLOCK,
-    /** Dictionary structure */
-    DICTIONARY,
-    /** Reference structure */
-    REFERENCE,
-    /** Index structure */
-    INDEX,
-    /** Point mapping structure */
-    POINT_MAPPING,
-    /** Point index structure */
-    POINT_INDEX,
-    /** Aggregate store structure */
-    AGGREGATE_STORE,
-    /** Bitmap Matcher structure */
-    BITMAP_MATCHER,
-    /** Level structure */
-    LEVEL
-  }
+	/**
+	 * Enum listing the types of parent structures that hold the {@link IChunk chunks}
+	 */
+	public enum ParentType {
+		/**
+		 * Records structure
+		 */
+		RECORDS,
+		/**
+		 * Vector block structure
+		 */
+		VECTOR_BLOCK,
+		/**
+		 * Dictionary structure
+		 */
+		DICTIONARY,
+		/**
+		 * Reference structure
+		 */
+		REFERENCE,
+		/**
+		 * Index structure
+		 */
+		INDEX,
+		/**
+		 * Point mapping structure
+		 */
+		POINT_MAPPING,
+		/**
+		 * Point index structure
+		 */
+		POINT_INDEX,
+		/**
+		 * Aggregate store structure
+		 */
+		AGGREGATE_STORE,
+		/**
+		 * Bitmap Matcher structure
+		 */
+		BITMAP_MATCHER,
+		/**
+		 * Level structure
+		 */
+		LEVEL
+	}
 
-  /** @return description of {@link DatastoreConstants#CHUNK_STORE} (main store) */
-  protected IStoreDescription chunkStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_STORE)
-        // key
-        .withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
+	/**
+	 * @return description of {@link DatastoreConstants#CHUNK_STORE} (main store)
+	 */
+	protected IStoreDescription chunkStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.CHUNK_STORE)
+				// key
+				.withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+				.asKeyField()
 
-        /* Foreign keys */
-        .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
-        .dictionarized()
-        .withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
-        .dictionarized()
-        .withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
-        .dictionarized()
-        .withField(DatastoreConstants.CHUNK__PARENT_ID)
-        .withField(DatastoreConstants.CHUNK__PARENT_TYPE, ILiteralType.OBJECT)
-        .withField(
-            DatastoreConstants.CHUNK__PROVIDER_ID,
-            ILiteralType.LONG,
-            DatastoreConstants.LONG_IF_NOT_EXIST)
-        .withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)
-        .withField(DatastoreConstants.CHUNK__CLASS)
-        .withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
-        .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
-        .withDuplicateKeyHandler(new ChunkRecordHandler())
-        .build();
-  }
+				/* Foreign keys */
+				.withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
+				.dictionarized()
+				.withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
+				.dictionarized()
+				.withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
+				.dictionarized()
+				.withField(DatastoreConstants.CHUNK__PARENT_ID)
+				.withField(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ILiteralType.OBJECT)
+				//Add 5 fields corresponding to the closest parent Id for a given type of parent
+				.withField(DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__PARENT_FIELD_NAME, ILiteralType.STRING , "Unknown/Shared")
+				.withField(DatastoreConstants.CHUNK__PARENT_STORE_NAME, ILiteralType.STRING,"Unknown/Shared")
+				.withField(DatastoreConstants.CHUNK__PARENT_INDEX_ID, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__PARENT_REF_ID, ILiteralType.LONG)
 
-  /** @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
-  protected IStoreDescription chunkToFieldStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_FIELD_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__STORE)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
+				.withField(
+						DatastoreConstants.CHUNK__PROVIDER_ID,
+						ILiteralType.LONG,
+						DatastoreConstants.LONG_IF_NOT_EXIST)
+				.withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)
+				.withField(DatastoreConstants.CHUNK__CLASS)
+				.withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
+				.withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
+				.withDuplicateKeyHandler(new ChunkRecordHandler())
+				.build();
+	}
 
-  /** @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
-  protected IStoreDescription chunkToReferenceStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_REF_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_REF__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_REF__REF_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
+	/**
+	 * @return description of {@link DatastoreConstants#REFERENCE_STORE}
+	 */
+	protected IStoreDescription referenceStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.REFERENCE_STORE)
+				.withField(DatastoreConstants.REFERENCE_ID, ILiteralType.LONG)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
+				/* Foreign keys */
+				.withField(DatastoreConstants.REFERENCE_FROM_STORE)
+				.withField(
+						DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID,
+						ILiteralType.INT,
+						DatastoreConstants.INT_IF_NOT_EXIST)
+				.withField(DatastoreConstants.REFERENCE_TO_STORE)
+				.withField(
+						DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID,
+						ILiteralType.INT,
+						DatastoreConstants.INT_IF_NOT_EXIST)
+				/* Attributes */
+				.withField(DatastoreConstants.REFERENCE_NAME)
+				.withField(DatastoreConstants.REFERENCE_CLASS)
+				.build();
+	}
 
-  /** @return description of {@link DatastoreConstants#REFERENCE_STORE} */
-  protected IStoreDescription referenceStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.REFERENCE_STORE)
-        .withField(DatastoreConstants.REFERENCE_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        /* Foreign keys */
-        .withField(DatastoreConstants.REFERENCE_FROM_STORE)
-        .withField(
-            DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID,
-            ILiteralType.INT,
-            DatastoreConstants.INT_IF_NOT_EXIST)
-        .withField(DatastoreConstants.REFERENCE_TO_STORE)
-        .withField(
-            DatastoreConstants.REFERENCE_TO_STORE_PARTITION_ID,
-            ILiteralType.INT,
-            DatastoreConstants.INT_IF_NOT_EXIST)
-        /* Attributes */
-        .withField(DatastoreConstants.REFERENCE_NAME)
-        .withField(DatastoreConstants.REFERENCE_CLASS)
-        .build();
-  }
+	/**
+	 * @return description of {@link DatastoreConstants#INDEX_STORE}
+	 */
+	protected IStoreDescription indexStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.INDEX_STORE)
+				.withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
 
-  /** @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
-  protected IStoreDescription chunkToIndexStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_INDEX_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
-  /**
-   * Returns the description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
-   *
-   * @return description of the {@link DatastoreConstants#CHUNK_TO_DICO_STORE} store
-   */
-  protected IStoreDescription chunkToDictionaryStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_DICO_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_DICO__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_DICO__DICO_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
+				/* Attributes */
+				.withField(
+						DatastoreConstants.INDEX_TYPE,
+						ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
+				.withField(DatastoreConstants.INDEX_CLASS)
+				.withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
+				.build();
+	}
 
-  /** @return description of {@link DatastoreConstants#INDEX_STORE} */
-  protected IStoreDescription indexStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.INDEX_STORE)
-        .withField(DatastoreConstants.INDEX_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
+	/**
+	 * @return description of {@link DatastoreConstants#DICTIONARY_STORE}
+	 */
+	protected IStoreDescription dictionaryStore() {
+		return new StoreDescriptionBuilder()
+				.withStoreName(DatastoreConstants.DICTIONARY_STORE)
+				.withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
 
-        /* Attributes */
-        .withField(
-            DatastoreConstants.INDEX_TYPE,
-            ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
-        .withField(DatastoreConstants.INDEX_CLASS)
-        .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
-        .build();
-  }
+				/* Attributes */
+				.withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
+				.withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
+				.withField(DatastoreConstants.DICTIONARY_CLASS)
+				.build();
+	}
 
-  /** @return description of {@link DatastoreConstants#DICTIONARY_STORE} */
-  protected IStoreDescription dictionaryStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.DICTIONARY_STORE)
-        .withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
+	/**
+	 * Returns the description of {@link DatastoreConstants#LEVEL_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#LEVEL_STORE}
+	 */
+	protected IStoreDescription levelStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.LEVEL_STORE)
+				.withField(DatastoreConstants.LEVEL__MANAGER_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.LEVEL__PIVOT_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.LEVEL__DIMENSION)
+				.asKeyField()
+				.withField(DatastoreConstants.LEVEL__HIERARCHY)
+				.asKeyField()
+				.withField(DatastoreConstants.LEVEL__LEVEL)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
 
-        /* Attributes */
-        .withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
-        .withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
-        .withField(DatastoreConstants.DICTIONARY_CLASS)
-        .build();
-  }
+				/* Attributes */
+				.withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
+				.withField(
+						DatastoreConstants.LEVEL__OFF_HEAP_SIZE,
+						ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
+				.withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
+				// TODO(ope) this is a base unit, introduce some versioning with the dump
+				.build();
+	}
 
-  /**
-   * Returns the description of {@link DatastoreConstants#LEVEL_STORE}
-   *
-   * @return description of {@link DatastoreConstants#LEVEL_STORE}
-   */
-  protected IStoreDescription levelStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.LEVEL_STORE)
-        .withField(DatastoreConstants.LEVEL__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__DIMENSION)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__HIERARCHY)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__LEVEL)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
+	/**
+	 * Returns the description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
+	 */
+	protected IStoreDescription chunkTolevelStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, ILiteralType.OBJECT)
+				.asKeyField()
+				.withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+				.asKeyField()
+				.build();
+	}
 
-        /* Attributes */
-        .withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
-        .withField(
-            DatastoreConstants.LEVEL__OFF_HEAP_SIZE,
-            ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
-        .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
-        // TODO(ope) this is a base unit, introduce some versioning with the dump
-        .build();
-  }
+	/**
+	 * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
+	 */
+	protected IStoreDescription providerComponentStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG)
+				.asKeyField()
+				/* Attributes */
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+				.asKeyField()
+				.withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
+				.build();
+	}
 
-  /**
-   * Returns the description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
-   *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
-   */
-  protected IStoreDescription chunkTolevelStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
+	/**
+	 * Returns the description of {@link DatastoreConstants#PROVIDER_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#PROVIDER_STORE}
+	 */
+	protected IStoreDescription providerStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.PROVIDER_STORE)
+				.withField(DatastoreConstants.PROVIDER__PROVIDER_ID, ILiteralType.LONG)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
 
-  /**
-   * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
-   *
-   * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
-   */
-  protected IStoreDescription providerComponentStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG)
-        .asKeyField()
-        /* Attributes */
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .asKeyField()
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
-        .build();
-  }
+				/* Foreign keys */
+				.withField(DatastoreConstants.PROVIDER__PIVOT_ID)
+				.withField(DatastoreConstants.PROVIDER__MANAGER_ID)
+				/* Attributes */
+				.withField(DatastoreConstants.PROVIDER__INDEX, ILiteralType.STRING, "<None>")
+				.withField(DatastoreConstants.PROVIDER__TYPE)
+				.withField(DatastoreConstants.PROVIDER__CATEGORY)
+				.build();
+	}
 
-  /**
-   * Returns the description of {@link DatastoreConstants#PROVIDER_STORE}
-   *
-   * @return description of {@link DatastoreConstants#PROVIDER_STORE}
-   */
-  protected IStoreDescription providerStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.PROVIDER_STORE)
-        .withField(DatastoreConstants.PROVIDER__PROVIDER_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
+	/**
+	 * Returns the description of {@link DatastoreConstants#PIVOT_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#PIVOT_STORE}
+	 */
+	protected IStoreDescription pivotStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.PIVOT_STORE)
+				.withField(DatastoreConstants.PIVOT__PIVOT_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.PIVOT__MANAGER_ID)
+				.asKeyField()
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
+				.build();
+	}
 
-        /* Foreign keys */
-        .withField(DatastoreConstants.PROVIDER__PIVOT_ID)
-        .withField(DatastoreConstants.PROVIDER__MANAGER_ID)
-        /* Attributes */
-        .withField(DatastoreConstants.PROVIDER__INDEX, ILiteralType.STRING, "<None>")
-        .withField(DatastoreConstants.PROVIDER__TYPE)
-        .withField(DatastoreConstants.PROVIDER__CATEGORY)
-        .build();
-  }
+	/**
+	 * Returns the description of {@link DatastoreConstants#APPLICATION_STORE}
+	 *
+	 * @return description of {@link DatastoreConstants#APPLICATION_STORE}
+	 */
+	protected IStoreDescription applicationStore() {
+		return StartBuilding.store()
+				.withStoreName(DatastoreConstants.APPLICATION_STORE)
+				.withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+				.asKeyField()
+				.withField(
+						DatastoreConstants.APPLICATION__DATE,
+						IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
+				.withField(DatastoreConstants.APPLICATION__USED_ON_HEAP, ILiteralType.LONG)
+				.withField(DatastoreConstants.APPLICATION__MAX_ON_HEAP, ILiteralType.LONG)
+				.withField(DatastoreConstants.APPLICATION__USED_OFF_HEAP, ILiteralType.LONG)
+				.withField(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, ILiteralType.LONG)
+				.withDuplicateKeyHandler(DuplicateKeyHandlers.ALWAYS_UPDATE)
+				.build();
+	}
 
-  /**
-   * Returns the description of {@link DatastoreConstants#PIVOT_STORE}
-   *
-   * @return description of {@link DatastoreConstants#PIVOT_STORE}
-   */
-  protected IStoreDescription pivotStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.PIVOT_STORE)
-        .withField(DatastoreConstants.PIVOT__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.PIVOT__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .build();
-  }
+	// TODO(ope) add another store for global info. It shall be linked to a dump and a date, possibly
+	// with the base entry
 
-  /**
-   * Returns the description of {@link DatastoreConstants#APPLICATION_STORE}
-   *
-   * @return description of {@link DatastoreConstants#APPLICATION_STORE}
-   */
-  protected IStoreDescription applicationStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.APPLICATION_STORE)
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .withField(
-            DatastoreConstants.APPLICATION__DATE,
-            IParser.DATE + "[" + DatastoreConstants.DATE_PATTERN + "]")
-        .withField(DatastoreConstants.APPLICATION__USED_ON_HEAP, ILiteralType.LONG)
-        .withField(DatastoreConstants.APPLICATION__MAX_ON_HEAP, ILiteralType.LONG)
-        .withField(DatastoreConstants.APPLICATION__USED_OFF_HEAP, ILiteralType.LONG)
-        .withField(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, ILiteralType.LONG)
-        .withDuplicateKeyHandler(DuplicateKeyHandlers.ALWAYS_UPDATE)
-        .build();
-  }
-
-  // TODO(ope) add another store for global info. It shall be linked to a dump and a date, possibly
-  // with the base entry
-
-  @Override
-  public Collection<? extends IStoreDescription> getStoreDescriptions() {
-    return Arrays.asList(
-        chunkStore(),
-        referenceStore(),
-        indexStore(),
-        dictionaryStore(),
-        levelStore(),
-        providerComponentStore(),
-        providerStore(),
-        pivotStore(),
+	@Override
+	public Collection<? extends IStoreDescription> getStoreDescriptions() {
+		return Arrays.asList(
+				chunkStore(),
+				referenceStore(),
+				indexStore(),
+				dictionaryStore(),
+				levelStore(),
+				providerComponentStore(),
+				providerStore(),
+				pivotStore(),
+        /*
+        Those stores should no longer be needed since the info is now in the base store
         chunkToFieldStore(),
         chunkToIndexStore(),
         chunkToReferenceStore(),
-        chunkTolevelStore(),
-        chunkToDictionaryStore(),
-        applicationStore());
-  }
+         chunkToDictionaryStore(),
+         */
+				chunkTolevelStore(),
+				applicationStore());
+	}
 
-  @Override
-  public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
+	@Override
+	public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
     return Stream.of(
-            getChunkReferences(),
-            Stream.of(
-                // Level refs
-                StartBuilding.reference()
-                    .fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-                    .toStore(DatastoreConstants.LEVEL_STORE)
-                    .withName("LevelInfo")
-                    .withMapping(
-                        DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID,
-                        DatastoreConstants.LEVEL__MANAGER_ID)
-                    .withMapping(
-                        DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID,
-                        DatastoreConstants.LEVEL__PIVOT_ID)
-                    .withMapping(
-                        DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION,
-                        DatastoreConstants.LEVEL__DIMENSION)
-                    .withMapping(
-                        DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY,
-                        DatastoreConstants.LEVEL__HIERARCHY)
-                    .withMapping(
-                        DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
-                    .build(),
-                // Provider component refs
-                StartBuilding.reference()
-                    .fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-                    .toStore(DatastoreConstants.PROVIDER_STORE)
-                    .withName(PROVIDER_COMPONENT_TO_PROVIDER)
-                    .withMapping(
-                        DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
-                        DatastoreConstants.PROVIDER__PROVIDER_ID)
-                    .withMapping(
-                        DatastoreConstants.APPLICATION__DUMP_NAME,
-                        DatastoreConstants.APPLICATION__DUMP_NAME)
-                    .build(),
-                // Provider partitions refs
-                StartBuilding.reference()
-                    .fromStore(DatastoreConstants.PROVIDER_STORE)
-                    .toStore(DatastoreConstants.PIVOT_STORE)
-                    .withName("ProviderToPivot")
-                    .withMapping(
-                        DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-                    .withMapping(
-                        DatastoreConstants.PROVIDER__MANAGER_ID,
-                        DatastoreConstants.PIVOT__MANAGER_ID)
-                    .withMapping(
-                        DatastoreConstants.APPLICATION__DUMP_NAME,
-                        DatastoreConstants.APPLICATION__DUMP_NAME)
-                    .build()),
-            chunkToComponentReferences())
+        getChunkReferences(),
+        getPivotAndProviderReferences()
+        // No longer needed
+        // ,chunkToComponentReferences()
+    )
         .flatMap(Function.identity())
         .collect(Collectors.toList());
   }
 
-  private Stream<IReferenceDescription> getChunkReferences() {
-    return Stream.of(
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_STORE)
-            .toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-            .withName(CHUNK_TO_PROVIDER)
-            .withMapping(
-                DatastoreConstants.APPLICATION__DUMP_NAME,
-                DatastoreConstants.APPLICATION__DUMP_NAME)
-            .withMapping(
-                DatastoreConstants.CHUNK__PROVIDER_ID,
-                DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-            .withMapping(
-                DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
-                DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-            .build(),
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_STORE)
-            .toStore(DatastoreConstants.APPLICATION_STORE)
-            .withName(CHUNK_TO_APP)
-            .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
-            .build());
-  }
+	private Stream<IReferenceDescription> getChunkReferences() {
+		return Stream.of(
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.CHUNK_STORE)
+						.toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+						.withName(CHUNK_TO_PROVIDER)
+						.withMapping(
+								DatastoreConstants.APPLICATION__DUMP_NAME,
+								DatastoreConstants.APPLICATION__DUMP_NAME)
+						.withMapping(
+								DatastoreConstants.CHUNK__PROVIDER_ID,
+								DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
+						.withMapping(
+								DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
+								DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+						.build(),
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.CHUNK_STORE)
+						.toStore(DatastoreConstants.APPLICATION_STORE)
+						.withName(CHUNK_TO_APP)
+						.withMapping(
+								DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+						.build());
+	}
 
-  private Stream<IReferenceDescription> chunkToComponentReferences() {
-    return Stream.of(
-        // ChunkToDico to Dico store reference
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_TO_DICO_STORE)
-            .toStore(DatastoreConstants.DICTIONARY_STORE)
-            .withName(DatastoreConstants.REF_DICTIONARY)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_DICO__DICO_ID, DatastoreConstants.DICTIONARY_ID)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
-            .build(),
-        // ChunkToReference to Reference store reference
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_TO_REF_STORE)
-            .toStore(DatastoreConstants.REFERENCE_STORE)
-            .withName(DatastoreConstants.REF_REFERENCES)
-            .withMapping(DatastoreConstants.CHUNK_TO_REF__REF_ID, DatastoreConstants.REFERENCE_ID)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
-            .build(),
-        // ChunkToIndex to Index store reference
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE)
-            .toStore(DatastoreConstants.INDEX_STORE)
-            .withName(DatastoreConstants.REF_INDEX)
-            .withMapping(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, DatastoreConstants.INDEX_ID)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
-            .build());
-  }
+	private Stream<IReferenceDescription> getPivotAndProviderReferences() {
+		return Stream.of(
+				// Level refs
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
+						.toStore(DatastoreConstants.LEVEL_STORE)
+						.withName("LevelInfo")
+						.withMapping(
+								DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID,
+								DatastoreConstants.LEVEL__MANAGER_ID)
+						.withMapping(
+								DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID,
+								DatastoreConstants.LEVEL__PIVOT_ID)
+						.withMapping(
+								DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION,
+								DatastoreConstants.LEVEL__DIMENSION)
+						.withMapping(
+								DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY,
+								DatastoreConstants.LEVEL__HIERARCHY)
+						.withMapping(
+								DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
+						.build(),
+				// Provider component refs
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+						.toStore(DatastoreConstants.PROVIDER_STORE)
+						.withName(PROVIDER_COMPONENT_TO_PROVIDER)
+						.withMapping(
+								DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
+								DatastoreConstants.PROVIDER__PROVIDER_ID)
+						.withMapping(
+								DatastoreConstants.APPLICATION__DUMP_NAME,
+								DatastoreConstants.APPLICATION__DUMP_NAME)
+						.build(),
+				// Provider partitions refs
+				StartBuilding.reference()
+						.fromStore(DatastoreConstants.PROVIDER_STORE)
+						.toStore(DatastoreConstants.PIVOT_STORE)
+						.withName("ProviderToPivot")
+						.withMapping(
+								DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
+						.withMapping(
+								DatastoreConstants.PROVIDER__MANAGER_ID,
+								DatastoreConstants.PIVOT__MANAGER_ID)
+						.withMapping(
+								DatastoreConstants.APPLICATION__DUMP_NAME,
+								DatastoreConstants.APPLICATION__DUMP_NAME)
+						.build());
+	}
 
-  @Override
-  public Collection<? extends IReferenceDescription> getSameDictionaryDescriptions() {
-    // TODO(ope) report same fields, as some are shared
-    return Collections.emptyList();
-  }
+	@Override
+	public Collection<? extends IReferenceDescription> getSameDictionaryDescriptions() {
+		// TODO(ope) report same fields, as some are shared
+		return Collections.emptyList();
+	}
 
-  /**
-   * Wrapper class around String[] (for equals, hashcode and toStrin).
-   *
-   * @author Quartet FS
-   */
-  public static class StringArrayObject {
+	/**
+	 * Wrapper class around String[] (for equals, hashcode and toStrin).
+	 *
+	 * @author Quartet FS
+	 */
+	public static class StringArrayObject {
 
-    /** Default value for the list of fields. */
-    protected static final StringArrayObject DEFAULT_VALUE =
-        new StringArrayObject(IRecordFormat.GLOBAL_DEFAULT_STRING);
+		/**
+		 * Default value for the list of fields.
+		 */
+		protected static final StringArrayObject DEFAULT_VALUE =
+				new StringArrayObject(IRecordFormat.GLOBAL_DEFAULT_STRING);
 
-    /** Underlying array */
-    protected final String[] fieldNames;
+		/**
+		 * Underlying array
+		 */
+		protected final String[] fieldNames;
 
-    /**
-     * Default constructor.
-     *
-     * @param fieldNames the Underlying array to wrap
-     */
-    public StringArrayObject(String... fieldNames) {
-      this.fieldNames = fieldNames;
-    }
+		/**
+		 * Default constructor.
+		 *
+		 * @param fieldNames the Underlying array to wrap
+		 */
+		public StringArrayObject(String... fieldNames) {
+			this.fieldNames = fieldNames;
+		}
 
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + Arrays.hashCode(fieldNames);
-      return result;
-    }
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Arrays.hashCode(fieldNames);
+			return result;
+		}
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) return true;
-      if (obj == null) return false;
-      if (getClass() != obj.getClass()) return false;
-      StringArrayObject other = (StringArrayObject) obj;
-      if (!Arrays.equals(fieldNames, other.fieldNames)) return false;
-      return true;
-    }
+		@Override
+		public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+			StringArrayObject other = (StringArrayObject) obj;
+      if (!Arrays.equals(fieldNames, other.fieldNames)) {
+        return false;
+      }
+			return true;
+		}
 
-    @Override
-    public String toString() {
-      return QfsArrays.join(", ", fieldNames).toString();
-    }
-  }
+		@Override
+		public String toString() {
+			return QfsArrays.join(", ", fieldNames).toString();
+		}
+	}
 }
