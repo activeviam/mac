@@ -258,9 +258,11 @@ public class DefaultDescriptionPostProcessor implements
 					measuresDescription.getPostProcessorsDescription());
 			DescriptionUtil
 					.addFormattersFromMeasures(formatters, measuresDescription.getNativeMeasures());
-			DescriptionUtil
-					.addFormattersFromMeasures(formatters, aggregationProceduresDescriptions.stream().flatMap(
-							aggProcDesc -> aggProcDesc.getJoinMeasures().stream()).collect(Collectors.toList()));
+			if (aggregationProceduresDescriptions != null) {
+				DescriptionUtil
+						.addFormattersFromMeasures(formatters, aggregationProceduresDescriptions.stream().flatMap(
+								aggProcDesc -> aggProcDesc.getJoinMeasures().stream()).collect(Collectors.toList()));
+			}
 		}
 
 		// Formatters for axis dimensions
