@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.security.impl;
 
 import static com.qfs.QfsWebUtils.url;
@@ -51,86 +52,93 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
 @EnableWebSecurity
 public class SecurityConfig extends ASecurityConfig {
 
-  /** Name of the Cookies of the MAC application */
-  public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
+	/**
+	 * Name of the Cookies of the MAC application.
+	 */
+	public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
-  /**
-   * Returns the spring security bean user details service wrapper.
-   *
-   * @return the {@link IUserDetailsService} used as spring security bean user details service
-   *     wrapper.
-   */
-  @Bean
-  public IUserDetailsService qfsUserDetailsService() {
-    return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());
-  }
+	/**
+	 * Returns the spring security bean user details service wrapper.
+	 *
+	 * @return the {@link IUserDetailsService} used as spring security bean user details service
+	 * 				wrapper.
+	 */
+	@Bean
+	public IUserDetailsService qfsUserDetailsService() {
+		return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());
+	}
 
-  /**
-   * To expose the Pivot services
-   *
-   * @author Quartet FS
-   */
-  @Configuration
-  public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {
+	/**
+	 * To expose the Pivot services.
+	 *
+	 * @author Quartet FS
+	 */
+	@Configuration
+	public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {
 
-    /** The autowired Spring configuration for ActivePivot */
-    @Autowired protected IActivePivotConfig activePivotConfig;
+		/**
+		 * The autowired Spring configuration for ActivePivot.
+		 */
+		@Autowired
+		protected IActivePivotConfig activePivotConfig;
 
-    /** Constructor */
-    public ActivePivotSecurityConfigurer() {
-      super(COOKIE_NAME);
-    }
+		/**
+		 * Constructor.
+		 */
+		public ActivePivotSecurityConfigurer() {
+			super(COOKIE_NAME);
+		}
 
-    @Override
-    protected void doConfigure(HttpSecurity http) throws Exception {
-      http.authorizeRequests()
-          // The order of the matchers matters
-          .antMatchers(HttpMethod.OPTIONS, REST_API_URL_PREFIX + "/**")
-          .permitAll()
-          // Web services used by AP live 3.4
-          .antMatchers(CXF_WEB_SERVICES + '/' + ID_GENERATOR_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(CXF_WEB_SERVICES + '/' + LONG_POLLING_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(CXF_WEB_SERVICES + '/' + LICENSING_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          // Spring remoting services used by AP live 3.4
-          .antMatchers(url(ID_GENERATOR_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(url(LONG_POLLING_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(url(LICENSING_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          // The ping service is temporarily authenticated (see PIVOT-3149)
-          .antMatchers(url(REST_API_URL_PREFIX, PING_SUFFIX))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          // REST services
-          .antMatchers(REST_API_URL_PREFIX + "/**")
-          .hasAnyAuthority(ROLE_USER)
-          // One has to be a user for all the other URLs
-          .antMatchers("/**")
-          .hasAuthority(ROLE_USER)
-          .and()
-          .httpBasic()
-          // SwitchUserFilter is the last filter in the chain. See FilterComparator class.
-          .and()
-          .addFilterAfter(activePivotConfig.contextValueFilter(), SwitchUserFilter.class);
-    }
+		@Override
+		protected void doConfigure(HttpSecurity http) throws Exception {
+			http.authorizeRequests()
+					// The order of the matchers matters
+					.antMatchers(HttpMethod.OPTIONS, REST_API_URL_PREFIX + "/**")
+					.permitAll()
+					// Web services used by AP live 3.4
+					.antMatchers(CXF_WEB_SERVICES + '/' + ID_GENERATOR_SERVICE + "/**")
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					.antMatchers(CXF_WEB_SERVICES + '/' + LONG_POLLING_SERVICE + "/**")
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					.antMatchers(CXF_WEB_SERVICES + '/' + LICENSING_SERVICE + "/**")
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					// Spring remoting services used by AP live 3.4
+					.antMatchers(url(ID_GENERATOR_REMOTING_SERVICE, "**"))
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					.antMatchers(url(LONG_POLLING_REMOTING_SERVICE, "**"))
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					.antMatchers(url(LICENSING_REMOTING_SERVICE, "**"))
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					// The ping service is temporarily authenticated (see PIVOT-3149)
+					.antMatchers(url(REST_API_URL_PREFIX, PING_SUFFIX))
+					.hasAnyAuthority(ROLE_USER, ROLE_TECH)
+					// REST services
+					.antMatchers(REST_API_URL_PREFIX + "/**")
+					.hasAnyAuthority(ROLE_USER)
+					// One has to be a user for all the other URLs
+					.antMatchers("/**")
+					.hasAuthority(ROLE_USER)
+					.and()
+					.httpBasic()
+					// SwitchUserFilter is the last filter in the chain. See FilterComparator class.
+					.and()
+					.addFilterAfter(activePivotConfig.contextValueFilter(), SwitchUserFilter.class);
+		}
 
-    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-      return super.authenticationManagerBean();
-    }
-  }
+		@Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+		@Override
+		public AuthenticationManager authenticationManagerBean() throws Exception {
+			return super.authenticationManagerBean();
+		}
+	}
 
-  /**
-   * Returns a bean initializing the Cookies name in the Servlet Spring context
-   *
-   * @return the bean initializing the Cookies name in the Servlet Spring context
-   */
-  @Bean
-  public ServletContextInitializer servletContextInitializer() {
-    return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);
-  }
+	/**
+	 * Returns a bean initializing the Cookies name in the Servlet Spring context.
+	 *
+	 * @return the bean initializing the Cookies name in the Servlet Spring context
+	 */
+	@Bean
+	public ServletContextInitializer servletContextInitializer() {
+		return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);
+	}
 }

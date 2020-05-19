@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
@@ -40,84 +41,86 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final boolean ADD_DEBUG_TREE = false;
 
 	/**
-	 * Name of the chunk <-> provider linking store
+	 * Name of the chunk <-> provider linking store.
 	 */
 	public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 	/**
-	 * Name of the provider component <-> provider store
+	 * Name of the provider component <-> provider store.
 	 */
 	public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
 	/**
-	 * Name of the /** Name of the chunk <-> application linking store
+	 * Name of the /** Name of the chunk <-> application linking store.
 	 */
 	public static final String CHUNK_TO_APP = "ChunkToApp";
 
 	/**
-	 * Owner value for a chunk held by multiple components
+	 * Owner value for a chunk held by multiple components.
 	 */
 	public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
 	/**
-	 * Component value for a chunk held by multiple components
+	 * Component value for a chunk held by multiple components.
 	 */
 	public static final String SHARED_COMPONENT = "shared";
 
 	/**
-	 * Partition value for chunks held by no partitions
+	 * Partition value for chunks held by no partitions.
 	 */
 	public static final int NO_PARTITION = -3;
 	/**
-	 * Partition value for chunks held by multiple partitions
+	 * Partition value for chunks held by multiple partitions.
 	 */
 	public static final int MANY_PARTITIONS = -2;
 
 	/**
-	 * Enum listing the types of parent structures that hold the {@link IChunk chunks}
+	 * Enum listing the types of parent structures that hold the {@link IChunk chunks}.
 	 */
 	public enum ParentType {
 		/**
-		 * Records structure
+		 * Records structure.
 		 */
 		RECORDS,
 		/**
-		 * Vector block structure
+		 * Vector block structure.
 		 */
 		VECTOR_BLOCK,
 		/**
-		 * Dictionary structure
+		 * Dictionary structure.
 		 */
 		DICTIONARY,
 		/**
-		 * Reference structure
+		 * Reference structure.
 		 */
 		REFERENCE,
 		/**
-		 * Index structure
+		 * Index structure.
 		 */
 		INDEX,
 		/**
-		 * Point mapping structure
+		 * Point mapping structure.
 		 */
 		POINT_MAPPING,
 		/**
-		 * Point index structure
+		 * Point index structure.
 		 */
 		POINT_INDEX,
 		/**
-		 * Aggregate store structure
+		 * Aggregate store structure.
 		 */
 		AGGREGATE_STORE,
 		/**
-		 * Bitmap Matcher structure
+		 * Bitmap Matcher structure.
 		 */
 		BITMAP_MATCHER,
 		/**
-		 * Level structure
+		 * Level structure.
 		 */
 		LEVEL
 	}
 
 	/**
+	 * Description of the chunk store.
+	 *
 	 * @return description of {@link DatastoreConstants#CHUNK_STORE} (main store)
 	 */
 	protected IStoreDescription chunkStore() {
@@ -140,8 +143,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ILiteralType.OBJECT)
 				//Add 5 fields corresponding to the closest parent Id for a given type of parent
 				.withField(DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG)
-				.withField(DatastoreConstants.CHUNK__PARENT_FIELD_NAME, ILiteralType.STRING , "Unknown/Shared")
-				.withField(DatastoreConstants.CHUNK__PARENT_STORE_NAME, ILiteralType.STRING,"Unknown/Shared")
+				.withField(DatastoreConstants.CHUNK__PARENT_FIELD_NAME, ILiteralType.STRING,
+						"Unknown/Shared")
+				.withField(DatastoreConstants.CHUNK__PARENT_STORE_NAME, ILiteralType.STRING,
+						"Unknown/Shared")
 				.withField(DatastoreConstants.CHUNK__PARENT_INDEX_ID, ILiteralType.LONG)
 				.withField(DatastoreConstants.CHUNK__PARENT_REF_ID, ILiteralType.LONG)
 
@@ -162,6 +167,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
+	 * Description of the reference store.
+	 *
 	 * @return description of {@link DatastoreConstants#REFERENCE_STORE}
 	 */
 	protected IStoreDescription referenceStore() {
@@ -189,6 +196,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
+	 * Description of the index store.
+	 *
 	 * @return description of {@link DatastoreConstants#INDEX_STORE}
 	 */
 	protected IStoreDescription indexStore() {
@@ -209,6 +218,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
+	 * Description of the dictionary store.
+	 *
 	 * @return description of {@link DatastoreConstants#DICTIONARY_STORE}
 	 */
 	protected IStoreDescription dictionaryStore() {
@@ -227,7 +238,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#LEVEL_STORE}
+	 * Returns the description of {@link DatastoreConstants#LEVEL_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#LEVEL_STORE}
 	 */
@@ -258,7 +269,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
+	 * Returns the description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
 	 */
@@ -285,7 +296,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
+	 * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
 	 */
@@ -304,7 +315,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#PROVIDER_STORE}
+	 * Returns the description of {@link DatastoreConstants#PROVIDER_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#PROVIDER_STORE}
 	 */
@@ -327,7 +338,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#PIVOT_STORE}
+	 * Returns the description of {@link DatastoreConstants#PIVOT_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#PIVOT_STORE}
 	 */
@@ -344,7 +355,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	}
 
 	/**
-	 * Returns the description of {@link DatastoreConstants#APPLICATION_STORE}
+	 * Returns the description of {@link DatastoreConstants#APPLICATION_STORE}.
 	 *
 	 * @return description of {@link DatastoreConstants#APPLICATION_STORE}
 	 */
@@ -378,28 +389,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				providerComponentStore(),
 				providerStore(),
 				pivotStore(),
-        /*
-        Those stores should no longer be needed since the info is now in the base store
-        chunkToFieldStore(),
-        chunkToIndexStore(),
-        chunkToReferenceStore(),
-         chunkToDictionaryStore(),
-         */
 				chunkTolevelStore(),
 				applicationStore());
 	}
 
 	@Override
 	public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
-    return Stream.of(
-        getChunkReferences(),
-        getPivotAndProviderReferences()
-        // No longer needed
-        // ,chunkToComponentReferences()
-    )
-        .flatMap(Function.identity())
-        .collect(Collectors.toList());
-  }
+		return Stream.of(
+				getChunkReferences(),
+				getPivotAndProviderReferences())
+				.flatMap(Function.identity())
+				.collect(Collectors.toList());
+	}
 
 	private Stream<IReferenceDescription> getChunkReferences() {
 		return Stream.of(
@@ -496,7 +497,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				new StringArrayObject(IRecordFormat.GLOBAL_DEFAULT_STRING);
 
 		/**
-		 * Underlying array
+		 * Underlying array.
 		 */
 		protected final String[] fieldNames;
 
@@ -519,19 +520,19 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
 		@Override
 		public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
 			StringArrayObject other = (StringArrayObject) obj;
-      if (!Arrays.equals(fieldNames, other.fieldNames)) {
-        return false;
-      }
+			if (!Arrays.equals(fieldNames, other.fieldNames)) {
+				return false;
+			}
 			return true;
 		}
 

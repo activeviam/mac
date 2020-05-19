@@ -63,291 +63,318 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public abstract class ASecurityConfig implements ICorsConfig {
 
-  /** Set to true to allow anonymous access. */
-  public static final boolean useAnonymous = false;
+	/**
+	 * Set to true to allow anonymous access.
+	 */
+	public static final boolean useAnonymous = false;
 
-  /** Authentication Bean Name. */
-  public static final String BASIC_AUTH_BEAN_NAME = "basicAuthenticationEntryPoint";
+	/**
+	 * Authentication Bean Name.
+	 */
+	public static final String BASIC_AUTH_BEAN_NAME = "basicAuthenticationEntryPoint";
 
-  /** ActivePivot Cookie Name. */
-  public static final String AP_COOKIE_NAME = "AP_JSESSIONID";
+	/**
+	 * ActivePivot Cookie Name.
+	 */
+	public static final String AP_COOKIE_NAME = "AP_JSESSIONID";
 
-  /** Name of the User Role. */
-  public static final String ROLE_USER = "ROLE_USER";
+	/**
+	 * Name of the User Role.
+	 */
+	public static final String ROLE_USER = "ROLE_USER";
 
-  /** Name of the Admin Role. */
-  public static final String ROLE_ADMIN = "ROLE_ADMIN";
+	/**
+	 * Name of the Admin Role.
+	 */
+	public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
-  /** Name of the Tech Role. */
-  public static final String ROLE_TECH = "ROLE_TECH";
+	/**
+	 * Name of the Tech Role.
+	 */
+	public static final String ROLE_TECH = "ROLE_TECH";
 
-  /** Name of the ContentService Root Role. */
-  public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
+	/**
+	 * Name of the ContentService Root Role.
+	 */
+	public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
-  /** The User Configuration. */
-  @Autowired protected UserConfig userDetailsConfig;
+	/**
+	 * The User Configuration.
+	 */
+	@Autowired
+	protected UserConfig userDetailsConfig;
 
-  /** The JWT Configuration. */
-  @Autowired protected IJwtConfig jwtConfig;
+	/**
+	 * The JWT Configuration.
+	 */
+	@Autowired
+	protected IJwtConfig jwtConfig;
 
-  /**
-   * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
-   * the input password will be encoded and compared with the stored encoded password. To determine
-   * which encoding function was used to encode the password, the stored encoded passwords are
-   * prefixed with the id of the encoding function.
-   *
-   * <p>In order to avoid reformatting existing passwords in databases one can set the default
-   * <code>PasswordEncoder</code> to use for stored passwords that are not prefixed. This is the
-   * role of the following function.
-   *
-   * <p>More information can be found in the <a
-   * href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding
-   * /> Spring documentation</a>
-   *
-   * @return The {@link PasswordEncoder} to encode passwords with.
-   */
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    ((DelegatingPasswordEncoder) passwordEncoder)
-        .setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
-    return passwordEncoder;
-  }
+	/**
+	 * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
+	 * the input password will be encoded and compared with the stored encoded password. To determine
+	 * which encoding function was used to encode the password, the stored encoded passwords are
+	 * prefixed with the id of the encoding function.
+	 *
+	 * <p>In order to avoid reformatting existing passwords in databases one can set the default
+	 * <code>PasswordEncoder</code> to use for stored passwords that are not prefixed. This is the
+	 * role of the following function.
+	 *
+	 * @return The {@link PasswordEncoder} to encode passwords with.
+	 */
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		((DelegatingPasswordEncoder) passwordEncoder)
+				.setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
+		return passwordEncoder;
+	}
 
-  /**
-   * Returns the default {@link AuthenticationEntryPoint} to use for the fallback basic HTTP
-   * authentication.
-   *
-   * @return The default {@link AuthenticationEntryPoint} for the fallback HTTP basic
-   *     authentication.
-   */
-  @Bean(name = BASIC_AUTH_BEAN_NAME)
-  public AuthenticationEntryPoint basicAuthenticationEntryPoint() {
-    return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
-  }
+	/**
+	 * Returns the default {@link AuthenticationEntryPoint} to use for the fallback basic HTTP
+	 * authentication.
+	 *
+	 * @return The default {@link AuthenticationEntryPoint} for the fallback HTTP basic
+	 * 				authentication.
+	 */
+	@Bean(name = BASIC_AUTH_BEAN_NAME)
+	public AuthenticationEntryPoint basicAuthenticationEntryPoint() {
+		return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+	}
 
-  /**
-   * Configures the authentication of the whole application.
-   *
-   * <p>This binds the defined user service to the authentication and sets the source for JWT
-   * tokens.
-   *
-   * @param auth Spring builder to manage authentication
-   * @throws Exception in case of error
-   */
-  @Autowired
-  public void configureGlobal(final AuthenticationManagerBuilder auth) throws Exception {
-    auth.eraseCredentials(false)
-        // Add an LDAP authentication provider instead of this to support LDAP
-        .userDetailsService(this.userDetailsConfig.userDetailsService())
-        .and()
-        // Required to allow JWT
-        .authenticationProvider(jwtConfig.jwtAuthenticationProvider());
-  }
+	/**
+	 * Configures the authentication of the whole application.
+	 *
+	 * <p>This binds the defined user service to the authentication and sets the source for JWT
+	 * tokens.
+	 *
+	 * @param auth Spring builder to manage authentication
+	 * @throws Exception in case of error
+	 */
+	@Autowired
+	public void configureGlobal(final AuthenticationManagerBuilder auth) throws Exception {
+		auth.eraseCredentials(false)
+				// Add an LDAP authentication provider instead of this to support LDAP
+				.userDetailsService(this.userDetailsConfig.userDetailsService())
+				.and()
+				// Required to allow JWT
+				.authenticationProvider(jwtConfig.jwtAuthenticationProvider());
+	}
 
-  /**
-   * [Bean] Comparator for user roles.
-   *
-   * <p>Defines the comparator used by:
-   *
-   * <ul>
-   *   <li>com.quartetfs.biz.pivot.security.impl.ContextValueManager#setAuthorityComparator(
-   *       IAuthorityComparator)
-   *   <li>{@link IJwtService}
-   * </ul>
-   *
-   * @return a comparator that indicates which authority/role prevails over another. <b>NOTICE - an
-   *     authority coming AFTER another one prevails over this "previous" authority.</b> This
-   *     authority ordering definition is essential to resolve possible ambiguity when, for a given
-   *     user, a context value has been defined in more than one authority applicable to that user.
-   *     In such case, it is what has been set for the "prevailing" authority that will be
-   *     effectively retained for that context value for that user.
-   */
-  @Bean
-  public IAuthorityComparator authorityComparator() {
-    final CustomComparator<String> comp = new CustomComparator<>();
-    comp.setFirstObjects(Arrays.asList(ROLE_USER));
-    comp.setLastObjects(Arrays.asList(ROLE_ADMIN));
-    return new AuthorityComparatorAdapter(comp);
-  }
+	/**
+	 * [Bean] Comparator for user roles.
+	 *
+	 * <p>Defines the comparator used by:
+	 *
+	 * <ul>
+	 *   <li>com.quartetfs.biz.pivot.security.impl.ContextValueManager#setAuthorityComparator(
+	 *       IAuthorityComparator)
+	 *   <li>{@link IJwtService}
+	 * </ul>
+	 *
+	 * @return a comparator that indicates which authority/role prevails over another.
+	 */
+	@Bean
+	public IAuthorityComparator authorityComparator() {
+		final CustomComparator<String> comp = new CustomComparator<>();
+		comp.setFirstObjects(Arrays.asList(ROLE_USER));
+		comp.setLastObjects(Arrays.asList(ROLE_ADMIN));
+		return new AuthorityComparatorAdapter(comp);
+	}
 
-  @Override
-  public List<String> getAllowedOrigins() {
-    return Collections.singletonList(CorsConfiguration.ALL);
-  }
+	@Override
+	public List<String> getAllowedOrigins() {
+		return Collections.singletonList(CorsConfiguration.ALL);
+	}
 
-  /**
-   * [Bean] Spring standard way of configuring CORS.
-   *
-   * <p>This simply forwards the configuration of {@link ICorsConfig} to Spring security system.
-   *
-   * @return the configuration for the application.
-   */
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    final CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(getAllowedOrigins());
-    configuration.setAllowedHeaders(getAllowedHeaders());
-    configuration.setExposedHeaders(getExposedHeaders());
-    configuration.setAllowedMethods(getAllowedMethods());
-    configuration.setAllowCredentials(true);
+	/**
+	 * [Bean] Spring standard way of configuring CORS.
+	 *
+	 * <p>This simply forwards the configuration of {@link ICorsConfig} to Spring security system.
+	 *
+	 * @return the configuration for the application.
+	 */
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		final CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(getAllowedOrigins());
+		configuration.setAllowedHeaders(getAllowedHeaders());
+		configuration.setExposedHeaders(getExposedHeaders());
+		configuration.setAllowedMethods(getAllowedMethods());
+		configuration.setAllowCredentials(true);
 
-    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
+		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
 
-    return source;
-  }
+		return source;
+	}
 
-  /**
-   * Common configuration for {@link HttpSecurity}.
-   *
-   * @author ActiveViam
-   */
-  public abstract static class AWebSecurityConfigurer extends WebSecurityConfigurerAdapter {
+	/**
+	 * Common configuration for {@link HttpSecurity}.
+	 *
+	 * @author ActiveViam
+	 */
+	public abstract static class AWebSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-    /** {@code true} to enable the logout URL. */
-    protected final boolean logout;
-    /** The name of the cookie to clear. */
-    protected final String cookieName;
+		/**
+		 * {@code true} to enable the logout URL.
+		 */
+		protected final boolean logout;
+		/**
+		 * The name of the cookie to clear.
+		 */
+		protected final String cookieName;
 
-    /** The name of the Environment to use. */
-    @Autowired protected Environment env;
+		/**
+		 * The name of the Environment to use.
+		 */
+		@Autowired
+		protected Environment env;
 
-    /** The ApplicationContext which contains the Beans. */
-    @Autowired protected ApplicationContext context;
+		/**
+		 * The ApplicationContext which contains the Beans.
+		 */
+		@Autowired
+		protected ApplicationContext context;
 
-    /** This constructor does not enable the logout URL. */
-    public AWebSecurityConfigurer() {
-      this(null);
-    }
+		/**
+		 * This constructor does not enable the logout URL.
+		 */
+		public AWebSecurityConfigurer() {
+			this(null);
+		}
 
-    /**
-     * This constructor enables the logout URL.
-     *
-     * @param cookieName the name of the cookie to clear
-     */
-    public AWebSecurityConfigurer(String cookieName) {
-      this.logout = cookieName != null;
-      this.cookieName = cookieName;
-    }
+		/**
+		 * This constructor enables the logout URL.
+		 *
+		 * @param cookieName the name of the cookie to clear
+		 */
+		public AWebSecurityConfigurer(String cookieName) {
+			this.logout = cookieName != null;
+			this.cookieName = cookieName;
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>This configures a new firewall accepting `%` in URLs, as none of the core services encode
-     * information in URL. This prevents from double-decoding exploits.<br>
-     * The firewall is also configured to accept `\` - backslash - as none of ActiveViam APIs offer
-     * to manipulate files from URL parameters.<br>
-     * Yet, nor `/` and `.` - slash and point - are accepted, as it may trick the REGEXP matchers
-     * used for security. Support for those two characters can be added at your own risk, by
-     * extending this method. As far as ActiveViam APIs are concerned, `/` and `.` in URL parameters
-     * do not represent any risk. `;` - semi-colon - is also not supported, for various APIs end up
-     * target an actual database, and because this character is less likely to be used.
-     */
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-      super.configure(web);
+		/**
+		 * {@inheritDoc}
+		 *
+		 * <p>This configures a new firewall accepting `%` in URLs, as none of the core services encode
+		 * information in URL. This prevents from double-decoding exploits.<br> The firewall is also
+		 * configured to accept `\` - backslash - as none of ActiveViam APIs offer to manipulate files
+		 * from URL parameters.<br> Yet, nor `/` and `.` - slash and point - are accepted, as it may
+		 * trick the REGEXP matchers used for security. Support for those two characters can be added at
+		 * your own risk, by extending this method. As far as ActiveViam APIs are concerned, `/` and `.`
+		 * in URL parameters do not represent any risk. `;` - semi-colon - is also not supported, for
+		 * various APIs end up target an actual database, and because this character is less likely to
+		 * be used.
+		 */
+		@Override
+		public void configure(WebSecurity web) throws Exception {
+			super.configure(web);
 
-      final StrictHttpFirewall firewall = new StrictHttpFirewall();
-      firewall.setAllowUrlEncodedPercent(true);
-      firewall.setAllowBackSlash(true);
+			final StrictHttpFirewall firewall = new StrictHttpFirewall();
+			firewall.setAllowUrlEncodedPercent(true);
+			firewall.setAllowBackSlash(true);
 
-      firewall.setAllowUrlEncodedSlash(false);
-      firewall.setAllowUrlEncodedPeriod(false);
-      firewall.setAllowSemicolon(false);
-      web.httpFirewall(firewall);
-    }
+			firewall.setAllowUrlEncodedSlash(false);
+			firewall.setAllowUrlEncodedPeriod(false);
+			firewall.setAllowSemicolon(false);
+			web.httpFirewall(firewall);
+		}
 
-    @Override
-    protected final void configure(final HttpSecurity http) throws Exception {
-      final Filter jwtFilter = context.getBean(IJwtConfig.class).jwtFilter();
+		@Override
+		protected final void configure(final HttpSecurity http) throws Exception {
+			final Filter jwtFilter = context.getBean(IJwtConfig.class).jwtFilter();
 
-      http
-          // As of Spring Security 4.0, CSRF protection is enabled by default.
-          .csrf()
-          .disable()
-          .cors()
-          .and()
-          // To allow authentication with JWT (Required for ActiveUI)
-          .addFilterAfter(jwtFilter, SecurityContextPersistenceFilter.class);
+			http
+					// As of Spring Security 4.0, CSRF protection is enabled by default.
+					.csrf()
+					.disable()
+					.cors()
+					.and()
+					// To allow authentication with JWT (Required for ActiveUI)
+					.addFilterAfter(jwtFilter, SecurityContextPersistenceFilter.class);
 
-      if (logout) {
-        // Configure logout URL
-        http.logout()
-            .permitAll()
-            .deleteCookies(cookieName)
-            .invalidateHttpSession(true)
-            .logoutSuccessHandler(new NoRedirectLogoutSuccessHandler());
-      }
+			if (logout) {
+				// Configure logout URL
+				http.logout()
+						.permitAll()
+						.deleteCookies(cookieName)
+						.invalidateHttpSession(true)
+						.logoutSuccessHandler(new NoRedirectLogoutSuccessHandler());
+			}
 
-      if (useAnonymous) {
-        // Handle anonymous users. The granted authority ROLE_USER
-        // will be assigned to the anonymous request
-        http.anonymous().principal("guest").authorities(ROLE_USER);
-      }
+			if (useAnonymous) {
+				// Handle anonymous users. The granted authority ROLE_USER
+				// will be assigned to the anonymous request
+				http.anonymous().principal("guest").authorities(ROLE_USER);
+			}
 
-      doConfigure(http);
-    }
+			doConfigure(http);
+		}
 
-    /**
-     * Applies the specific configuration for the endpoint.
-     *
-     * @param http the http endpoint to configure.
-     * @see #configure(HttpSecurity)
-     * @throws Exception in case of error.
-     */
-    protected abstract void doConfigure(HttpSecurity http) throws Exception;
-  }
-  /**
-   * Configuration for Version service to allow anyone to access this service
-   *
-   * @author Quartet FS
-   * @see HttpStatusEntryPoint
-   */
-  public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
+		/**
+		 * Applies the specific configuration for the endpoint.
+		 *
+		 * @param http the http endpoint to configure.
+		 * @throws Exception in case of error.
+		 * @see #configure(HttpSecurity)
+		 */
+		protected abstract void doConfigure(HttpSecurity http) throws Exception;
+	}
 
-    /** The autowired Spring context */
-    @Autowired protected ApplicationContext context;
+	/**
+	 * Configuration for Version service to allow anyone to access this service.
+	 *
+	 * @author Quartet FS
+	 * @see HttpStatusEntryPoint
+	 */
+	public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+		/**
+		 * The autowired Spring context.
+		 */
+		@Autowired
+		protected ApplicationContext context;
 
-      http.antMatcher(VersionServicesConfig.REST_API_URL_PREFIX + "/**")
-          // As of Spring Security 4.0, CSRF protection is enabled by default.
-          .csrf()
-          .disable()
-          .cors()
-          .and()
-          .authorizeRequests()
-          .antMatchers("/**")
-          .permitAll();
-    }
-  }
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
 
-  /**
-   * Configuration for ActiveUI.
-   *
-   * @author Quartet FS
-   * @see HttpStatusEntryPoint
-   */
-  public abstract static class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
+			http.antMatcher(VersionServicesConfig.REST_API_URL_PREFIX + "/**")
+					// As of Spring Security 4.0, CSRF protection is enabled by default.
+					.csrf()
+					.disable()
+					.cors()
+					.and()
+					.authorizeRequests()
+					.antMatchers("/**")
+					.permitAll();
+		}
+	}
 
-    @Override
-    protected void doConfigure(HttpSecurity http) throws Exception {
-      // Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
-      final String pattern = "^(.{0}|\\/|\\/" + "ui" + "(\\/.*)?)$";
-      http
-          // Only theses URLs must be handled by this HttpSecurity
-          .regexMatcher(pattern)
-          .authorizeRequests()
-          // The order of the matchers matters
-          .regexMatchers(HttpMethod.OPTIONS, pattern)
-          .permitAll()
-          .regexMatchers(HttpMethod.GET, pattern)
-          .permitAll();
+	/**
+	 * Configuration for ActiveUI.
+	 *
+	 * @author Quartet FS
+	 * @see HttpStatusEntryPoint
+	 */
+	public abstract static class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
 
-      // Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
-      http.headers().frameOptions().disable();
-    }
-  }
+		@Override
+		protected void doConfigure(HttpSecurity http) throws Exception {
+			// Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
+			final String pattern = "^(.{0}|\\/|\\/" + "ui" + "(\\/.*)?)$";
+			http
+					// Only theses URLs must be handled by this HttpSecurity
+					.regexMatcher(pattern)
+					.authorizeRequests()
+					// The order of the matchers matters
+					.regexMatchers(HttpMethod.OPTIONS, pattern)
+					.permitAll()
+					.regexMatchers(HttpMethod.GET, pattern)
+					.permitAll();
+
+			// Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
+			http.headers().frameOptions().disable();
+		}
+	}
 }

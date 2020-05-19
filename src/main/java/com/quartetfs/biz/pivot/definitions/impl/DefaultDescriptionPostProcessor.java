@@ -7,19 +7,6 @@
 
 package com.quartetfs.biz.pivot.definitions.impl;
 
-import com.quartetfs.biz.pivot.cube.hierarchy.axis.IAnalysisAggregationProcedure;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-
 import com.activeviam.copper.HierarchyIdentifier;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
@@ -41,6 +28,17 @@ import com.quartetfs.biz.pivot.definitions.IDistributedActivePivotDescription;
 import com.quartetfs.biz.pivot.definitions.IEpochDimensionDescription;
 import com.quartetfs.biz.pivot.definitions.IMeasuresDescription;
 import com.quartetfs.biz.pivot.definitions.INativeMeasureDescription;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 /*
@@ -49,11 +47,11 @@ import java.util.stream.Collectors;
  */
 
 /**
- * Post process an {@link IActivePivotDescription} to update it's
- * {@link MdxContext}, putting the formatters and default members defined
- * outside the {@link MdxContext} to the {@link MdxContext}
+ * Post process an {@link IActivePivotDescription} to update it's {@link MdxContext}, putting the
+ * formatters and default members defined outside the {@link MdxContext} to the {@link MdxContext}.
  */
-public class DefaultDescriptionPostProcessor implements IActivePivotDescription.IDescriptionPostProcessor {
+public class DefaultDescriptionPostProcessor implements
+		IActivePivotDescription.IDescriptionPostProcessor {
 
 	@Override
 	public IActivePivotDescription postProcessActivePivotDescription(
@@ -66,6 +64,7 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 
 	/**
 	 * Post-processes the description of an ActivePivot.
+	 *
 	 * @param pivotDescription initial description
 	 * @return processed description
 	 */
@@ -77,11 +76,9 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	}
 
 	/**
-	 * Merge the identical context values together, with the last context value
-	 * taking precedence.
+	 * Merge the identical context values together, with the last context value taking precedence.
 	 *
-	 * @param apDescription The {@link IActivePivotDescription description} to
-	 *        merge the values for.
+	 * @param apDescription The {@link IActivePivotDescription description} to merge the values for.
 	 */
 	public static void mergeSharedContexts(final IActivePivotDescription apDescription) {
 		final IContextValuesDescription sharedContexts = apDescription.getSharedContexts();
@@ -96,14 +93,14 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	}
 
 	/**
-	 * Update the {@link MdxContext}, by adding the default formatters and
-	 * default members.
+	 * Update the {@link MdxContext}, by adding the default formatters and default members.
 	 *
-	 * @param apDescription The {@link IActivePivotDescription description} to
-	 *        update the context for.
+	 * @param apDescription The {@link IActivePivotDescription description} to update the context
+	 *                      for.
 	 */
 	public static void updateMdxContext(final IActivePivotDescription apDescription) {
-		final List<IContextValue> sharedContexts = new LinkedList<>(apDescription.getSharedContexts().getValues());
+		final List<IContextValue> sharedContexts = new LinkedList<>(
+				apDescription.getSharedContexts().getValues());
 
 		// MDX context as defined in the xml
 		final IMdxContext oldMdxContext = DescriptionUtil.getMdxContext(sharedContexts);
@@ -117,27 +114,27 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	/**
 	 * Update the given {@link IMdxContext} by adding the formatters/default members/measures alias
 	 * from the given {@code apDescription}.
-	 * <p>
-	 * If {@code mdxContextToUpdate} is null, create an instance of {@link IMdxContext} to keep the
+	 *
+	 * <p>If {@code mdxContextToUpdate} is null, create an instance of {@link IMdxContext} to keep the
 	 * formatters/default members/measures alias. Otherwise, they are added into the given instance.
-	 * <p>
-	 * If the context value and the description both describe default members/measures alias for the
-	 * same measure or hierarchy, those defined by the context value are kept.
-	 * <p>
-	 * If the context value and the description both define formatters for the same measures and if
+	 *
+	 * <p>If the context value and the description both describe default members/measures alias for
+	 * the same measure or hierarchy, those defined by the context value are kept.
+	 *
+	 * <p>If the context value and the description both define formatters for the same measures and if
 	 * {@code overrideFormatters} is {@code true}, then keep those defined by the description.
 	 * Otherwise, keep the ones defined by the context value.
 	 *
-	 * @param mdxContextToUpdate The mdx context to update, can be null. If the value is non-null,
-	 *        and there are formatters/default members/alias in the pivot description to add into
-	 *        mdx context, they are added into this parameter.
-	 * @param apDescription The {@link IActivePivotDescription description} to update the context
-	 *        for.
-	 * @param overrideFormatters true if the formatters in the description will override those in
-	 *        the mdx context.
+	 * @param mdxContextToUpdate The mdx context to update, can be null. If the value is non-null, and
+	 *                           there are formatters/default members/alias in the pivot description
+	 *                           to add into mdx context, they are added into this parameter.
+	 * @param apDescription      The {@link IActivePivotDescription description} to update the context
+	 *                           for.
+	 * @param overrideFormatters true if the formatters in the description will override those in the
+	 *                           mdx context.
 	 * @return an instance of {@link IMdxContext} if the given mdx context is null, and there are
-	 *         formatters/default members/alias in the pivot description to add into mdx context.
-	 *         Otherwise, returns null.
+	 * 				formatters/default members/alias in the pivot description to add into mdx context
+	 * 				Otherwise, returns null.
 	 */
 	public static IMdxContext updateMdxContext(
 			final IMdxContext mdxContextToUpdate,
@@ -145,11 +142,15 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 			final boolean overrideFormatters) {
 		//Hacked part
 		final IMeasuresDescription measuresDescription = apDescription.getMeasuresDescription();
-		final IEpochDimensionDescription epochDimensionDescription = apDescription.getEpochDimensionDescription();
+		final IEpochDimensionDescription epochDimensionDescription = apDescription
+				.getEpochDimensionDescription();
 		final IAxisDimensionsDescription axisDimensionsDescription = apDescription.getAxisDimensions();
-		final Collection<IAnalysisAggregationProcedureDescription> aggregationProceduresDescriptions = apDescription.getAggregationProcedures();
+		final Collection<IAnalysisAggregationProcedureDescription> aggregationProceduresDescriptions =
+				apDescription.getAggregationProcedures();
 
-		final Map<String, String> formatters = mergeFormatters(mdxContextToUpdate, measuresDescription, epochDimensionDescription, axisDimensionsDescription, aggregationProceduresDescriptions, overrideFormatters);
+		final Map<String, String> formatters = mergeFormatters(mdxContextToUpdate, measuresDescription,
+				epochDimensionDescription, axisDimensionsDescription, aggregationProceduresDescriptions,
+				overrideFormatters);
 		// End of hack
 		final Map<String, List<String>> defaultMembers = mergeDefaultMembers(
 				mdxContextToUpdate,
@@ -157,12 +158,14 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 				axisDimensionsDescription);
 		final Map<String, String> alias = mergeMeasureAlias(mdxContextToUpdate, measuresDescription);
 
-		final MdxContext ctx = (MdxContext) (mdxContextToUpdate != null ? mdxContextToUpdate : new MdxContext());
+		final MdxContext ctx = (MdxContext) (mdxContextToUpdate != null ? mdxContextToUpdate
+				: new MdxContext());
 		ctx.setFormatters(formatters);
 		ctx.setDefaultMembers(defaultMembers);
 		ctx.setMeasureAliases(alias);
 
-		if (mdxContextToUpdate == null && !(formatters.isEmpty() && defaultMembers.isEmpty() && alias.isEmpty())) {
+		if (mdxContextToUpdate == null && !(formatters.isEmpty() && defaultMembers.isEmpty() && alias
+				.isEmpty())) {
 			return ctx;
 		}
 
@@ -172,12 +175,14 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	/**
 	 * Collects all the aggregation procedures defined directly in an analysis hierarchy description.
 	 * <p>
-	 *   This explores hierarchy descriptions. Only the factory plugin key and the underlying levels are retrieved
-	 *   from the hierarchy definitions.
+	 * This explores hierarchy descriptions. Only the factory plugin key and the underlying levels are
+	 * retrieved from the hierarchy definitions.
 	 * </p>
+	 *
 	 * @param description pivot description to explore
 	 */
-	public static void collectAggregationProceduresFromHierarchies(final IActivePivotDescription description) {
+	public static void collectAggregationProceduresFromHierarchies(
+			final IActivePivotDescription description) {
 		if (description instanceof IDistributedActivePivotDescription) {
 			return; // Nothing to do for distributed pivots
 		}
@@ -186,9 +191,11 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 		for (final IAxisDimensionDescription dimension : description.getAxisDimensions().getValues()) {
 			for (final IAxisHierarchyDescription hierarchy : dimension.getHierarchies()) {
 				final Optional<String> aggregationPlugin = Optional.ofNullable(hierarchy.getProperties())
-						.map(props -> props.getProperty(IAnalysisAggregationProcedureDescription.AGGREGATION_PROCEDURE_PROPERTY));
+						.map(props -> props.getProperty(
+								IAnalysisAggregationProcedureDescription.AGGREGATION_PROCEDURE_PROPERTY));
 				if (aggregationPlugin.isPresent()) {
-					final String levelProp = hierarchy.getProperties().getProperty(IAnalysisAggregationProcedureDescription.UNDERLYING_LEVELS_PROPERTY);
+					final String levelProp = hierarchy.getProperties()
+							.getProperty(IAnalysisAggregationProcedureDescription.UNDERLYING_LEVELS_PROPERTY);
 					final Collection<String> underlyingLevels;
 					if (levelProp != null) {
 						underlyingLevels = Arrays.asList(levelProp.split(","));
@@ -196,7 +203,8 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 						underlyingLevels = Collections.emptyList();
 					}
 
-					final AnalysisAggregationProcedureDescription procedureDesc = new AnalysisAggregationProcedureDescription(
+					final AnalysisAggregationProcedureDescription procedureDesc =
+							new AnalysisAggregationProcedureDescription(
 							aggregationPlugin.get(),
 							Collections.singleton(
 									HierarchyIdentifier.toDescription(dimension.getName(), hierarchy.getName())),
@@ -217,16 +225,19 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	}
 
 	/**
-	 * Extract the measures and hierarchies' formatters in the given descriptions and add to the
-	 * given {@code mdxContext}. The formatters in {@code mdxContext} won't be overridden by those
-	 * defined in the descriptions.
+	 * Extract the measures and hierarchies' formatters in the given descriptions and add to the given
+	 * {@code mdxContext}. The formatters in {@code mdxContext} won't be overridden by those defined
+	 * in the descriptions.
 	 *
-	 * @param mdxContext The mdx context to merge the formatters, could be null.
-	 * @param measuresDescription The measures' description.
-	 * @param epochDimensionDescription The description of epoch dimension.
-	 * @param axisDimensionsDescription The axis' description.
-	 * @param overrideFormattersInMdxContext {@code true} if the formatters in the given measure
-	 *        descriptions will override those in the {@code mdxContext}. {@code false} otherwise.
+	 * @param mdxContext                        The mdx context to merge the formatters, could be
+	 *                                          null.
+	 * @param measuresDescription               The measures' description.
+	 * @param epochDimensionDescription         The description of epoch dimension.
+	 * @param axisDimensionsDescription         The axis' description.
+	 * @param aggregationProceduresDescriptions The aggregation procedures descriptions.
+	 * @param overrideFormattersInMdxContext    {@code true} if the formatters in the given measure
+	 *                                          descriptions will override those in the {@code
+	 *                                          mdxContext}. {@code false} otherwise.
 	 * @return the formatters from {@code mdxContext} and the descriptions.
 	 */
 	//Hacked method to consider the aggregation procedures
@@ -241,16 +252,21 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 
 		if (!overrideFormattersInMdxContext) {
 			// Formatters for measures
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getAggregatedMeasuresDescription());
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getPostProcessorsDescription());
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getNativeMeasures());
-			DescriptionUtil.addFormattersFromMeasures(formatters,aggregationProceduresDescriptions.stream().flatMap(
-					aggProcDesc -> aggProcDesc.getJoinMeasures().stream()).collect(Collectors.toList()));
+			DescriptionUtil.addFormattersFromMeasures(formatters,
+					measuresDescription.getAggregatedMeasuresDescription());
+			DescriptionUtil.addFormattersFromMeasures(formatters,
+					measuresDescription.getPostProcessorsDescription());
+			DescriptionUtil
+					.addFormattersFromMeasures(formatters, measuresDescription.getNativeMeasures());
+			DescriptionUtil
+					.addFormattersFromMeasures(formatters, aggregationProceduresDescriptions.stream().flatMap(
+							aggProcDesc -> aggProcDesc.getJoinMeasures().stream()).collect(Collectors.toList()));
 		}
 
 		// Formatters for axis dimensions
 		if (axisDimensionsDescription != null) { // null if distributed description
-			DescriptionUtil.addFormattersFromDimensions(formatters, axisDimensionsDescription.getValues());
+			DescriptionUtil
+					.addFormattersFromDimensions(formatters, axisDimensionsDescription.getValues());
 		}
 
 		// Formatters for the Epoch dimension
@@ -282,21 +298,24 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 
 		if (overrideFormattersInMdxContext) {
 			// Formatters for measures
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getAggregatedMeasuresDescription());
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getPostProcessorsDescription());
-			DescriptionUtil.addFormattersFromMeasures(formatters, measuresDescription.getNativeMeasures());
+			DescriptionUtil.addFormattersFromMeasures(formatters,
+					measuresDescription.getAggregatedMeasuresDescription());
+			DescriptionUtil.addFormattersFromMeasures(formatters,
+					measuresDescription.getPostProcessorsDescription());
+			DescriptionUtil
+					.addFormattersFromMeasures(formatters, measuresDescription.getNativeMeasures());
 		}
 
 		return formatters;
 	}
 
 	/**
-	 * Extract the measures' and hierarchies' default members in the given descriptions and add to
-	 * the given {@code mdxContext}. The default members in {@code mdxContext} won't be overridden
-	 * by those defined in the descriptions.
+	 * Extract the measures' and hierarchies' default members in the given descriptions and add to the
+	 * given {@code mdxContext}. The default members in {@code mdxContext} won't be overridden by
+	 * those defined in the descriptions.
 	 *
-	 * @param mdxContext The mdx context to merge the default members, could be null.
-	 * @param measuresDescription The measures' description.
+	 * @param mdxContext                The mdx context to merge the default members, could be null.
+	 * @param measuresDescription       The measures' description.
 	 * @param axisDimensionsDescription The axis' description.
 	 * @return the default members from {@code mdxContext} and the descriptions.
 	 */
@@ -304,9 +323,13 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 			final IMdxContext mdxContext,
 			final IMeasuresDescription measuresDescription,
 			final IAxisDimensionsDescription axisDimensionsDescription) {
-		final Map<String, List<String>> defaultMembers = axisDimensionsDescription != null ? DescriptionUtil.getDefaultMembers(axisDimensionsDescription.getValues()) : new LinkedHashMap<>();
-		if (measuresDescription.getDefaultMeasures() != null && measuresDescription.getDefaultMeasures().length > 0) {
-			final List<String> uniqueNames = new ArrayList<>(measuresDescription.getDefaultMeasures().length);
+		final Map<String, List<String>> defaultMembers =
+				axisDimensionsDescription != null ? DescriptionUtil
+						.getDefaultMembers(axisDimensionsDescription.getValues()) : new LinkedHashMap<>();
+		if (measuresDescription.getDefaultMeasures() != null
+				&& measuresDescription.getDefaultMeasures().length > 0) {
+			final List<String> uniqueNames = new ArrayList<>(
+					measuresDescription.getDefaultMeasures().length);
 			for (final String measureName : measuresDescription.getDefaultMeasures()) {
 				uniqueNames.add(MdxNamingUtil.quote(measureName));
 			}
@@ -325,7 +348,7 @@ public class DefaultDescriptionPostProcessor implements IActivePivotDescription.
 	 * {@code mdxContext}. The default members in {@code mdxContext} won't be overridden by those
 	 * defined in the descriptions.
 	 *
-	 * @param mdxContext The mdx context to merge the default members, could be null.
+	 * @param mdxContext          The mdx context to merge the default members, could be null.
 	 * @param measuresDescription The measures' description.
 	 * @return the measures' alias from {@code mdxContext} and the descriptions.
 	 */

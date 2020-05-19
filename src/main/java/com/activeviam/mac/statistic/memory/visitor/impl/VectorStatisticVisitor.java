@@ -32,164 +32,170 @@ import java.time.Instant;
  */
 public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
-  /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
+	/**
+	 * The record format of the store that stores the chunks.
+	 */
+	protected final IRecordFormat chunkRecordFormat;
 
-  /** The export date, found on the first statistics we read. */
-  protected final Instant current;
+	/**
+	 * The export date, found on the first statistics we read.
+	 */
+	protected final Instant current;
 
-  /** The partition id of the visited statistic. */
-  protected final int partitionId;
+	/**
+	 * The partition id of the visited statistic.
+	 */
+	protected final int partitionId;
 
-  /**
-   * Constructor.
-   *
-   * @param storageMetadata metadata of the application datastore
-   * @param transaction ongoing transaction
-   * @param dumpName name of the ongoing import
-   * @param current current time
-   * @param store store being visited
-   * @param partitionId partition id of the parent if the chunkSet
-   */
-  public VectorStatisticVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
-      final IOpenedTransaction transaction,
-      final String dumpName,
-      final Instant current,
-      final String store,
-      final int partitionId) {
-    super(transaction, storageMetadata, dumpName);
-    this.current = current;
-    this.store = store;
-    this.partitionId = partitionId;
+	/**
+	 * Constructor.
+	 *
+	 * @param storageMetadata metadata of the application datastore
+	 * @param transaction     ongoing transaction
+	 * @param dumpName        name of the ongoing import
+	 * @param current         current time
+	 * @param store           store being visited
+	 * @param partitionId     partition id of the parent if the chunkSet
+	 */
+	public VectorStatisticVisitor(
+			final IDatastoreSchemaMetadata storageMetadata,
+			final IOpenedTransaction transaction,
+			final String dumpName,
+			final Instant current,
+			final String store,
+			final int partitionId) {
+		super(transaction, storageMetadata, dumpName);
+		this.current = current;
+		this.store = store;
+		this.partitionId = partitionId;
 
-    this.chunkRecordFormat =
-        this.storageMetadata
-            .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
-  }
+		this.chunkRecordFormat =
+				this.storageMetadata
+						.getStoreMetadata(DatastoreConstants.CHUNK_STORE)
+						.getStoreFormat()
+						.getRecordFormat();
+	}
 
-  /**
-   * Tests if a statistic represents a Vector.
-   *
-   * @param statistic instance to test
-   * @return true for a Vector, that this Visitor must handle
-   */
-  static boolean isVector(final IMemoryStatistic statistic) {
-    return (statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
-            && statistic
-                .getAttributes()
-                .containsKey(MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT))
-        || statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK);
-  }
+	/**
+	 * Tests if a statistic represents a Vector.
+	 *
+	 * @param statistic instance to test
+	 * @return true for a Vector, that this Visitor must handle
+	 */
+	static boolean isVector(final IMemoryStatistic statistic) {
+		return (statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
+				&& statistic
+				.getAttributes()
+				.containsKey(MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT))
+				|| statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK);
+	}
 
-  /**
-   * Process the Vector element and all its children.
-   *
-   * @param statistic root statistic
-   */
-  public void process(final IMemoryStatistic statistic) {
-    statistic.accept(this);
-  }
+	/**
+	 * Process the Vector element and all its children.
+	 *
+	 * @param statistic root statistic
+	 */
+	public void process(final IMemoryStatistic statistic) {
+		statistic.accept(this);
+	}
 
-  @Override
-  public Void visit(DefaultMemoryStatistic memoryStatistic) {
-    // TODO we could store the information on that vector in another dedicated store.
-    FeedVisitor.visitChildren(this, memoryStatistic);
-    return null;
-  }
+	@Override
+	public Void visit(DefaultMemoryStatistic memoryStatistic) {
+		// TODO we could store the information on that vector in another dedicated store.
+		FeedVisitor.visitChildren(this, memoryStatistic);
+		return null;
+	}
 
-  @Override
-  public Void visit(final ChunkStatistic chunkStatistic) {
-    if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-      visitVectorBlock(chunkStatistic);
-    } else {
-      throw new IllegalStateException(
-          "Unexpected statistics for chunks. Got "
-              + chunkStatistic
-              + "from "
-              + StatisticTreePrinter.getTreeAsString(chunkStatistic));
-    }
-    return null;
-  }
+	@Override
+	public Void visit(final ChunkStatistic chunkStatistic) {
+		if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+			visitVectorBlock(chunkStatistic);
+		} else {
+			throw new IllegalStateException(
+					"Unexpected statistics for chunks. Got "
+							+ chunkStatistic
+							+ "from "
+							+ StatisticTreePrinter.getTreeAsString(chunkStatistic));
+		}
+		return null;
+	}
 
-  // NOT RELEVANT
+	// NOT RELEVANT
 
-  @Override
-  public Void visit(final ChunkSetStatistic statistic) {
-    throw new UnsupportedOperationException();
-  }
+	@Override
+	public Void visit(final ChunkSetStatistic statistic) {
+		throw new UnsupportedOperationException();
+	}
 
-  @Override
-  public Void visit(ReferenceStatistic referenceStatistic) {
-    throw new UnsupportedOperationException();
-  }
+	@Override
+	public Void visit(ReferenceStatistic referenceStatistic) {
+		throw new UnsupportedOperationException();
+	}
 
-  @Override
-  public Void visit(IndexStatistic indexStatistic) {
-    throw new UnsupportedOperationException();
-  }
+	@Override
+	public Void visit(IndexStatistic indexStatistic) {
+		throw new UnsupportedOperationException();
+	}
 
-  @Override
-  public Void visit(DictionaryStatistic dictionaryStatistic) {
-    throw new UnsupportedOperationException();
-  }
+	@Override
+	public Void visit(DictionaryStatistic dictionaryStatistic) {
+		throw new UnsupportedOperationException();
+	}
 
-  /**
-   * Visits a chunk containing only vectors.
-   *
-   * <p>This is the actual block containing all the data stored in various vectors, not the objects
-   * representing vectors.
-   *
-   * @param statistic statistics about a block of vector items.
-   */
-  protected void visitVectorBlock(final ChunkStatistic statistic) {
-    assert statistic.getChildren().isEmpty() : "Vector statistics with children";
+	/**
+	 * Visits a chunk containing only vectors.
+	 *
+	 * <p>This is the actual block containing all the data stored in various vectors, not the objects
+	 * representing vectors.
+	 *
+	 * @param statistic statistics about a block of vector items.
+	 */
+	protected void visitVectorBlock(final ChunkStatistic statistic) {
+		assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
-    final IRecordFormat format = this.chunkRecordFormat;
-    final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
+		final IRecordFormat format = this.chunkRecordFormat;
+		final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.VECTOR_BLOCK);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
+		FeedVisitor.setTupleElement(
+				tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.VECTOR_BLOCK);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    if (this.referenceId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
-    }
-    if (this.indexId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
-    }
-    if (this.dictionaryId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
-    }
-    if (this.field != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
-    }
-    if (this.store != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
-    }
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+		FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+		if (this.referenceId != null) {
+			FeedVisitor.setTupleElement(
+					tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+		}
+		if (this.indexId != null) {
+			FeedVisitor.setTupleElement(
+					tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+		}
+		if (this.dictionaryId != null) {
+			FeedVisitor.setTupleElement(
+					tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+		}
+		if (this.field != null) {
+			FeedVisitor.setTupleElement(
+					tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+		}
+		if (this.store != null) {
+			FeedVisitor.setTupleElement(
+					tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
+		}
+		FeedVisitor.setTupleElement(
+				tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
+		FeedVisitor.setTupleElement(
+				tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
+		FeedVisitor.setTupleElement(
+				tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
-    // Debug
-    if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
-      tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
-          StatisticTreePrinter.getTreeAsString(statistic);
-    }
-    //Set the chunk data to be added to the Chunk store
-    FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+		// Debug
+		if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+			tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
+					StatisticTreePrinter.getTreeAsString(statistic);
+		}
+		//Set the chunk data to be added to the Chunk store
+		FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
-    visitChildren(statistic);
-  }
+		visitChildren(statistic);
+	}
 }

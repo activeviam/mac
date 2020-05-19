@@ -9,20 +9,24 @@ package com.activeviam.mac.entities;
 
 import lombok.Data;
 
-/** Sub-class of owners for ActivePivot cubes. */
+/**
+ * Sub-class of owners for ActivePivot cubes.
+ */
 @Data
 public class CubeOwner implements ChunkOwner {
 
-  /** Unique id of the ActivePivot. */
-  private final String id;
+	/**
+	 * Unique id of the ActivePivot.
+	 */
+	private final String id;
 
-  @Override
-  public String getName() {
-    return this.id;
-  }
+	@Override
+	public String getName() {
+		return this.id;
+	}
 
-  @Override
-  public String toString() {
-    return "Cube " + this.id;
-  }
+	@Override
+	public String toString() {
+		return "Cube " + this.id;
+	}
 }

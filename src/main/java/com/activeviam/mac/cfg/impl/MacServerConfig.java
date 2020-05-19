@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
@@ -49,7 +50,8 @@ import org.springframework.core.env.Environment;
  * classes, so that we can manage the application configuration in a modular way (split by
  * domain/feature, re-use of core config, override of core config, customized config, etc...).
  *
- * <p>Spring best practices recommends not to have arguments in bean methods if possible. One should
+ * <p>Spring best practices recommends not to have arguments in bean methods if possible. One
+ * should
  * rather autowire the appropriate spring configurations (and not beans directly unless necessary),
  * and use the beans from there.
  *
@@ -57,135 +59,147 @@ import org.springframework.core.env.Environment;
  */
 @Configuration
 @Import(
-    value = {
-      ActiveViamPropertyFromSpringConfig.class,
-      JwtRestServiceConfig.class,
-      JwtConfig.class,
-      ManagerDescriptionConfig.class,
+		value = {
+				ActiveViamPropertyFromSpringConfig.class,
+				JwtRestServiceConfig.class,
+				JwtConfig.class,
+				ManagerDescriptionConfig.class,
 
-      // Pivot
-      ActivePivotConfig.class,
-      DatastoreConfig.class,
-      NoWriteDatastoreServiceConfig.class,
-      FullAccessBranchPermissionsManagerConfig.class,
-      ActivePivotServicesConfig.class,
-      ActiveViamRestServicesConfig.class,
-      ActiveViamWebSocketServicesConfig.class,
+				// Pivot
+				ActivePivotConfig.class,
+				DatastoreConfig.class,
+				NoWriteDatastoreServiceConfig.class,
+				FullAccessBranchPermissionsManagerConfig.class,
+				ActivePivotServicesConfig.class,
+				ActiveViamRestServicesConfig.class,
+				ActiveViamWebSocketServicesConfig.class,
 
-      // Content server
-      LocalContentServiceConfig.class,
-      LocalI18nConfig.class,
+				// Content server
+				LocalContentServiceConfig.class,
+				LocalI18nConfig.class,
 
-      // Specific to monitoring server
-      SecurityConfig.class,
-      UserConfig.class,
-      SourceConfig.class,
-      ActiveUIResourceServerConfig.class
-    })
+				// Specific to monitoring server
+				SecurityConfig.class,
+				UserConfig.class,
+				SourceConfig.class,
+				ActiveUIResourceServerConfig.class
+		})
 public class MacServerConfig {
 
-  /** Datastore spring configuration */
-  @Autowired protected IDatastoreConfig datastoreConfig;
+	/**
+	 * Datastore spring configuration.
+	 */
+	@Autowired
+	protected IDatastoreConfig datastoreConfig;
 
-  /** ActivePivot spring configuration */
-  @Autowired protected IActivePivotConfig apConfig;
+	/**
+	 * ActivePivot spring configuration.
+	 */
+	@Autowired
+	protected IActivePivotConfig apConfig;
 
-  /** ActivePivot content service spring configuration */
-  @Autowired protected IActivePivotContentServiceConfig apCSConfig;
+	/**
+	 * ActivePivot content service spring configuration.
+	 */
+	@Autowired
+	protected IActivePivotContentServiceConfig apCSConfig;
 
-  /** Spring configuration of the source files of the Memory Analysis Cube application */
-  @Autowired protected SourceConfig sourceConfig;
+	/**
+	 * Spring configuration of the source files of the Memory Analysis Cube application.
+	 */
+	@Autowired
+	protected SourceConfig sourceConfig;
 
-  /**
-   * Initialize and start the ActivePivot Manager, after performing all the injections into the
-   * ActivePivot plug-ins.
-   *
-   * @return void
-   */
-  @Bean
-  public Void startManager() {
-    /* *********************************************** */
-    /* Initialize the ActivePivot Manager and start it */
-    /* *********************************************** */
-    try {
-      apConfig.activePivotManager().init(null);
-      apConfig.activePivotManager().start();
-    } catch (AgentException e) {
-      throw new IllegalStateException("Cannot start the application", e);
-    }
-    //    createDefaultRowsForJoinStores();
-    return null;
-  }
+	/**
+	 * Initialize and start the ActivePivot Manager, after performing all the injections into the
+	 * ActivePivot plug-ins.
+	 *
+	 * @return void
+	 */
+	@Bean
+	public Void startManager() {
+		/* *********************************************** */
+		/* Initialize the ActivePivot Manager and start it */
+		/* *********************************************** */
+		try {
+			apConfig.activePivotManager().init(null);
+			apConfig.activePivotManager().start();
+		} catch (AgentException e) {
+			throw new IllegalStateException("Cannot start the application", e);
+		}
+		//    createDefaultRowsForJoinStores();
+		return null;
+	}
 
-  /**
-   * Hook called after the application started.
-   *
-   * <p>It performs every operation once the application is up and read, such as loading data, etc.
-   */
-  @EventListener(ApplicationReadyEvent.class)
-  public void afterStart() {
-    // Connect the real-time updates
-    sourceConfig.watchStatisticDirectory();
-  }
+	/**
+	 * Hook called after the application started.
+	 *
+	 * <p>It performs every operation once the application is up and read, such as loading data, etc.
+	 */
+	@EventListener(ApplicationReadyEvent.class)
+	public void afterStart() {
+		// Connect the real-time updates
+		sourceConfig.watchStatisticDirectory();
+	}
 
 
-  /**
-   * Enables JMX Monitoring for the Source
-   *
-   * @return the {@link JMXEnabler} attached to the source
-   */
-  @Bean
-  public JMXEnabler JMXMonitoringConnectorEnabler() {
-    return new JMXEnabler("StatisticSource", sourceConfig);
-  }
+	/**
+	 * Enables JMX Monitoring for the Source.
+	 *
+	 * @return the {@link JMXEnabler} attached to the source
+	 */
+	@Bean
+	public JMXEnabler JMXMonitoringConnectorEnabler() {
+		return new JMXEnabler("StatisticSource", sourceConfig);
+	}
 
-  /**
-   * Enable JMX Monitoring for the Datastore
-   *
-   * @return the {@link JMXEnabler} attached to the datastore
-   */
-  @Bean
-  public JMXEnabler JMXDatastoreEnabler() {
-    return new JMXEnabler(datastoreConfig.datastore());
-  }
+	/**
+	 * Enable JMX Monitoring for the Datastore.
+	 *
+	 * @return the {@link JMXEnabler} attached to the datastore
+	 */
+	@Bean
+	public JMXEnabler JMXDatastoreEnabler() {
+		return new JMXEnabler(datastoreConfig.datastore());
+	}
 
-  /**
-   * Enable JMX Monitoring for ActivePivot Components
-   *
-   * @return the {@link JMXEnabler} attached to the activePivotManager
-   */
-  @Bean
-  public JMXEnabler JMXActivePivotEnabler() {
-    startManager();
+	/**
+	 * Enable JMX Monitoring for ActivePivot Components.
+	 *
+	 * @return the {@link JMXEnabler} attached to the activePivotManager
+	 */
+	@Bean
+	public JMXEnabler JMXActivePivotEnabler() {
+		startManager();
 
-    return new JMXEnabler(apConfig.activePivotManager());
-  }
+		return new JMXEnabler(apConfig.activePivotManager());
+	}
 
-  /**
-   * Enable JMX Monitoring for the ContentService
-   *
-   * @return the {@link JMXEnabler} attached to the Content Service
-   */
-  @Bean
-  public JMXEnabler JMXActivePivotContentServiceEnabler() {
-    // to allow operations from the JMX bean
-    return new JMXEnabler(
-        new DynamicActivePivotContentServiceMBean(
-            apCSConfig.activePivotContentService(), apConfig.activePivotManager()));
-  }
+	/**
+	 * Enable JMX Monitoring for the ContentService.
+	 *
+	 * @return the {@link JMXEnabler} attached to the Content Service
+	 */
+	@Bean
+	public JMXEnabler JMXActivePivotContentServiceEnabler() {
+		// to allow operations from the JMX bean
+		return new JMXEnabler(
+				new DynamicActivePivotContentServiceMBean(
+						apCSConfig.activePivotContentService(), apConfig.activePivotManager()));
+	}
 
-  /**
-   * Enable Memory JMX Monitoring
-   *
-   * @return the {@link JMXEnabler} attached to the memory analysis service.
-   */
-  @Bean
-  public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
-    return new JMXEnabler(
-        new MemoryAnalysisService(
-            this.datastoreConfig.datastore(),
-            this.apConfig.activePivotManager(),
-            this.datastoreConfig.datastore().getEpochManager(),
-            Paths.get(System.getProperty("java.io.tmpdir"))));
-  }
+	/**
+	 * Enable Memory JMX Monitoring.
+	 *
+	 * @return the {@link JMXEnabler} attached to the memory analysis service.
+	 */
+	@Bean
+	public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
+		return new JMXEnabler(
+				new MemoryAnalysisService(
+						this.datastoreConfig.datastore(),
+						this.apConfig.activePivotManager(),
+						this.datastoreConfig.datastore().getEpochManager(),
+						Paths.get(System.getProperty("java.io.tmpdir"))));
+	}
 }
