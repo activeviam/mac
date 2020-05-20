@@ -380,16 +380,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
 						.withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-		// rename and hide the dictionaryId Analysis Hierarchy
-		Copper.newSingleLevelHierarchy(DICO_ID_HIERARCHY)
-				.from(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_ID))
-				.hidden()
-				.publish(context);
-
 		Copper.sum(
 				chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
 				.as("Dictionary Size")
-				.withFormatter(ByteFormatter.KEY)
 				.publish(context);
 
 		// --------------------
@@ -399,12 +392,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.joinToCube()
 						.withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
 						.withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-		// rename and hide the referenceID Analysis Hierarchy
-		Copper.newSingleLevelHierarchy(REF_ID_HIERARCHY)
-				.from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_ID))
-				.hidden()
-				.publish(context);
 
 		// Reference name
 		Copper.newSingleLevelHierarchy("Reference Names")
@@ -418,12 +405,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 						.joinToCube()
 						.withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
 						.withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-		// rename and hide the index Id Analysis Hierarchy
-		Copper.newSingleLevelHierarchy(INDEX_ID_HIERARCHY)
-				.from(chunkToIndexStore.field(DatastoreConstants.INDEX_ID))
-				.hidden()
-				.publish(context);
 
 		Copper.newSingleLevelHierarchy("Indexed Fields")
 				.from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))

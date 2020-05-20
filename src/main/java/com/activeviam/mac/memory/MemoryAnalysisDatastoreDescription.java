@@ -55,6 +55,20 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 	public static final String CHUNK_TO_APP = "ChunkToApp";
 
 	/**
+	 * Default value for store and field - fields.
+	 */
+	public static final String DATASTORE_SHARED = "Shared";
+
+	/**
+	 * Default value for store and field - fields.
+	 */
+	public static final String DEFAULT_DATASTORE = "Unknown";
+
+	/**
+	 *  Default value for component-specific ids.
+	 */
+	public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
+	/**
 	 * Owner value for a chunk held by multiple components.
 	 */
 	public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
@@ -142,13 +156,22 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 				.withField(DatastoreConstants.CHUNK__PARENT_ID)
 				.withField(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ILiteralType.OBJECT)
 				//Add 5 fields corresponding to the closest parent Id for a given type of parent
-				.withField(DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG)
+				.withField(DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG,
+						DEFAULT_COMPONENT_ID_VALUE)
+				.dictionarized()
 				.withField(DatastoreConstants.CHUNK__PARENT_FIELD_NAME, ILiteralType.STRING,
-						"Unknown/Shared")
+						DEFAULT_DATASTORE)
+				.dictionarized()
 				.withField(DatastoreConstants.CHUNK__PARENT_STORE_NAME, ILiteralType.STRING,
-						"Unknown/Shared")
-				.withField(DatastoreConstants.CHUNK__PARENT_INDEX_ID, ILiteralType.LONG)
-				.withField(DatastoreConstants.CHUNK__PARENT_REF_ID, ILiteralType.LONG)
+						DEFAULT_DATASTORE)
+				.dictionarized()
+				.withField(DatastoreConstants.CHUNK__PARENT_INDEX_ID, ILiteralType.LONG,
+						DEFAULT_COMPONENT_ID_VALUE)
+				.dictionarized()
+				.withField(DatastoreConstants.CHUNK__PARENT_REF_ID, ILiteralType.LONG,
+						DEFAULT_COMPONENT_ID_VALUE)
+				.dictionarized()
+
 
 				.withField(
 						DatastoreConstants.CHUNK__PROVIDER_ID,
