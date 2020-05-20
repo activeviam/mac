@@ -15,15 +15,17 @@ package com.activeviam.mac;
  */
 public @interface Workaround {
 
-	/**
-	 * Returns the solution.
-	 * @return Brief explanation of the issue to workaround.
-	 */
-	String solution();
+  /**
+   * Returns the solution.
+   *
+   * @return Brief explanation of the issue to workaround.
+   */
+  String solution();
 
-	/**
-	 * Returns the jira ticket.
-	 * @return Jira ticket related to the issue.
-	 */
-	String jira() default "";
+  /**
+   * Returns the jira ticket.
+   *
+   * @return Jira ticket related to the issue.
+   */
+  String jira() default "";
 }

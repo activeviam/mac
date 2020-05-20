@@ -36,38 +36,38 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Import({MacServerConfig.class})
 public class MacSpringBootApp {
 
-	/* Before anything else we statically initialize the Quartet FS Registry. */ {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+  /* Before anything else we statically initialize the Quartet FS Registry. */ {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
 
-	/**
-	 * Starts the Memory Analysis Cube application.
-	 *
-	 * @param args additional CLI arguments
-	 */
-	public static void main(final String[] args) {
-		SpringApplication.run(MacSpringBootApp.class, args);
-	}
+  /**
+   * Starts the Memory Analysis Cube application.
+   *
+   * @param args additional CLI arguments
+   */
+  public static void main(final String[] args) {
+    SpringApplication.run(MacSpringBootApp.class, args);
+  }
 
-	/**
-	 * Provides a customized {@link DispatcherServletRegistrationBean} with a specific servlet path.
-	 *
-	 * <p>This bean is required to make AP work in SpringBoot; see :
-	 * https://github.com/spring-projects/spring-boot/issues/15373
-	 *
-	 * @param dispatcherServlet the dispatcher servlet
-	 * @param multipartConfig   the dispatcher servlet properties
-	 * @return a customized {@link DispatcherServletRegistrationBean}
-	 */
-	@Bean
-	public DispatcherServletRegistrationBean dispatcherServletRegistration(
-			final DispatcherServlet dispatcherServlet,
-			final ObjectProvider<MultipartConfigElement> multipartConfig) {
-		final DispatcherServletRegistrationBean registration =
-				new DispatcherServletRegistrationBean(dispatcherServlet, "/*");
-		registration.setName("springDispatcherServlet");
-		registration.setLoadOnStartup(1);
-		multipartConfig.ifAvailable(registration::setMultipartConfig);
-		return registration;
-	}
+  /**
+   * Provides a customized {@link DispatcherServletRegistrationBean} with a specific servlet path.
+   *
+   * <p>This bean is required to make AP work in SpringBoot; see :
+   * https://github.com/spring-projects/spring-boot/issues/15373
+   *
+   * @param dispatcherServlet the dispatcher servlet
+   * @param multipartConfig the dispatcher servlet properties
+   * @return a customized {@link DispatcherServletRegistrationBean}
+   */
+  @Bean
+  public DispatcherServletRegistrationBean dispatcherServletRegistration(
+      final DispatcherServlet dispatcherServlet,
+      final ObjectProvider<MultipartConfigElement> multipartConfig) {
+    final DispatcherServletRegistrationBean registration =
+        new DispatcherServletRegistrationBean(dispatcherServlet, "/*");
+    registration.setName("springDispatcherServlet");
+    registration.setLoadOnStartup(1);
+    multipartConfig.ifAvailable(registration::setMultipartConfig);
+    return registration;
+  }
 }

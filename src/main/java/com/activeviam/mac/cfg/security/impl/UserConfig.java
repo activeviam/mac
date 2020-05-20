@@ -20,33 +20,33 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 @Configuration
 public class UserConfig {
 
-	/**
-	 * ROLE_KPI is added to users, to give them permission to read kpis created by other users in the
-	 * content server In order to "share" kpis created in the content server, the kpi reader role is
-	 * set to : ROLE_KPI.
-	 */
-	public static final String ROLE_KPI = "ROLE_KPI";
+  /**
+   * ROLE_KPI is added to users, to give them permission to read kpis created by other users in the
+   * content server In order to "share" kpis created in the content server, the kpi reader role is
+   * set to : ROLE_KPI.
+   */
+  public static final String ROLE_KPI = "ROLE_KPI";
 
-	/**
-	 * [Bean] Create the users that can access the application.
-	 *
-	 * @return {@link UserDetailsService user data}
-	 */
-	@Bean
-	public UserDetailsService userDetailsService() {
-		return new InMemoryUserDetailsManagerBuilder()
+  /**
+   * [Bean] Create the users that can access the application.
+   *
+   * @return {@link UserDetailsService user data}
+   */
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return new InMemoryUserDetailsManagerBuilder()
 
-				// "Real users"
-				.withUser("admin")
-				.password("admin")
-				.authorities(
-						SecurityConfig.ROLE_USER,
-						SecurityConfig.ROLE_ADMIN,
-						ROLE_KPI,
-						SecurityConfig.ROLE_CS_ROOT)
-				.and()
+        // "Real users"
+        .withUser("admin")
+        .password("admin")
+        .authorities(
+            SecurityConfig.ROLE_USER,
+            SecurityConfig.ROLE_ADMIN,
+            ROLE_KPI,
+            SecurityConfig.ROLE_CS_ROOT)
+        .and()
 
-				// We're done
-				.build();
-	}
+        // We're done
+        .build();
+  }
 }

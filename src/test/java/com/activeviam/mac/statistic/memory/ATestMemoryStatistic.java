@@ -9,16 +9,15 @@ package com.activeviam.mac.statistic.memory;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
-import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -949,7 +948,8 @@ public abstract class ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__CLOSEST_PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(
+                        CHUNK__CLOSEST_PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
                     BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)))
             .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
             .onCurrentThread()

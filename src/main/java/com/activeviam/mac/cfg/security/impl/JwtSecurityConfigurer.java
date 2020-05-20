@@ -26,30 +26,27 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 @Order(2) // Must be done before ContentServerSecurityConfigurer (because they match common URLs)
 public class JwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-	/**
-	 * The autowired Spring @link {@link ApplicationContext}.
-	 */
-	@Autowired
-	protected ApplicationContext context;
+  /** The autowired Spring @link {@link ApplicationContext}. */
+  @Autowired protected ApplicationContext context;
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		final AuthenticationEntryPoint basicAuthenticationEntryPoint =
-				context.getBean(ASecurityConfig.BASIC_AUTH_BEAN_NAME, AuthenticationEntryPoint.class);
-		http.antMatcher(JwtRestServiceConfig.REST_API_URL_PREFIX + "/**")
-				// As of Spring Security 4.0, CSRF protection is enabled by default.
-				.csrf()
-				.disable()
-				.cors()
-				.and()
-				// Configure CORS
-				.authorizeRequests()
-				.antMatchers(HttpMethod.OPTIONS, "/**")
-				.permitAll()
-				.antMatchers("/**")
-				.hasAnyAuthority(ASecurityConfig.ROLE_USER)
-				.and()
-				.httpBasic()
-				.authenticationEntryPoint(basicAuthenticationEntryPoint);
-	}
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    final AuthenticationEntryPoint basicAuthenticationEntryPoint =
+        context.getBean(ASecurityConfig.BASIC_AUTH_BEAN_NAME, AuthenticationEntryPoint.class);
+    http.antMatcher(JwtRestServiceConfig.REST_API_URL_PREFIX + "/**")
+        // As of Spring Security 4.0, CSRF protection is enabled by default.
+        .csrf()
+        .disable()
+        .cors()
+        .and()
+        // Configure CORS
+        .authorizeRequests()
+        .antMatchers(HttpMethod.OPTIONS, "/**")
+        .permitAll()
+        .antMatchers("/**")
+        .hasAnyAuthority(ASecurityConfig.ROLE_USER)
+        .and()
+        .httpBasic()
+        .authenticationEntryPoint(basicAuthenticationEntryPoint);
+  }
 }

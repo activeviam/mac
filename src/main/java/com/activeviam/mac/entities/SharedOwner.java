@@ -7,32 +7,29 @@
 
 package com.activeviam.mac.entities;
 
-/**
- * Special class symbolizing a owner that owns chunks shared by multiple components.
- */
+/** Special class symbolizing a owner that owns chunks shared by multiple components. */
 public final class SharedOwner implements ChunkOwner {
 
-	private static final SharedOwner INSTANCE = new SharedOwner();
+  private static final SharedOwner INSTANCE = new SharedOwner();
 
-	/**
-	 * Get the unique instance of this class.
-	 *
-	 * @return the singleton
-	 */
-	public static SharedOwner getInstance() {
-		return INSTANCE;
-	}
+  /**
+   * Get the unique instance of this class.
+   *
+   * @return the singleton
+   */
+  public static SharedOwner getInstance() {
+    return INSTANCE;
+  }
 
-	private SharedOwner() {
-	}
+  private SharedOwner() {}
 
-	@Override
-	public String getName() {
-		return "shared";
-	}
+  @Override
+  public String getName() {
+    return "shared";
+  }
 
-	@Override
-	public String toString() {
-		return "Shared";
-	}
+  @Override
+  public String toString() {
+    return "Shared";
+  }
 }

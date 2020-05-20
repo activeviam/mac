@@ -7,15 +7,13 @@
 
 package com.activeviam.mac.entities;
 
-/**
- * Interface representing an Owner of a chunk in the application.
- */
+/** Interface representing an Owner of a chunk in the application. */
 public interface ChunkOwner {
 
-	/**
-	 * Gets the name of the owner.
-	 *
-	 * @return the name
-	 */
-	String getName();
+  /**
+   * Gets the name of the owner.
+   *
+   * @return the name
+   */
+  String getName();
 }

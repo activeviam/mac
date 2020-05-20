@@ -24,36 +24,34 @@ import java.util.Map;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = IndexFormatter.KEY)
 public class IndexFormatter implements IFormatter {
 
-	private static final long serialVersionUID = 4778274710157958593L;
+  private static final long serialVersionUID = 4778274710157958593L;
 
-	/**
-	 * Plugin key.
-	 */
-	public static final String KEY = "IndexFormatter";
+  /** Plugin key. */
+  public static final String KEY = "IndexFormatter";
 
-	@Override
-	public String getType() {
-		return KEY;
-	}
+  @Override
+  public String getType() {
+    return KEY;
+  }
 
-	private static final Map<Object, String> membersMap = new HashMap<>();
+  private static final Map<Object, String> membersMap = new HashMap<>();
 
-	static {
-		membersMap.put(
-				MultiVersionCompositePrimaryRecordIndex.class.getName(), "Composite primary index");
-		membersMap.put(
-				MultiVersionCompositeSecondaryRecordIndex.class.getName(), "Composite secondary index");
-		membersMap.put(MultiVersionPrimaryRecordIndex.class.getName(), "Primary index");
-		membersMap.put(MultiVersionSecondaryRecordIndex.class.getName(), "Secondary index");
-	}
+  static {
+    membersMap.put(
+        MultiVersionCompositePrimaryRecordIndex.class.getName(), "Composite primary index");
+    membersMap.put(
+        MultiVersionCompositeSecondaryRecordIndex.class.getName(), "Composite secondary index");
+    membersMap.put(MultiVersionPrimaryRecordIndex.class.getName(), "Primary index");
+    membersMap.put(MultiVersionSecondaryRecordIndex.class.getName(), "Secondary index");
+  }
 
-	@Override
-	public String format(final Object object) {
-		final String formatted = membersMap.get(object);
-		if (formatted == null) {
-			return object != null ? object.toString() : null;
-		} else {
-			return formatted;
-		}
-	}
+  @Override
+  public String format(final Object object) {
+    final String formatted = membersMap.get(object);
+    if (formatted == null) {
+      return object != null ? object.toString() : null;
+    } else {
+      return formatted;
+    }
+  }
 }

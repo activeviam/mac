@@ -7,32 +7,29 @@
 
 package com.activeviam.mac.entities;
 
-/**
- * Special class representing the absence of owner.
- */
+/** Special class representing the absence of owner. */
 public final class NoOwner implements ChunkOwner {
 
-	private static final NoOwner INSTANCE = new NoOwner();
+  private static final NoOwner INSTANCE = new NoOwner();
 
-	/**
-	 * Gets the unique instance of this class.
-	 *
-	 * @return the singleton
-	 */
-	public static NoOwner getInstance() {
-		return INSTANCE;
-	}
+  /**
+   * Gets the unique instance of this class.
+   *
+   * @return the singleton
+   */
+  public static NoOwner getInstance() {
+    return INSTANCE;
+  }
 
-	private NoOwner() {
-	}
+  private NoOwner() {}
 
-	@Override
-	public String getName() {
-		return "none";
-	}
+  @Override
+  public String getName() {
+    return "none";
+  }
 
-	@Override
-	public String toString() {
-		return "No owner";
-	}
+  @Override
+  public String toString() {
+    return "No owner";
+  }
 }

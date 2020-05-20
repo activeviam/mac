@@ -17,6 +17,4 @@ import org.springframework.core.annotation.Order;
  */
 @Configuration
 @Order(3)
-public class VersionSecurityConfigurer extends ASecurityConfig.AVersionSecurityConfigurer {
-
-}
+public class VersionSecurityConfigurer extends ASecurityConfig.AVersionSecurityConfigurer {}

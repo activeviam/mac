@@ -16,76 +16,72 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Configuration preventing any edition to the datastore from the remote services.
- */
+/** Configuration preventing any edition to the datastore from the remote services. */
 @Configuration
 public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
 
-	/**
-	 * Constructor.
-	 */
-	public NoWriteDatastoreServiceConfig() {
-		super(Collections.emptyMap(), Collections.emptyMap(), storesSecurityMap, DEFAULT_QUERY_TIMEOUT);
-	}
+  /** Constructor. */
+  public NoWriteDatastoreServiceConfig() {
+    super(Collections.emptyMap(), Collections.emptyMap(), storesSecurityMap, DEFAULT_QUERY_TIMEOUT);
+  }
 
-	/**
-	 * A constant for the map which will always return the same store security, also defined as a
-	 * constant below.
-	 */
-	protected static final Map<String, IStoreSecurity> storesSecurityMap =
-			new HashMap<String, IStoreSecurity>() {
+  /**
+   * A constant for the map which will always return the same store security, also defined as a
+   * constant below.
+   */
+  protected static final Map<String, IStoreSecurity> storesSecurityMap =
+      new HashMap<String, IStoreSecurity>() {
 
-				private static final long serialVersionUID = 5_08_00L;
+        private static final long serialVersionUID = 5_08_00L;
 
-				@Override
-				public IStoreSecurity get(Object key) {
-					return containsKey(key) ? super.get(key) : defaultStoreSecurity;
-				}
-			};
+        @Override
+        public IStoreSecurity get(Object key) {
+          return containsKey(key) ? super.get(key) : defaultStoreSecurity;
+        }
+      };
 
-	/**
-	 * A constant for store security.
-	 *
-	 * <p>This allows to read any fields but forbids all updates.
-	 */
-	protected static final IStoreSecurity defaultStoreSecurity =
-			new IStoreSecurity() {
+  /**
+   * A constant for store security.
+   *
+   * <p>This allows to read any fields but forbids all updates.
+   */
+  protected static final IStoreSecurity defaultStoreSecurity =
+      new IStoreSecurity() {
 
-				@Override
-				public boolean isDeletingRecordsAllowed() {
-					return false;
-				}
+        @Override
+        public boolean isDeletingRecordsAllowed() {
+          return false;
+        }
 
-				@Override
-				public boolean isAddingNewRecordsAllowed() {
-					return false;
-				}
+        @Override
+        public boolean isAddingNewRecordsAllowed() {
+          return false;
+        }
 
-				@Override
-				public IStorePermission getStorePermissions() {
-					return new IStorePermission() {
+        @Override
+        public IStorePermission getStorePermissions() {
+          return new IStorePermission() {
 
-						@Override
-						public Set<String> getStoreWriterRoles() {
-							return Collections.emptySet();
-						}
+            @Override
+            public Set<String> getStoreWriterRoles() {
+              return Collections.emptySet();
+            }
 
-						@Override
-						public Set<String> getStoreReaderRoles() {
-							return Collections.emptySet();
-						}
+            @Override
+            public Set<String> getStoreReaderRoles() {
+              return Collections.emptySet();
+            }
 
-						@Override
-						public boolean canWriteField(String field, Set<String> roles) {
-							return false;
-						}
+            @Override
+            public boolean canWriteField(String field, Set<String> roles) {
+              return false;
+            }
 
-						@Override
-						public boolean canReadField(String field, Set<String> roles) {
-							return true;
-						}
-					};
-				}
-			};
+            @Override
+            public boolean canReadField(String field, Set<String> roles) {
+              return true;
+            }
+          };
+        }
+      };
 }

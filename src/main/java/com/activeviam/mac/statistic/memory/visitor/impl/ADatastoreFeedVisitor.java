@@ -7,10 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
 /**
@@ -21,37 +18,27 @@ import com.qfs.store.transaction.IOpenedTransaction;
  */
 public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
 
-	/**
-	 * The name of the store of the visited statistic.
-	 */
-	protected String store = null;
-	/**
-	 * Name of the currently visited field.
-	 */
-	protected String field = null;
-	/**
-	 * ID of the current index.
-	 */
-	protected Long indexId;
-	/**
-	 * ID of the current reference.
-	 */
-	protected Long referenceId;
+  /** The name of the store of the visited statistic. */
+  protected String store = null;
+  /** Name of the currently visited field. */
+  protected String field = null;
+  /** ID of the current index. */
+  protected Long indexId;
+  /** ID of the current reference. */
+  protected Long referenceId;
 
-	/**
-	 * ID of the current dictionary.
-	 */
-	protected Long dictionaryId;
+  /** ID of the current dictionary. */
+  protected Long dictionaryId;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param transaction     Ongoing loading transaction
-	 * @param storageMetadata Schema metadata
-	 * @param dumpName        dumpName of the ongoing import
-	 */
-	public ADatastoreFeedVisitor(
-			IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
-		super(transaction, storageMetadata, dumpName);
-	}
+  /**
+   * Constructor.
+   *
+   * @param transaction Ongoing loading transaction
+   * @param storageMetadata Schema metadata
+   * @param dumpName dumpName of the ongoing import
+   */
+  public ADatastoreFeedVisitor(
+      IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
+    super(transaction, storageMetadata, dumpName);
+  }
 }
