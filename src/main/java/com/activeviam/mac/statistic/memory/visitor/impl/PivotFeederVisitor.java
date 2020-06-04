@@ -216,7 +216,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     if (this.dictionaryId != null) {
       FeedVisitor.setTupleElement(
-              tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
 
     this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);

@@ -135,6 +135,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
   /** Formatter for Percentages. */
   public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+
   public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
@@ -232,7 +233,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "Class of the chunks")
-
         .withDimension("Chunk Owners")
         .withHierarchy(OWNER_HIERARCHY)
         .withLevelOfSameName()
@@ -470,7 +470,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .or(
                 Copper.level(OWNER_COMPONENT_HIERARCHY)
                     .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .or(Copper.level(PARTITION_HIERARCHY).eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+            .or(
+                Copper.level(PARTITION_HIERARCHY)
+                    .eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
 
     Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
         .filter(sharedCondition)

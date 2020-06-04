@@ -116,10 +116,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     if (this.dictionaryId != null) {
       FeedVisitor.setTupleElement(
-              tuple,
-              format,
-              DatastoreConstants.CHUNK__PARENT_DICO_ID,
-              this.dictionaryId);
+          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
 
     final IRecordReader r =
