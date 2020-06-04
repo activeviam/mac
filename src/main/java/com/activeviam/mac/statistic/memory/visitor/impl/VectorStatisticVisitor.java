@@ -85,8 +85,8 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Tests if the name of the statistic is matching the list of known entities representing
-   * vectors.
+   * Tests if the name of the statistic is matching the list of known entities representing vectors.
+   *
    * @param statisticName name of the visited statistic
    * @return true for a stat on a vector
    */
