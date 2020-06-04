@@ -16,10 +16,19 @@ import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.i18n.impl.LocalI18nConfig;
-import com.qfs.server.cfg.impl.*;
+import com.qfs.server.cfg.impl.ActivePivotConfig;
+import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
+import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
+import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
+import com.qfs.server.cfg.impl.DatastoreConfig;
+import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
+import com.qfs.server.cfg.impl.JwtConfig;
+import com.qfs.server.cfg.impl.JwtRestServiceConfig;
 import com.qfs.store.IDatastore;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
+import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
@@ -28,8 +37,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-
-import java.nio.file.Paths;
 
 /**
  * Spring configuration of the ActivePivot Sandbox application.
