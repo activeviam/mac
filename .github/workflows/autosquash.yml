@@ -17,10 +17,12 @@ jobs:
     name: Autosquash
     runs-on: ubuntu-18.04
     steps:
-      - name: Autosquash
-        uses: tibdex/autosquash@v2
+      - id: generate_token
+        uses: tibdex/github-app-token@v1
         with:
-          # We can't use the built-in secrets.GITHUB_TOKEN yet because of this limitation:
-          # https://github.community/t5/GitHub-Actions/Triggering-a-new-workflow-from-another-workflow/td-p/31676
-          # In the meantime, use a personal access token with repo access.
-          github_token: ${{ secrets.AUTOSQUASH_TOKEN }}
+          app_id: ${{ secrets.JMP_APP_ID }}
+          private_key: ${{ secrets.JMP_PRIVATE_KEY }}
+      - uses: tibdex/autosquash@v2
+        with:
+          # See https://github.com/tibdex/autosquash/blob/a0526e5a03e31c20e3d592d1130ad6297d9400e8/.github/workflows/autosquash.yml#L33-L37
+          github_token: ${{ steps.generate_token.outputs.token }}

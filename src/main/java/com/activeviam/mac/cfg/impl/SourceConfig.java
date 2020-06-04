@@ -6,7 +6,7 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.fwk.ActiveviamRuntimeException;
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.jmx.JmxOperation;
@@ -188,7 +188,7 @@ public class SourceConfig {
               final String message = feedDatastore(inputs, dumpName);
               LOGGER.info(message);
             } catch (Exception e) {
-              throw new ActiveviamRuntimeException(e);
+              throw new ActiveViamRuntimeException(e);
             }
           });
     }
