@@ -77,11 +77,22 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @return true for a Vector, that this Visitor must handle
    */
   static boolean isVector(final IMemoryStatistic statistic) {
-    return (statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
-            && statistic
+    return statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)
+        || (statistic
                 .getAttributes()
-                .containsKey(MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT))
-        || statistic.getName().equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK);
+                .containsKey(MemoryStatisticConstants.ATTR_NAME_VECTOR_OFFHEAP_PRINT)
+            && isVectorName(statistic.getName()));
+  }
+
+  /**
+   * Tests if the name of the statistic is matching the list of known entities representing
+   * vectors.
+   * @param statisticName name of the visited statistic
+   * @return true for a stat on a vector
+   */
+  static boolean isVectorName(final String statisticName) {
+    return statisticName.equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
+        || statisticName.endsWith("BlockVector");
   }
 
   /**
