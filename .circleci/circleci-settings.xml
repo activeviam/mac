@@ -1,0 +1,37 @@
+<settings>
+  <profiles>
+    <profile>
+      <id>zob</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>JCenter</id>
+          <name>JCenter Repository</name>
+          <url>http://jcenter.bintray.com/</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <layout>default</layout>
+        </repository>
+        <repository>
+          <id>ActiveViamInternalRepository</id>
+          <name>ActiveViam Internal Repository</name>
+          <url>https://activeviam.jfrog.io/activeviam/mvn-internal/</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <layout>default</layout>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <servers>
+    <server>
+      <id>ActiveViamInternalRepository</id>
+      <username>${env.ARTIFACTORY_USER}</username>
+      <password>${env.ARTIFACTORY_PASSWORD}</password>
+    </server>
+  </servers>
+</settings>

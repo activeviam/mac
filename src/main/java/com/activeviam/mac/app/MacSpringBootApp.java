@@ -7,8 +7,6 @@
 package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
-import com.qfs.pivot.servlet.impl.ContextValueFilter;
-import com.qfs.security.impl.SpringCorsFilter;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import javax.servlet.MultipartConfigElement;
@@ -17,7 +15,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.servlet.DispatcherServletRegistrationBean;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -71,37 +68,6 @@ public class MacSpringBootApp {
     registration.setName("springDispatcherServlet");
     registration.setLoadOnStartup(1);
     multipartConfig.ifAvailable(registration::setMultipartConfig);
-    return registration;
-  }
-
-  // TODO(ope) how to properly register a filter in SpringBoot
-  /**
-   * Disables the registration of a {@code ContextValueFilter} in the SpringBoot servlet environment
-   *
-   * @param filter Filter not to be registered
-   * @return the non registered Bean
-   */
-  @Bean
-  public FilterRegistrationBean<ContextValueFilter> disableRegisteringContextValueFilter(
-      final ContextValueFilter filter) {
-    final FilterRegistrationBean<ContextValueFilter> registration =
-        new FilterRegistrationBean<>(filter);
-    registration.setEnabled(false);
-    return registration;
-  }
-
-  /**
-   * Disables the registration of a {@code SpringCorsFilter} in the SpringBoot servlet
-   *
-   * @param filter Filter not to be registered
-   * @return the non registered Bean
-   */
-  @Bean
-  public FilterRegistrationBean<SpringCorsFilter> disableRegisteringSpringCorsFilter(
-      final SpringCorsFilter filter) {
-    final FilterRegistrationBean<SpringCorsFilter> registration =
-        new FilterRegistrationBean<>(filter);
-    registration.setEnabled(false);
     return registration;
   }
 }

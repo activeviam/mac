@@ -7,8 +7,10 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.qfs.server.cfg.impl.ASpringResourceServerConfig;
-import com.qfs.util.impl.QfsArrays;
+import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -58,29 +60,30 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
    */
   @Override
   public Set<String> getServedExtensions() {
-    return QfsArrays.mutableSet(
-        // Default HTML files
-        "html",
-        "js",
-        "css",
-        "map",
-        "json",
-        // Image extensions
-        "png",
-        "jpg",
-        "gif",
-        "ico",
-        // Font extensions
-        "eot",
-        "svg",
-        "ttf",
-        "woff",
-        "woff2");
+    return Stream.of(
+            // Default HTML files
+            "html",
+            "js",
+            "css",
+            "map",
+            "json",
+            // Image extensions
+            "png",
+            "jpg",
+            "gif",
+            "ico",
+            // Font extensions
+            "eot",
+            "svg",
+            "ttf",
+            "woff",
+            "woff2")
+        .collect(Collectors.toSet());
   }
 
   @Override
   public Set<String> getServedDirectories() {
-    return QfsArrays.mutableSet("/");
+    return Collections.singleton("/");
   }
 
   @Override
@@ -89,9 +92,10 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
     // You can read more about this feature here
     // https://support.activeviam.com/documentation/activeui/4.2.0/dev/setup/maven-integration.html
 
-    return QfsArrays.mutableSet(
-        "/activeui/", // index.html, favicon.ico, etc.
-        "classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts and
-    // supporting assets
+    return Stream.of(
+            "/activeui/", // index.html, favicon.ico, etc.
+            "classpath:META-INF/resources/webjars/activeui/") // ActiveUI SDK UMD scripts
+        // and supporting assets
+        .collect(Collectors.toSet());
   }
 }

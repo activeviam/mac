@@ -7,6 +7,9 @@
 package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
+import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.NoOwner;
+import com.activeviam.mac.entities.SharedOwner;
 import com.qfs.chunk.IChunk;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IReferenceDescription;
@@ -20,6 +23,7 @@ import com.quartetfs.fwk.format.IParser;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,11 +41,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
   /** Name of the provider component <-> provider store */
   public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
-  /** Name of the chunk <-> application linking store */
+
+  /** Name of the /** Name of the chunk <-> application linking store */
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
   /** Owner value for a chunk held by multiple components */
-  public static final String SHARED_OWNER = "shared";
+  public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
   /** Component value for a chunk held by multiple components */
   public static final String SHARED_COMPONENT = "shared";
 
@@ -85,7 +90,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Foreign keys */
-        .withField(DatastoreConstants.CHUNK__OWNER)
+        .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
         .dictionarized()
@@ -121,6 +126,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK_TO_FIELD__STORE)
         .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
         .build();
   }
 
@@ -133,6 +140,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK_TO_REF__REF_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
         .build();
   }
@@ -172,6 +181,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, ILiteralType.LONG)
         .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
         .build();
   }
   /**
@@ -187,6 +198,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK_TO_DICO__DICO_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
         .build();
   }
@@ -277,6 +290,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, ILiteralType.OBJECT)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
         .build();
   }
@@ -387,7 +402,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
     return Stream.of(
             getChunkReferences(),
-            Arrays.asList(
+            Stream.of(
                 // Level refs
                 StartBuilding.reference()
                     .fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
@@ -433,13 +448,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
                     .withMapping(
                         DatastoreConstants.APPLICATION__DUMP_NAME,
                         DatastoreConstants.APPLICATION__DUMP_NAME)
-                    .build()))
-        .flatMap(Collection::stream)
+                    .build()),
+            chunkToComponentReferences())
+        .flatMap(Function.identity())
         .collect(Collectors.toList());
   }
 
-  private Collection<IReferenceDescription> getChunkReferences() {
-    return Arrays.asList(
+  private Stream<IReferenceDescription> getChunkReferences() {
+    return Stream.of(
         StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
@@ -460,6 +476,35 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .withName(CHUNK_TO_APP)
             .withMapping(
                 DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+            .build());
+  }
+
+  private Stream<IReferenceDescription> chunkToComponentReferences() {
+    return Stream.of(
+        // ChunkToDico to Dico store reference
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.CHUNK_TO_DICO_STORE)
+            .toStore(DatastoreConstants.DICTIONARY_STORE)
+            .withName(DatastoreConstants.REF_DICTIONARY)
+            .withMapping(
+                DatastoreConstants.CHUNK_TO_DICO__DICO_ID, DatastoreConstants.DICTIONARY_ID)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
+            .build(),
+        // ChunkToReference to Reference store reference
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.CHUNK_TO_REF_STORE)
+            .toStore(DatastoreConstants.REFERENCE_STORE)
+            .withName(DatastoreConstants.REF_REFERENCES)
+            .withMapping(DatastoreConstants.CHUNK_TO_REF__REF_ID, DatastoreConstants.REFERENCE_ID)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
+            .build(),
+        // ChunkToIndex to Index store reference
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.CHUNK_TO_INDEX_STORE)
+            .toStore(DatastoreConstants.INDEX_STORE)
+            .withName(DatastoreConstants.REF_INDEX)
+            .withMapping(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID, DatastoreConstants.INDEX_ID)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
             .build());
   }
 

@@ -6,9 +6,10 @@
  */
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.activeviam.copper.HierarchyCoordinate;
-import com.activeviam.copper.LevelCoordinate;
+import com.activeviam.copper.HierarchyIdentifier;
+import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -206,7 +207,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
         this.providerCpnType.toString());
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, this.pivot);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.CHUNK__OWNER, new CubeOwner(this.pivot));
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
@@ -248,7 +250,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
           transaction,
           DatastoreConstants.CHUNK_TO_DICO_STORE,
           FeedVisitor.buildDicoTupleForStructure(
-              this.directParentType, this.directParentId, this.dictionaryId, joinStoreFormat));
+              this.dumpName,
+              this.directParentType,
+              this.directParentId,
+              this.dictionaryId,
+              joinStoreFormat));
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
@@ -371,7 +377,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   private void processHierarchy(final IMemoryStatistic stat) {
     String hierarchyDescription =
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_HIERARCHY_ID).asText();
-    HierarchyCoordinate hc = HierarchyCoordinate.fromDescription(hierarchyDescription);
+    HierarchyIdentifier hc = HierarchyIdentifier.fromDescription(hierarchyDescription);
     this.dimension = hc.dimension;
     this.hierarchy = hc.hierarchy;
 
@@ -386,7 +392,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     String levelDescription =
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
-    LevelCoordinate lc = LevelCoordinate.fromDescription(levelDescription);
+    LevelIdentifier lc = LevelIdentifier.fromDescription(levelDescription);
     this.level = lc.level;
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MANAGER_ID, this.manager);

@@ -251,6 +251,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   /**
    * Adds dictionary parent data to the join store
    *
+   * @param dumpName name of the dumped chunk
    * @param type {@code ParentType} of the owner of the dictionary-related chunk
    * @param id id of the owner of the dictionary-related chun
    * @param dictionaryId id of the dictionary
@@ -258,9 +259,14 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    * @return the built tuple corresponding to the dictionary
    */
   protected static Object[] buildDicoTupleForStructure(
-      final ParentType type, final String id, final Long dictionaryId, final IRecordFormat format) {
+      final String dumpName,
+      final ParentType type,
+      final String id,
+      final Long dictionaryId,
+      final IRecordFormat format) {
     final Object[] tuple = new Object[format.getFieldCount()];
     if (dictionaryId != null) {
+      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, dumpName);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, dictionaryId);
       FeedVisitor.setTupleElement(

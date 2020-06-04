@@ -7,6 +7,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -150,7 +151,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, this.store);
+        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
@@ -309,7 +310,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           transaction,
           DatastoreConstants.CHUNK_TO_DICO_STORE,
           FeedVisitor.buildDicoTupleForStructure(
-              this.directParentType, this.directParentId, this.dictionaryId, joinStoreFormat));
+              this.dumpName,
+              this.directParentType,
+              this.directParentId,
+              this.dictionaryId,
+              joinStoreFormat));
     }
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
