@@ -134,7 +134,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
         // If component-specific ids are both not the default value and do not match, we throw
         // else we keep the non-default
         if (currentDicId != newDicId) {
-          if (currentDicId != defaultDicId && newDicId != defaultDicId) {
+          if (currentDicId != defaultDicId) {
             throw new IllegalStateException(
                 "Cannot merge a chunk record coming from two different "
                     + "dictionaries. Something went wrong");

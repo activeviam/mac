@@ -213,6 +213,12 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
+
+    if (this.dictionaryId != null) {
+      FeedVisitor.setTupleElement(
+              tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+    }
+
     this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
 
     visitChildren(stat);

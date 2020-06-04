@@ -8,6 +8,7 @@
 package com.quartetfs.biz.pivot.definitions.impl;
 
 import com.activeviam.copper.HierarchyIdentifier;
+import com.activeviam.mac.Workaround;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.quartetfs.biz.pivot.context.IContextValue;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
  * Post process an {@link IActivePivotDescription} to update it's {@link MdxContext}, putting the
  * formatters and default members defined outside the {@link MdxContext} to the {@link MdxContext}.
  */
+@Workaround(jira = "APS-12725", solution = "Correctly exposes the formatter for join measures")
 public class DefaultDescriptionPostProcessor
     implements IActivePivotDescription.IDescriptionPostProcessor {
 

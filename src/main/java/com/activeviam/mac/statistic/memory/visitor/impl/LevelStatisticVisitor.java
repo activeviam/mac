@@ -114,6 +114,14 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         DatastoreConstants.CHUNK__PARTITION_ID,
         MemoryAnalysisDatastoreDescription.NO_PARTITION);
 
+    if (this.dictionaryId != null) {
+      FeedVisitor.setTupleElement(
+              tuple,
+              format,
+              DatastoreConstants.CHUNK__PARENT_DICO_ID,
+              this.dictionaryId);
+    }
+
     final IRecordReader r =
         this.chunkIdCQ.runInTransaction(new Object[] {stat.getChunkId(), this.dumpName}, false);
     if (r != null) {
