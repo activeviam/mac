@@ -29,10 +29,12 @@ import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
 /**
@@ -111,12 +113,19 @@ public class MacServerConfig {
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
-    createDefaultRowsForJoinStores();
+    //    createDefaultRowsForJoinStores();
+    return null;
+  }
 
+  /**
+   * Hook called after the application started.
+   *
+   * <p>It performs every operation once the application is up and read, such as loading data, etc.
+   */
+  @EventListener(ApplicationReadyEvent.class)
+  public void afterStart() {
     // Connect the real-time updates
     sourceConfig.watchStatisticDirectory();
-
-    return null;
   }
 
   /**
