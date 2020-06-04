@@ -30,10 +30,12 @@ import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 
 /**
@@ -115,12 +117,19 @@ public class MacServerConfig {
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
-    createDefaultRowsForJoinStores();
+    //    createDe faultRowsForJoinStores();
+    return null;
+  }
 
+  /**
+   * Hook called after the application started.
+   *
+   * <p>It performs every operation once the application is up and read, such as loading data, etc.
+   */
+  @EventListener(ApplicationReadyEvent.class)
+  public void afterStart() {
     // Connect the real-time updates
     sourceConfig.watchStatisticDirectory();
-
-    return null;
   }
 
   /**
@@ -132,9 +141,9 @@ public class MacServerConfig {
     final IDatastore datastore = datastoreConfig.datastore();
     datastore.edit(
         tm -> {
-          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L);
-          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L);
+          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L, "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L, "N/A");
           tm.add(
               DatastoreConstants.CHUNK_TO_LEVEL_STORE,
               "N/A",
@@ -143,8 +152,9 @@ public class MacServerConfig {
               "N/A",
               "N/A",
               "N/A",
+              "N/A",
               "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A");
+          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A", "N/A");
         });
   }
 

@@ -250,7 +250,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
           transaction,
           DatastoreConstants.CHUNK_TO_DICO_STORE,
           FeedVisitor.buildDicoTupleForStructure(
-              this.directParentType, this.directParentId, this.dictionaryId, joinStoreFormat));
+              this.dumpName,
+              this.directParentType,
+              this.directParentId,
+              this.dictionaryId,
+              joinStoreFormat));
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
