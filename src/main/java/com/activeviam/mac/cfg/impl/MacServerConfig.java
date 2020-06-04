@@ -95,7 +95,7 @@ public class MacServerConfig {
   /** ActivePivot content service spring configuration */
   @Autowired protected IActivePivotContentServiceConfig apCSConfig;
 
-  @Autowired protected LocalContentServiceConfig localContentServiceConfig;
+  @Autowired protected LocalContentServiceConfig contentServiceConfig;
 
   /** Spring configuration of the source files of the Memory Analysis Cube application */
   @Autowired protected SourceConfig sourceConfig;
@@ -108,6 +108,8 @@ public class MacServerConfig {
    */
   @Bean
   public Void startManager() {
+    contentServiceConfig.loadPredefinedBookmarks();
+
     /* *********************************************** */
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
@@ -117,7 +119,7 @@ public class MacServerConfig {
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
-    //    createDe faultRowsForJoinStores();
+
     return null;
   }
 
@@ -192,7 +194,7 @@ public class MacServerConfig {
 
   @Bean
   public JMXEnabler JMXBookmarkEnabler() {
-    return new JMXEnabler("Bookmark", localContentServiceConfig);
+    return new JMXEnabler("Bookmark", contentServiceConfig);
   }
 
   /**

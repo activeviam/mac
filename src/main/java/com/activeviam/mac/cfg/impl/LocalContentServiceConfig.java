@@ -7,9 +7,11 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.bookmark.BookmarkTool;
+import com.activeviam.bookmark.CSConstants;
+import com.activeviam.bookmark.CSConstants.Role;
+import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
-import com.qfs.content.service.audit.impl.AuditableHibernateContentService;
 import com.qfs.content.service.impl.HibernateContentService;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.jmx.JmxOperation;
@@ -20,6 +22,8 @@ import com.quartetfs.biz.pivot.context.IContextValue;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.IKpiDescription;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.hibernate.cfg.AvailableSettings;
@@ -85,7 +89,7 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   @Bean
   public IContentService contentService() {
     org.hibernate.cfg.Configuration conf = loadConfiguration(contentServiceHibernateProperties());
-    return new AuditableHibernateContentService(conf);
+    return new HibernateContentService(conf);
   }
 
   /**
@@ -126,8 +130,18 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   public void exportBookMarks() {
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
-        "testingBookmarks",
-        null);
+        "Predefined views",
+            Map.of(
+                    CSConstants.Role.OWNERS, List.of(SecurityConfig.ROLE_USER),
+                    Role.READERS, List.of(SecurityConfig.ROLE_USER)
+            ));
+  }
+
+  public void loadPredefinedBookmarks() {
+//    BookmarkTool.importBookmarks(
+//            new ContentServiceSnapshotter(contentService().withRootPrivileges()),
+//            "bookmarks",
+//            Collections.emptyMap());
   }
 
   /**

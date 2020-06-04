@@ -18,12 +18,14 @@ import com.quartetfs.fwk.IPair;
 import com.quartetfs.fwk.impl.Pair;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -265,25 +267,19 @@ class ContentServerExporter {
           encodeForFilesystems(retrievePropertyFromContent(content, key, CSConstants.Tree.NAME));
       JsonNode descriptionJsonNode = null;
 
-      StringBuilder exportFolder = new StringBuilder();
-      exportFolder
-          .append(System.getProperty("user.dir"))
-          .append(CSConstants.Paths.FILESYSTEM_SEPARATOR)
-          .append(exportDirectory);
+      Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
+      final Path folderName = Stream.of(node.getPath().split(CSConstants.Paths.SEPARATOR))
+              .filter(part -> !part.isEmpty())
+              .reduce(
+                      exportFolder,
+                      Path::resolve,
+                      (a, b) -> {
+                        throw new UnsupportedOperationException();
+                      });
 
-      StringBuilder folderName = new StringBuilder();
-      folderName.append(exportFolder.toString());
-
-      for (String folder : node.getPath().split(CSConstants.Paths.SEPARATOR)) {
-        String currentFolder = retrievePropertyFromContent(content, folder, CSConstants.Tree.NAME);
-        folderName
-            .append(currentFolder.isEmpty() ? "" : CSConstants.Paths.FILESYSTEM_SEPARATOR)
-            .append(currentFolder);
-      }
-
-      File bookmarkFolder = new File(folderName.toString());
+      File bookmarkFolder = folderName.toFile();
       if (!bookmarkFolder.exists()) {
-        boolean createdDirectories = new File(folderName.toString()).mkdirs();
+        boolean createdDirectories = bookmarkFolder.mkdirs();
         if (!createdDirectories) {
           throw new IOException(
               "Could not create export directories. Check path: " + folderName.toString());
@@ -293,17 +289,9 @@ class ContentServerExporter {
       JsonNode entryNode = mapper.readTree(content.getChildren().get(key).getEntry().getContent());
       descriptionJsonNode = entryNode.path(CSConstants.Tree.DESCRIPTION);
       if (!folderEntries.containsKey(key)
-          && !entryNode
-              .path(CSConstants.Tree.TYPE)
-              .toString()
-              .contains(CSConstants.Content.FOLDER)) {
-        StringBuilder fileName = new StringBuilder();
-        fileName
-            .append(bookmarkFolder)
-            .append(CSConstants.Paths.FILESYSTEM_SEPARATOR)
-            .append(name)
-            .append(CSConstants.Paths.JSON);
-        writer.writeValue(new File(fileName.toString()), entryNode.path(CSConstants.Tree.VALUE));
+          && !entryNode.path(CSConstants.Tree.TYPE).toString().contains(CSConstants.Content.FOLDER)) {
+        final Path fileName = folderName.resolve(name + CSConstants.Paths.JSON);
+        writer.writeValue(fileName.toFile(), entryNode.path(CSConstants.Tree.VALUE));
       }
 
       ObjectNode meta;
@@ -317,13 +305,8 @@ class ContentServerExporter {
         meta.set(CSConstants.Role.READERS, currentPermissions.getRight());
       }
       if (meta.size() > 0) {
-        StringBuilder metaFileName = new StringBuilder();
-        metaFileName
-            .append(bookmarkFolder)
-            .append(CSConstants.Paths.FILESYSTEM_SEPARATOR)
-            .append(name)
-            .append(CSConstants.Paths.METADATA_FILE);
-        writer.writeValue(new File(metaFileName.toString()), meta);
+          final Path metaFileName = folderName.resolve(name + CSConstants.Paths.METADATA_FILE);
+        writer.writeValue(metaFileName.toFile(), meta);
       }
     } catch (IOException e) {
       LOGGER.warn(e.toString());
