@@ -1,15 +1,20 @@
 package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertArrayEquals;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.qfs.assertj.QfsConditions;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.dic.IDictionary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
+import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
@@ -30,8 +35,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
@@ -521,8 +529,99 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testCompareDumpsOfDifferentEpochs() throws IOException, AgentException {
+  public void testMappingFromChunkToFields() {
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final IMemoryAnalysisService analysisService =
+        createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
+    // Add 100 records
+    monitoredApp
+        .getLeft()
+        .edit(
+            tm -> {
+              IntStream.range(0, 10)
+                  .forEach(
+                      i -> {
+                        tm.add("A", i * i);
+                      });
+            });
+    // Initial Dump
+    Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
+    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+
+    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    monitoringDatastore.edit(
+        tm -> {
+          stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "appAInit"));
+        });
+
+    final List<IMemoryStatistic> dics =
+        collectStatistics(
+            stats,
+            List.of(
+                stat ->
+                    stat.getName().equals(MemoryStatisticConstants.STAT_NAME_STORE)
+                        && stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
+                            .asText()
+                            .equals("A"),
+                stat ->
+                    stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_MANAGER),
+                stat -> stat.getAttribute("field").asText().equals("id")));
+    Assertions.assertThat(dics)
+        .extracting(
+            stat -> stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID).asLong())
+        .are(QfsConditions.identical());
+    final var dicForFieldId =
+        dics.get(0).getAttribute(MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID).asLong();
+
+    final var dicChunks =
+        dics.get(0)
+            .accept(
+                new AMemoryStatisticWithPredicate<Set<IMemoryStatistic>>(
+                    ChunkStatistic.class::isInstance) {
+                  final Set<IMemoryStatistic> collected = new HashSet<>();
+
+                  @Override
+                  protected Set<IMemoryStatistic> getResult() {
+                    return this.collected;
+                  }
+
+                  @Override
+                  protected boolean match(IMemoryStatistic stat) {
+                    this.collected.add(stat);
+                    return true;
+                  }
+                });
+    final var chunkIds =
+        dicChunks.stream()
+            .map(stat -> stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong())
+            .collect(toList());
+
+    final IDictionaryCursor cursor =
+        monitoringDatastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.CHUNK_ID, DatastoreConstants.CHUNK__PARENT_DICO_ID)
+            .onCurrentThread()
+            .run();
+    cursor.forEach(
+        (record) -> {
+          final var chunkId = record.readLong(0);
+          final var dictionaryId = record.readLong(1);
+          if (chunkIds.contains(chunkId)) {
+            Assertions.assertThat(dictionaryId).as("Dic for #" + chunkId).isEqualTo(dicForFieldId);
+          } else {
+            Assertions.assertThat(dictionaryId)
+                .as("Dic for #" + chunkId)
+                .isNotEqualTo(dicForFieldId);
+          }
+        });
+  }
+
+  @Test
+  public void testCompareDumpsOfDifferentEpochs() {
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
@@ -758,4 +857,19 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   }
 
   // TODO Test content of all stores similarly
+
+  private List<IMemoryStatistic> collectStatistics(
+      final IMemoryStatistic root, final List<Predicate<IMemoryStatistic>> predicates) {
+    return predicates.stream()
+        .reduce(
+            List.of(root),
+            (result, predicate) ->
+                result.stream()
+                    .flatMap(stat -> stat.getChildren().stream())
+                    .filter(predicate)
+                    .collect(toList()),
+            (a, b) -> {
+              throw new UnsupportedOperationException();
+            });
+  }
 }

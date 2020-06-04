@@ -73,6 +73,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -748,7 +749,11 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplication() throws AgentException {
+  /**
+   * Builds a minimal application with one field <i>id</i> in the store <i>A</i>, loaded into a cube
+   * <i>Cube</i> with a single hierarchy <i>id</i>.
+   */
+  static Pair<IDatastore, IActivePivotManager> createMicroApplication() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -780,21 +785,25 @@ public abstract class ATestMemoryStatistic {
     final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
     IDatastore datastore =
-        (Datastore)
-            resources.create(
-                () ->
-                    new UnitTestDatastoreBuilder()
-                        .setSchemaDescription(schemaDescription)
-                        .addSchemaDescriptionPostProcessors(
-                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                        .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                        .build());
-    return new Pair<IDatastore, IActivePivotManager>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
   }
 
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReference()
@@ -1056,13 +1065,12 @@ public abstract class ATestMemoryStatistic {
         });
   }
 
-  static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) throws IOException {
+  static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {
     return loadMemoryStatFromFolder(folderPath, __ -> true);
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath)
-      throws IOException {
+  static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) {
     final IMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
@@ -1072,8 +1080,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath)
-      throws IOException {
+  static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) {
     final IMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
@@ -1083,9 +1090,15 @@ public abstract class ATestMemoryStatistic {
   }
 
   static IMemoryStatistic loadMemoryStatFromFolder(
-      final Path folderPath, final Predicate<Path> filter) throws IOException {
+      final Path folderPath, final Predicate<Path> filter) {
+    final Stream<Path> fileList;
+    try {
+      fileList = Files.list(folderPath);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Cannot list files under " + folderPath, e);
+    }
     final List<IMemoryStatistic> childStats =
-        Files.list(folderPath)
+        fileList
             .filter(filter)
             .map(
                 file -> {

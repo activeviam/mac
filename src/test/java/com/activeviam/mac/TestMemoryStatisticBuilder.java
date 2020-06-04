@@ -90,7 +90,7 @@ public class TestMemoryStatisticBuilder
             delegateParent = child.getParent();
           } else {
             if (delegateParent != child.getParent()) {
-              throw new IllegalStateException("Inconsistency in stistics parenthood...Bad.");
+              throw new IllegalStateException("Inconsistency in statistics parenthood...Bad.");
             }
           }
 
