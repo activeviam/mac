@@ -392,7 +392,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + "] ON COLUMNS"
                                 + " FROM [MemoryCube]"
                                 + " WHERE (["
-                                + ManagerDescriptionConfig.CHUNK_HIERARCHY
+                                + ManagerDescriptionConfig.CHUNK_DIMENSION
                                 + "].[ChunkId].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
                     final Long resultValue = extractValueFromSingleCellDTO(result);

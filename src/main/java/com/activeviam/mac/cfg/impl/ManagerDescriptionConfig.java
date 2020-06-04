@@ -101,13 +101,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the field level. */
   public static final String STORE_FIELD_LEVEL = "Field";
 
-  /** Measure counting the number of off-Heap Chunks. */
-  public static final String DIRECT_CHUNKS_COUNT = "DirectChunks.COUNT";
-  /** Measure counting the number of on-Heap Chunks. */
-  public static final String HEAP_CHUNKS_COUNT = "HeapChunks.COUNT";
-
   /** Name of the Chunk Hierarchy. */
-  public static final String CHUNK_HIERARCHY = "Chunks";
+  public static final String CHUNK_DIMENSION = "Chunks";
 
   /** Name of the DictionaryID AH. */
   public static final String DICO_ID_HIERARCHY = "Dictionary ID";
@@ -127,15 +122,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
 
-  /**
-   * Name of the folder in which "hidden" copper measures will be hidden.
-   *
-   * <p>Measures contained in this folder should never be used
-   */
-  public static final String BLACK_MAGIC_FOLDER = "BlackMagic";
-  /** Name of the hierarchy used to perform join. */
-  public static final String BLACK_MAGIC_HIERARCHY = "BlackMagic";
-
   /** Measure of the size of Chunks (in Bytes). */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
 
@@ -149,6 +135,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
   /** Formatter for Percentages. */
   public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+  public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+  public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
+  public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
+  public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
+  public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+  public static final String PIVOT_HIERARCHY = "Pivot";
+  public static final String MANAGER_HIERARCHY = "Manager";
+  public static final String OWNER_HIERARCHY = "Owner";
+  public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
+  public static final String CHUNK_ID_HIERARCHY = "ChunkId";
+  public static final String PARTITION_HIERARCHY = "Partition";
 
   @Bean
   @Override
@@ -207,8 +204,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
       final ICanStartBuildingDimensions builder) {
     return builder
         // FROM ChunkStore
-        .withDimension(CHUNK_HIERARCHY)
-        .withHierarchy("ChunkId")
+        .withDimension(CHUNK_DIMENSION)
+        .withHierarchy(CHUNK_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK_ID)
         .withHierarchy(CHUNK_TYPE_LEVEL)
@@ -235,14 +232,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "Class of the chunks")
+
         .withDimension("Chunk Owners")
-        .withHierarchy("Owner")
+        .withHierarchy(OWNER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__OWNER)
-        .withLevel("Partition")
+        .withLevel(PARTITION_HIERARCHY)
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
-        .withHierarchy("Owner component")
+        .withHierarchy(OWNER_COMPONENT_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
@@ -258,19 +256,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withComparator(ReverseOrderComparator.type)
         .withProperty("description", "Date at which statistics were retrieved")
         .withDimension("Aggregate Provider")
-        .withHierarchy("Manager")
+        .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
-        .withHierarchy("Pivot")
+        .withHierarchy(PIVOT_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
-        .withHierarchy("ProviderType")
+        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .withHierarchy("ProviderPartition")
+        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-        .withHierarchy("ProviderId")
+        .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID);
   }
@@ -337,7 +335,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
     // Reference name
-    Copper.newSingleLevelHierarchy("Reference Names")
+    Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
         .from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
         .publish(context);
 
@@ -349,7 +347,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    Copper.newSingleLevelHierarchy("Indexed Fields")
+    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
   }
@@ -410,29 +408,31 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("CommittedChunk")
         .publish(context);
 
+    // Workaround waiting for a grand total
     final CopperMeasure grandTotal =
         Set.of(
-                "Owner",
-                "ChunkId",
-                CHUNK_TYPE_LEVEL,
-                CHUNK_PARENT_ID_LEVEL,
-                CHUNK_CLASS_LEVEL,
-                "Owner component",
-                CHUNK_DUMP_NAME_LEVEL,
-                "Date",
-                "Manager",
-                "Pivot",
-                "ProviderType",
-                "ProviderPartition",
-                "ProviderId",
-                DICO_ID_HIERARCHY,
-                INDEX_ID_HIERARCHY,
-                REF_ID_HIERARCHY,
-                "Index fields")
+                Copper.hierarchy(CHUNK_ID_HIERARCHY),
+                Copper.hierarchy(CHUNK_TYPE_LEVEL),
+                Copper.hierarchy(CHUNK_PARENT_ID_LEVEL),
+                Copper.hierarchy(CHUNK_DICO_ID_LEVEL),
+                Copper.hierarchy(CHUNK_INDEX_ID_LEVEL),
+                Copper.hierarchy(CHUNK_REF_ID_LEVEL),
+                Copper.hierarchy(STORE_HIERARCHY),
+                Copper.hierarchy(CHUNK_CLASS_LEVEL),
+                Copper.hierarchy(OWNER_HIERARCHY),
+                Copper.hierarchy(OWNER_COMPONENT_HIERARCHY),
+                Copper.hierarchy(CHUNK_DUMP_NAME_LEVEL),
+                Copper.hierarchy(MANAGER_HIERARCHY),
+                Copper.hierarchy(PIVOT_HIERARCHY),
+                Copper.hierarchy(PROVIDER_TYPE_HIERARCHY),
+                Copper.hierarchy(PROVIDER_PARTITION_HIERARCHY),
+                Copper.hierarchy(PROVIDER_ID_HIERARCHY),
+                Copper.hierarchy(REFERENCE_NAMES_HIERARCHY),
+                Copper.hierarchy(INDEXED_FIELDS_HIERARCHY))
             .stream()
             .reduce(
                 directMemory,
-                (total, hierarchy) -> Copper.total(total, Copper.hierarchy(hierarchy)),
+                Copper::total,
                 (a, b) -> {
                   throw new UnsupportedOperationException();
                 });
@@ -465,12 +465,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     CopperLevelCondition sharedCondition =
-        Copper.level("Owner")
+        Copper.level(OWNER_HIERARCHY)
             .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
             .or(
-                Copper.level("Owner component")
+                Copper.level(OWNER_COMPONENT_HIERARCHY)
                     .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .or(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
+            .or(Copper.level(PARTITION_HIERARCHY).eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
 
     Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
         .filter(sharedCondition)
