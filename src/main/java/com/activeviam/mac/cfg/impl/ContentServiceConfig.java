@@ -136,16 +136,19 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   public void exportBookMarks() {
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
-        "Predefined views",
+        "bookmark-export",
         defaultBookmarkPermissions());
   }
 
   public void loadPredefinedBookmarks() {
-    BookmarkTool.importBookmarks(
-        new ContentServiceSnapshotter(
-            contentService().withRootPrivileges()),
-        "bookmarks/Predefined views",
-        defaultBookmarkPermissions());
+    final var service = contentService().withRootPrivileges();
+    if (!service.exists("/ui/bookmarks")) {
+      BookmarkTool.importBookmarks(
+              new ContentServiceSnapshotter(
+                      service),
+              "bookmarks",
+              defaultBookmarkPermissions());
+    }
   }
 
   /**
