@@ -9,6 +9,9 @@ package com.activeviam.tools.bookmark.constant.impl;
 
 import java.io.File;
 
+// CHECKSTYLE.OFF: JavadocVariable (Internal constants)
+// CHECKSTYLE.OFF: JavadocType (Internal constants)
+
 /** @author ActiveViam */
 public class CSConstants {
 
@@ -67,6 +70,12 @@ public class CSConstants {
     public static final String FOLDER = "folder";
   }
 
+  /**
+   * Gets the type of a bookmark from its name.
+   *
+   * @param contentType name of the type
+   * @return exported type
+   */
   public static String getBookmarkType(String contentType) {
     switch (contentType) {
       case Content.FILTER:
@@ -76,3 +85,6 @@ public class CSConstants {
     }
   }
 }
+
+// CHECKSTYLE.ON: JavadocType
+// CHECKSTYLE.ON: JavadocVariable

@@ -86,18 +86,19 @@ import org.springframework.core.env.Environment;
     })
 public class MacServerConfig {
 
-  /** Datastore spring configuration */
+  /** Datastore spring configuration. */
   @Autowired protected IDatastoreConfig datastoreConfig;
 
-  /** ActivePivot spring configuration */
+  /** ActivePivot spring configuration. */
   @Autowired protected IActivePivotConfig apConfig;
 
-  /** ActivePivot content service spring configuration */
+  /** ActivePivot content service spring configuration. */
   @Autowired protected IActivePivotContentServiceConfig apCSConfig;
 
+  /** Content Service configuration. */
   @Autowired protected ContentServiceConfig contentServiceConfig;
 
-  /** Spring configuration of the source files of the Memory Analysis Cube application */
+  /** Spring configuration of the source files of the Memory Analysis Cube application. */
   @Autowired protected SourceConfig sourceConfig;
 
   /**
@@ -192,6 +193,11 @@ public class MacServerConfig {
     return new JMXEnabler(apConfig.activePivotManager());
   }
 
+  /**
+   * [Bean] JMX Bean to export bookmarks
+   *
+   * @return the MBean
+   */
   @Bean
   public JMXEnabler JMXBookmarkEnabler() {
     return new JMXEnabler("Bookmark", contentServiceConfig);

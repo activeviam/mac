@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.formatter;
 
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
@@ -12,7 +13,11 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/** @author Quartet FS */
+/**
+ * Basic formatter for class names removing class namespaces from inputs.
+ *
+ * @author ActiveViam
+ */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
 public class ClassFormatter implements IFormatter {
 

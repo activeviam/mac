@@ -1,9 +1,10 @@
 /*
- * (C) ActiveViam 2012-2016
+ * (C) ActiveViam 2019-2020
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.security.impl;
 
 import static com.qfs.QfsWebUtils.url;
@@ -44,14 +45,14 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
  *   <li>The Spring configuration that defines security on the ActivePivot server
  * </ul>
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @Import(value = {JwtSecurityConfigurer.class, VersionSecurityConfigurer.class})
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends ASecurityConfig {
 
-  /** Name of the Cookies of the MAC application */
+  /** Name of the Cookies of the MAC application. */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
   /**
@@ -66,17 +67,17 @@ public class SecurityConfig extends ASecurityConfig {
   }
 
   /**
-   * To expose the Pivot services
+   * To expose the Pivot services.
    *
-   * @author Quartet FS
+   * @author ActiveViam
    */
   @Configuration
   public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {
 
-    /** The autowired Spring configuration for ActivePivot */
+    /** The autowired Spring configuration for ActivePivot. */
     @Autowired protected IActivePivotConfig activePivotConfig;
 
-    /** Constructor */
+    /** Constructor. */
     public ActivePivotSecurityConfigurer() {
       super(COOKIE_NAME);
     }
@@ -125,7 +126,7 @@ public class SecurityConfig extends ASecurityConfig {
   }
 
   /**
-   * Returns a bean initializing the Cookies name in the Servlet Spring context
+   * Returns a bean initializing the Cookies name in the Servlet Spring context.
    *
    * @return the bean initializing the Cookies name in the Servlet Spring context
    */

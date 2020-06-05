@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ResourceLoader;
@@ -34,7 +35,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
  * Reads a Directory hierarchy representing the contents and structure part of the bookmarks and
- * returns a SnapshotContentTree representing this subtree where the root is "/ui"
+ * returns a SnapshotContentTree representing this subtree where the root is "/ui".
  */
 class JsonUIToContentServer {
   static final Map<String, List<String>> ROOT_ONLY_PERMISSIONS = new HashMap<>();
@@ -410,34 +411,27 @@ class JsonUIToContentServer {
     return metadata;
   }
 
+  /** Metadata for a bookmark. */
+  @Data
   protected static class BookmarkMetadata {
+    /**
+     * Description of the bookmark.
+     *
+     * @return the description
+     */
     private String description;
+    /**
+     * List of permissions for the bookmark.
+     *
+     * @return the permissions
+     */
     private Map<String, List<String>> permissions;
+    /**
+     * Key of the bookmark.
+     *
+     * @return the key
+     */
     private String key;
-
-    public String getKey() {
-      return key;
-    }
-
-    public void setKey(String key) {
-      this.key = key;
-    }
-
-    public void setDescription(String description) {
-      this.description = description;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-
-    public Map<String, List<String>> getPermissions() {
-      return permissions;
-    }
-
-    public void setPermissions(Map<String, List<String>> permissions) {
-      this.permissions = permissions;
-    }
   }
 
   /**

@@ -12,7 +12,6 @@ import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
 import com.qfs.content.service.impl.HibernateContentService;
-import com.qfs.content.service.impl.PrefixedContentService;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.pivot.content.IActivePivotContentService;
@@ -42,7 +41,7 @@ import org.springframework.core.env.Environment;
  * <p>This configuration imports {@link ContentServerRestServicesConfig} to expose the content
  * service.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @Configuration
 public class ContentServiceConfig implements IActivePivotContentServiceConfig {
@@ -129,6 +128,11 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
         Role.READERS, List.of(SecurityConfig.ROLE_CS_ROOT));
   }
 
+  /**
+   * Exports the bookmarks from the Content Service.
+   *
+   * <p>This is used to back up the defined bookmarks to load them at boot time.
+   */
   @JmxOperation(
       name = "exportBookMarks",
       desc = "Export the current bookmark structure",
@@ -140,14 +144,12 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
         defaultBookmarkPermissions());
   }
 
+  /** Loads the bookmarks packaged with the application. */
   public void loadPredefinedBookmarks() {
     final var service = contentService().withRootPrivileges();
     if (!service.exists("/ui/bookmarks")) {
       BookmarkTool.importBookmarks(
-              new ContentServiceSnapshotter(
-                      service),
-              "bookmarks",
-              defaultBookmarkPermissions());
+          new ContentServiceSnapshotter(service), "bookmarks", defaultBookmarkPermissions());
     }
   }
 

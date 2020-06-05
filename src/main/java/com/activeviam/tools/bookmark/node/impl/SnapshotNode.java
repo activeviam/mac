@@ -10,6 +10,7 @@ package com.activeviam.tools.bookmark.node.impl;
 import com.qfs.content.snapshot.impl.BasicJsonContentEntry;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 
 /**
  * Internal representation of the SnapshotContentTree object, aimed to simplify the object to the
@@ -17,50 +18,49 @@ import java.util.List;
  *
  * @author ActiveViam
  */
+@Data
 public class SnapshotNode {
+  /**
+   * Key of this node.
+   *
+   * @return the key
+   */
   private String key;
+  /**
+   * Path to this node from the root.
+   *
+   * @return the path
+   */
   private String path = "";
+  /**
+   * Content of this node.
+   *
+   * @return the content
+   */
   private BasicJsonContentEntry entry;
+  /**
+   * Child nodes for this node.
+   *
+   * @return the children
+   */
   private List<SnapshotNode> children;
 
+  /**
+   * Contructor.
+   *
+   * @param key key of the node
+   */
   public SnapshotNode(String key) {
     this.key = key;
     children = new ArrayList<>();
   }
 
-  public BasicJsonContentEntry getEntry() {
-    return entry;
-  }
-
-  public void setEntry(BasicJsonContentEntry entry) {
-    this.entry = entry;
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  public void setKey(String key) {
-    this.key = key;
-  }
-
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(String path) {
-    this.path = path;
-  }
-
+  /**
+   * Adds a node as a child of this node.
+   *
+   * @param c node to add
+   */
   public void addChild(SnapshotNode c) {
     children.add(c);
-  }
-
-  public List<SnapshotNode> getChildren() {
-    return children;
-  }
-
-  public void setChildren(List<SnapshotNode> children) {
-    this.children = children;
   }
 }
