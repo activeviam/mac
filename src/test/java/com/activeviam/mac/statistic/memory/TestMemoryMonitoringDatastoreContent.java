@@ -1,12 +1,14 @@
 package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static org.junit.Assert.assertArrayEquals;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.qfs.chunk.impl.ChunkSingleVector;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.dic.IDictionary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -18,6 +20,8 @@ import com.qfs.store.query.ICompiledGetByKey;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.query.impl.CompiledGetByKey;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
+import com.qfs.vector.direct.impl.DirectLongVectorBlock;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -31,8 +35,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
@@ -776,6 +784,70 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     // (we want to be able to make MDX queries even if there is no references )
     // Therefore, we need to check if the size is >1
     Assertions.assertThat(list2.size()).isGreaterThan(1);
+  }
+
+  @Test
+  public void testBlocksOfSingleVectors() {
+    createApplicationWithVector(
+        true,
+        (monitoredDatastore, monitoredManager) -> {
+          monitoredDatastore.edit(
+              tm -> {
+                IntStream.range(0, 24)
+                    .forEach(
+                        i -> {
+                          tm.add(
+                              VECTOR_STORE_NAME,
+                              i,
+                              IntStream.rangeClosed(1, 5).toArray(),
+                              IntStream.rangeClosed(10, 20).toArray(),
+                              LongStream.rangeClosed(3, 8).toArray());
+                        });
+              });
+
+          final IMemoryAnalysisService analysisService =
+              createService(monitoredDatastore, monitoredManager);
+          final Path exportPath =
+              analysisService.exportMostRecentVersion("testBlocksOfSingleVectors");
+          final Collection<IMemoryStatistic> datastoreStats =
+              loadDatastoreMemoryStatFromFolder(exportPath);
+
+          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+
+          // Test that we have chunks of single values
+          final IDictionaryCursor recordCursor =
+              monitoringDatastore
+                  .getHead()
+                  .getQueryRunner()
+                  .forStore(CHUNK_STORE)
+                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.RECORDS))
+                  .selecting(DatastoreConstants.CHUNK__CLASS)
+                  .onCurrentThread()
+                  .run();
+          final Set<String> recordTypes =
+              StreamSupport.stream(recordCursor.spliterator(), false)
+                  .map(record -> (String) record.read(0))
+                  .collect(Collectors.toSet());
+          Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
+
+          // Test that we have chunks of single values
+          final IDictionaryCursor vectorCursor =
+              monitoringDatastore
+                  .getHead()
+                  .getQueryRunner()
+                  .forStore(CHUNK_STORE)
+                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
+                  .selecting(DatastoreConstants.CHUNK__CLASS)
+                  .onCurrentThread()
+                  .run();
+          final Set<String> vectorTypes =
+              StreamSupport.stream(vectorCursor.spliterator(), false)
+                  .map(record -> (String) record.read(0))
+                  .collect(Collectors.toSet());
+          Assertions.assertThat(vectorTypes)
+              .contains(
+                  DirectIntegerVectorBlock.class.getName(), DirectLongVectorBlock.class.getName());
+        });
   }
 
   // TODO Test content of all stores similarly

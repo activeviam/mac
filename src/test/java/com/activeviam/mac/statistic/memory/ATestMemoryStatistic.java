@@ -636,6 +636,12 @@ public abstract class ATestMemoryStatistic {
     return d;
   }
 
+  /**
+   * Creates a minimal application with a single store {@link #VECTOR_STORE_NAME} with the following
+   * fields: - vectorId - int - vectorInt1 - int[] (block of 35 entries) - vectorInt2 - int[]
+   * (blocks of 20 entries) - vectorLong - long[] (blocks of 30 entries) The store has chunks of 10
+   * rows.
+   */
   static void createApplicationWithVector(
       final boolean useVectorsAsMeasures,
       final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
@@ -652,6 +658,7 @@ public abstract class ATestMemoryStatistic {
                     .withVectorBlockSize(20)
                     .withVectorField("vectorLong", ILiteralType.LONG)
                     .withVectorBlockSize(30)
+                    .withChunkSize(16) // Make it easy to fill a complete block
                     .build())
             .build();
     final var userManagerDescription =
