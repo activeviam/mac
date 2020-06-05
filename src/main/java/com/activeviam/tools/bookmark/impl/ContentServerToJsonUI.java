@@ -1,12 +1,14 @@
 /*
- * (C) ActiveViam 2020
+ * (C) ActiveViam 2018
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
 
-package com.activeviam.bookmark;
+package com.activeviam.tools.bookmark.impl;
 
+import com.activeviam.tools.bookmark.constant.impl.CSConstants;
+import com.activeviam.tools.bookmark.node.impl.SnapshotNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -32,12 +34,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Helper class containing methods used for the export of the Content Server bookmarks into a
  * directory structure.
- *
- * @author ActiveViam
  */
-class ContentServerExporter {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ContentServerExporter.class);
+class ContentServerToJsonUI {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ContentServerToJsonUI.class);
 
   private static final String WINDOWS_OS = "Windows";
   private static final String UNIX_OS = "Unix/BSD";
@@ -71,19 +70,13 @@ class ContentServerExporter {
       Map<String, List<String>> defaultPermissions) {
     SnapshotContentTree bookmarks =
         snapshotter
-            .export(
-                CSConstants.Paths.SEPARATOR
-                    + CSConstants.Paths.UI
-                    + CSConstants.Paths.SEPARATOR
-                    + CSConstants.Tree.BOOKMARKS)
+            .export(CSConstants.Paths.UI + CSConstants.Paths.SEPARATOR + CSConstants.Tree.BOOKMARKS)
             .get();
     exportToDirectory(bookmarks, exportDirectory, defaultPermissions);
     snapshotter.export(
         CSConstants.Paths.SETTINGS,
         Paths.get(
-            System.getProperty("user.dir"),
-            exportDirectory,
-            CSConstants.Paths.SETTINGS_TOKEN + CSConstants.Paths.JSON));
+            System.getProperty("user.dir"), exportDirectory, CSConstants.Paths.SETTINGS_JSON));
     snapshotter.export(
         CSConstants.Paths.I18N,
         Paths.get(System.getProperty("user.dir"), exportDirectory, CSConstants.Paths.I18N_JSON));
@@ -268,14 +261,15 @@ class ContentServerExporter {
       JsonNode descriptionJsonNode = null;
 
       Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
-      final Path folderName = Stream.of(node.getPath().split(CSConstants.Paths.SEPARATOR))
+      final Path folderName =
+          Stream.of(node.getPath().split(CSConstants.Paths.SEPARATOR))
               .filter(part -> !part.isEmpty())
               .reduce(
-                      exportFolder,
-                      Path::resolve,
-                      (a, b) -> {
-                        throw new UnsupportedOperationException();
-                      });
+                  exportFolder,
+                  Path::resolve,
+                  (a, b) -> {
+                    throw new UnsupportedOperationException();
+                  });
 
       File bookmarkFolder = folderName.toFile();
       if (!bookmarkFolder.exists()) {
@@ -289,7 +283,10 @@ class ContentServerExporter {
       JsonNode entryNode = mapper.readTree(content.getChildren().get(key).getEntry().getContent());
       descriptionJsonNode = entryNode.path(CSConstants.Tree.DESCRIPTION);
       if (!folderEntries.containsKey(key)
-          && !entryNode.path(CSConstants.Tree.TYPE).toString().contains(CSConstants.Content.FOLDER)) {
+          && !entryNode
+              .path(CSConstants.Tree.TYPE)
+              .toString()
+              .contains(CSConstants.Content.FOLDER)) {
         final Path fileName = folderName.resolve(name + CSConstants.Paths.JSON);
         writer.writeValue(fileName.toFile(), entryNode.path(CSConstants.Tree.VALUE));
       }
@@ -305,7 +302,7 @@ class ContentServerExporter {
         meta.set(CSConstants.Role.READERS, currentPermissions.getRight());
       }
       if (meta.size() > 0) {
-          final Path metaFileName = folderName.resolve(name + CSConstants.Paths.METADATA_FILE);
+        final Path metaFileName = folderName.resolve(name + CSConstants.Paths.METADATA_FILE);
         writer.writeValue(metaFileName.toFile(), meta);
       }
     } catch (IOException e) {

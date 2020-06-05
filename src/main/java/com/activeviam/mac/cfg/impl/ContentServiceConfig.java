@@ -6,9 +6,9 @@
  */
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.bookmark.BookmarkTool;
-import com.activeviam.bookmark.CSConstants.Role;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
+import com.activeviam.tools.bookmark.constant.impl.CSConstants.Role;
+import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
 import com.qfs.content.service.impl.HibernateContentService;
@@ -125,9 +125,8 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   private Map<String, List<String>> defaultBookmarkPermissions() {
     return Map.of(
-            Role.OWNERS, List.of(SecurityConfig.ROLE_USER),
-            Role.READERS, List.of(SecurityConfig.ROLE_USER)
-    );
+        Role.OWNERS, List.of(SecurityConfig.ROLE_CS_ROOT),
+        Role.READERS, List.of(SecurityConfig.ROLE_CS_ROOT));
   }
 
   @JmxOperation(
@@ -138,17 +137,15 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
         "Predefined views",
-            defaultBookmarkPermissions());
+        defaultBookmarkPermissions());
   }
 
   public void loadPredefinedBookmarks() {
     BookmarkTool.importBookmarks(
-            new ContentServiceSnapshotter(
-                    new PrefixedContentService(
-                            "/ui",
-                            contentService().withRootPrivileges())),
-            "bookmarks/Predefined views",
-            defaultBookmarkPermissions());
+        new ContentServiceSnapshotter(
+            contentService().withRootPrivileges()),
+        "bookmarks/Predefined views",
+        defaultBookmarkPermissions());
   }
 
   /**

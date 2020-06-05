@@ -5,7 +5,7 @@
  * reproduction or transfer of this material is strictly prohibited
  */
 
-package com.activeviam.bookmark;
+package com.activeviam.tools.bookmark.node.impl;
 
 import com.qfs.content.snapshot.impl.BasicJsonContentEntry;
 import java.util.ArrayList;

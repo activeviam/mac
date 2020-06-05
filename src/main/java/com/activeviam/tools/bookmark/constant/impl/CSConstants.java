@@ -5,7 +5,7 @@
  * reproduction or transfer of this material is strictly prohibited
  */
 
-package com.activeviam.bookmark;
+package com.activeviam.tools.bookmark.constant.impl;
 
 import java.io.File;
 
