@@ -46,7 +46,7 @@ public class SnapshotNode {
   private List<SnapshotNode> children;
 
   /**
-   * Contructor.
+   * Constructor.
    *
    * @param key key of the node
    */
