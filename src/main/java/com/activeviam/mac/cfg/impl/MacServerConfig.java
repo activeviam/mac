@@ -74,7 +74,7 @@ import org.springframework.core.env.Environment;
       ActiveViamWebSocketServicesConfig.class,
 
       // Content server
-      LocalContentServiceConfig.class,
+      ContentServiceConfig.class,
       LocalI18nConfig.class,
 
       // Specific to monitoring server
@@ -95,7 +95,7 @@ public class MacServerConfig {
   /** ActivePivot content service spring configuration */
   @Autowired protected IActivePivotContentServiceConfig apCSConfig;
 
-  @Autowired protected LocalContentServiceConfig contentServiceConfig;
+  @Autowired protected ContentServiceConfig contentServiceConfig;
 
   /** Spring configuration of the source files of the Memory Analysis Cube application */
   @Autowired protected SourceConfig sourceConfig;

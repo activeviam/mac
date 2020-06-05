@@ -7,12 +7,12 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.bookmark.BookmarkTool;
-import com.activeviam.bookmark.CSConstants;
 import com.activeviam.bookmark.CSConstants.Role;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
 import com.qfs.content.service.impl.HibernateContentService;
+import com.qfs.content.service.impl.PrefixedContentService;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.pivot.content.IActivePivotContentService;
@@ -45,7 +45,7 @@ import org.springframework.core.env.Environment;
  * @author Quartet FS
  */
 @Configuration
-public class LocalContentServiceConfig implements IActivePivotContentServiceConfig {
+public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   /**
    * The name of the property which contains the role allowed to add new calculated members in the
@@ -123,6 +123,13 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
     return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
   }
 
+  private Map<String, List<String>> defaultBookmarkPermissions() {
+    return Map.of(
+            Role.OWNERS, List.of(SecurityConfig.ROLE_USER),
+            Role.READERS, List.of(SecurityConfig.ROLE_USER)
+    );
+  }
+
   @JmxOperation(
       name = "exportBookMarks",
       desc = "Export the current bookmark structure",
@@ -131,17 +138,17 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
         "Predefined views",
-            Map.of(
-                    CSConstants.Role.OWNERS, List.of(SecurityConfig.ROLE_USER),
-                    Role.READERS, List.of(SecurityConfig.ROLE_USER)
-            ));
+            defaultBookmarkPermissions());
   }
 
   public void loadPredefinedBookmarks() {
-//    BookmarkTool.importBookmarks(
-//            new ContentServiceSnapshotter(contentService().withRootPrivileges()),
-//            "bookmarks",
-//            Collections.emptyMap());
+    BookmarkTool.importBookmarks(
+            new ContentServiceSnapshotter(
+                    new PrefixedContentService(
+                            "/ui",
+                            contentService().withRootPrivileges())),
+            "bookmarks/Predefined views",
+            defaultBookmarkPermissions());
   }
 
   /**
