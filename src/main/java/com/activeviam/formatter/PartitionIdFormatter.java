@@ -10,7 +10,7 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
-/** @author Quartet FS */
+/** @author ActiveViam */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = PartitionIdFormatter.KEY)
 public class PartitionIdFormatter implements IFormatter {
 

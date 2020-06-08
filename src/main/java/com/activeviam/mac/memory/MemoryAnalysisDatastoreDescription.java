@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 /**
  * Contains all stores used to analyze a memory analysis dump.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescription {
 
@@ -515,9 +515,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Wrapper class around String[] (for equals, hashcode and toStrin).
+   * Wrapper class around String[] (for equals, hashcode and toString).
    *
-   * @author Quartet FS
+   * @author ActiveViam
    */
   public static class StringArrayObject {
 

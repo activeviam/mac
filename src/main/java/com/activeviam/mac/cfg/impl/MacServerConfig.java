@@ -10,6 +10,7 @@ import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
+import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IActivePivotConfig;
@@ -73,27 +74,31 @@ import org.springframework.core.env.Environment;
       ActiveViamWebSocketServicesConfig.class,
 
       // Content server
-      LocalContentServiceConfig.class,
+      ContentServiceConfig.class,
       LocalI18nConfig.class,
 
       // Specific to monitoring server
       SecurityConfig.class,
       UserConfig.class,
       SourceConfig.class,
-      ActiveUIResourceServerConfig.class
+      ActiveUIResourceServerConfig.class,
+      ContentServerResourceServerConfig.class
     })
 public class MacServerConfig {
 
-  /** Datastore spring configuration */
+  /** Datastore spring configuration. */
   @Autowired protected IDatastoreConfig datastoreConfig;
 
-  /** ActivePivot spring configuration */
+  /** ActivePivot spring configuration. */
   @Autowired protected IActivePivotConfig apConfig;
 
-  /** ActivePivot content service spring configuration */
+  /** ActivePivot content service spring configuration. */
   @Autowired protected IActivePivotContentServiceConfig apCSConfig;
 
-  /** Spring configuration of the source files of the Memory Analysis Cube application */
+  /** Content Service configuration. */
+  @Autowired protected ContentServiceConfig contentServiceConfig;
+
+  /** Spring configuration of the source files of the Memory Analysis Cube application. */
   @Autowired protected SourceConfig sourceConfig;
 
   /**
@@ -104,6 +109,8 @@ public class MacServerConfig {
    */
   @Bean
   public Void startManager() {
+    contentServiceConfig.loadPredefinedBookmarks();
+
     /* *********************************************** */
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
@@ -113,7 +120,7 @@ public class MacServerConfig {
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
-    //    createDefaultRowsForJoinStores();
+
     return null;
   }
 
@@ -184,6 +191,16 @@ public class MacServerConfig {
     startManager();
 
     return new JMXEnabler(apConfig.activePivotManager());
+  }
+
+  /**
+   * [Bean] JMX Bean to export bookmarks
+   *
+   * @return the MBean
+   */
+  @Bean
+  public JMXEnabler JMXBookmarkEnabler() {
+    return new JMXEnabler("Bookmark", contentServiceConfig);
   }
 
   /**

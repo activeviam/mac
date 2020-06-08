@@ -102,6 +102,14 @@
       <groupId>com.activeviam.activeui</groupId>
       <artifactId>activeui</artifactId>
       <version>${activeui.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.activeviam.tech</groupId>
+      <artifactId>content-server-ui</artifactId>
+      <version>2.0.0</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- SpringBoot dependencies -->
@@ -201,6 +209,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+          <source>11</source>
+          <target>11</target>
           <release>11</release>
           <encoding>UTF-8</encoding>
         </configuration>
@@ -249,6 +259,14 @@
                   <property name="severity" value="warning"/>
                   <module name="TreeWalker">
                     <property name="fileExtensions" value="java"/>
+                    <!-- Config to disable checks -->
+                    <module name="SuppressionCommentFilter">
+                      <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
+                      <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
+                      <property name="checkFormat" value="$1"/>
+                      <property name="checkCPP" value="true"/>
+                      <property name="checkC" value="true"/>
+                    </module>
                     <!-- Required for disabling comments, later in the rules -->
                     <module name="JavadocType">
                       <property name="scope" value="package"/>

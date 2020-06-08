@@ -6,10 +6,14 @@
  */
 package com.activeviam.mac.cfg.impl;
 
+import com.activeviam.mac.cfg.security.impl.SecurityConfig;
+import com.activeviam.tools.bookmark.constant.impl.CSConstants.Role;
+import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
-import com.qfs.content.service.audit.impl.AuditableHibernateContentService;
 import com.qfs.content.service.impl.HibernateContentService;
+import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
+import com.qfs.jmx.JmxOperation;
 import com.qfs.pivot.content.IActivePivotContentService;
 import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
@@ -17,6 +21,8 @@ import com.quartetfs.biz.pivot.context.IContextValue;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.IKpiDescription;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import org.hibernate.cfg.AvailableSettings;
@@ -35,10 +41,10 @@ import org.springframework.core.env.Environment;
  * <p>This configuration imports {@link ContentServerRestServicesConfig} to expose the content
  * service.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @Configuration
-public class LocalContentServiceConfig implements IActivePivotContentServiceConfig {
+public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   /**
    * The name of the property which contains the role allowed to add new calculated members in the
@@ -82,7 +88,7 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
   @Bean
   public IContentService contentService() {
     org.hibernate.cfg.Configuration conf = loadConfiguration(contentServiceHibernateProperties());
-    return new AuditableHibernateContentService(conf);
+    return new HibernateContentService(conf);
   }
 
   /**
@@ -114,6 +120,37 @@ public class LocalContentServiceConfig implements IActivePivotContentServiceConf
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
     return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+  }
+
+  private Map<String, List<String>> defaultBookmarkPermissions() {
+    return Map.of(
+        Role.OWNERS, List.of(SecurityConfig.ROLE_CS_ROOT),
+        Role.READERS, List.of(SecurityConfig.ROLE_CS_ROOT));
+  }
+
+  /**
+   * Exports the bookmarks from the Content Service.
+   *
+   * <p>This is used to back up the defined bookmarks to load them at boot time.
+   */
+  @JmxOperation(
+      name = "exportBookMarks",
+      desc = "Export the current bookmark structure",
+      params = {})
+  public void exportBookMarks() {
+    BookmarkTool.exportBookmarks(
+        new ContentServiceSnapshotter(contentService().withRootPrivileges()),
+        "bookmark-export",
+        defaultBookmarkPermissions());
+  }
+
+  /** Loads the bookmarks packaged with the application. */
+  public void loadPredefinedBookmarks() {
+    final var service = contentService().withRootPrivileges();
+    if (!service.exists("/ui/bookmarks")) {
+      BookmarkTool.importBookmarks(
+          new ContentServiceSnapshotter(service), "bookmarks", defaultBookmarkPermissions());
+    }
   }
 
   /**
