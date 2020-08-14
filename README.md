@@ -28,7 +28,7 @@ ActivePivot on heap are using chunks, do not use this measure to assume total on
 - Total direct memory footprint of an application
 - Total on-heap memory footprint of an application 
 
-Multi-dimentional analysis can be done on the loaded data through the following hierarchies:
+Multi-dimensional analysis can be done on the loaded data through the following hierarchies:
 - Owner: Chunks are raw data, but they are always held by a high-level structure. This can be a Store of the Datastore 
   or an ActivePivot. Some structures are shared by multiple Stores or a Store and a Pivot. In this case, the chunk is 
   marked as **shared**.

@@ -131,7 +131,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
-  /** @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
+  /** @return description of {@link DatastoreConstants#CHUNK_TO_REF_STORE} */
   protected IStoreDescription chunkToReferenceStore() {
     return new StoreDescriptionBuilder()
         .withStoreName(DatastoreConstants.CHUNK_TO_REF_STORE)
@@ -171,7 +171,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
-  /** @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE} */
+  /** @return description of {@link DatastoreConstants#CHUNK_TO_INDEX_STORE} */
   protected IStoreDescription chunkToIndexStore() {
     return new StoreDescriptionBuilder()
         .withStoreName(DatastoreConstants.CHUNK_TO_INDEX_STORE)
