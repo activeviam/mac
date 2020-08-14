@@ -20,8 +20,8 @@
   </prerequisites>
 
   <properties>
-    <activepivot.version>5.9.0</activepivot.version>
-    <activeui.version>4.3.7</activeui.version>
+    <activepivot.version>5.9.1</activepivot.version>
+    <activeui.version>4.3.10</activeui.version>
     <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.12</lombok.version>
 
