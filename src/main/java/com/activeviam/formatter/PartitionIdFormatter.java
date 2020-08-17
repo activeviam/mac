@@ -14,7 +14,7 @@ import com.quartetfs.fwk.format.IFormatter;
 /**
  * Formatter for partitions.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = PartitionIdFormatter.KEY)
 public class PartitionIdFormatter implements IFormatter {

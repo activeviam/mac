@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Formatter for java classes.
+ * Basic formatter for class names removing class namespaces from inputs.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
 public class ClassFormatter implements IFormatter {

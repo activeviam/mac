@@ -293,7 +293,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /**
    * Configuration for Version service to allow anyone to access this service.
    *
-   * @author Quartet FS
+   * @author ActiveViam
    * @see HttpStatusEntryPoint
    */
   public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
@@ -319,7 +319,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /**
    * Configuration for ActiveUI.
    *
-   * @author Quartet FS
+   * @author ActiveViam
    * @see HttpStatusEntryPoint
    */
   public abstract static class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {

@@ -1,5 +1,5 @@
 /*
- * (C) ActiveViam 2012-2016
+ * (C) ActiveViam 2019-2020
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
@@ -45,7 +45,7 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
  *   <li>The Spring configuration that defines security on the ActivePivot server
  * </ul>
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @Import(value = {JwtSecurityConfigurer.class, VersionSecurityConfigurer.class})
 @Configuration
@@ -69,7 +69,7 @@ public class SecurityConfig extends ASecurityConfig {
   /**
    * To expose the Pivot services.
    *
-   * @author Quartet FS
+   * @author ActiveViam
    */
   @Configuration
   public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {

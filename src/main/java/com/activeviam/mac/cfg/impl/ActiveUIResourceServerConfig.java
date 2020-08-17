@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Spring configuration for ActiveUI web application.
  *
- * @author Quartet FS
+ * @author ActiveViam
  */
 @Configuration
 public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
