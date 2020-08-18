@@ -347,6 +347,23 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
+
+    // --------------------
+    // 4- Chunk to field
+    CopperStore chunkToFieldStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+            .joinToCube()
+            .withMapping(DatastoreConstants.CHUNK_TO_FIELD__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    Copper.newSingleLevelHierarchy("Fields", "Field", "Field")
+        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME))
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy("Stores", "Store", "Store")
+        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME))
+        .hidden()
+        .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {

@@ -9,6 +9,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.LevelIdentifier;
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -271,7 +272,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       // For distributed hierarchy, it is possible to have standalone dictionaries
       visitChildren(stat);
     } else {
-      throw new QuartetRuntimeException("Unexpected stat on dictionary: " + stat);
+      throw new ActiveViamRuntimeException("Unexpected stat on dictionary: " + stat);
     }
 
     this.directParentType = previousParentType;
@@ -473,6 +474,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
               this.dumpName,
               this.current,
               this.pivot,
+              null,
               this.partition);
       subVisitor.process(statistic);
     } else {

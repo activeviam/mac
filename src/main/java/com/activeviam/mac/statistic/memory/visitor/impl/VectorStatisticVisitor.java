@@ -23,6 +23,8 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Stack;
 
 /**
  * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
@@ -57,10 +59,12 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final String dumpName,
       final Instant current,
       final String store,
+      final Stack<Collection<String>> fields,
       final int partitionId) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
+    this.fields = fields;
     this.partitionId = partitionId;
 
     this.chunkRecordFormat =
@@ -178,9 +182,15 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.field != null) {
+    if (!this.fields.isEmpty()) {
+      // todo vlg clear this if obsolete
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+          tuple,
+          chunkRecordFormat,
+          DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
+          this.fields.peek().iterator().next());
+
+      writeFieldRecordsForCurrentChunk(statistic);
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(
