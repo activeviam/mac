@@ -80,7 +80,7 @@ public class ByteFormatter implements IFormatter {
     if (decimal == 0) {
       return String.format("%d %s", value, unit);
     } else {
-      return String.format("%.3f %s", value + 0.001f * decimal, unit);
+      return String.format("%.3f %s", value + decimal / 1024.f, unit);
     }
   }
 }
