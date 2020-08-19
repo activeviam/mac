@@ -235,20 +235,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testSharedCount() throws QueryException {
-
-    final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-    final MDXQuery query =
-        new MDXQuery(
-            "SELECT" + "  NON EMPTY [Measures].[Shared.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
-
-    Long value = extractValueFromSingleCellDTO(res);
-    Assertions.assertThat(value).isEqualTo(2);
-  }
-
-  @Test
   public void testOnHeapMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =

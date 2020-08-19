@@ -4,3 +4,4 @@
 # Keep the folder for the README but ignore everything else
 /statistics/*
 !/statistics/README.txt
+target

@@ -10,7 +10,6 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
-import com.activeviam.copper.api.CopperLevelCondition;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -23,7 +22,6 @@ import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.qfs.agg.impl.CountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -37,7 +35,6 @@ import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -409,33 +406,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     // Workaround waiting for a grand total
-    final CopperMeasure grandTotal =
-        Set.of(
-                Copper.hierarchy(CHUNK_ID_HIERARCHY),
-                Copper.hierarchy(CHUNK_TYPE_LEVEL),
-                Copper.hierarchy(CHUNK_PARENT_ID_LEVEL),
-                Copper.hierarchy(CHUNK_DICO_ID_LEVEL),
-                Copper.hierarchy(CHUNK_INDEX_ID_LEVEL),
-                Copper.hierarchy(CHUNK_REF_ID_LEVEL),
-                Copper.hierarchy(STORE_HIERARCHY),
-                Copper.hierarchy(CHUNK_CLASS_LEVEL),
-                Copper.hierarchy(OWNER_HIERARCHY),
-                Copper.hierarchy(OWNER_COMPONENT_HIERARCHY),
-                Copper.hierarchy(CHUNK_DUMP_NAME_LEVEL),
-                Copper.hierarchy(MANAGER_HIERARCHY),
-                Copper.hierarchy(PIVOT_HIERARCHY),
-                Copper.hierarchy(PROVIDER_TYPE_HIERARCHY),
-                Copper.hierarchy(PROVIDER_PARTITION_HIERARCHY),
-                Copper.hierarchy(PROVIDER_ID_HIERARCHY),
-                Copper.hierarchy(REFERENCE_NAMES_HIERARCHY),
-                Copper.hierarchy(INDEXED_FIELDS_HIERARCHY))
-            .stream()
-            .reduce(
-                directMemory,
-                Copper::total,
-                (a, b) -> {
-                  throw new UnsupportedOperationException();
-                });
+    final CopperMeasure grandTotal = directMemory.grandTotal();
 
     Copper.measure("CommittedRows")
         .divide(chunkSize)
@@ -462,21 +433,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .divide(Copper.measure(MAX_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as("MaxMemory.Ratio")
-        .publish(context);
-
-    CopperLevelCondition sharedCondition =
-        Copper.level(OWNER_HIERARCHY)
-            .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-            .or(
-                Copper.level(OWNER_COMPONENT_HIERARCHY)
-                    .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .or(
-                Copper.level(PARTITION_HIERARCHY)
-                    .eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
-
-    Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
-        .filter(sharedCondition)
-        .as("Shared.COUNT")
         .publish(context);
   }
 
