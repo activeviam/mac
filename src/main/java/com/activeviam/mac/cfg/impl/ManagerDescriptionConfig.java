@@ -429,34 +429,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("CommittedChunk")
         .publish(context);
 
-    final CopperMeasure grandTotal =
-        Set.of(
-                "Owner",
-                "ChunkId",
-                CHUNK_TYPE_LEVEL,
-                CHUNK_PARENT_ID_LEVEL,
-                CHUNK_CLASS_LEVEL,
-                "Owner component",
-                CHUNK_DUMP_NAME_LEVEL,
-                "Date",
-                "Manager",
-                "Pivot",
-                "ProviderType",
-                "ProviderPartition",
-                "ProviderId",
-                DICO_ID_HIERARCHY,
-                INDEX_ID_HIERARCHY,
-                REF_ID_HIERARCHY,
-                FIELD_NAME_HIERARCHY,
-                STORE_NAME_HIERARCHY,
-                "Index fields")
-            .stream()
-            .reduce(
-                directMemory,
-                (total, hierarchy) -> Copper.total(total, Copper.hierarchy(hierarchy)),
-                (a, b) -> {
-                  throw new UnsupportedOperationException();
-                });
+    final CopperMeasure grandTotal = directMemory.grandTotal();
 
     Copper.measure("CommittedRows")
         .divide(chunkSize)
@@ -483,19 +456,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .divide(Copper.measure(MAX_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as("MaxMemory.Ratio")
-        .publish(context);
-
-    CopperLevelCondition sharedCondition =
-        Copper.level("Owner")
-            .eq(MemoryAnalysisDatastoreDescription.SHARED_OWNER)
-            .or(
-                Copper.level("Owner component")
-                    .eq(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT))
-            .or(Copper.level("Partition").eq(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS));
-
-    Copper.agg(DatastoreConstants.CHUNK_ID, CountFunction.PLUGIN_KEY)
-        .filter(sharedCondition)
-        .as("Shared.COUNT")
         .publish(context);
   }
 
