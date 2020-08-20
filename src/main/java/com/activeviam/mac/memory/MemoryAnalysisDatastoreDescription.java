@@ -105,6 +105,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         /* Foreign keys */
         .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
         .dictionarized()
+
         .withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
@@ -142,6 +143,38 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
+        .build();
+  }
+
+  // todo vlg
+  protected IStoreDescription chunkToOwnerStore() {
+    return new StoreDescriptionBuilder()
+        .withStoreName(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+        .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
+        .asKeyField()
+
+        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
+        .asKeyField()
+
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
+        .asKeyField()
+
+        .build();
+  }
+
+  protected IStoreDescription chunkToComponentStore() {
+    return new StoreDescriptionBuilder()
+        .withStoreName(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+
+        .withField(DatastoreConstants.COMPONENT__CHUNK_ID, ILiteralType.LONG)
+        .asKeyField()
+
+        .withField(DatastoreConstants.COMPONENT__COMPONENT, ILiteralType.OBJECT)
+        .asKeyField()
+
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
+        .asKeyField()
+
         .build();
   }
 
@@ -361,6 +394,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
+        chunkToOwnerStore(),
+        chunkToComponentStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),

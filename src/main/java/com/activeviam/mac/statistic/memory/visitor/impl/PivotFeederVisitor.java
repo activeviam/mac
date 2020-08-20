@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -191,6 +192,24 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(final ChunkStatistic stat) {
+
+    // todo vlg refactor
+    final ChunkOwner owner = new CubeOwner(this.pivot);
+
+    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+    final Object[] ownerTuple =
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName);
+    FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+
+    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+    final Object[] componentTuple =
+        FeedVisitor
+            .buildComponentTupleFrom(componentFormat, stat, this.rootComponent, this.dumpName);
+    FeedVisitor.add(stat,
+        transaction,
+        DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+        componentTuple);
+
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -209,7 +228,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         this.providerCpnType.toString());
 
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__OWNER, new CubeOwner(this.pivot));
+        tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;

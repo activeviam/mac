@@ -252,6 +252,13 @@ public class DatastoreConstants {
   /** Parent type in the chunk to level store. */
   public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
+  public static final String CHUNK_TO_OWNER_STORE = "ChunkToOwner";
+  public static final String OWNER__CHUNK_ID = CHUNK_ID;
+  public static final String OWNER__OWNER = CHUNK__OWNER;
+  public static final String CHUNK_TO_COMPONENT_STORE = "ChunkToComponent";
+  public static final String COMPONENT__CHUNK_ID = CHUNK_ID;
+  public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
+
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 

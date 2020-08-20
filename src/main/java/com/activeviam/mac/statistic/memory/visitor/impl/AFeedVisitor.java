@@ -125,4 +125,14 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   protected static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
   }
+
+  // todo vlg javadoc
+  protected static IRecordFormat getOwnerFormat(IDatastoreSchemaMetadata storageMetadata) {
+    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_OWNER_STORE);
+  }
+
+  protected static IRecordFormat getComponentFormat(IDatastoreSchemaMetadata storageMetadata) {
+    return FeedVisitor
+        .getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_COMPONENT_STORE);
+  }
 }

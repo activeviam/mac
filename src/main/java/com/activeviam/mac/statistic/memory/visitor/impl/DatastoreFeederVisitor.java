@@ -8,6 +8,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -27,6 +28,7 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -130,6 +132,26 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
 
+    // todo vlg refactor
+    final ChunkOwner owner = new StoreOwner(this.store);
+
+    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+    final Object[] ownerTuple =
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName);
+    FeedVisitor
+        .add(chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+
+    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+    final Object[] componentTuple =
+        FeedVisitor.buildComponentTupleFrom(componentFormat,
+            chunkStatistic,
+            this.rootComponent,
+            this.dumpName);
+    FeedVisitor.add(chunkStatistic,
+        transaction,
+        DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+        componentTuple);
+
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
       FeedVisitor.setTupleElement(
@@ -169,7 +191,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
     }
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
+        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =

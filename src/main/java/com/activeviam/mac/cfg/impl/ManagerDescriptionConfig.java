@@ -10,8 +10,10 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
+import com.activeviam.copper.api.CopperHierarchy;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
+import com.activeviam.copper.store.Mapping.JoinType;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -20,8 +22,10 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.qfs.agg.impl.DistinctCountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -144,6 +148,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
   public static final String PARTITION_HIERARCHY = "Partition";
+
+  public static final String OWNERSHIP_FOLDER = "Ownership";
+  public static final String MEMORY_FOLDER = "Memory";
 
   @Bean
   @Override
@@ -346,6 +353,53 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
+        .publish(context);
+
+    // --------------------
+    // 4- Chunk to owners
+    CopperStore chunkToOwnerStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+            .joinToCube(JoinType.LEFT)
+            .withDefaultValue(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance())
+            .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    // todo vlg constants
+    CopperHierarchy ownerHierarchy = Copper.newSingleLevelHierarchy("Owners", "Owner", "Owner")
+        .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
+        .publish(context);
+
+    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
+        DistinctCountFunction.PLUGIN_KEY)
+        .totalOn(ownerHierarchy)
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .max()
+        .as("Owner.COUNT")
+        .withinFolder(OWNERSHIP_FOLDER)
+        .publish(context);
+
+
+    // --------------------
+    // 5- Chunk to components
+    CopperStore chunkToComponentStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+            .joinToCube()
+            .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    // todo vlg constants
+    CopperHierarchy componentHierarchy =
+        Copper.newSingleLevelHierarchy("Components", "Component", "Component")
+            .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
+            .publish(context);
+
+    Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
+        DistinctCountFunction.PLUGIN_KEY)
+        .totalOn(componentHierarchy)
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .max()
+        .as("Component.COUNT")
+        .withinFolder(OWNERSHIP_FOLDER)
         .publish(context);
   }
 

@@ -11,7 +11,9 @@ import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -91,6 +93,31 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, 0);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, 0);
 
+    return tuple;
+  }
+
+  // todo vlg
+  static Object[] buildOwnerTupleFrom(
+      final IRecordFormat format,
+      final ChunkStatistic stat,
+      final ChunkOwner owner,
+      final String dumpName) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
+    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    return tuple;
+  }
+
+  static Object[] buildComponentTupleFrom(
+      final IRecordFormat format,
+      final ChunkStatistic stat,
+      final ParentType componentType,
+      final String dumpName) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__CHUNK_ID)] = stat.getChunkId();
+    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__COMPONENT)] = componentType;
+    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
     return tuple;
   }
 
