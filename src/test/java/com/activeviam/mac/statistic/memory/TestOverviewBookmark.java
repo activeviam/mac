@@ -62,14 +62,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 		// Add 100 records
 		monitoredApp.getLeft()
-				.edit(
-						tm -> {
-							IntStream.range(0, ADDED_DATA_SIZE)
-									.forEach(
-											i -> {
-												tm.add("A", i * i);
-											});
-						});
+				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
+								.forEach(i -> tm.add("A", i * i)));
 
 		// Force to discard all versions
 		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -142,16 +136,29 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 						+ "[Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
 						+ "FROM (" + OVERVIEW_QUERY + ")");
 
+		final MDXQuery excessMemoryQuery = new MDXQuery(
+				"WITH"
+						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
+						+ " Sum("
+						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+						+ "   ([Measures].[Owner.COUNT] - 1) * [Measures].[DirectMemory.SUM]"
+						+ " )"
+						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+						+ " FROM [MemoryCube]");
+
 		final CellSetDTO totalResult = pivot.execute(totalQuery);
 		final CellSetDTO perOwnerResult = pivot.execute(perOwnerQuery);
+		final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
-		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult))
-				.isEqualTo(totalResult); // todo vlg adjust with shared chunks
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
+				- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+				.isEqualTo(CellSetUtils
+						.extractValueFromSingleCellDTO(totalResult));
 	}
 
 	// todo vlg: junit5 parameterized tests
 	@Test
-	public void testStoreGrandTotal() throws QueryException {
+	public void testOverviewStoreTotal() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -166,15 +173,28 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 						+ "FROM (" + OVERVIEW_QUERY + ") "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
+		final MDXQuery excessMemoryQuery = new MDXQuery(
+				"WITH"
+						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
+						+ " Sum("
+						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+						+ "   ([Measures].[Component.COUNT] - 1) * [Measures].[DirectMemory.SUM]"
+						+ " )"
+						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+
 		final CellSetDTO storeTotalResult = pivot.execute(storeTotalQuery);
 		final CellSetDTO perComponentStoreResult = pivot.execute(perComponentsStoreQuery);
+		final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
-		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perComponentStoreResult))
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perComponentStoreResult)
+				- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
 				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(storeTotalResult));
 	}
 
 	@Test
-	public void testCubeGrandTotal() throws QueryException {
+	public void testOverviewCubeTotal() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -189,10 +209,23 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 						+ "FROM (" + OVERVIEW_QUERY + ") "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
+		final MDXQuery excessMemoryQuery = new MDXQuery(
+				"WITH"
+						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
+						+ " Sum("
+						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+						+ "   ([Measures].[Component.COUNT] - 1) * [Measures].[DirectMemory.SUM]"
+						+ " )"
+						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
+
 		final CellSetDTO cubeTotalResult = pivot.execute(cubeTotalQuery);
 		final CellSetDTO perComponentCubeResult = pivot.execute(perComponentCubeQuery);
+		final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
-		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult))
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
+				- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
 				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
 	}
 }

@@ -20,6 +20,20 @@ public class CellSetUtils {
 		return value;
 	}
 
+	public static Double extractDoubleValueFromSingleCellDTO(CellSetDTO data) {
+		Assertions.assertThat(data.getCells().size()).isEqualTo(1);
+
+		String sum_s = data.getCells().iterator().next().toString();
+		String[] cell = sum_s.split(",");
+		Double value = null;
+		for (String attr : cell) {
+			if (attr.contains(" value=")) {
+				value = Double.parseDouble(attr.replace(" value=", ""));
+			}
+		}
+		return value;
+	}
+
 	public static Double[] extractValuesFromCellSetDTO(CellSetDTO data) {
 		final AtomicInteger cursor = new AtomicInteger();
 		Double[] res = new Double[data.getCells().size()];
