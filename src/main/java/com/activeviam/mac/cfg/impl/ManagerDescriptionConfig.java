@@ -114,6 +114,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the ReferenceID AH. */
   public static final String REF_ID_HIERARCHY = "Reference ID";
 
+  /** Name of the component dimension. */
+  public static final String COMPONENT_DIMENSION = "Components";
+  /** Name of the component analysis hierarchy. */
+  public static final String COMPONENT_HIERARCHY = "Component";
+  /** Name of the component dimension. */
+  public static final String OWNER_DIMENSION = "Owners";
+  /** Name of the component analysis hierarchy. */
+  public static final String OWNER_HIERARCHY = "Owner";
+
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
   /** Total on-heap memory committed by the JVM. */
@@ -144,7 +153,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
   public static final String PIVOT_HIERARCHY = "Pivot";
   public static final String MANAGER_HIERARCHY = "Manager";
-  public static final String OWNER_HIERARCHY = "Owner";
   public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
   public static final String PARTITION_HIERARCHY = "Partition";
@@ -297,18 +305,22 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_HEAP)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(COMMITTED_HEAP)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_DIRECT)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(MAX_DIRECT)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
   }
 
@@ -365,39 +377,43 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
     // todo vlg constants
-    CopperHierarchy ownerHierarchy = Copper.newSingleLevelHierarchy("Owners", "Owner", "Owner")
-        .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
-        .publish(context);
-
-    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
-        DistinctCountFunction.PLUGIN_KEY)
-        .totalOn(ownerHierarchy)
-        .per(Copper.level(CHUNK_ID_HIERARCHY))
-        .max()
-        .as("Owner.COUNT")
-        .withinFolder(OWNERSHIP_FOLDER)
-        .publish(context);
-
+    CopperHierarchy ownerHierarchy =
+        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
+            .publish(context);
 
     // --------------------
     // 5- Chunk to components
     CopperStore chunkToComponentStore =
         Copper.store(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
-            .joinToCube()
+            .joinToCube(JoinType.LEFT)
             .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
     // todo vlg constants
     CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy("Components", "Component", "Component")
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
             .publish(context);
+
+
+    // todo vlg: fix aggregation behavior above owner/component hierarchy
+    // this is still true: XXX.COUNT > 1 <=> the location contains shared chunks
+    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
+        DistinctCountFunction.PLUGIN_KEY)
+        .totalOn(ownerHierarchy)
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .max() // todo vlg: wrong, use a custom aggregation function or PP?
+        .as("Owner.COUNT")
+        .withinFolder(OWNERSHIP_FOLDER)
+        .publish(context);
 
     Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
         DistinctCountFunction.PLUGIN_KEY)
         .totalOn(componentHierarchy)
         .per(Copper.level(CHUNK_ID_HIERARCHY))
-        .max()
+        .max() // todo vlg: wrong, use a custom aggregation function or PP?
         .as("Component.COUNT")
         .withinFolder(OWNERSHIP_FOLDER)
         .publish(context);

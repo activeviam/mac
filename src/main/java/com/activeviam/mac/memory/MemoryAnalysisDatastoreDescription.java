@@ -146,7 +146,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
-  // todo vlg
+  /**
+   * Description of the chunk store.
+   *
+   * @return description of {@link DatastoreConstants#CHUNK_TO_OWNER_STORE}
+   */
   protected IStoreDescription chunkToOwnerStore() {
     return new StoreDescriptionBuilder()
         .withStoreName(DatastoreConstants.CHUNK_TO_OWNER_STORE)
@@ -162,6 +166,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
+  /**
+   * Description of the chunk store.
+   *
+   * @return description of {@link DatastoreConstants#CHUNK_TO_COMPONENT_STORE}
+   */
   protected IStoreDescription chunkToComponentStore() {
     return new StoreDescriptionBuilder()
         .withStoreName(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
