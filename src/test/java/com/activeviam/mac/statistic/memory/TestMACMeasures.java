@@ -148,54 +148,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(pivot).isNotNull();
   }
 
-  static Long extractValueFromSingleCellDTO(CellSetDTO data) {
-    Assertions.assertThat(data.getCells().size()).isEqualTo(1);
-
-    String sum_s = data.getCells().iterator().next().toString();
-    String[] cell = sum_s.split(",");
-    Long value = null;
-    for (String attr : cell) {
-      if (attr.contains(" value=")) {
-        value = Long.parseLong(attr.replace(" value=", ""));
-      }
-    }
-    return value;
-  }
-
-  static Double[] extractValuesFromCellSetDTO(CellSetDTO data) {
-    final AtomicInteger cursor = new AtomicInteger();
-    Double[] res = new Double[data.getCells().size()];
-    data.getCells()
-        .forEach(
-            cell -> {
-              int i = cursor.getAndIncrement();
-              String[] cell_s = cell.toString().split(",");
-              for (String attr : cell_s) {
-
-                if (attr.contains(" value=")) {
-                  res[i] = Double.parseDouble(attr.replace(" value=", ""));
-                }
-              }
-            });
-    return res;
-  }
-
-  static Long sumValuesFromCellSetDTO(CellSetDTO data) {
-    final AtomicLong value = new AtomicLong();
-    data.getCells()
-        .forEach(
-            cell -> {
-              String[] cell_s = cell.toString().split(",");
-
-              for (String attr : cell_s) {
-                if (attr.contains(" value=")) {
-                  value.addAndGet(Long.parseLong(attr.replace(" value=", "")));
-                }
-              }
-            });
-    return value.get();
-  }
-
   @Test
   public void testDirectMemorySum() throws QueryException {
 
@@ -208,7 +160,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Long value = extractValueFromSingleCellDTO(res);
+    Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -216,7 +168,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
-    Long nbC = extractValueFromSingleCellDTO(res2);
+    Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -230,7 +182,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
     // Check that the summed value corresponds to the Exported sum
     Assertions.assertThat(statsSumm.offHeapMemory).isEqualTo(value);
   }
@@ -247,7 +199,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Long value = extractValueFromSingleCellDTO(res);
+    Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -255,7 +207,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
-    Long nbC = extractValueFromSingleCellDTO(res2);
+    Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -269,7 +221,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
 
     /*
      * On-heap memory usage by chunks is not consistent with application on-heap
@@ -292,7 +244,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res))
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE);
   }
 
@@ -310,7 +262,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res))
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE - ADDED_DATA_SIZE);
   }
 
@@ -332,7 +284,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + "] ON COLUMNS"
                                 + "  FROM [MemoryCube]");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -361,7 +313,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + " FROM [MemoryCube]"
                                 + " WHERE ([Chunk Owners].[Owner].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -382,7 +334,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + ManagerDescriptionConfig.CHUNK_DIMENSION
                                 + "].[ChunkId].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -402,7 +354,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res)).contains((double) REMOVED_DATA_SIZE);
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res)).contains((double) REMOVED_DATA_SIZE);
   }
 
   @Test
@@ -434,9 +386,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = extractValuesFromCellSetDTO(res);
-    final Double[] nonWrittenRows = extractValuesFromCellSetDTO(res2);
-    final Double[] nonWrittenRatio = extractValuesFromCellSetDTO(res3);
+    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final Double[] nonWrittenRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final Double[] nonWrittenRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
     for (int i = 0; i < chunkSizes.length; i++) {
       Assertions.assertThat(nonWrittenRatio[i]).isEqualTo(nonWrittenRows[i] / chunkSizes[i]);
@@ -472,9 +424,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = extractValuesFromCellSetDTO(res);
-    final Double[] DeletedRows = extractValuesFromCellSetDTO(res2);
-    final Double[] DeletedRatio = extractValuesFromCellSetDTO(res3);
+    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final Double[] DeletedRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final Double[] DeletedRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
     for (int i = 0; i < chunkSizes.length; i++) {
       Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i] / chunkSizes[i]);
@@ -550,27 +502,27 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     final MDXQuery verificationQuery =
         new MDXQuery(
             "WITH Member [Measures].[Expected.COUNT] AS"
-                + " DistinctCount(\n"
-                + "  Generate(\n"
-                + "    NonEmpty(\n"
-                + "      Crossjoin(\n"
-                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,\n"
-                + "        " + countedHierarchy + ".CurrentMember\n"
-                + "      )\n"
-                + "    ),\n"
-                + "    Generate(\n"
-                + "      NonEmpty(\n"
-                + "        Crossjoin(\n"
-                + "          [Chunks].[ChunkId].CurrentMember,\n"
-                + "          " + countedHierarchy + ".[ALL].[AllMember].Children\n"
-                + "        )\n"
-                + "      ),\n"
-                + "      {\n"
-                + "        " + countedHierarchy + ".CurrentMember\n"
-                + "      }\n"
-                + "    )\n"
-                + "  )\n"
-                + ") "
+                + " DistinctCount("
+                + "  Generate("
+                + "    NonEmpty("
+                + "      Crossjoin("
+                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "        " + countedHierarchy + ".CurrentMember"
+                + "      )"
+                + "    ),"
+                + "    Generate("
+                + "      NonEmpty("
+                + "        Crossjoin("
+                + "          [Chunks].[ChunkId].CurrentMember,"
+                + "          " + countedHierarchy + ".[ALL].[AllMember].Children"
+                + "        )"
+                + "      ),"
+                + "      {"
+                + "        " + countedHierarchy + ".CurrentMember"
+                + "      }"
+                + "    )"
+                + "  )"
+                + " ) "
                 + " SELECT"
                 + " NON EMPTY " + rowMdxExpression + " ON ROWS,"
                 + " NON EMPTY [Measures].[Expected.COUNT] ON COLUMNS"
@@ -578,8 +530,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     CellSetDTO expectedResult = pivot.execute(verificationQuery);
 
-    final Double[] counts = extractValuesFromCellSetDTO(countResult);
-    final Double[] expectedCounts = extractValuesFromCellSetDTO(expectedResult);
+    final Double[] counts = CellSetUtils.extractValuesFromCellSetDTO(countResult);
+    final Double[] expectedCounts = CellSetUtils.extractValuesFromCellSetDTO(expectedResult);
 
     Assertions.assertThat(counts).containsExactly(expectedCounts);
   }
