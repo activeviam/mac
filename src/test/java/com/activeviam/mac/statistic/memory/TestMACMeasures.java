@@ -40,6 +40,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -480,17 +481,120 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     }
   }
 
+  @Test
+  public void testOwnerCountOnChunks() throws QueryException {
+    performCountTest("[Measures].[Owner.COUNT]",
+        "[Owners].[Owner]",
+        "[Chunks].[ChunkId].[ChunkId].Members");
+  }
+
+  @Test
+  public void testOwnerCountOnOwnerAndComponents() throws QueryException {
+    performCountTest("[Measures].[Owner.COUNT]",
+        "[Owners].[Owner]",
+        " Crossjoin("
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Owners].[Owner].[ALL].[AllMember]"
+            + "      )"
+            + "    ),"
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Components].[Component].[ALL].[AllMember]"
+            + "      )"
+            + "    )"
+            + "  )");
+  }
+
+  @Test
+  public void testComponentCountOnChunks() throws QueryException {
+    performCountTest("[Measures].[Component.COUNT]",
+        "[Components].[Component]",
+        "[Chunks].[ChunkId].[ChunkId].Members");
+  }
+
+  @Test
+  @Ignore("Component.COUNT is not aggregated properly above the chunk level")
+  public void testComponentCountOnOwnerAndComponents() throws QueryException {
+    performCountTest("[Measures].[Component.COUNT]",
+        "[Components].[Component]",
+        " Crossjoin("
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Owners].[Owner].[ALL].[AllMember]"
+            + "      )"
+            + "    ),"
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Components].[Component].[ALL].[AllMember]"
+            + "      )"
+            + "    )"
+            + "  )");
+  }
+
+  protected void performCountTest(
+      String measureName,
+      String countedHierarchy,
+      String rowMdxExpression) throws QueryException {
+
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+    final MDXQuery countQuery =
+        new MDXQuery("SELECT"
+            + " NON EMPTY " + rowMdxExpression + " ON ROWS,"
+            + "  NON EMPTY " + measureName + " ON COLUMNS"
+            + "  FROM [MemoryCube]");
+    CellSetDTO countResult = pivot.execute(countQuery);
+
+    final MDXQuery verificationQuery =
+        new MDXQuery(
+            "WITH Member [Measures].[Expected.COUNT] AS"
+                + " DistinctCount(\n"
+                + "  Generate(\n"
+                + "    NonEmpty(\n"
+                + "      Crossjoin(\n"
+                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,\n"
+                + "        " + countedHierarchy + ".CurrentMember\n"
+                + "      )\n"
+                + "    ),\n"
+                + "    Generate(\n"
+                + "      NonEmpty(\n"
+                + "        Crossjoin(\n"
+                + "          [Chunks].[ChunkId].CurrentMember,\n"
+                + "          " + countedHierarchy + ".[ALL].[AllMember].Children\n"
+                + "        )\n"
+                + "      ),\n"
+                + "      {\n"
+                + "        " + countedHierarchy + ".CurrentMember\n"
+                + "      }\n"
+                + "    )\n"
+                + "  )\n"
+                + ") "
+                + " SELECT"
+                + " NON EMPTY " + rowMdxExpression + " ON ROWS,"
+                + " NON EMPTY [Measures].[Expected.COUNT] ON COLUMNS"
+                + " FROM [MemoryCube]");
+
+    CellSetDTO expectedResult = pivot.execute(verificationQuery);
+
+    final Double[] counts = extractValuesFromCellSetDTO(countResult);
+    final Double[] expectedCounts = extractValuesFromCellSetDTO(expectedResult);
+
+    Assertions.assertThat(counts).containsExactly(expectedCounts);
+  }
+
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
     final IMemoryStatistic firstChild = export.getChildren().iterator().next();
     return QfsArrays.<String, String>mutableMap(
-            ManagerDescriptionConfig.USED_HEAP,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
-            ManagerDescriptionConfig.COMMITTED_HEAP,
-                MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
-            ManagerDescriptionConfig.USED_DIRECT,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
-            ManagerDescriptionConfig.MAX_DIRECT,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
+        ManagerDescriptionConfig.USED_HEAP,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
+        ManagerDescriptionConfig.COMMITTED_HEAP,
+        MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+        ManagerDescriptionConfig.USED_DIRECT,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
+        ManagerDescriptionConfig.MAX_DIRECT,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
         .entrySet().stream()
         .collect(
             toMap(
