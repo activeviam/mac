@@ -146,18 +146,30 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Formatter for Percentages. */
   public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
 
+  /** The name of the hierarchy of indexed fields. */
   public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+  /** The name of the hierarchy of reference names. */
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
+  /** The name of the hierarchy of provider ids. */
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
+  /** The name of the hierarchy of provider partitions. */
   public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
+  /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+  /** The name of the hierarchy of pivots. */
   public static final String PIVOT_HIERARCHY = "Pivot";
+  /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
+  /** The name of the hierarchy of owner components. */
   public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
+  /** The name of the hierarchy of chunk ids. */
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
+  /** The name of the hierarchy of partitions. */
   public static final String PARTITION_HIERARCHY = "Partition";
 
+  /** The name of the folder for measures related to chunk ownership. */
   public static final String OWNERSHIP_FOLDER = "Ownership";
+  /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
   @Bean
