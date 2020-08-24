@@ -26,17 +26,18 @@ import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.qfs.agg.impl.CountFunction;
-import com.qfs.agg.impl.DistinctCountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
+import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
+import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
+import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
@@ -224,6 +225,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMeasures(this::measures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
+        .withSharedMdxContext()
+        .withCalculatedMembers(calculatedMembers())
+        .end()
         .build();
   }
 
@@ -306,6 +310,61 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(NUMBER_FORMATTER)
         .withUpdateTimestamp()
         .withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
+  }
+
+  private ICalculatedMemberDescription[] calculatedMembers() {
+    return new ICalculatedMemberDescription[] {
+        createMdxMeasureDescription("Owner.COUNT",
+            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
+            OWNERSHIP_FOLDER),
+        createMdxMeasureDescription("Component.COUNT",
+            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
+            OWNERSHIP_FOLDER)
+    };
+  }
+
+  private ICalculatedMemberDescription createMdxMeasureDescription(
+      final String measureName,
+      final String mdxExpression) {
+    return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
+  }
+
+  private ICalculatedMemberDescription createMdxMeasureDescription(
+      final String measureName,
+      final String mdxExpression,
+      final String folder) {
+    final ICalculatedMemberDescription description = createMdxMeasureDescription(measureName, mdxExpression);
+    description.setFolder(folder);
+    return description;
+  }
+
+  private String ownershipCountMdxExpression(final String dimensionName, final String hierarchyName) {
+    return ownershipCountMdxExpression(MdxNamingUtil
+        .hierarchyUniqueName(dimensionName, hierarchyName));
+  }
+
+  private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+    return "DistinctCount("
+        + "  Generate("
+        + "    NonEmpty("
+        + "      Crossjoin("
+        + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "      )"
+        + "    ),"
+        + "    Generate("
+        + "      NonEmpty("
+        + "        Crossjoin("
+        + "          [Chunks].[ChunkId].CurrentMember,"
+        + "          " + hierarchyUniqueName + ".[ALL].[AllMember].Children"
+        + "        )"
+        + "      ),"
+        + "      {"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "      }"
+        + "    )"
+        + "  )"
+        + ")";
   }
 
   private void copperCalculations(final ICopperContext context) {
@@ -412,23 +471,23 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
 
     // todo vlg: fix aggregation behavior
-    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
-        DistinctCountFunction.PLUGIN_KEY)
-        .totalOn(ownerHierarchy)
-        .per(ownerHierarchy.level(OWNER_HIERARCHY))
-        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
-        .as("Owner.COUNT")
-        .withinFolder(OWNERSHIP_FOLDER)
-        .publish(context);
+//    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
+//        DistinctCountFunction.PLUGIN_KEY)
+//        .totalOn(ownerHierarchy)
+//        .per(ownerHierarchy.level(OWNER_HIERARCHY))
+//        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
+//        .as("Owner.COUNT")
+//        .withinFolder(OWNERSHIP_FOLDER)
+//        .publish(context);
 
-    Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
-        DistinctCountFunction.PLUGIN_KEY)
-        .totalOn(componentHierarchy)
-        .per(Copper.level(COMPONENT_HIERARCHY))
-        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
-        .as("Component.COUNT")
-        .withinFolder(OWNERSHIP_FOLDER)
-        .publish(context);
+//    Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
+//        DistinctCountFunction.PLUGIN_KEY)
+//        .totalOn(componentHierarchy)
+//        .per(Copper.level(COMPONENT_HIERARCHY))
+//        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
+//        .as("Component.COUNT")
+//        .withinFolder(OWNERSHIP_FOLDER)
+//        .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {

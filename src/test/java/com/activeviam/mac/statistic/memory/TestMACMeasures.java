@@ -466,7 +466,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-//  @Ignore("Component.COUNT is not aggregated properly above the chunk level")
   public void testComponentCountOnOwnerAndComponents() throws QueryException {
     performCountTest("[Measures].[Component.COUNT]",
         "[Components].[Component]",

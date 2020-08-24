@@ -96,7 +96,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  // todo vlg
   static Object[] buildOwnerTupleFrom(
       final IRecordFormat format,
       final ChunkStatistic stat,
