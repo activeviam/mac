@@ -25,6 +25,8 @@ import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.qfs.agg.impl.CountFunction;
 import com.qfs.agg.impl.DistinctCountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
@@ -388,7 +390,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    // todo vlg constants
     CopperHierarchy ownerHierarchy =
         Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
@@ -398,11 +399,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // 5- Chunk to components
     CopperStore chunkToComponentStore =
         Copper.store(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
-            .joinToCube(JoinType.LEFT)
+            .joinToCube()
+            .withDefaultValue(DatastoreConstants.COMPONENT__COMPONENT, ParentType.NO_COMPONENT)
             .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    // todo vlg constants
     CopperHierarchy componentHierarchy =
         Copper
             .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
@@ -410,13 +411,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .publish(context);
 
 
-    // todo vlg: fix aggregation behavior above owner/component hierarchy
-    // this is still true: XXX.COUNT > 1 <=> the location contains shared chunks
+    // todo vlg: fix aggregation behavior
     Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
         DistinctCountFunction.PLUGIN_KEY)
         .totalOn(ownerHierarchy)
-        .per(Copper.level(CHUNK_ID_HIERARCHY))
-        .max() // todo vlg: wrong, use a custom aggregation function or PP?
+        .per(ownerHierarchy.level(OWNER_HIERARCHY))
+        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
         .as("Owner.COUNT")
         .withinFolder(OWNERSHIP_FOLDER)
         .publish(context);
@@ -424,8 +424,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
         DistinctCountFunction.PLUGIN_KEY)
         .totalOn(componentHierarchy)
-        .per(Copper.level(CHUNK_ID_HIERARCHY))
-        .max() // todo vlg: wrong, use a custom aggregation function or PP?
+        .per(Copper.level(COMPONENT_HIERARCHY))
+        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
         .as("Component.COUNT")
         .withinFolder(OWNERSHIP_FOLDER)
         .publish(context);

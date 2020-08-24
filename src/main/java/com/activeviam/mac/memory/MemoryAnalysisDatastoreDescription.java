@@ -85,7 +85,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     /** Bitmap Matcher structure. */
     BITMAP_MATCHER,
     /** Level structure. */
-    LEVEL
+    LEVEL,
+    /** No owning structure. */
+    NO_COMPONENT
   }
 
   /**

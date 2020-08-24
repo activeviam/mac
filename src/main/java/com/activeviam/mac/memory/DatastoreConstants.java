@@ -268,7 +268,7 @@ public class DatastoreConstants {
   public static final String COMPONENT__CHUNK_ID = CHUNK_ID;
 
   /** The component field in the store of chunk components. */
-  public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
+  public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT + "_joined"; // todo vlg remove
 
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
