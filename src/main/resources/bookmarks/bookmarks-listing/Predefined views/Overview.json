@@ -13,9 +13,13 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Owner.COUNT], [Measures].[Component.COUNT]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
-              "contextValues" : { },
-              "updateMode" : "once",
+              "mdx" : "WITH  Member [Measures].[Component.COUNT.mdx] AS DistinctCount(Generate(NonEmpty(Crossjoin([Chunks].[ChunkId].[ALL].[AllMember].Children, [Components].[Component].CurrentMember)), Generate(NonEmpty(Crossjoin([Chunks].[ChunkId].CurrentMember, [Components].[Component].[ALL].[AllMember].Children)), {[Components].[Component].CurrentMember})))    Member [Measures].[Owner.COUNT.mdx] AS DistinctCount(Generate(NonEmpty(Crossjoin([Chunks].[ChunkId].[ALL].[AllMember].Children, [Owners].[Owner].CurrentMember)), Generate(NonEmpty(Crossjoin([Chunks].[ChunkId].CurrentMember, [Owners].[Owner].[ALL].[AllMember].Children)), {[Owners].[Owner].CurrentMember})))  SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Owner.COUNT.mdx], [Measures].[Component.COUNT.mdx]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "contextValues" : {
+                "MemoryCube" : {
+                  "mdx.hiddengrandtotals" : ""
+                }
+              },
+              "updateMode" : "realTime",
               "refreshInterval" : 10,
               "ranges" : {
                 "row" : {
@@ -54,6 +58,12 @@
                     "selector" : "member"
                   } ],
                   "hideAddButton" : true,
+                  "columnOrder" : {
+                    "key" : "explicit",
+                    "args" : {
+                      "orderedColumns" : [ "c-treeCells-member", "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]", "[Measures].[Owner.COUNT.mdx]", "[Measures].[Component.COUNT.mdx]" ]
+                    }
+                  },
                   "defaultOptions" : { },
                   "columns" : [ {
                     "key" : "[Measures].[DirectMemory.SUM]",
