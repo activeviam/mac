@@ -20,7 +20,6 @@ import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,10 +27,10 @@ import org.junit.Test;
 
 public class TestOverviewBookmark extends ATestMemoryStatistic {
 
-	Pair<IDatastore, IActivePivotManager> monitoredApp;
-	Pair<IDatastore, IActivePivotManager> monitoringApp;
+	private Pair<IDatastore, IActivePivotManager> monitoredApp;
+	private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
-	StatisticsSummary summary;
+	private StatisticsSummary summary;
 
 	private static final String OVERVIEW_QUERY =
 			"SELECT [Measures].[DirectMemory.SUM] ON COLUMNS,"
@@ -58,45 +57,52 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 	@Before
 	public void setup() throws AgentException {
-		monitoredApp = createMicroApplication();
+		initializeApplication();
 
-		// Add 100 records
-		monitoredApp.getLeft()
-				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-								.forEach(i -> tm.add("A", i * i)));
-
-		// Force to discard all versions
-		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
-
-		// perform GCs before exporting the store data
-		performGC();
-		final MemoryAnalysisService analysisService =
-				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-		final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
+		final Path exportPath = generateMemoryStatistics();
 
 		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 		summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		// Start a monitoring datastore with the exported data
+		initializeMonitoringApplication(stats);
+
+		IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		Assertions.assertThat(pivot).isNotNull();
+	}
+
+	private void initializeApplication() {
+		monitoredApp = createMicroApplication();
+
+		monitoredApp.getLeft()
+				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
+						.forEach(i -> tm.add("A", i * i)));
+	}
+
+	private Path generateMemoryStatistics() {
+		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+
+		performGC();
+
+		final MemoryAnalysisService analysisService =
+				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+		return analysisService.exportMostRecentVersion("testOverview");
+	}
+
+	private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
 		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
 		final IDatastore monitoringDatastore = StartBuilding.datastore()
 				.setSchemaDescription(config.schemaDescription())
 				.build();
 
-		// Start a monitoring cube
 		IActivePivotManager manager = StartBuilding.manager()
 				.setDescription(config.managerDescription())
 				.setDatastoreAndPermissions(monitoringDatastore)
 				.buildAndStart();
 		monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-		// Fill the monitoring datastore
 		monitoringDatastore.edit(
-				tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
-
-		IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-		Assertions.assertThat(pivot).isNotNull();
+				tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
 	}
 
 	@After
@@ -111,9 +117,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery totalQuery = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM ("
-						+ OVERVIEW_QUERY
-						+ ")");
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM (" + OVERVIEW_QUERY + ")");
 
 		final CellSetDTO totalResult = pivot.execute(totalQuery);
 
@@ -127,9 +132,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery totalQuery = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM ("
-						+ OVERVIEW_QUERY
-						+ ")");
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
+						+ "FROM (" + OVERVIEW_QUERY + ")");
 
 		final MDXQuery perOwnerQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
