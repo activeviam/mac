@@ -132,7 +132,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery totalQuery = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
 						+ "FROM (" + OVERVIEW_QUERY + ")");
 
 		final MDXQuery perOwnerQuery = new MDXQuery(
