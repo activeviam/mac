@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -158,6 +159,26 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   protected void visitVectorBlock(final ChunkStatistic statistic) {
     assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
+    final ChunkOwner owner = new StoreOwner(this.store);
+
+    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+    final Object[] ownerTuple =
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, owner, this.dumpName);
+    FeedVisitor
+        .add(statistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+    final Object[] componentTuple =
+        FeedVisitor.buildComponentTupleFrom(componentFormat,
+            statistic,
+            ParentType.VECTOR_BLOCK,
+            this.dumpName);
+    FeedVisitor
+        .add(statistic,
+            transaction,
+            DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+            componentTuple);
+
+
     final IRecordFormat format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
@@ -187,7 +208,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
     }
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
+        tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(

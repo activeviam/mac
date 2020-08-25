@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -95,6 +96,21 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     recordLevelForStructure(this.directParentType, this.directParentId);
 
+    final ChunkOwner owner = new CubeOwner(this.parent.pivot);
+
+    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+    final Object[] ownerTuple =
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName);
+    FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+
+    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+    final Object[] componentTuple =
+        FeedVisitor.buildComponentTupleFrom(componentFormat, stat, ParentType.LEVEL, this.dumpName);
+    FeedVisitor.add(stat,
+        transaction,
+        DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+        componentTuple);
+
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -105,7 +121,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__OWNER, new CubeOwner(this.parent.pivot));
+        tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.LEVEL);
     FeedVisitor.setTupleElement(

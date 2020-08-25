@@ -8,7 +8,7 @@
 package com.activeviam.mac.entities;
 
 /** Interface representing an Owner of a chunk in the application. */
-public interface ChunkOwner {
+public interface ChunkOwner extends Comparable<ChunkOwner> {
 
   /**
    * Gets the name of the owner.
@@ -16,4 +16,9 @@ public interface ChunkOwner {
    * @return the name
    */
   String getName();
+
+  @Override
+  default int compareTo(ChunkOwner o) {
+    return this.toString().compareTo(o.toString());
+  }
 }

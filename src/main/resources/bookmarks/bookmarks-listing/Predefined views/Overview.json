@@ -1,0 +1,316 @@
+{
+  "style" : { },
+  "showTitleBar" : false,
+  "body" : {
+    "pages" : [ {
+      "content" : [ {
+        "key" : "0",
+        "bookmark" : {
+          "name" : "Direct memory usage overview",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Owner.COUNT], [Measures].[Component.COUNT]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "contextValues" : {
+                "MemoryCube" : {
+                  "mdx.hiddengrandtotals" : ""
+                }
+              },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "columnOrder" : {
+                    "key" : "explicit",
+                    "args" : {
+                      "orderedColumns" : [ "c-treeCells-member", "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]", "[Measures].[Owner.COUNT.mdx]", "[Measures].[Component.COUNT.mdx]" ]
+                    }
+                  },
+                  "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "[Measures].[DirectMemory.SUM]",
+                    "width" : 154
+                  }, {
+                    "key" : "[Measures].[DirectMemory.Ratio]",
+                    "width" : 159
+                  } ],
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Chunk Owners",
+                "hierarchy" : "Owner",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "4",
+                "size" : 0.52
+              },
+              "1" : {
+                "ck" : "3",
+                "size" : 0.48
+              }
+            },
+            "size" : 0.2,
+            "direction" : "column"
+          },
+          "1" : {
+            "ck" : "0",
+            "size" : 0.8
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Overview",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Direct memory usage detailed overview",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[contributors.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "[Measures].[DirectMemory.SUM]",
+                    "width" : 149
+                  } ],
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Chunk Owners",
+                "hierarchy" : "Owner",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "5",
+                "size" : 0.48
+              },
+              "1" : {
+                "ck" : "4",
+                "size" : 0.52
+              }
+            },
+            "size" : 0.21,
+            "direction" : "column"
+          },
+          "1" : {
+            "ck" : "1",
+            "size" : 0.79
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Detailed",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    } ]
+  },
+  "containerKey" : "dashboard"
+}
