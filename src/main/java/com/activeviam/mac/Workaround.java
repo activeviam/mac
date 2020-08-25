@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac;
 
 /**
@@ -14,9 +15,17 @@ package com.activeviam.mac;
  */
 public @interface Workaround {
 
-  /** @return Brief explanation of the issue to workaround. */
+  /**
+   * Returns the solution.
+   *
+   * @return Brief explanation of the issue to workaround.
+   */
   String solution();
 
-  /** @return Jira ticket related to the issue. */
+  /**
+   * Returns the jira ticket.
+   *
+   * @return Jira ticket related to the issue.
+   */
   String jira() default "";
 }

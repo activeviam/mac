@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.formatter;
 
 import com.qfs.store.impl.MultiVersionCompositePrimaryRecordIndex;
@@ -15,13 +16,17 @@ import com.quartetfs.fwk.format.IFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-/** @author ActiveViam */
+/**
+ * Formatter for indexes.
+ *
+ * @author ActiveViam
+ */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = IndexFormatter.KEY)
 public class IndexFormatter implements IFormatter {
 
   private static final long serialVersionUID = 4778274710157958593L;
 
-  /** Plugin key */
+  /** Plugin key. */
   public static final String KEY = "IndexFormatter";
 
   @Override

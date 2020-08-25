@@ -100,10 +100,6 @@ public abstract class ASecurityConfig implements ICorsConfig {
    * <code>PasswordEncoder</code> to use for stored passwords that are not prefixed. This is the
    * role of the following function.
    *
-   * <p>More information can be found in the <a
-   * href=https://docs.spring.io/spring-security/site/docs/current/reference/html/core-services.html#core-services-password-encoding
-   * /> Spring documentation</a>
-   *
    * @return The {@link PasswordEncoder} to encode passwords with.
    */
   @Bean
@@ -156,12 +152,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
    *   <li>{@link IJwtService}
    * </ul>
    *
-   * @return a comparator that indicates which authority/role prevails over another. <b>NOTICE - an
-   *     authority coming AFTER another one prevails over this "previous" authority.</b> This
-   *     authority ordering definition is essential to resolve possible ambiguity when, for a given
-   *     user, a context value has been defined in more than one authority applicable to that user.
-   *     In such case, it is what has been set for the "prevailing" authority that will be
-   *     effectively retained for that context value for that user.
+   * @return a comparator that indicates which authority/role prevails over another.
    */
   @Bean
   public IAuthorityComparator authorityComparator() {
@@ -293,20 +284,21 @@ public abstract class ASecurityConfig implements ICorsConfig {
      * Applies the specific configuration for the endpoint.
      *
      * @param http the http endpoint to configure.
-     * @see #configure(HttpSecurity)
      * @throws Exception in case of error.
+     * @see #configure(HttpSecurity)
      */
     protected abstract void doConfigure(HttpSecurity http) throws Exception;
   }
+
   /**
-   * Configuration for Version service to allow anyone to access this service
+   * Configuration for Version service to allow anyone to access this service.
    *
    * @author ActiveViam
    * @see HttpStatusEntryPoint
    */
   public abstract static class AVersionSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-    /** The autowired Spring context */
+    /** The autowired Spring context. */
     @Autowired protected ApplicationContext context;
 
     @Override

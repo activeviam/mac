@@ -9,16 +9,15 @@ package com.activeviam.mac.statistic.memory;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
+import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_TYPE;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
-import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -51,6 +50,7 @@ import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.util.impl.ThrowingLambda;
 import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
@@ -73,6 +73,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -183,7 +184,7 @@ public abstract class ATestMemoryStatistic {
                     .withMapping("productId", "id")
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -321,7 +322,7 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
 
     final Datastore datastore =
@@ -365,7 +366,7 @@ public abstract class ATestMemoryStatistic {
                     .withModuloPartitioning(4, "id")
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -398,7 +399,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
 
     final Datastore datastore =
@@ -627,11 +628,6 @@ public abstract class ATestMemoryStatistic {
             () -> {
               return StartBuilding.datastore().setSchemaDescription(desc).build();
             });
-    // Make sure the analysis hierarchies created by coPPer are not empty by adding a "default"
-    // record to the joined stores
-    // This is necessary to ensure a dimensions have a least a member, which is required for the MDX
-    // engine to work properly
-    d.edit(tm -> tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A"));
 
     return d;
   }
@@ -661,7 +657,7 @@ public abstract class ATestMemoryStatistic {
                     .withChunkSize(16) // Make it easy to fill a complete block
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -689,7 +685,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
     final IDatastore datastore =
@@ -760,7 +756,11 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplication() throws AgentException {
+  /**
+   * Builds a minimal application with one field <i>id</i> in the store <i>A</i>, loaded into a cube
+   * <i>Cube</i> with a single hierarchy <i>id</i>.
+   */
+  static Pair<IDatastore, IActivePivotManager> createMicroApplication() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -773,7 +773,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -789,24 +789,28 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
     IDatastore datastore =
-        (Datastore)
-            resources.create(
-                () ->
-                    new UnitTestDatastoreBuilder()
-                        .setSchemaDescription(schemaDescription)
-                        .addSchemaDescriptionPostProcessors(
-                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                        .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                        .build());
-    return new Pair<IDatastore, IActivePivotManager>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
   }
 
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReference()
@@ -838,7 +842,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -853,7 +857,7 @@ public abstract class ATestMemoryStatistic {
                     .asDefaultHierarchy()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
     IDatastore datastore =
@@ -887,7 +891,7 @@ public abstract class ATestMemoryStatistic {
                     .withChunkSize(MICROAPP_CHUNK_SIZE)
                     .build())
             .build();
-    final var userManagerDescription =
+    final IActivePivotManagerDescription userManagerDescription =
         StartBuilding.managerDescription()
             .withSchema()
             .withSelection(
@@ -904,7 +908,7 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final var managerDescription =
+    final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
     IDatastore datastore =
         (Datastore)
@@ -960,9 +964,10 @@ public abstract class ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(
+                        CHUNK__CLOSEST_PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
                     BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)))
-            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__PARENT_TYPE, CHUNK__PARENT_ID)
+            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
             .onCurrentThread()
             .run();
     if (cursor.hasNext()) {
@@ -1067,13 +1072,12 @@ public abstract class ATestMemoryStatistic {
         });
   }
 
-  static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) throws IOException {
+  static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {
     return loadMemoryStatFromFolder(folderPath, __ -> true);
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath)
-      throws IOException {
+  static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) {
     final IMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
@@ -1083,8 +1087,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath)
-      throws IOException {
+  static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) {
     final IMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
@@ -1094,9 +1097,15 @@ public abstract class ATestMemoryStatistic {
   }
 
   static IMemoryStatistic loadMemoryStatFromFolder(
-      final Path folderPath, final Predicate<Path> filter) throws IOException {
+      final Path folderPath, final Predicate<Path> filter) {
+    final Stream<Path> fileList;
+    try {
+      fileList = Files.list(folderPath);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Cannot list files under " + folderPath, e);
+    }
     final List<IMemoryStatistic> childStats =
-        Files.list(folderPath)
+        fileList
             .filter(filter)
             .map(
                 file -> {

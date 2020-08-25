@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
@@ -91,7 +92,7 @@ public class SourceConfig {
   }
 
   /**
-   * Resolve the directory path
+   * Resolve the directory path.
    *
    * @param name the path name
    * @return the corresponding path object

@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.security.impl;
 
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
@@ -17,7 +18,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 /**
- * To expose the JWT REST service
+ * To expose the JWT REST service.
  *
  * @author ActiveViam
  */
@@ -25,7 +26,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 @Order(2) // Must be done before ContentServerSecurityConfigurer (because they match common URLs)
 public class JwtSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
-  /** The autowired Spring @link {@link ApplicationContext} */
+  /** The autowired Spring @link {@link ApplicationContext}. */
   @Autowired protected ApplicationContext context;
 
   @Override

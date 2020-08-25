@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -15,17 +16,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Statistics tree printer utility class
+ * Statistics tree printer utility class.
  *
  * @author ActiveViam
  */
 public class StatisticTreePrinter {
 
-  /** One tree per root */
+  /** One tree per root. */
   protected List<Tree> trees = new ArrayList<>();
 
   /**
-   * Adds the statistic and all its childen to the tree
+   * Adds the statistic and all its childen to the tree.
    *
    * @param statistic statistic to add
    */
@@ -70,7 +71,7 @@ public class StatisticTreePrinter {
   }
 
   /**
-   * returns the memory statistic Trees as a string
+   * returns the memory statistic Trees as a string.
    *
    * @return the string displaying the tree
    */
@@ -86,14 +87,14 @@ public class StatisticTreePrinter {
     return sb.toString();
   }
 
-  /** Prints the tree of {@link IMemoryStatistic} */
+  /** Prints the tree of {@link IMemoryStatistic}. */
   public void print() {
     System.out.println(getTreesAsString());
   }
 
   /**
    * Prints the descending tree of {@link IMemoryStatistic memory statistics} from the n {@link
-   * Node} and downwards
+   * Node} and downwards.
    *
    * @param sb {@link StringBuilder} on which the append the data
    * @param depth current depth
@@ -113,7 +114,7 @@ public class StatisticTreePrinter {
   }
 
   /**
-   * Returns the parent {@link IMemoryStatistic} of the input statistic
+   * Returns the parent {@link IMemoryStatistic} of the input statistic.
    *
    * @param child statistic
    * @return tree List of the parents of the child statistic
@@ -130,7 +131,7 @@ public class StatisticTreePrinter {
   }
 
   /**
-   * Returns the memory statistic Trees of the children of the input statistic
+   * Returns the memory statistic Trees of the children of the input statistic.
    *
    * @param child memory statistic which children are to be displayed
    * @return the string displaying the tree
@@ -142,18 +143,18 @@ public class StatisticTreePrinter {
   }
 
   /**
-   * Checks is two {@link IMemoryStatistic} are equal
+   * Checks is two {@link IMemoryStatistic} are equal.
    *
    * @param s1 first statistic
    * @param s2 second statistic
-   * @return {@link <code>true</code> if the statistics are equal <code>false</code> elsewhere}
+   * @return @code{true} if the statistics are equal @code{false} elsewhere.
    */
   protected static boolean areEquals(IMemoryStatistic s1, IMemoryStatistic s2) {
     return getId(s1) == getId(s2);
   }
 
   /**
-   * Returns the debug ID of a statistic
+   * Returns the debug ID of a statistic.
    *
    * @param statistic memory statistic
    * @return the {@link DatastoreConstants#CHUNK__DEBUG_TREE} id of the statistic

@@ -4,13 +4,13 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
-import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IActivePivotConfig;
@@ -82,7 +82,6 @@ import org.springframework.core.env.Environment;
       UserConfig.class,
       SourceConfig.class,
       ActiveUIResourceServerConfig.class,
-      ContentServerResourceServerConfig.class
     })
 public class MacServerConfig {
 
@@ -136,33 +135,7 @@ public class MacServerConfig {
   }
 
   /**
-   * Creates default rows for the stores joined with Copper.
-   *
-   * <p>This avoids empty dimensions, preventing any query on the cube.
-   */
-  private void createDefaultRowsForJoinStores() {
-    final IDatastore datastore = datastoreConfig.datastore();
-    datastore.edit(
-        tm -> {
-          tm.add(DatastoreConstants.CHUNK_TO_REF_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_INDEX_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_DICO_STORE, "N/A", "N/A", -1L, "N/A");
-          tm.add(
-              DatastoreConstants.CHUNK_TO_LEVEL_STORE,
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A",
-              "N/A");
-          tm.add(DatastoreConstants.CHUNK_TO_FIELD_STORE, "N/A", "N/A", "N/A", "N/A", "N/A");
-        });
-  }
-
-  /**
-   * Enables JMX Monitoring for the Source
+   * Enables JMX Monitoring for the Source.
    *
    * @return the {@link JMXEnabler} attached to the source
    */
@@ -172,7 +145,7 @@ public class MacServerConfig {
   }
 
   /**
-   * Enable JMX Monitoring for the Datastore
+   * Enable JMX Monitoring for the Datastore.
    *
    * @return the {@link JMXEnabler} attached to the datastore
    */
@@ -182,7 +155,7 @@ public class MacServerConfig {
   }
 
   /**
-   * Enable JMX Monitoring for ActivePivot Components
+   * Enable JMX Monitoring for ActivePivot Components.
    *
    * @return the {@link JMXEnabler} attached to the activePivotManager
    */
@@ -194,7 +167,7 @@ public class MacServerConfig {
   }
 
   /**
-   * [Bean] JMX Bean to export bookmarks
+   * [Bean] JMX Bean to export bookmarks.
    *
    * @return the MBean
    */
@@ -204,7 +177,7 @@ public class MacServerConfig {
   }
 
   /**
-   * Enable JMX Monitoring for the ContentService
+   * Enable JMX Monitoring for the ContentService.
    *
    * @return the {@link JMXEnabler} attached to the Content Service
    */
@@ -217,7 +190,7 @@ public class MacServerConfig {
   }
 
   /**
-   * Enable Memory JMX Monitoring
+   * Enable Memory JMX Monitoring.
    *
    * @return the {@link JMXEnabler} attached to the memory analysis service.
    */

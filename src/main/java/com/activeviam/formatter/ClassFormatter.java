@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class ClassFormatter implements IFormatter {
 
   private static final long serialVersionUID = 1L;
-  /** Plugin key */
+  /** Plugin key. */
   public static final String KEY = "ClassFormatter";
 
   @Override
@@ -43,7 +43,9 @@ public class ClassFormatter implements IFormatter {
           .map(className -> className.replaceAll("^.*\\.", ""))
           .collect(Collectors.joining(","));
     } else {
-      if (object == null) return null;
+      if (object == null) {
+        return null;
+      }
       return object.toString();
     }
   }

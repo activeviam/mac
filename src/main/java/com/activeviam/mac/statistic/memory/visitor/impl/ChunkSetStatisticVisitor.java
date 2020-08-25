@@ -4,9 +4,11 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Workaround;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -26,10 +28,11 @@ import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collections;
 
 /**
  * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
- * class for {@link ChunkSetStatistic}
+ * class for {@link ChunkSetStatistic}.
  *
  * @author ActiveViam
  */
@@ -38,13 +41,13 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The record format of the store that stores the chunks. */
   protected final IRecordFormat chunkRecordFormat;
 
-  /** The export date, found on the first statistics we read */
+  /** The export date, found on the first statistics we read. */
   protected final Instant current;
 
   private final ParentType rootComponent;
   private final ParentType directParentType;
   private final String directParentId;
-  /** The partition id of the visited statistic */
+  /** The partition id of the visited statistic. */
   protected final int partitionId;
 
   /** ID of the current {@link ChunkSet}. */
@@ -55,7 +58,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   private Integer nonWrittenRows;
 
   /**
-   * Constructor
+   * Constructor.
    *
    * @param storageMetadata metadata of the application datastore
    * @param transaction ongoing transaction
@@ -143,22 +146,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     return null;
   }
 
-  private void visitVectorBlock(final IMemoryStatistic memoryStatistic) {
-    final VectorStatisticVisitor subVisitor =
-        new VectorStatisticVisitor(
-            this.storageMetadata,
-            this.transaction,
-            this.dumpName,
-            this.current,
-            this.store,
-            this.partitionId);
-    subVisitor.process(memoryStatistic);
-  }
-
   @Override
   public Void visit(final ChunkSetStatistic statistic) {
-    recordFieldForStructure(this.directParentType, this.directParentId);
-
     this.chunkSize = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
     this.freeRows = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
     this.nonWrittenRows =
@@ -182,23 +171,37 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     if (VectorStatisticVisitor.isVector(chunkStatistic)) {
       visitVectorBlock(chunkStatistic);
     } else {
-      recordIndexForStructure(this.directParentType, this.directParentId);
-      recordRefForStructure(this.directParentType, this.directParentId);
-
       final String previousField = this.field;
       if (chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET)) {
         final IStatisticAttribute fieldAttribute =
             chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         this.field = fieldAttribute.asText();
-
-        recordFieldForStructure(this.directParentType, this.directParentId);
       }
+
+      final ChunkOwner owner = new StoreOwner(this.store);
+
+      final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+      final Object[] ownerTuple =
+          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName);
+      FeedVisitor
+          .add(chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+
+      final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+      final Object[] componentTuple = FeedVisitor.buildComponentTupleFrom(componentFormat,
+          chunkStatistic,
+          this.rootComponent,
+          this.dumpName);
+      FeedVisitor
+          .add(chunkStatistic,
+              transaction,
+              DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+              componentTuple);
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+          tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
@@ -206,11 +209,31 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
+          tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+      if (this.referenceId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+      }
+      if (this.indexId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+      }
+      if (this.dictionaryId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+      }
+      if (this.field != null) {
+        FeedVisitor.setTupleElement(
+            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+      }
+      if (this.store != null) {
+        FeedVisitor.setTupleElement(
+            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
+      }
 
       // Complete chunk info regarding size and usage if not defined by a parent
       if (this.chunkSize != null) {
@@ -230,7 +253,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }
-
+      // Set the chunk data to be added to the Chunk store
       FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
       visitChildren(chunkStatistic);
@@ -238,6 +261,36 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       this.field = previousField;
     }
     return null;
+  }
+
+  // region NOT RELEVANT
+  @Override
+  public Void visit(ReferenceStatistic referenceStatistic) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Void visit(IndexStatistic indexStatistic) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Void visit(DictionaryStatistic dictionaryStatistic) {
+    throw new UnsupportedOperationException();
+  }
+
+  // endregion
+
+  private void visitVectorBlock(final IMemoryStatistic memoryStatistic) {
+    final VectorStatisticVisitor subVisitor =
+        new VectorStatisticVisitor(
+            this.storageMetadata,
+            this.transaction,
+            this.dumpName,
+            this.current,
+            this.store,
+            this.partitionId);
+    subVisitor.process(memoryStatistic);
   }
 
   @Workaround(
@@ -258,22 +311,5 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     } else {
       throw new RuntimeException("unexpected statistic " + statistic);
     }
-  }
-
-  // NOT RELEVANT
-
-  @Override
-  public Void visit(ReferenceStatistic referenceStatistic) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Void visit(IndexStatistic indexStatistic) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Void visit(DictionaryStatistic dictionaryStatistic) {
-    throw new UnsupportedOperationException();
   }
 }

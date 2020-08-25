@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.security.impl;
 
 import java.util.ArrayList;
@@ -25,19 +26,21 @@ public class InMemoryUserDetailsManagerBuilder
     extends UserDetailsManagerConfigurer<
         AuthenticationManagerBuilder, InMemoryUserDetailsManagerBuilder> {
 
-  /** Creates a new instance */
+  /** Creates a new instance. */
   public InMemoryUserDetailsManagerBuilder() {
     super(new InMemoryUserDetailsManager(new ArrayList<UserDetails>()));
   }
 
   @Override
   public void configure(AuthenticationManagerBuilder builder) throws Exception {
-    if (null != builder) throw new IllegalArgumentException();
+    if (null != builder) {
+      throw new IllegalArgumentException();
+    }
     initUserDetailsService();
   }
 
   /**
-   * Builds the In-memory {@link UserDetailsManager} and returns it
+   * Builds the In-memory {@link UserDetailsManager} and returns it.
    *
    * @return the built object
    */

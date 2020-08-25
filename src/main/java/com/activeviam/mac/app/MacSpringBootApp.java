@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
@@ -22,7 +23,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 /**
- * SpringBoot starter class for ActivePivot
+ * SpringBoot starter class for ActivePivot.
  *
  * <p>We don't use {@link SpringBootApplication} here because it will load too many beans including
  * those we don't need and causing bean conflict
@@ -35,13 +36,12 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Import({MacServerConfig.class})
 public class MacSpringBootApp {
 
-  /* Before anything else we statically initialize the Quartet FS Registry. */
-  {
+  /* Before anything else we statically initialize the Quartet FS Registry. */ {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
   /**
-   * Starts the Memory Analysis Cube application
+   * Starts the Memory Analysis Cube application.
    *
    * @param args additional CLI arguments
    */
@@ -52,8 +52,8 @@ public class MacSpringBootApp {
   /**
    * Provides a customized {@link DispatcherServletRegistrationBean} with a specific servlet path.
    *
-   * <p>This bean is required to make AP work in SpringBoot; see : {@linkplain
-   * https://github.com/spring-projects/spring-boot/issues/15373}
+   * <p>This bean is required to make AP work in SpringBoot; see :
+   * https://github.com/spring-projects/spring-boot/issues/15373
    *
    * @param dispatcherServlet the dispatcher servlet
    * @param multipartConfig the dispatcher servlet properties

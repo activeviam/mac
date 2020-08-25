@@ -4,14 +4,16 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
-import com.activeviam.copper.api.CopperLevelCondition;
+import com.activeviam.copper.api.CopperHierarchy;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
+import com.activeviam.copper.store.Mapping.JoinType;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -20,30 +22,33 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.qfs.agg.impl.CountFunction;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
+import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
+import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
+import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * Manager Description Config that defines the manager description which contains the cube
- * dimensions and every CopperMeasure
+ * dimensions and every CopperMeasure.
  *
  * @author ActiveViam
  */
@@ -51,95 +56,124 @@ import org.springframework.context.annotation.Configuration;
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
   /**
-   * The main monitoring cube
+   * The main monitoring cube.
    *
    * <p>This Cube is based from Chunk facts
    */
   public static final String MONITORING_CUBE = "MemoryCube";
-  /** The index-related cube */
+  /** The index-related cube. */
   public static final String INDEX_CUBE = "Indexes";
-  /** The dictionary related cube */
+  /** The dictionary related cube. */
   public static final String DICTIONARY_CUBE = "Dictionaries";
-  /** The provider related cube */
+  /** The provider related cube. */
   public static final String PROVIDER_CUBE = "Providers";
-  /** The references related Cube */
+  /** The references related Cube. */
   public static final String REFERENCE_CUBE = "References";
 
-  /** Measure of the summed off-heap memory footprint */
+  /** Measure of the summed off-heap memory footprint. */
   public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
   /**
-   * Measure of the summed on-heap memory footprint
+   * Measure of the summed on-heap memory footprint.
    *
    * <p>This measure only sums the on-heap memory held by chunk, and therefore do not contains the
    * entire on-heap footprint of the entire ActivePivot Application
    */
   public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
 
-  /** Java class of the chunk */
+  /** Java class of the chunk. */
   public static final String CHUNK_CLASS_LEVEL = "Class";
-  /** Type of the structure owning the chunk */
+  /** Type of the structure owning the chunk. */
   public static final String CHUNK_TYPE_LEVEL = "Type";
 
-  /** Name of the chunk dump level */
+  /** Name of the chunk dump level. */
   public static final String CHUNK_DUMP_NAME_LEVEL = "Import info";
 
-  /** Type of the structure owning the chunk */
+  /** Type of the structure owning the chunk. */
   public static final String CHUNK_PARENT_ID_LEVEL = "ParentID";
 
-  /** Measure counting the number of off-Heap Chunks */
-  public static final String DIRECT_CHUNKS_COUNT = "DirectChunks.COUNT";
-  /** Measure counting the number of on-Heap Chunks */
-  public static final String HEAP_CHUNKS_COUNT = "HeapChunks.COUNT";
+  /** Level for the Ids of the dictionary. */
+  public static final String CHUNK_DICO_ID_LEVEL = "DicoID";
+  /** Level for the Ids of the references. */
+  public static final String CHUNK_REF_ID_LEVEL = "ReferenceID";
+  /** Level for the Ids of the indexes. */
+  public static final String CHUNK_INDEX_ID_LEVEL = "IndexID";
 
-  /** Name of the Chunk Hierarchy */
-  public static final String CHUNK_HIERARCHY = "Chunks";
+  /** Name of the store hierarchy. */
+  public static final String STORE_HIERARCHY = "Stores";
+  /** Name of the store level. */
+  public static final String STORE_STORE_LEVEL = "Store";
+  /** Name of the field level. */
+  public static final String STORE_FIELD_LEVEL = "Field";
 
-  /** Name of the DictionaryID AH */
+  /** Name of the Chunk Hierarchy. */
+  public static final String CHUNK_DIMENSION = "Chunks";
+
+  /** Name of the DictionaryID AH. */
   public static final String DICO_ID_HIERARCHY = "Dictionary ID";
 
-  /** Name of the DictionaryID AH */
+  /** Name of the DictionaryID AH. */
   public static final String INDEX_ID_HIERARCHY = "Index ID";
 
-  /** Name of the ReferenceID AH */
+  /** Name of the ReferenceID AH. */
   public static final String REF_ID_HIERARCHY = "Reference ID";
 
-  /** Name of the FieldName AH */
-  public static final String FIELD_NAME_HIERARCHY = "Field name";
+  /** Name of the component dimension. */
+  public static final String COMPONENT_DIMENSION = "Components";
+  /** Name of the component analysis hierarchy. */
+  public static final String COMPONENT_HIERARCHY = "Component";
+  /** Name of the component dimension. */
+  public static final String OWNER_DIMENSION = "Owners";
+  /** Name of the component analysis hierarchy. */
+  public static final String OWNER_HIERARCHY = "Owner";
 
-  /** Name of the StoreName AH */
-  public static final String STORE_NAME_HIERARCHY = "Store name";
-
-  /** Total on-heap memory footprint of the application */
+  /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
-  /** Total on-heap memory committed by the JVM */
+  /** Total on-heap memory committed by the JVM. */
   public static final String COMMITTED_HEAP = "CommittedHeapMemory";
-  /** Total off-heap memory footprint of the application */
+  /** Total off-heap memory footprint of the application. */
   public static final String USED_DIRECT = "UsedDirectMemory";
-  /** Total off-heap memory committed by the JVM */
+  /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
 
-  /**
-   * Name of the folder in which "hidden" copper measures will be hidden
-   *
-   * <p>Measures contained in this folder should never be used
-   */
-  public static final String BLACK_MAGIC_FOLDER = "BlackMagic";
-  /** Name of the hierarchy used to perform join */
-  public static final String BLACK_MAGIC_HIERARCHY = "BlackMagic";
-
-  /** Measure of the size of Chunks (in Bytes) */
+  /** Measure of the size of Chunks (in Bytes). */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
 
-  /** Measure of the the non written rows in Chunks */
+  /** Measure of the the non written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
 
-  /** Measure of the deleted rows in Chunks */
+  /** Measure of the deleted rows in Chunks. */
   public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
 
-  /** Formatter for Numbers */
+  /** Formatter for Numbers. */
   public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
-  /** Formatter for Percentages */
+  /** Formatter for Percentages. */
   public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+
+  /** The name of the hierarchy of indexed fields. */
+  public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+  /** The name of the hierarchy of reference names. */
+  public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
+  /** The name of the hierarchy of provider ids. */
+  public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
+  /** The name of the hierarchy of provider partitions. */
+  public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
+  /** The name of the hierarchy of provider types. */
+  public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+  /** The name of the hierarchy of pivots. */
+  public static final String PIVOT_HIERARCHY = "Pivot";
+  /** The name of the hierarchy of managers. */
+  public static final String MANAGER_HIERARCHY = "Manager";
+  /** The name of the hierarchy of owner components. */
+  public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
+  /** The name of the hierarchy of chunk ids. */
+  public static final String CHUNK_ID_HIERARCHY = "ChunkId";
+  /** The name of the hierarchy of partitions. */
+  public static final String PARTITION_HIERARCHY = "Partition";
+
+  /** The name of the folder for measures related to chunk ownership. */
+  public static final String OWNERSHIP_FOLDER = "Ownership";
+  /** The name of the folder for measures related to memory metrics. */
+  public static final String MEMORY_FOLDER = "Memory";
 
   @Bean
   @Override
@@ -157,7 +191,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   /**
-   * Prefixes a field by another string
+   * Prefixes a field by another string.
    *
    * @param prefix string to prepend
    * @param field field to be prefixed
@@ -173,7 +207,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withAllReachableFields(
             allReachableFields -> {
               allReachableFields.remove(DatastoreConstants.CHUNK__CLASS);
-
               final Map<String, String> result =
                   ISelectionDescriptionBuilder.FieldsCollisionHandler.CLOSEST.handle(
                       allReachableFields);
@@ -192,6 +225,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMeasures(this::measures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
+        .withSharedMdxContext()
+        .withCalculatedMembers(calculatedMembers())
+        .end()
         .build();
   }
 
@@ -199,17 +235,28 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
       final ICanStartBuildingDimensions builder) {
     return builder
         // FROM ChunkStore
-        .withDimension(CHUNK_HIERARCHY)
-        .withHierarchy("ChunkId")
+        .withDimension(CHUNK_DIMENSION)
+        .withHierarchy(CHUNK_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK_ID)
         .withHierarchy(CHUNK_TYPE_LEVEL)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_TYPE)
+        .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
         .withHierarchy(CHUNK_PARENT_ID_LEVEL)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
         .withProperty("description", "What are chunks for")
+        .withSingleLevelHierarchy(CHUNK_DICO_ID_LEVEL)
+        .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
+        .withSingleLevelHierarchy(CHUNK_INDEX_ID_LEVEL)
+        .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
+        .withSingleLevelHierarchy(CHUNK_REF_ID_LEVEL)
+        .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
+        .withHierarchy(STORE_HIERARCHY)
+        .withLevel(STORE_STORE_LEVEL)
+        .withPropertyName(DatastoreConstants.CHUNK__PARENT_STORE_NAME)
+        .withLevel(STORE_FIELD_LEVEL)
+        .withPropertyName(DatastoreConstants.CHUNK__PARENT_FIELD_NAME)
         .withHierarchy(CHUNK_CLASS_LEVEL)
         .withLevelOfSameName()
         .withPropertyName(
@@ -217,13 +264,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "Class of the chunks")
         .withDimension("Chunk Owners")
-        .withHierarchy("Owner")
+        .withHierarchy(OWNER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__OWNER)
-        .withLevel("Partition")
+        .withLevel(PARTITION_HIERARCHY)
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
-        .withHierarchy("Owner component")
+        .withHierarchy(OWNER_COMPONENT_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
@@ -239,19 +286,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withComparator(ReverseOrderComparator.type)
         .withProperty("description", "Date at which statistics were retrieved")
         .withDimension("Aggregate Provider")
-        .withHierarchy("Manager")
+        .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
-        .withHierarchy("Pivot")
+        .withHierarchy(PIVOT_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
-        .withHierarchy("ProviderType")
+        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .withHierarchy("ProviderPartition")
+        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-        .withHierarchy("ProviderId")
+        .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID);
   }
@@ -265,6 +312,61 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
   }
 
+  private ICalculatedMemberDescription[] calculatedMembers() {
+    return new ICalculatedMemberDescription[] {
+        createMdxMeasureDescription("Owner.COUNT",
+            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
+            OWNERSHIP_FOLDER),
+        createMdxMeasureDescription("Component.COUNT",
+            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
+            OWNERSHIP_FOLDER)
+    };
+  }
+
+  private ICalculatedMemberDescription createMdxMeasureDescription(
+      final String measureName,
+      final String mdxExpression) {
+    return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
+  }
+
+  private ICalculatedMemberDescription createMdxMeasureDescription(
+      final String measureName,
+      final String mdxExpression,
+      final String folder) {
+    final ICalculatedMemberDescription description = createMdxMeasureDescription(measureName, mdxExpression);
+    description.setFolder(folder);
+    return description;
+  }
+
+  private String ownershipCountMdxExpression(final String dimensionName, final String hierarchyName) {
+    return ownershipCountMdxExpression(MdxNamingUtil
+        .hierarchyUniqueName(dimensionName, hierarchyName));
+  }
+
+  private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+    return "DistinctCount("
+        + "  Generate("
+        + "    NonEmpty("
+        + "      Crossjoin("
+        + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "      )"
+        + "    ),"
+        + "    Generate("
+        + "      NonEmpty("
+        + "        Crossjoin("
+        + "          [Chunks].[ChunkId].CurrentMember,"
+        + "          " + hierarchyUniqueName + ".[ALL].[AllMember].Children"
+        + "        )"
+        + "      ),"
+        + "      {"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "      }"
+        + "    )"
+        + "  )"
+        + ")";
+  }
+
   private void copperCalculations(final ICopperContext context) {
     memoryMeasure(context);
     joinHierarchies(context);
@@ -276,18 +378,22 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_HEAP)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(COMMITTED_HEAP)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_DIRECT)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(MAX_DIRECT)
         .withFormatter(ByteFormatter.KEY)
+        .withinFolder(MEMORY_FOLDER)
         .publish(context);
   }
 
@@ -296,81 +402,72 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // --------------------
     // Define Copper Joins
 
-    // 1- Chunk to Field
-    CopperStore chunkToFieldStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_FIELD_STORE)
-            .joinToCube()
-            .withMapping(DatastoreConstants.CHUNK_TO_FIELD__PARENT_ID, CHUNK_PARENT_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK_TO_FIELD__PARENT_TYPE, CHUNK_TYPE_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-    // rename the fieldName and StoreName Analysis Hierarchy
-    Copper.newSingleLevelHierarchy(STORE_NAME_HIERARCHY)
-        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__STORE))
-        .publish(context);
-
-    Copper.newSingleLevelHierarchy(FIELD_NAME_HIERARCHY)
-        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__FIELD))
-        .publish(context);
-
-    // 2- Chunk to Dicos
+    // --------------------
+    // 1- Chunk to Dicos
     CopperStore chunkToDicoStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_DICO_STORE)
+        Copper.store(DatastoreConstants.DICTIONARY_STORE)
             .joinToCube()
-            .withMapping(DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, CHUNK_PARENT_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, CHUNK_TYPE_LEVEL)
+            .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    // rename the dictionaryId Analysis Hierarchy
-    Copper.newSingleLevelHierarchy(DICO_ID_HIERARCHY)
-        .from(chunkToDicoStore.field(DatastoreConstants.CHUNK_TO_DICO__DICO_ID))
-        .publish(context);
-
-    Copper.sum(
-            chunkToDicoStore.field(
-                DatastoreConstants.REF_DICTIONARY + "/" + DatastoreConstants.DICTIONARY_SIZE))
+    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .as("Dictionary Size")
         .withFormatter(NUMBER_FORMATTER)
         .publish(context);
 
-    // 3- Chunk to references
+    // --------------------
+    // 2- Chunk to references
     CopperStore chunkToReferenceStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_REF_STORE)
+        Copper.store(DatastoreConstants.REFERENCE_STORE)
             .joinToCube()
-            .withMapping(DatastoreConstants.CHUNK_TO_REF__PARENT_ID, CHUNK_PARENT_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK_TO_REF__PARENT_TYPE, CHUNK_TYPE_LEVEL)
+            .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-    // rename the referenceID Analysis Hierarchy
-    Copper.newSingleLevelHierarchy(REF_ID_HIERARCHY)
-        .from(chunkToReferenceStore.field(DatastoreConstants.CHUNK_TO_REF__REF_ID))
-        .publish(context);
 
     // Reference name
-    Copper.newLookupMeasure(
-            chunkToReferenceStore.field(
-                DatastoreConstants.REF_REFERENCES + "/" + DatastoreConstants.REFERENCE_NAME))
-        .as("Reference Name")
+    Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
+        .from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
         .publish(context);
 
-    // 4- Chunk to indexes
+    // --------------------
+    // 3- Chunk to indexes
     CopperStore chunkToIndexStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_INDEX_STORE)
+        Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
-            .withMapping(DatastoreConstants.CHUNK_TO_INDEX__PARENT_ID, CHUNK_PARENT_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK_TO_INDEX__PARENT_TYPE, CHUNK_TYPE_LEVEL)
+            .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    Copper.newSingleLevelHierarchy("Index fields")
-        .from(
-            chunkToIndexStore.field(
-                DatastoreConstants.REF_INDEX + "/" + DatastoreConstants.INDEX__FIELDS))
+    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
+        .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
-    // rename the index Id Analysis Hierarchy
-    Copper.newSingleLevelHierarchy(INDEX_ID_HIERARCHY)
-        .from(chunkToIndexStore.field(DatastoreConstants.CHUNK_TO_INDEX__INDEX_ID))
-        .publish(context);
+    // --------------------
+    // 4- Chunk to owners
+    CopperStore chunkToOwnerStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+            .joinToCube(JoinType.LEFT)
+            .withDefaultValue(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance())
+            .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    CopperHierarchy ownerHierarchy =
+        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
+            .publish(context);
+
+    // --------------------
+    // 5- Chunk to components
+    CopperStore chunkToComponentStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+            .joinToCube()
+            .withDefaultValue(DatastoreConstants.COMPONENT__COMPONENT, ParentType.NO_COMPONENT)
+            .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    CopperHierarchy componentHierarchy =
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+            .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
+            .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {
@@ -388,7 +485,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     final var chunkSize =
         Copper.sum(DatastoreConstants.CHUNK__SIZE)
             .as(CHUNK_SIZE_SUM)
-            .withFormatter(NUMBER_FORMATTER)
+            .withFormatter(ByteFormatter.KEY)
             .publish(context);
 
     Copper.sum(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
@@ -429,6 +526,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("CommittedChunk")
         .publish(context);
 
+    // Workaround waiting for a grand total
     final CopperMeasure grandTotal = directMemory.grandTotal();
 
     Copper.measure("CommittedRows")

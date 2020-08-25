@@ -4,9 +4,11 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -26,6 +28,7 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -39,7 +42,7 @@ import java.util.logging.Logger;
  */
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
-  /** Class logger */
+  /** Class logger. */
   @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
@@ -53,9 +56,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   /** The record format of the store that stores the chunks. */
   protected final IRecordFormat chunkRecordFormat;
 
-  /** The export date, found on the first statistics we read */
+  /** The export date, found on the first statistics we read. */
   protected Instant current = null;
-  /** The epoch id we are currently reading statistics for */
+  /** The epoch id we are currently reading statistics for. */
   protected Long epochId = null;
   /** Branch owning {@link #epochId}. */
   protected String branch = null;
@@ -66,8 +69,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   protected ParentType directParentType;
   /** Id of the direct parent owning the chunk. */
   protected String directParentId;
-
-  /** The partition id of the visited statistic */
+  /** The partition id of the visited statistic. */
   protected Integer partitionId = null;
 
   /** Type of the currently visited index. */
@@ -96,7 +98,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Starts navigating the tree of chunk statistics from the input entry point
+   * Starts navigating the tree of chunk statistics from the input entry point.
    *
    * @param stat Entry point for the traversal of the memory statistics tree
    */
@@ -130,9 +132,24 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
 
-    recordFieldForStructure(this.directParentType, this.directParentId);
-    recordIndexForStructure(this.directParentType, this.directParentId);
-    recordRefForStructure(this.directParentType, this.directParentId);
+    final ChunkOwner owner = new StoreOwner(this.store);
+
+    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+    final Object[] ownerTuple =
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName);
+    FeedVisitor
+        .add(chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+
+    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
+    final Object[] componentTuple =
+        FeedVisitor.buildComponentTupleFrom(componentFormat,
+            chunkStatistic,
+            this.rootComponent,
+            this.dumpName);
+    FeedVisitor.add(chunkStatistic,
+        transaction,
+        DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
+        componentTuple);
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
@@ -146,12 +163,34 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_TYPE, this.directParentType);
+        tuple,
+        chunkRecordFormat,
+        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
+        this.directParentType);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
-
+    if (this.referenceId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+    }
+    if (this.indexId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+    }
+    if (this.dictionaryId != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+    }
+    if (this.field != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+    }
+    if (this.store != null) {
+      FeedVisitor.setTupleElement(
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
+    }
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, new StoreOwner(this.store));
+        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
@@ -160,7 +199,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(chunkStatistic);
     }
-
+    // Set the chunk data to be added to the Chunk store
     FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
 
     visitChildren(chunkStatistic);
@@ -299,23 +338,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final DictionaryStatistic stat) {
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final IRecordFormat joinStoreFormat =
-        FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_DICO_STORE);
 
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
-    if (directParentId != null && directParentType != null) {
-      FeedVisitor.add(
-          stat,
-          transaction,
-          DatastoreConstants.CHUNK_TO_DICO_STORE,
-          FeedVisitor.buildDicoTupleForStructure(
-              this.dumpName,
-              this.directParentType,
-              this.directParentId,
-              this.dictionaryId,
-              joinStoreFormat));
-    }
+
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -330,9 +356,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
-    recordFieldForStructure(this.directParentType, this.directParentId);
-    recordIndexForStructure(this.directParentType, this.directParentId);
-    recordRefForStructure(this.directParentType, this.directParentId);
 
     visitChildren(stat);
     this.directParentType = previousParentType;
@@ -345,7 +368,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Processes the statistic of a {@link DictionaryManager}
+   * Processes the statistic of a {@link DictionaryManager}.
    *
    * @param stat statistic to be processed
    */
@@ -356,7 +379,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Processes the statistic of a {@link IStore}
+   * Processes the statistic of a {@link IStore}.
    *
    * @param stat statistic to be processed
    */
@@ -374,7 +397,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Processes the statistic of a store partition
+   * Processes the statistic of a store partition.
    *
    * @param stat statistic to be processed
    */

@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
@@ -74,7 +75,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   }
 
   /**
-   * The content service is a bean which can be used by ActivePivot server to store:
+   * The content service is a bean which can be used by ActivePivot server to store.
    *
    * <ul>
    *   <li>calculated members and share them between users

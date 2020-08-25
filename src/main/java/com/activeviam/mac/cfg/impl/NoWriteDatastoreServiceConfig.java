@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.qfs.desc.IStorePermission;
@@ -19,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
 
-  /** Constructor */
+  /** Constructor. */
   public NoWriteDatastoreServiceConfig() {
     super(Collections.emptyMap(), Collections.emptyMap(), storesSecurityMap, DEFAULT_QUERY_TIMEOUT);
   }
@@ -31,7 +32,6 @@ public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
   protected static final Map<String, IStoreSecurity> storesSecurityMap =
       new HashMap<String, IStoreSecurity>() {
 
-        /** For serialization */
         private static final long serialVersionUID = 5_08_00L;
 
         @Override

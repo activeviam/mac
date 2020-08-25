@@ -4,12 +4,14 @@
  * property of ActiveViam. Any unauthorized use
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
@@ -31,10 +33,14 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-/** @author ActiveViam */
+/**
+ * Visitor for chunks.
+ *
+ * @author ActiveViam
+ */
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
-  /** Class logger */
+  /** Class logger. */
   private static final Logger logger = Logger.getLogger(Loggers.LOADING);
 
   private final IDatastoreSchemaMetadata storageMetadata;
@@ -42,7 +48,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   private final String dumpName;
 
   /**
-   * Contructor
+   * Contructor.
    *
    * @param storageMetadata metadata of the Datastore schema
    * @param tm ongoing transaction
@@ -58,7 +64,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   /**
-   * Adds a tuple to the current transaction
+   * Adds a tuple to the current transaction.
    *
    * @param statistic statistic
    * @param transaction ongoing transaction
@@ -87,6 +93,30 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, 0);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, 0);
 
+    return tuple;
+  }
+
+  static Object[] buildOwnerTupleFrom(
+      final IRecordFormat format,
+      final ChunkStatistic stat,
+      final ChunkOwner owner,
+      final String dumpName) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
+    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    return tuple;
+  }
+
+  static Object[] buildComponentTupleFrom(
+      final IRecordFormat format,
+      final ChunkStatistic stat,
+      final ParentType componentType,
+      final String dumpName) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__CHUNK_ID)] = stat.getChunkId();
+    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__COMPONENT)] = componentType;
+    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
     return tuple;
   }
 
@@ -217,7 +247,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   /**
-   * Adds a value to a given field of a tuple
+   * Adds a value to a given field of a tuple.
    *
    * @param tuple tuple to be filled
    * @param format {@link IRecordFormat} the tuple must match
@@ -226,14 +256,14 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    */
   protected static void setTupleElement(
       Object[] tuple, IRecordFormat format, String field, final Object value) {
-    if (value == null) {
+    if (value == null && format.isPrimitive(format.getFieldIndex(field))) {
       throw new RuntimeException("Expected a non-null value for field " + field);
     }
     tuple[format.getFieldIndex(field)] = value;
   }
 
   /**
-   * Checks the format of a tuple correspond to the given input
+   * Checks the format of a tuple correspond to the given input.
    *
    * @param tuple tuple to be checked
    * @param format format the tuple must match
@@ -246,33 +276,5 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
             "Unexpected null value for field " + field + " in tuple: " + Arrays.toString(tuple));
       }
     }
-  }
-
-  /**
-   * Adds dictionary parent data to the join store
-   *
-   * @param dumpName name of the dumped chunk
-   * @param type {@code ParentType} of the owner of the dictionary-related chunk
-   * @param id id of the owner of the dictionary-related chun
-   * @param dictionaryId id of the dictionary
-   * @param format format of the dictionary store
-   * @return the built tuple corresponding to the dictionary
-   */
-  protected static Object[] buildDicoTupleForStructure(
-      final String dumpName,
-      final ParentType type,
-      final String id,
-      final Long dictionaryId,
-      final IRecordFormat format) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    if (dictionaryId != null) {
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, dumpName);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK_TO_DICO__DICO_ID, dictionaryId);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_TYPE, type);
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK_TO_DICO__PARENT_ID, id);
-    }
-    return tuple;
   }
 }

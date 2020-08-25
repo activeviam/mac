@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.impl;
 
 import com.qfs.server.cfg.impl.ASpringResourceServerConfig;
@@ -14,17 +15,17 @@ import java.util.stream.Stream;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Spring configuration for ActiveUI web application
+ * Spring configuration for ActiveUI web application.
  *
  * @author ActiveViam
  */
 @Configuration
 public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
 
-  /** The namespace of the ActiveUI web application */
+  /** The namespace of the ActiveUI web application. */
   public static final String NAMESPACE = "ui";
 
-  /** Constructor */
+  /** Constructor. */
   public ActiveUIResourceServerConfig() {
     super("/" + NAMESPACE);
   }

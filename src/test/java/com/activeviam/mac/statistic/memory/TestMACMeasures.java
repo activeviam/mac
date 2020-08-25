@@ -40,6 +40,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -147,54 +148,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(pivot).isNotNull();
   }
 
-  static Long extractValueFromSingleCellDTO(CellSetDTO data) {
-    Assertions.assertThat(data.getCells().size()).isEqualTo(1);
-
-    String sum_s = data.getCells().iterator().next().toString();
-    String[] cell = sum_s.split(",");
-    Long value = null;
-    for (String attr : cell) {
-      if (attr.contains(" value=")) {
-        value = Long.parseLong(attr.replace(" value=", ""));
-      }
-    }
-    return value;
-  }
-
-  static Double[] extractValuesFromCellSetDTO(CellSetDTO data) {
-    final AtomicInteger cursor = new AtomicInteger();
-    Double[] res = new Double[data.getCells().size()];
-    data.getCells()
-        .forEach(
-            cell -> {
-              int i = cursor.getAndIncrement();
-              String[] cell_s = cell.toString().split(",");
-              for (String attr : cell_s) {
-
-                if (attr.contains(" value=")) {
-                  res[i] = Double.parseDouble(attr.replace(" value=", ""));
-                }
-              }
-            });
-    return res;
-  }
-
-  static Long sumValuesFromCellSetDTO(CellSetDTO data) {
-    final AtomicLong value = new AtomicLong();
-    data.getCells()
-        .forEach(
-            cell -> {
-              String[] cell_s = cell.toString().split(",");
-
-              for (String attr : cell_s) {
-                if (attr.contains(" value=")) {
-                  value.addAndGet(Long.parseLong(attr.replace(" value=", "")));
-                }
-              }
-            });
-    return value.get();
-  }
-
   @Test
   public void testDirectMemorySum() throws QueryException {
 
@@ -207,7 +160,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Long value = extractValueFromSingleCellDTO(res);
+    Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -215,7 +168,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
-    Long nbC = extractValueFromSingleCellDTO(res2);
+    Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -229,7 +182,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
     // Check that the summed value corresponds to the Exported sum
     Assertions.assertThat(statsSumm.offHeapMemory).isEqualTo(value);
   }
@@ -246,7 +199,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Long value = extractValueFromSingleCellDTO(res);
+    Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -254,7 +207,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
-    Long nbC = extractValueFromSingleCellDTO(res2);
+    Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -268,7 +221,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
 
     /*
      * On-heap memory usage by chunks is not consistent with application on-heap
@@ -291,7 +244,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res))
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE);
   }
 
@@ -309,7 +262,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res))
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE - ADDED_DATA_SIZE);
   }
 
@@ -331,7 +284,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + "] ON COLUMNS"
                                 + "  FROM [MemoryCube]");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -360,7 +313,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + " FROM [MemoryCube]"
                                 + " WHERE ([Chunk Owners].[Owner].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -378,10 +331,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + "] ON COLUMNS"
                                 + " FROM [MemoryCube]"
                                 + " WHERE (["
-                                + ManagerDescriptionConfig.CHUNK_HIERARCHY
+                                + ManagerDescriptionConfig.CHUNK_DIMENSION
                                 + "].[ChunkId].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = extractValueFromSingleCellDTO(result);
+                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
@@ -401,7 +354,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(extractValuesFromCellSetDTO(res)).contains((double) REMOVED_DATA_SIZE);
+    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res)).contains((double) REMOVED_DATA_SIZE);
   }
 
   @Test
@@ -433,9 +386,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = extractValuesFromCellSetDTO(res);
-    final Double[] nonWrittenRows = extractValuesFromCellSetDTO(res2);
-    final Double[] nonWrittenRatio = extractValuesFromCellSetDTO(res3);
+    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final Double[] nonWrittenRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final Double[] nonWrittenRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
     for (int i = 0; i < chunkSizes.length; i++) {
       Assertions.assertThat(nonWrittenRatio[i]).isEqualTo(nonWrittenRows[i] / chunkSizes[i]);
@@ -471,26 +424,128 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = extractValuesFromCellSetDTO(res);
-    final Double[] DeletedRows = extractValuesFromCellSetDTO(res2);
-    final Double[] DeletedRatio = extractValuesFromCellSetDTO(res3);
+    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final Double[] DeletedRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final Double[] DeletedRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
     for (int i = 0; i < chunkSizes.length; i++) {
       Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i] / chunkSizes[i]);
     }
   }
 
+  @Test
+  public void testOwnerCountOnChunks() throws QueryException {
+    performCountTest("[Measures].[Owner.COUNT]",
+        "[Owners].[Owner]",
+        "[Chunks].[ChunkId].[ChunkId].Members");
+  }
+
+  @Test
+  public void testOwnerCountOnOwnerAndComponents() throws QueryException {
+    performCountTest("[Measures].[Owner.COUNT]",
+        "[Owners].[Owner]",
+        " Crossjoin("
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Owners].[Owner].[ALL].[AllMember]"
+            + "      )"
+            + "    ),"
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Components].[Component].[ALL].[AllMember]"
+            + "      )"
+            + "    )"
+            + "  )");
+  }
+
+  @Test
+  public void testComponentCountOnChunks() throws QueryException {
+    performCountTest("[Measures].[Component.COUNT]",
+        "[Components].[Component]",
+        "[Chunks].[ChunkId].[ChunkId].Members");
+  }
+
+  @Test
+  public void testComponentCountOnOwnerAndComponents() throws QueryException {
+    performCountTest("[Measures].[Component.COUNT]",
+        "[Components].[Component]",
+        " Crossjoin("
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Owners].[Owner].[ALL].[AllMember]"
+            + "      )"
+            + "    ),"
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Components].[Component].[ALL].[AllMember]"
+            + "      )"
+            + "    )"
+            + "  )");
+  }
+
+  protected void performCountTest(
+      String measureName,
+      String countedHierarchy,
+      String rowMdxExpression) throws QueryException {
+
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+    final MDXQuery countQuery =
+        new MDXQuery("SELECT"
+            + " NON EMPTY " + rowMdxExpression + " ON ROWS,"
+            + "  NON EMPTY " + measureName + " ON COLUMNS"
+            + "  FROM [MemoryCube]");
+    CellSetDTO countResult = pivot.execute(countQuery);
+
+    final MDXQuery verificationQuery =
+        new MDXQuery(
+            "WITH Member [Measures].[Expected.COUNT] AS"
+                + " DistinctCount("
+                + "  Generate("
+                + "    NonEmpty("
+                + "      Crossjoin("
+                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "        " + countedHierarchy + ".CurrentMember"
+                + "      )"
+                + "    ),"
+                + "    Generate("
+                + "      NonEmpty("
+                + "        Crossjoin("
+                + "          [Chunks].[ChunkId].CurrentMember,"
+                + "          " + countedHierarchy + ".[ALL].[AllMember].Children"
+                + "        )"
+                + "      ),"
+                + "      {"
+                + "        " + countedHierarchy + ".CurrentMember"
+                + "      }"
+                + "    )"
+                + "  )"
+                + " ) "
+                + " SELECT"
+                + " NON EMPTY " + rowMdxExpression + " ON ROWS,"
+                + " NON EMPTY [Measures].[Expected.COUNT] ON COLUMNS"
+                + " FROM [MemoryCube]");
+
+    CellSetDTO expectedResult = pivot.execute(verificationQuery);
+
+    final Double[] counts = CellSetUtils.extractValuesFromCellSetDTO(countResult);
+    final Double[] expectedCounts = CellSetUtils.extractValuesFromCellSetDTO(expectedResult);
+
+    Assertions.assertThat(counts).containsExactly(expectedCounts);
+  }
+
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
     final IMemoryStatistic firstChild = export.getChildren().iterator().next();
     return QfsArrays.<String, String>mutableMap(
-            ManagerDescriptionConfig.USED_HEAP,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
-            ManagerDescriptionConfig.COMMITTED_HEAP,
-                MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
-            ManagerDescriptionConfig.USED_DIRECT,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
-            ManagerDescriptionConfig.MAX_DIRECT,
-                MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
+        ManagerDescriptionConfig.USED_HEAP,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
+        ManagerDescriptionConfig.COMMITTED_HEAP,
+        MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+        ManagerDescriptionConfig.USED_DIRECT,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
+        ManagerDescriptionConfig.MAX_DIRECT,
+        MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
         .entrySet().stream()
         .collect(
             toMap(

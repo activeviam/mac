@@ -4,6 +4,7 @@
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
+
 package com.activeviam.mac.cfg.security.impl;
 
 import com.activeviam.mac.cfg.impl.ActiveUIResourceServerConfig;
