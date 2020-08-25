@@ -31,23 +31,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 	private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
 	private StatisticsSummary summary;
-
-	private static final String OVERVIEW_QUERY =
-			"SELECT [Measures].[DirectMemory.SUM] ON COLUMNS,"
-					+ " Crossjoin("
-					+ "   Hierarchize("
-					+ "     DrilldownLevel("
-					+ "       [Owners].[Owner].[ALL].[AllMember]"
-					+ "     )"
-					+ "   ),"
-					+ "   Hierarchize("
-					+ "     DrilldownLevel("
-					+ "       [Components].[Component].[ALL].[AllMember]"
-					+ "     )"
-					+ "   )"
-					+ " ) ON ROWS "
-					+ "FROM [MemoryCube]";
-
+	
 	public static final int ADDED_DATA_SIZE = 20;
 
 	@BeforeClass
@@ -118,7 +102,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 		final MDXQuery totalQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM (" + OVERVIEW_QUERY + ")");
+						+ "FROM [MemoryCube]");
 
 		final CellSetDTO totalResult = pivot.execute(totalQuery);
 
@@ -133,12 +117,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 		final MDXQuery totalQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM (" + OVERVIEW_QUERY + ")");
+						+ "FROM [MemoryCube]");
 
 		final MDXQuery perOwnerQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
 						+ "[Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
-						+ "FROM (" + OVERVIEW_QUERY + ")");
+						+ "FROM [MemoryCube]");
 
 		final MDXQuery excessMemoryQuery = new MDXQuery(
 				"WITH"
@@ -167,13 +151,13 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 		final MDXQuery storeTotalQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM (" + OVERVIEW_QUERY + ") "
+						+ "FROM [MemoryCube] "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
 		final MDXQuery perComponentsStoreQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
 						+ "[Components].[Component].[ALL].[AllMember].Children ON ROWS "
-						+ "FROM (" + OVERVIEW_QUERY + ") "
+						+ "FROM [MemoryCube] "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
 		final MDXQuery excessMemoryQuery = new MDXQuery(
@@ -203,13 +187,13 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
 		final MDXQuery cubeTotalQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM (" + OVERVIEW_QUERY + ") "
+						+ "FROM [MemoryCube] "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
 		final MDXQuery perComponentCubeQuery = new MDXQuery(
 				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS,"
 						+ "[Components].[Component].[ALL].[AllMember].Children ON ROWS "
-						+ "FROM (" + OVERVIEW_QUERY + ") "
+						+ "FROM [MemoryCube] "
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
 		final MDXQuery excessMemoryQuery = new MDXQuery(
