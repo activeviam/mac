@@ -159,7 +159,6 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   protected void visitVectorBlock(final ChunkStatistic statistic) {
     assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
-    // todo vlg refactor
     final ChunkOwner owner = new StoreOwner(this.store);
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);

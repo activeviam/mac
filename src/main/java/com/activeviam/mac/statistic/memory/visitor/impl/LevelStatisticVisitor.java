@@ -96,7 +96,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     recordLevelForStructure(this.directParentType, this.directParentId);
 
-    // todo vlg refactor
     final ChunkOwner owner = new CubeOwner(this.parent.pivot);
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);

@@ -468,26 +468,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
             .publish(context);
-
-
-    // todo vlg: fix aggregation behavior
-//    Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
-//        DistinctCountFunction.PLUGIN_KEY)
-//        .totalOn(ownerHierarchy)
-//        .per(ownerHierarchy.level(OWNER_HIERARCHY))
-//        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
-//        .as("Owner.COUNT")
-//        .withinFolder(OWNERSHIP_FOLDER)
-//        .publish(context);
-
-//    Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
-//        DistinctCountFunction.PLUGIN_KEY)
-//        .totalOn(componentHierarchy)
-//        .per(Copper.level(COMPONENT_HIERARCHY))
-//        .custom(CountFunction.PLUGIN_KEY) // todo vlg: wait for PIVOT-4369?
-//        .as("Component.COUNT")
-//        .withinFolder(OWNERSHIP_FOLDER)
-//        .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {

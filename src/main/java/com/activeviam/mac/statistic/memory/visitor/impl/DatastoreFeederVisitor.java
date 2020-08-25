@@ -132,7 +132,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
 
-    // todo vlg refactor
     final ChunkOwner owner = new StoreOwner(this.store);
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);

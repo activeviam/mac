@@ -160,7 +160,6 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 						.extractValueFromSingleCellDTO(totalResult));
 	}
 
-	// todo vlg: junit5 parameterized tests
 	@Test
 	public void testOverviewStoreTotal() throws QueryException {
 		final IMultiVersionActivePivot pivot =

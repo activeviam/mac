@@ -193,7 +193,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic stat) {
 
-    // todo vlg refactor
     final ChunkOwner owner = new CubeOwner(this.pivot);
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);

@@ -178,7 +178,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.field = fieldAttribute.asText();
       }
 
-      // todo vlg cleanup
       final ChunkOwner owner = new StoreOwner(this.store);
 
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
