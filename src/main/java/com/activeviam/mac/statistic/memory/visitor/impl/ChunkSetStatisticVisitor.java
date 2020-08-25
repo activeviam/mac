@@ -28,7 +28,6 @@ import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
-import java.util.Collections;
 
 /**
  * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
@@ -183,19 +182,15 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
       final Object[] ownerTuple =
           FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName);
-      FeedVisitor
-          .add(chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
+      FeedVisitor.add(
+          chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
 
       final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
-      final Object[] componentTuple = FeedVisitor.buildComponentTupleFrom(componentFormat,
-          chunkStatistic,
-          this.rootComponent,
-          this.dumpName);
-      FeedVisitor
-          .add(chunkStatistic,
-              transaction,
-              DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
-              componentTuple);
+      final Object[] componentTuple =
+          FeedVisitor.buildComponentTupleFrom(
+              componentFormat, chunkStatistic, this.rootComponent, this.dumpName);
+      FeedVisitor.add(
+          chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_COMPONENT_STORE, componentTuple);
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
@@ -208,8 +203,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
+      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
       FeedVisitor.setTupleElement(
