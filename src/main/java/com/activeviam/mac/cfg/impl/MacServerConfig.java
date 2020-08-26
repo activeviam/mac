@@ -9,7 +9,6 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
-import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
@@ -25,7 +24,6 @@ import com.qfs.server.cfg.impl.DatastoreConfig;
 import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
-import com.qfs.store.IDatastore;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import java.nio.file.Paths;
