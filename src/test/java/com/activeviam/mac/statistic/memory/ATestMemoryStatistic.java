@@ -464,7 +464,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) r.nextInt(productCount));
+                        (long) r.nextInt(productCount),
+                        r.nextDouble());
                   });
         });
   }
@@ -541,7 +542,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) SINGLE_VALUE);
+                        (long) SINGLE_VALUE,
+                        (double) SINGLE_VALUE);
                   });
         });
   }
