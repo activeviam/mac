@@ -314,33 +314,34 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private ICalculatedMemberDescription[] calculatedMembers() {
     return new ICalculatedMemberDescription[] {
-        createMdxMeasureDescription("Owner.COUNT",
-            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Component.COUNT",
-            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-            OWNERSHIP_FOLDER)
+      createMdxMeasureDescription(
+          "Owner.COUNT",
+          ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
+          OWNERSHIP_FOLDER),
+      createMdxMeasureDescription(
+          "Component.COUNT",
+          ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
+          OWNERSHIP_FOLDER)
     };
   }
 
   private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName,
-      final String mdxExpression) {
+      final String measureName, final String mdxExpression) {
     return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
   }
 
   private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName,
-      final String mdxExpression,
-      final String folder) {
-    final ICalculatedMemberDescription description = createMdxMeasureDescription(measureName, mdxExpression);
+      final String measureName, final String mdxExpression, final String folder) {
+    final ICalculatedMemberDescription description =
+        createMdxMeasureDescription(measureName, mdxExpression);
     description.setFolder(folder);
     return description;
   }
 
-  private String ownershipCountMdxExpression(final String dimensionName, final String hierarchyName) {
-    return ownershipCountMdxExpression(MdxNamingUtil
-        .hierarchyUniqueName(dimensionName, hierarchyName));
+  private String ownershipCountMdxExpression(
+      final String dimensionName, final String hierarchyName) {
+    return ownershipCountMdxExpression(
+        MdxNamingUtil.hierarchyUniqueName(dimensionName, hierarchyName));
   }
 
   private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
@@ -349,18 +350,24 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         + "    NonEmpty("
         + "      Crossjoin("
         + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "        "
+        + hierarchyUniqueName
+        + ".CurrentMember"
         + "      )"
         + "    ),"
         + "    Generate("
         + "      NonEmpty("
         + "        Crossjoin("
         + "          [Chunks].[ChunkId].CurrentMember,"
-        + "          " + hierarchyUniqueName + ".[ALL].[AllMember].Children"
+        + "          "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children"
         + "        )"
         + "      ),"
         + "      {"
-        + "        " + hierarchyUniqueName + ".CurrentMember"
+        + "        "
+        + hierarchyUniqueName
+        + ".CurrentMember"
         + "      }"
         + "    )"
         + "  )"
@@ -464,8 +471,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
     CopperHierarchy componentHierarchy =
-        Copper
-            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+        Copper.newSingleLevelHierarchy(
+                COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
             .publish(context);
   }

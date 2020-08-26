@@ -106,10 +106,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
     final Object[] componentTuple =
         FeedVisitor.buildComponentTupleFrom(componentFormat, stat, ParentType.LEVEL, this.dumpName);
-    FeedVisitor.add(stat,
-        transaction,
-        DatastoreConstants.CHUNK_TO_COMPONENT_STORE,
-        componentTuple);
+    FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_COMPONENT_STORE, componentTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
@@ -120,8 +117,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.LEVEL);
     FeedVisitor.setTupleElement(
