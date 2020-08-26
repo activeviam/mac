@@ -142,6 +142,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.VECTOR_BLOCK__LENGTH, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.VECTOR_BLOCK__REFERENCE_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();
@@ -311,18 +313,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}.
+   * Returns the description of {@link DatastoreConstants#FIELD_STORE}.
    *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
+   * @return description of {@link DatastoreConstants#FIELD_STORE}
    */
   protected IStoreDescription chunkToFieldStore() {
     return StartBuilding.store()
-        .withStoreName(DatastoreConstants.CHUNK_TO_FIELD_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__CHUNK_ID, ILiteralType.LONG)
+        .withStoreName(DatastoreConstants.FIELD_STORE)
+        .withField(DatastoreConstants.FIELD__CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME, ILiteralType.STRING)
+        .withField(DatastoreConstants.FIELD__STORE_NAME, ILiteralType.STRING)
         .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME, ILiteralType.STRING)
+        .withField(DatastoreConstants.FIELD__FIELD_NAME, ILiteralType.STRING)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
@@ -458,7 +460,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .toStore(DatastoreConstants.APPLICATION_STORE)
             .withName(CHUNK_TO_APP)
             .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+                DatastoreConstants.CHUNK__DUMP_NAME,
+                DatastoreConstants.APPLICATION__DUMP_NAME)
             .build());
   }
 

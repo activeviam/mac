@@ -216,6 +216,11 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VECTOR_BLOCK__LENGTH,
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asLong());
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VECTOR_BLOCK__REFERENCE_COUNT,
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_BLOCK_REFERENCE_COUNT).asLong());
+
     // Debug
     if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
       tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =

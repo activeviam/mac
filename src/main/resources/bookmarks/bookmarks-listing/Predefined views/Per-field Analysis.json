@@ -155,7 +155,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Stores].[Store].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] WHERE [Chunks].[Type].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Stores].[Store].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])))) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] WHERE [Chunks].[Type].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -198,6 +198,19 @@
                   } ],
                   "hideAddButton" : true,
                   "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "[Measures].[VectorBlock.RefCount]",
+                    "width" : 156
+                  }, {
+                    "key" : "[Measures].[VectorBlock.Length]",
+                    "width" : 155
+                  }, {
+                    "key" : "[Measures].[DirectMemory.Ratio]",
+                    "width" : 150
+                  }, {
+                    "key" : "[Measures].[DirectMemory.SUM]",
+                    "width" : 156
+                  } ],
                   "expansion" : {
                     "automaticExpansion" : true
                   }

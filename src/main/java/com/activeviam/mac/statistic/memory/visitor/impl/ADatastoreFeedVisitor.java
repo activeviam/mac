@@ -54,7 +54,7 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
 
     FeedVisitor.setTupleElement(tuple,
         format,
-        DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME,
+        DatastoreConstants.FIELD__STORE_NAME,
         this.store);
     FeedVisitor.setTupleElement(tuple,
         format,
@@ -65,12 +65,12 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
         .forEachOrdered(field -> {
           FeedVisitor.setTupleElement(tuple,
               format,
-              DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME,
+              DatastoreConstants.FIELD__FIELD_NAME,
               field);
 
           FeedVisitor.add(statistic,
               this.transaction,
-              DatastoreConstants.CHUNK_TO_FIELD_STORE,
+              DatastoreConstants.FIELD_STORE,
               tuple);
         });
   }
@@ -79,7 +79,7 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
       final IRecordFormat format, final IMemoryStatistic stat) {
     final Object[] tuple = new Object[format.getFieldCount()];
 
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK_TO_FIELD__CHUNK_ID)] =
+    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong();
 
     return tuple;
