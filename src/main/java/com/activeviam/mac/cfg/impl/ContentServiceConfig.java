@@ -154,8 +154,8 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     }
   }
 
-  /** Returns if the bookmarks must be reloaded even if already present. */
-  private boolean reloadBookmarks() {
+  /** Returns true if the bookmarks must be reloaded even if already present. */
+  private boolean shouldReloadBookmarks() {
     return this.env.getProperty("bookmarks.reload", Boolean.class, Boolean.FALSE);
   }
 
