@@ -87,6 +87,7 @@ public abstract class ATestMemoryStatistic {
   public static final int SINGLE_VALUE = 10;
 
   public static final int MICROAPP_CHUNK_SIZE = 256;
+  public static final int MICROAPP_VECTOR_BLOCK_SIZE = 64;
 
   public static final int MAX_GC_STEPS = 10;
 
@@ -769,6 +770,63 @@ public abstract class ATestMemoryStatistic {
                     .withStoreName("A")
                     .withField("id", ILiteralType.INT)
                     .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedField() {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withVectorField("vector1", ILiteralType.DOUBLE)
+                    .withVectorBlockSize(MICROAPP_VECTOR_BLOCK_SIZE)
+                    .withVectorField("vector2", ILiteralType.DOUBLE)
+                    .withVectorBlockSize(MICROAPP_VECTOR_BLOCK_SIZE)
                     .withChunkSize(MICROAPP_CHUNK_SIZE)
                     .build())
             .build();

@@ -28,6 +28,8 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -111,9 +113,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
 
       readEpochAndBranchIfAny(stat);
-      if (!stat.getName().equalsIgnoreCase(MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE)) {
-        assert this.epochId != null;
-      }
+      assert stat.getName().equalsIgnoreCase(MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE)
+          || this.epochId != null;
 
       FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
 
@@ -176,9 +177,15 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.field != null) {
+    if (!this.fields.isEmpty()) {
+      writeFieldRecordsForCurrentChunk(chunkStatistic);
+
+      // todo vlg clear this if obsolete
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+          tuple,
+          chunkRecordFormat,
+          DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
+          this.fields.peek().iterator().next());
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(
@@ -314,11 +321,18 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.directParentId = String.valueOf(this.indexId);
     this.rootComponent = ParentType.INDEX;
 
+    final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
+    assert fieldNames != null && fieldNames.length > 0
+        : "Cannot find fields in the attributes of " + stat;
+    this.fields.push(List.of(fieldNames));
+
     visitChildren(stat);
 
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
+
+    this.fields.pop();
 
     // Reset
     this.indexId = null;
@@ -342,8 +356,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     final IStatisticAttribute fieldAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-    if (fieldAttr != null) {
-      this.field = fieldAttr.asText();
+
+    final boolean isFieldSpecified = fieldAttr != null;
+    if (isFieldSpecified) {
+      this.fields.push(Collections.singleton(fieldAttr.asText()));
     }
 
     final ParentType previousParentType = this.directParentType;
@@ -352,12 +368,17 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.directParentId = String.valueOf(this.dictionaryId);
 
     visitChildren(stat);
+
+    // Reset
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
-    // Reset
     this.dictionaryId = null;
-    this.field = null;
+
+    if (isFieldSpecified) {
+      this.fields.pop();
+    }
+
     return null;
   }
 
@@ -470,6 +491,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
 
+    // todo vlg: remove if obsolete
     final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;

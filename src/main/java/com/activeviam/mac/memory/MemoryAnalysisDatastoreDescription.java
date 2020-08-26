@@ -311,6 +311,25 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
+   * Returns the description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}.
+   *
+   * @return description of {@link DatastoreConstants#CHUNK_TO_FIELD_STORE}
+   */
+  protected IStoreDescription chunkToFieldStore() {
+    return StartBuilding.store()
+        .withStoreName(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+        .withField(DatastoreConstants.CHUNK_TO_FIELD__CHUNK_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .build();
+  }
+
+  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
@@ -407,7 +426,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        applicationStore());
+        applicationStore(),
+        chunkToFieldStore());
   }
 
   @Override
@@ -534,10 +554,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         return false;
       }
       StringArrayObject other = (StringArrayObject) obj;
-      if (!Arrays.equals(fieldNames, other.fieldNames)) {
-        return false;
-      }
-      return true;
+      return Arrays.equals(fieldNames, other.fieldNames);
     }
 
     @Override

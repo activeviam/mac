@@ -270,6 +270,11 @@ public class DatastoreConstants {
   /** The component field in the store of chunk components. */
   public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
 
+  public static final String CHUNK_TO_FIELD_STORE = "Field";
+  public static final String CHUNK_TO_FIELD__CHUNK_ID = CHUNK_ID;
+  public static final String CHUNK_TO_FIELD__STORE_NAME = "store";
+  public static final String CHUNK_TO_FIELD__FIELD_NAME = "field";
+
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
 

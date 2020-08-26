@@ -26,6 +26,8 @@ import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.qfs.agg.impl.CountFunction;
+import com.qfs.agg.impl.DistinctCountFunction;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -42,6 +44,7 @@ import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -125,6 +128,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String OWNER_DIMENSION = "Owners";
   /** Name of the component analysis hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the component dimension. */
+  public static final String FIELD_DIMENSION = "Fields";
+  /** Name of the component analysis hierarchy. */
+  public static final String FIELD_HIERARCHY = "Field";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -314,14 +321,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private ICalculatedMemberDescription[] calculatedMembers() {
     return new ICalculatedMemberDescription[] {
-      createMdxMeasureDescription(
-          "Owner.COUNT",
-          ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-          OWNERSHIP_FOLDER),
-      createMdxMeasureDescription(
-          "Component.COUNT",
-          ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-          OWNERSHIP_FOLDER)
+        createMdxMeasureDescription("Owner.COUNT",
+            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
+            OWNERSHIP_FOLDER),
+        createMdxMeasureDescription("Component.COUNT",
+            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
+            OWNERSHIP_FOLDER),
+        createMdxMeasureDescription("Field.COUNT",
+            ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
+            OWNERSHIP_FOLDER)
     };
   }
 
@@ -346,31 +354,24 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
     return "DistinctCount("
-        + "  Generate("
-        + "    NonEmpty("
-        + "      Crossjoin("
+        + "    Generate("
+        + "      NonEmpty("
         + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "        "
-        + hierarchyUniqueName
-        + ".CurrentMember"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
         + "      )"
         + "    ),"
         + "    Generate("
         + "      NonEmpty("
         + "        Crossjoin("
         + "          [Chunks].[ChunkId].CurrentMember,"
-        + "          "
-        + hierarchyUniqueName
-        + ".[ALL].[AllMember].Children"
+        + "          " + hierarchyUniqueName + ".[ALL].[AllMember].Children"
         + "        )"
         + "      ),"
         + "      {"
-        + "        "
-        + hierarchyUniqueName
-        + ".CurrentMember"
+        + "        " + hierarchyUniqueName + ".CurrentMember"
         + "      }"
         + "    )"
-        + "  )"
+        + "  "
         + ")";
   }
 
@@ -401,6 +402,22 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(MAX_DIRECT)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(MEMORY_FOLDER)
+        .publish(context);
+
+    // --------------------
+    // 4- Chunk to field
+    CopperStore chunkToFieldStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+            .joinToCube()
+            .withMapping(DatastoreConstants.CHUNK_TO_FIELD__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    Copper.newSingleLevelHierarchy("Fields", "Field", "Field")
+        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME))
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy("Stores", "Store", "Store")
+        .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME))
         .publish(context);
   }
 
@@ -474,6 +491,26 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.newSingleLevelHierarchy(
                 COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
+            .publish(context);
+
+    // --------------------
+    // 6- Chunk to fields
+    CopperStore chunkToFieldStore =
+        Copper.store(DatastoreConstants.CHUNK_TO_FIELD_STORE)
+            .joinToCube()
+            .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+    CopperHierarchy fieldHierarchy =
+        Copper
+            .newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
+            .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__FIELD_NAME))
+            .publish(context);
+
+    CopperHierarchy storeHierarchy =
+        Copper
+            .newSingleLevelHierarchy("Stores", "Store", "Store") // todo vlg constants
+            .from(chunkToFieldStore.field(DatastoreConstants.CHUNK_TO_FIELD__STORE_NAME))
             .publish(context);
   }
 

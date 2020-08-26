@@ -483,6 +483,31 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             + "  )");
   }
 
+  @Test
+  public void testFieldCount() throws QueryException {
+    performCountTest("[Measures].[Field.COUNT]",
+        "[Fields].[Field]",
+        "[Chunks].[ChunkId].[ChunkId].Members");
+  }
+
+  @Test
+  public void testComponentCountOnStoresAndTypes() throws QueryException {
+    performCountTest("[Measures].[Field.COUNT]",
+        "[Fields].[Field]",
+        " Crossjoin("
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Stores].[Store].[ALL].[AllMember]"
+            + "      )"
+            + "    ),"
+            + "    Hierarchize("
+            + "      DrilldownLevel("
+            + "        [Chunks].[Type].[ALL].[AllMember]"
+            + "      )"
+            + "    )"
+            + "  )");
+  }
+
   protected void performCountTest(
       String measureName, String countedHierarchy, String rowMdxExpression) throws QueryException {
 
@@ -503,34 +528,20 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final MDXQuery verificationQuery =
         new MDXQuery(
-            "WITH Member [Measures].[Expected.COUNT] AS"
-                + " DistinctCount("
-                + "  Generate("
-                + "    NonEmpty("
-                + "      Crossjoin("
-                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-                + "        "
-                + countedHierarchy
-                + ".CurrentMember"
-                + "      )"
-                + "    ),"
+            "WITH Member [Measures].[Expected.COUNT] AS "
+                + "DistinctCount("
                 + "    Generate("
                 + "      NonEmpty("
-                + "        Crossjoin("
-                + "          [Chunks].[ChunkId].CurrentMember,"
-                + "          "
-                + countedHierarchy
-                + ".[ALL].[AllMember].Children"
-                + "        )"
+                + "        [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "        {[Measures].[contributors.COUNT]}"
                 + "      ),"
-                + "      {"
-                + "        "
-                + countedHierarchy
-                + ".CurrentMember"
-                + "      }"
+                + "      NonEmpty("
+                + "        " + countedHierarchy + ".[ALL].[AllMember].Children,"
+                + "        {[Measures].[contributors.COUNT]}"
+                + "      )"
                 + "    )"
-                + "  )"
-                + " ) "
+                + "  "
+                + ")"
                 + " SELECT"
                 + " NON EMPTY "
                 + rowMdxExpression
