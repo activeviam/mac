@@ -144,6 +144,7 @@ public abstract class ATestMemoryStatistic {
                     .withField("buyer")
                     .withField("date", ILiteralType.LOCAL_DATE)
                     .withField("productId", ILiteralType.LONG)
+                    .withField("price", ILiteralType.DOUBLE)
                     .withModuloPartitioning(4, "id")
                     .build())
             .withStore(
@@ -205,6 +206,8 @@ public abstract class ATestMemoryStatistic {
             .withCube(
                 StartBuilding.cube("HistoryCube")
                     .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("price")
                     .withSingleLevelDimension("Product")
                     .withPropertyName("product")
                     .withSingleLevelDimension("Date")
@@ -231,6 +234,8 @@ public abstract class ATestMemoryStatistic {
             .withCube(
                 StartBuilding.cube("DailyCube")
                     .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("price")
                     .withSingleLevelDimension("Product")
                     .withPropertyName("product")
                     .withDimension("Operations")
@@ -254,6 +259,8 @@ public abstract class ATestMemoryStatistic {
             .withCube(
                 StartBuilding.cube("OverviewJITCube")
                     .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("price")
                     .withSingleLevelDimension("Product")
                     .withPropertyName("product")
                     .withSingleLevelDimension("Date")
@@ -276,6 +283,8 @@ public abstract class ATestMemoryStatistic {
             .withCube(
                 StartBuilding.cube("OverviewBitmapCube")
                     .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("price")
                     .withSingleLevelDimension("Product")
                     .withPropertyName("product")
                     .withSingleLevelDimension("Date")
@@ -298,6 +307,8 @@ public abstract class ATestMemoryStatistic {
             .withCube(
                 StartBuilding.cube("OverviewCubeWithPartialProvider")
                     .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("price")
                     .withSingleLevelDimension("Product")
                     .withPropertyName("product")
                     .withSingleLevelDimension("Date")
@@ -453,7 +464,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) r.nextInt(productCount));
+                        (long) r.nextInt(productCount),
+                        r.nextDouble());
                   });
         });
   }
@@ -499,7 +511,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) r.nextInt(productCount));
+                        (long) r.nextInt(productCount),
+                        r.nextDouble());
                   });
         });
   }
@@ -529,7 +542,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) SINGLE_VALUE);
+                        (long) SINGLE_VALUE,
+                        (double) SINGLE_VALUE);
                   });
         });
   }
@@ -559,7 +573,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) SINGLE_VALUE);
+                        (long) SINGLE_VALUE,
+                        (double) SINGLE_VALUE);
                   });
         });
   }
@@ -603,7 +618,8 @@ public abstract class ATestMemoryStatistic {
                         String.valueOf(seller),
                         String.valueOf(buyer),
                         LocalDate.now().plusDays(-r.nextInt(7)),
-                        (long) r.nextInt(STORE_PRODUCT_COUNT));
+                        (long) r.nextInt(STORE_PRODUCT_COUNT),
+                        r.nextDouble());
                   });
           try {
             tm.commitTransaction();
