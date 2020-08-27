@@ -11,7 +11,6 @@ import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperHierarchy;
-import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
 import com.activeviam.copper.store.Mapping.JoinType;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
@@ -478,6 +477,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper
             .newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToFieldStore.field(DatastoreConstants.FIELD__FIELD_NAME))
+            .publish(context);
+
+    CopperHierarchy storeHierarchy =
+        Copper
+            // todo vlg constants
+            .newSingleLevelHierarchy("Stores", "Store", "Store")
+            .from(chunkToFieldStore.field(DatastoreConstants.FIELD__STORE_NAME))
             .publish(context);
   }
 

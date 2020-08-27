@@ -57,14 +57,38 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
    */
   protected void writeFieldRecordsForChunk(final ChunkStatistic statistic) {
     final IRecordFormat format = getFieldFormat(this.storageMetadata);
-    Object[] tuple = FeedVisitor.buildFieldTupleFrom(format, statistic);
+    Object[] tuple = buildFieldTupleFrom(format, statistic);
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(tuple,
+        format,
+        DatastoreConstants.FIELD__STORE_NAME,
+        this.store);
+    FeedVisitor.setTupleElement(tuple,
+        format,
+        DatastoreConstants.CHUNK__DUMP_NAME,
+        this.dumpName);
 
     this.fields.stream().flatMap(Collection::stream)
         .forEachOrdered(field -> {
-          FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.FIELD__FIELD_NAME, field);
-          FeedVisitor.add(statistic, this.transaction, DatastoreConstants.FIELD_STORE, tuple);
+          FeedVisitor.setTupleElement(tuple,
+              format,
+              DatastoreConstants.FIELD__FIELD_NAME,
+              field);
+
+          FeedVisitor.add(statistic,
+              this.transaction,
+              DatastoreConstants.FIELD_STORE,
+              tuple);
         });
+  }
+
+  protected static Object[] buildFieldTupleFrom(
+      final IRecordFormat format, final IMemoryStatistic stat) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+
+    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong();
+
+    return tuple;
   }
 }

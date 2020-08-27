@@ -285,6 +285,8 @@ public class DatastoreConstants {
   public static final String FIELD__CHUNK_ID = CHUNK_ID;
   /** The field name field in the store of fields. */
   public static final String FIELD__FIELD_NAME = "field";
+  /** The store name field in the store of fields. */
+  public static final String FIELD__STORE_NAME = "store";
 
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;

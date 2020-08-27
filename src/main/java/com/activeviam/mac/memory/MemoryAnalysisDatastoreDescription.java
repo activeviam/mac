@@ -322,6 +322,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withStoreName(DatastoreConstants.FIELD_STORE)
         .withField(DatastoreConstants.FIELD__CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
+        .withField(DatastoreConstants.FIELD__STORE_NAME, ILiteralType.STRING)
+        .asKeyField()
         .withField(DatastoreConstants.FIELD__FIELD_NAME, ILiteralType.STRING)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
