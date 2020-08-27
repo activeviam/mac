@@ -470,7 +470,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     CopperStore chunkToFieldStore =
         Copper.store(DatastoreConstants.FIELD_STORE)
             .joinToCube()
-            .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.FIELD__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
     CopperHierarchy fieldHierarchy =
