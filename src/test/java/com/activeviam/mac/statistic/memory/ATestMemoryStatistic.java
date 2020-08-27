@@ -936,6 +936,72 @@ public abstract class ATestMemoryStatistic {
             .buildAndStart());
   }
 
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReferenceAndSameFieldName()
+      throws AgentException {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("val", ILiteralType.INT)
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("B")
+                    .withField("tgt_id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("val", ILiteralType.INT)
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .withReference(
+                StartBuilding.reference()
+                    .fromStore("A")
+                    .toStore("B")
+                    .withName("AToB")
+                    .withMapping("val", "tgt_id")
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllReachableFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+
+    IDatastore datastore =
+        (Datastore)
+            resources.create(
+                () ->
+                    new UnitTestDatastoreBuilder()
+                        .setSchemaDescription(schemaDescription)
+                        .addSchemaDescriptionPostProcessors(
+                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                        .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                        .build());
+    return new Pair<IDatastore, IActivePivotManager>(
+        datastore,
+        StartBuilding.manager()
+            .setDescription(managerDescription)
+            .setDatastoreAndPermissions(datastore)
+            .buildAndStart());
+  }
+
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithLeafBitmap()
       throws AgentException {
 
