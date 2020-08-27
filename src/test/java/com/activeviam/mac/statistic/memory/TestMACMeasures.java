@@ -491,7 +491,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testFieldCountOnStoresAndTypes() throws QueryException {
+  public void testFieldCountOnStoresAndComponents() throws QueryException {
     performCountTest("[Measures].[Field.COUNT]",
         "[Fields].[Field]",
         " Crossjoin("
@@ -502,7 +502,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             + "    ),"
             + "    Hierarchize("
             + "      DrilldownLevel("
-            + "        [Chunks].[Type].[ALL].[AllMember]"
+            + "        [Components].[Component].[ALL].[AllMember]"
             + "      )"
             + "    )"
             + "  )");

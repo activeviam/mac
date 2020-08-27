@@ -130,7 +130,7 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery recordQuery = new MDXQuery(
-				"SELECT [Chunks].[Type].[Type].[RECORDS] ON ROWS,"
+				"SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
 						+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
 						+ " FROM [MemoryCube]"
 						+ " WHERE ("
@@ -151,8 +151,8 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
 		final MDXQuery vectorBlockQuery = new MDXQuery(
 				"SELECT {"
-						+ "   [Chunks].[Type].[ALL].[AllMember],"
-						+ "   [Chunks].[Type].[Type].[VECTOR_BLOCK]"
+						+ "   [Components].[Component].[ALL].[AllMember],"
+						+ "   [Components].[Component].[Component].[VECTOR_BLOCK]"
 						+ " } ON ROWS,"
 						+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
 						+ " FROM [MemoryCube]"
