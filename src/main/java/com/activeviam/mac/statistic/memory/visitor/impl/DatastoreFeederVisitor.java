@@ -178,7 +178,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
     if (!this.fields.isEmpty()) {
-      writeFieldRecordsForCurrentChunk(chunkStatistic);
+      writeFieldRecordsForChunk(chunkStatistic);
 
       // todo vlg clear this if obsolete
       FeedVisitor.setTupleElement(

@@ -278,7 +278,6 @@ public class DatastoreConstants {
 
   // todo vlg doc
   public static final String FIELD__CHUNK_ID = CHUNK_ID;
-  public static final String FIELD__STORE_NAME = "store";
   public static final String FIELD__FIELD_NAME = "field";
 
   public static final String VECTOR_BLOCK__LENGTH = "length";

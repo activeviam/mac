@@ -204,7 +204,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
           this.fields.peek().iterator().next());
 
-      writeFieldRecordsForCurrentChunk(statistic);
+      writeFieldRecordsForChunk(statistic);
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(

@@ -479,13 +479,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToFieldStore.field(DatastoreConstants.FIELD__FIELD_NAME))
             .publish(context);
-
-    CopperHierarchy storeHierarchy =
-        Copper
-            // todo vlg constants
-            .newSingleLevelHierarchy("Stores", "Store", "Store")
-            .from(chunkToFieldStore.field(DatastoreConstants.FIELD__STORE_NAME))
-            .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {
