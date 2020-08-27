@@ -289,6 +289,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       throw new ActiveViamRuntimeException("Unexpected stat on dictionary: " + stat);
     }
 
+    this.dictionaryId = null;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
