@@ -814,7 +814,7 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedField() {
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedVectorField() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()

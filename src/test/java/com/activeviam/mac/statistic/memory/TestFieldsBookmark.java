@@ -3,6 +3,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
+import com.google.common.collect.Table.Cell;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -20,7 +21,6 @@ import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,7 +42,7 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
 	@Before
 	public void setup() throws AgentException {
-		monitoredApp = createMicroApplicationWithSharedField();
+		monitoredApp = createMicroApplicationWithSharedVectorField();
 
 		monitoredApp.getLeft()
 				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
@@ -125,16 +125,12 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testVectorBlockConsumption() throws QueryException {
+	public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery recordQuery = new MDXQuery(
-				"SELECT {"
-						+ "   [Chunks].[Type].[ALL].[AllMember],"
-						+ "   [Chunks].[Type].[Type].[RECORDS],"
-						+ "   [Chunks].[Type].[Type].[VECTOR_BLOCK]"
-						+ " } ON ROWS,"
+				"SELECT [Chunks].[Type].[Type].[RECORDS] ON ROWS,"
 						+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
 						+ " FROM [MemoryCube]"
 						+ " WHERE ("
@@ -144,12 +140,78 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
 		final CellSetDTO result = pivot.execute(recordQuery);
 
-		SoftAssertions.assertSoftly(assertions -> {
-			assertions.assertThat((long) result.getCells().get(1).getValue())
-					.isZero();
+		Assertions.assertThat((long) result.getCells().get(0).getValue())
+				.isZero();
+	}
 
-			assertions.assertThat((long) result.getCells().get(2).getValue())
-					.isEqualTo((long) result.getCells().get(0).getValue());
-		});
+	@Test
+	public void testVectorBlockConsumption() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery vectorBlockQuery = new MDXQuery(
+				"SELECT {"
+						+ "   [Chunks].[Type].[ALL].[AllMember],"
+						+ "   [Chunks].[Type].[Type].[VECTOR_BLOCK]"
+						+ " } ON ROWS,"
+						+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE ("
+						+ "   [Owners].[Owner].[Owner].[Store A],"
+						+ "   [Fields].[Field].[Field].[vector1]"
+						+ " )");
+
+		final CellSetDTO result = pivot.execute(vectorBlockQuery);
+
+		Assertions.assertThat((long) result.getCells().get(1).getValue())
+				.isEqualTo((long) result.getCells().get(0).getValue());
+	}
+
+	@Test
+	public void testVectorBlockLength() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery lengthQuery = new MDXQuery(
+				"SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE ("
+						+ "   [Owners].[Owner].[Owner].[Store A],"
+						+ "   [Fields].[Field].[Field].[vector1]"
+						+ " )");
+
+		final CellSetDTO result = pivot.execute(lengthQuery);
+
+		Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(result))
+				.isEqualTo((long) MICROAPP_VECTOR_BLOCK_SIZE);
+	}
+
+	@Test
+	public void testVectorBlockRefCount() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery refCountQuery = new MDXQuery(
+				"SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE ("
+						+ "   [Owners].[Owner].[Owner].[Store A],"
+						+ "   [Fields].[Field].[Field].[vector1]"
+						+ " )");
+
+		final MDXQuery sharedCountQuery = new MDXQuery(
+				"SELECT [Measures].[Field.COUNT] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE ("
+						+ "   [Owners].[Owner].[Owner].[Store A],"
+						+ "   [Fields].[Field].[Field].[vector1]"
+						+ " )");
+
+		final CellSetDTO refCountResult = pivot.execute(refCountQuery);
+		final CellSetDTO sharedCountResult = pivot.execute(sharedCountQuery);
+
+		Assertions.assertThat((long) CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
+				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(sharedCountResult)
+						* ADDED_DATA_SIZE);
 	}
 }
