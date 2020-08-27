@@ -1,110 +1,55 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.activeviam.pivot.builders.StartBuilding;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplication;
+import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
+import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
-import java.nio.file.Path;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class TestOverviewBookmark extends ATestMemoryStatistic {
-
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
-
-  private StatisticsSummary summary;
+public class TestOverviewBookmark extends ATestOnMonitoringApp {
 
   public static final int ADDED_DATA_SIZE = 20;
 
-  @BeforeClass
-  public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+  @Override
+  protected IDatastoreSchemaDescription datastoreSchema() {
+    return MicroApplication.datastoreDescription();
   }
 
-  @Before
-  public void setup() throws AgentException {
-    initializeApplication();
-
-    final Path exportPath = generateMemoryStatistics();
-
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-    summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
-
-    initializeMonitoringApplication(stats);
-
-    IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-    Assertions.assertThat(pivot).isNotNull();
+  @Override
+  protected IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription datastoreSchema) {
+    return MicroApplication.managerDescription(datastoreSchema);
   }
 
-  private void initializeApplication() {
-    monitoredApp = createMicroApplication();
-
-    monitoredApp
-        .getLeft()
-        .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
-  }
-
-  private Path generateMemoryStatistics() {
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
-
-    performGC();
-
-    final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-    return analysisService.exportMostRecentVersion("testOverview");
-  }
-
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
-
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
-
-    monitoringDatastore.edit(
-        tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
-  }
-
-  @After
-  public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+  @Override
+  protected void beforeExport(
+      IDatastore datastore, IActivePivotManager manager) {
+    datastore.edit(tm ->
+        IntStream.range(0, ADDED_DATA_SIZE).forEach(i ->
+            tm.add("A", i * i)));
   }
 
   @Test
   public void testOverviewGrandTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS " + "FROM [MemoryCube]");
 
     final CellSetDTO totalResult = pivot.execute(totalQuery);
+
+    final StatisticsSummary summary = computeStatisticsSummary(statistics);
 
     Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
         .isEqualTo(summary.offHeapMemory);
@@ -113,11 +58,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   @Test
   public void testOverviewOwnerTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
         new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS " + "FROM [MemoryCube]");
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]");
 
     final MDXQuery perOwnerQuery =
         new MDXQuery(
@@ -149,7 +95,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   @Test
   public void testOverviewStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery storeTotalQuery =
         new MDXQuery(
@@ -189,7 +135,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   @Test
   public void testOverviewCubeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery cubeTotalQuery =
         new MDXQuery(
@@ -221,8 +167,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-            CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
+            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
   }
 }
