@@ -13,7 +13,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Crossjoin([Stores].[Store].[Store].Members, Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember]))) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members, Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember]))) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -67,32 +67,6 @@
           "writable" : true
         }
       }, {
-        "key" : "1",
-        "bookmark" : {
-          "name" : "Owner filter",
-          "type" : "container",
-          "value" : {
-            "style" : { },
-            "showTitleBar" : true,
-            "body" : {
-              "configuration" : {
-                "displayedAsSelect" : true,
-                "multipleSelection" : false
-              },
-              "filterKey" : "explicit",
-              "levelDetails" : {
-                "cube" : "MemoryCube",
-                "dimension" : "Chunk Owners",
-                "hierarchy" : "Owner",
-                "level" : "Owner",
-                "caption" : "Owner"
-              }
-            },
-            "containerKey" : "quick-filter"
-          },
-          "writable" : true
-        }
-      }, {
         "key" : "2",
         "bookmark" : {
           "name" : "Partition filter",
@@ -118,24 +92,50 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
             "children" : {
               "0" : {
-                "ck" : "1"
+                "ck" : "3"
               },
               "1" : {
                 "ck" : "2"
               }
             },
-            "direction" : "column",
-            "size" : 0.22
+            "size" : 0.21,
+            "direction" : "column"
           },
           "1" : {
             "ck" : "0",
-            "size" : 0.78
+            "size" : 0.79
           }
         },
         "direction" : "column"
@@ -155,9 +155,9 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Stores].[Store].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])))) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] WHERE [Chunks].[Type].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])))) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount], [Measures].[Field.COUNT]} ON COLUMNS FROM [MemoryCube] WHERE [Chunks].[Type].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
-              "updateMode" : "once",
+              "updateMode" : "realTime",
               "refreshInterval" : 10,
               "ranges" : {
                 "row" : {
