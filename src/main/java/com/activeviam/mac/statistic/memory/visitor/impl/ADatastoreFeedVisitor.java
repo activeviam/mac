@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
@@ -48,7 +49,13 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
     super(transaction, storageMetadata, dumpName);
   }
 
-  protected void writeFieldRecordsForChunk(final IMemoryStatistic statistic) {
+  /**
+   * Feeds the {@link DatastoreConstants#FIELD_STORE} with records associating the chunk of the
+   * given statistic with all fields currently registered in the visitor.
+   *
+   * @param statistic the statistic of the chunk
+   */
+  protected void writeFieldRecordsForChunk(final ChunkStatistic statistic) {
     final IRecordFormat format = getFieldFormat(this.storageMetadata);
     Object[] tuple = FeedVisitor.buildFieldTupleFrom(format, statistic);
 

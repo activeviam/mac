@@ -234,6 +234,11 @@ public class DatastoreConstants {
   /** member count field. */
   public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
+  /** Field for the vector block length of the chunk, if relevant. */
+  public static final String VECTOR_BLOCK__LENGTH = "vectorBlockLength";
+  /** Field for the vector block reference count of the chunk, if relevant. */
+  public static final String VECTOR_BLOCK__REFERENCE_COUNT = "vectorBlockRefCount";
+
   /** Name of the store for joining chunk and level data. */
   public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
 
@@ -276,12 +281,10 @@ public class DatastoreConstants {
   /** The component field in the store of chunk components. */
   public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
 
-  // todo vlg doc
+  /** The chunk ID field in the store of fields. */
   public static final String FIELD__CHUNK_ID = CHUNK_ID;
+  /** The field name field in the store of fields. */
   public static final String FIELD__FIELD_NAME = "field";
-
-  public static final String VECTOR_BLOCK__LENGTH = "length";
-  public static final String VECTOR_BLOCK__REFERENCE_COUNT = "referenceCount";
 
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;

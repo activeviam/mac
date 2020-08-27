@@ -148,12 +148,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  protected static Object[] buildFieldTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
+  static Object[] buildFieldTupleFrom(
+      final IRecordFormat format, final ChunkStatistic stat) {
     final Object[] tuple = new Object[format.getFieldCount()];
 
-    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong();
+    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] = stat.getChunkId();
 
     return tuple;
   }

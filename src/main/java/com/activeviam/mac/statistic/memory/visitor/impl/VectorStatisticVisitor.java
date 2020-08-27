@@ -52,6 +52,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param dumpName name of the ongoing import
    * @param current current time
    * @param store store being visited
+   * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
    */
   public VectorStatisticVisitor(
