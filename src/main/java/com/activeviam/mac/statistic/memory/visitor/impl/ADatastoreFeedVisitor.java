@@ -8,8 +8,6 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
@@ -57,7 +55,7 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
    */
   protected void writeFieldRecordsForChunk(final ChunkStatistic statistic) {
     final IRecordFormat format = getFieldFormat(this.storageMetadata);
-    Object[] tuple = buildFieldTupleFrom(format, statistic);
+    Object[] tuple = FeedVisitor.buildFieldTupleFrom(format, statistic);
 
     FeedVisitor.setTupleElement(tuple,
         format,
@@ -80,15 +78,5 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
               DatastoreConstants.FIELD_STORE,
               tuple);
         });
-  }
-
-  protected static Object[] buildFieldTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-
-    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong();
-
-    return tuple;
   }
 }

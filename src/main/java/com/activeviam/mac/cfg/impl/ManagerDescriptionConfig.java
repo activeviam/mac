@@ -97,13 +97,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Level for the Ids of the indexes. */
   public static final String CHUNK_INDEX_ID_LEVEL = "IndexID";
 
-  /** Name of the store hierarchy. */
-  public static final String STORE_HIERARCHY = "Stores";
-  /** Name of the store level. */
-  public static final String STORE_STORE_LEVEL = "Store";
-  /** Name of the field level. */
-  public static final String STORE_FIELD_LEVEL = "Field";
-
   /** Name of the Chunk Hierarchy. */
   public static final String CHUNK_DIMENSION = "Chunks";
 
@@ -128,6 +121,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the component analysis hierarchy. */
   public static final String FIELD_HIERARCHY = "Field";
+  /** Name of the store dimension. */
+  public static final String STORE_DIMENSION = "Stores";
+  /** Name of the store hierarchy. */
+  public static final String STORE_HIERARCHY = "Store";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -255,11 +252,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
         .withSingleLevelHierarchy(CHUNK_REF_ID_LEVEL)
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
-        .withHierarchy(STORE_HIERARCHY)
-        .withLevel(STORE_STORE_LEVEL)
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_STORE_NAME)
-        .withLevel(STORE_FIELD_LEVEL)
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_FIELD_NAME)
         .withHierarchy(CHUNK_CLASS_LEVEL)
         .withLevelOfSameName()
         .withPropertyName(
@@ -481,8 +473,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     CopperHierarchy storeHierarchy =
         Copper
-            // todo vlg constants
-            .newSingleLevelHierarchy("Stores", "Store", "Store")
+            .newSingleLevelHierarchy(STORE_DIMENSION, STORE_HIERARCHY, STORE_HIERARCHY)
             .from(chunkToFieldStore.field(DatastoreConstants.FIELD__STORE_NAME))
             .publish(context);
   }
