@@ -87,7 +87,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     /** Level structure. */
     LEVEL,
     /** No owning structure. */
-    NO_COMPONENT
+    NO_COMPONENT;
+
+    ParentType() {}
   }
 
   /**

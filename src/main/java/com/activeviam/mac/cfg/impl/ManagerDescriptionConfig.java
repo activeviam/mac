@@ -25,15 +25,12 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
-import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
@@ -122,6 +119,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String STORE_DIMENSION = "Stores";
   /** Name of the store hierarchy. */
   public static final String STORE_HIERARCHY = "Store";
+
+  /** Name of the component analysis hierarchy. */
+  public static final String SHARED_HIERARCHY = "Shared";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -222,9 +222,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMeasures(this::measures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
-        .withSharedMdxContext()
-        .withCalculatedMembers(calculatedMembers())
-        .end()
         .build();
   }
 
@@ -302,54 +299,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(NUMBER_FORMATTER)
         .withUpdateTimestamp()
         .withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
-  }
-
-  private ICalculatedMemberDescription[] calculatedMembers() {
-    return new ICalculatedMemberDescription[] {
-        createMdxMeasureDescription("Owner.COUNT",
-            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Component.COUNT",
-            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Field.COUNT",
-            ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
-            OWNERSHIP_FOLDER)
-    };
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression) {
-    return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression, final String folder) {
-    final ICalculatedMemberDescription description =
-        createMdxMeasureDescription(measureName, mdxExpression);
-    description.setFolder(folder);
-    return description;
-  }
-
-  private String ownershipCountMdxExpression(
-      final String dimensionName, final String hierarchyName) {
-    return ownershipCountMdxExpression(
-        MdxNamingUtil.hierarchyUniqueName(dimensionName, hierarchyName));
-  }
-
-  private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-    return "DistinctCount("
-        + "  Generate("
-        + "    NonEmpty("
-        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    ),"
-        + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    )"
-        + "  )"
-        + ")";
   }
 
   private void copperCalculations(final ICopperContext context) {
