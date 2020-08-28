@@ -15,7 +15,7 @@ import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
 public class MicroApplication {
 
-  public static final int MICROAPP_CHUNK_SIZE = 256;
+  public static final int CHUNK_SIZE = 256;
 
   private MicroApplication() {
   }
@@ -27,7 +27,7 @@ public class MicroApplication {
                 .withStoreName("A")
                 .withField("id", ILiteralType.INT)
                 .asKeyField()
-                .withChunkSize(MICROAPP_CHUNK_SIZE)
+                .withChunkSize(CHUNK_SIZE)
                 .build())
         .build();
   }

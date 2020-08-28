@@ -1,0 +1,110 @@
+/*
+ * (C) ActiveViam 2020
+ * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
+ * property of ActiveViam. Any unauthorized use,
+ * reproduction or transfer of this material is strictly prohibited
+ */
+
+package com.activeviam.mac.statistic.memory.descriptions;
+
+import com.activeviam.pivot.builders.StartBuilding;
+import com.qfs.desc.IDatastoreSchemaDescription;
+import com.qfs.literal.ILiteralType;
+import com.qfs.store.IDatastore;
+import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
+import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
+import java.time.LocalDate;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
+
+public class MinimalApplication {
+
+  public static final int STORE_PEOPLE_COUNT = 10;
+  public static final int STORE_PRODUCT_COUNT = 20;
+
+  public static AtomicInteger operationsBatch = new AtomicInteger();
+
+  private MinimalApplication() {
+  }
+
+  public static IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("Sales")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withField("seller")
+                .withField("buyer")
+                .withField("date", ILiteralType.LOCAL_DATE)
+                .withField("productId", ILiteralType.LONG)
+                .withModuloPartitioning(4, "id")
+                .build())
+        .build();
+  }
+
+  public static IActivePivotManagerDescription managerDescription(
+      final IDatastoreSchemaDescription schemaDescription) {
+    final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+        .withSchema()
+        .withSelection(
+            StartBuilding.selection(schemaDescription)
+                .fromBaseStore("Sales")
+                .withAllFields()
+                .build())
+        .withCube(
+            StartBuilding.cube("HistoryCube")
+                .withContributorsCount()
+                .withDimension("Operations")
+                .withHierarchy("Sales")
+                .withLevel("Seller")
+                .withPropertyName("seller")
+                .withLevel("Buyer")
+                .withPropertyName("buyer")
+                .withEpochDimension()
+                .build())
+        .withCube(
+            StartBuilding.cube("HistoryCubeLeaf")
+                .withContributorsCount()
+                .withDimension("Operations")
+                .withHierarchy("Sales")
+                .withLevel("Seller")
+                .withPropertyName("seller")
+                .withLevel("Buyer")
+                .withPropertyName("buyer")
+                .withEpochDimension()
+                .withAggregateProvider()
+                .leaf()
+                .build())
+        .build();
+
+    return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+  }
+
+  public static void fillApplication(final IDatastore datastore) {
+    datastore.edit(
+        tm -> {
+          final int peopleCount = STORE_PEOPLE_COUNT;
+          final int productCount = STORE_PRODUCT_COUNT;
+
+          final Random r = new Random(47605);
+          IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
+              .forEach(
+                  i -> {
+                    final int seller = r.nextInt(peopleCount);
+                    int buyer;
+                    do {
+                      buyer = r.nextInt(peopleCount);
+                    } while (buyer == seller);
+                    tm.add(
+                        "Sales",
+                        i,
+                        String.valueOf(seller),
+                        String.valueOf(buyer),
+                        LocalDate.now().plusDays(-r.nextInt(7)),
+                        (long) r.nextInt(productCount));
+                  });
+        });
+  }
+}

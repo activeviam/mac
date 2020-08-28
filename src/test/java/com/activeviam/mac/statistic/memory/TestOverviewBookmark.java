@@ -1,3 +1,10 @@
+/*
+ * (C) ActiveViam 2020
+ * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
+ * property of ActiveViam. Any unauthorized use,
+ * reproduction or transfer of this material is strictly prohibited
+ */
+
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -15,7 +22,7 @@ import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class TestOverviewBookmark extends ATestOnMonitoringApp {
+public class TestOverviewBookmark extends ASingleAppMonitoringTest {
 
   public static final int ADDED_DATA_SIZE = 20;
 
@@ -51,7 +58,7 @@ public class TestOverviewBookmark extends ATestOnMonitoringApp {
 
     final StatisticsSummary summary = computeStatisticsSummary(statistics);
 
-    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
+    Assertions.assertThat(CellSetUtils.<Long>extractValueFromSingleCellDTO(totalResult))
         .isEqualTo(summary.offHeapMemory);
   }
 
@@ -87,8 +94,10 @@ public class TestOverviewBookmark extends ATestOnMonitoringApp {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-            CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.<Long>extractValuesFromCellSetDTO(perOwnerResult)
+            .stream().reduce(0L, Long::sum)
+            - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessMemoryResult)
+            .longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
   }
 
@@ -127,8 +136,10 @@ public class TestOverviewBookmark extends ATestOnMonitoringApp {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-            CellSetUtils.sumValuesFromCellSetDTO(perComponentStoreResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.<Long>extractValuesFromCellSetDTO(perComponentStoreResult)
+            .stream().reduce(0L, Long::sum)
+            - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessMemoryResult)
+            .longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(storeTotalResult));
   }
 
@@ -167,8 +178,10 @@ public class TestOverviewBookmark extends ATestOnMonitoringApp {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-        CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
-            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.<Long>extractValuesFromCellSetDTO(perComponentCubeResult)
+            .stream().reduce(0L, Long::sum)
+            - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessMemoryResult)
+            .longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
   }
 }

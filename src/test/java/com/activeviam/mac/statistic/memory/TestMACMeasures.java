@@ -1,9 +1,17 @@
+/*
+ * (C) ActiveViam 2020
+ * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
+ * property of ActiveViam. Any unauthorized use,
+ * reproduction or transfer of this material is strictly prohibited
+ */
+
 package com.activeviam.mac.statistic.memory;
 
 import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.statistic.memory.descriptions.Application;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplication;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -21,6 +29,7 @@ import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.QuartetRuntimeException;
 import com.quartetfs.fwk.query.QueryException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
@@ -35,7 +44,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Tools.extractSnappyFile(path to file);
  */
-public class TestMACMeasures extends ATestOnMonitoringApp {
+public class TestMACMeasures extends ASingleAppMonitoringTest {
 
   public static final int ADDED_DATA_SIZE = 100;
   public static final int REMOVED_DATA_SIZE = 10;
@@ -50,7 +59,7 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
   @Override
   protected IActivePivotManagerDescription managerDescription(
       IDatastoreSchemaDescription datastoreSchema) {
-    return MicroApplication.managerDescription(datastoreSchema);
+    return Application.cubelessManagerDescription();
   }
 
   @Override
@@ -124,7 +133,10 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions
+        .assertThat(CellSetUtils.<Long>extractValuesFromCellSetDTO(res3).stream()
+            .reduce(0L, Long::sum))
+        .isEqualTo(value);
     // Check that the summed value corresponds to the Exported sum
     final StatisticsSummary statsSumm = computeStatisticsSummary(statistics);
     Assertions.assertThat(statsSumm.offHeapMemory).isEqualTo(value);
@@ -132,7 +144,6 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
-
     final IMultiVersionActivePivot pivot =
         monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -164,7 +175,9 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
-    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
+    Assertions.assertThat(CellSetUtils.<Long>extractValuesFromCellSetDTO(res3).stream()
+    .reduce(0L, Long::sum))
+        .isEqualTo(value);
 
     /*
      * On-heap memory usage by chunks is not consistent with application on-heap
@@ -187,8 +200,8 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
-        .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE);
+    Assertions.assertThat(CellSetUtils.<Long>extractValuesFromCellSetDTO(res))
+        .contains((long) MicroApplication.CHUNK_SIZE);
   }
 
   @Test
@@ -205,8 +218,8 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
-        .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE - ADDED_DATA_SIZE);
+    Assertions.assertThat(CellSetUtils.<Long>extractValuesFromCellSetDTO(res))
+        .contains((long) MicroApplication.CHUNK_SIZE - ADDED_DATA_SIZE);
   }
 
   @Test
@@ -297,8 +310,8 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
-        .contains((double) REMOVED_DATA_SIZE);
+    Assertions.assertThat(CellSetUtils.<Long>extractValuesFromCellSetDTO(res))
+        .contains((long) REMOVED_DATA_SIZE);
   }
 
   @Test
@@ -330,18 +343,18 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
-    final Double[] nonWrittenRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
-    final Double[] nonWrittenRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
+    final List<Long> chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final List<Long> nonWrittenRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final List<Double> nonWrittenRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
-    for (int i = 0; i < chunkSizes.length; i++) {
-      Assertions.assertThat(nonWrittenRatio[i]).isEqualTo(nonWrittenRows[i] / chunkSizes[i]);
+    for (int i = 0; i < chunkSizes.size(); i++) {
+      Assertions.assertThat(nonWrittenRatio.get(i))
+          .isEqualTo((double) nonWrittenRows.get(i) / chunkSizes.get(i));
     }
   }
 
   @Test
   public void testDeletedRatio() throws QueryException {
-
     final IMultiVersionActivePivot pivot =
         monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -368,12 +381,13 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
-    final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
-    final Double[] DeletedRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
-    final Double[] DeletedRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
+    final List<Long> chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
+    final List<Long> deletedRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
+    final List<Double> deletedRatio = CellSetUtils.extractValuesFromCellSetDTO(res3);
 
-    for (int i = 0; i < chunkSizes.length; i++) {
-      Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i] / chunkSizes[i]);
+    for (int i = 0; i < chunkSizes.size(); i++) {
+      Assertions.assertThat(deletedRatio.get(i))
+          .isEqualTo((double) deletedRows.get(i) / chunkSizes.get(i));
     }
   }
 
@@ -486,10 +500,10 @@ public class TestMACMeasures extends ATestOnMonitoringApp {
 
     CellSetDTO expectedResult = pivot.execute(verificationQuery);
 
-    final Double[] counts = CellSetUtils.extractValuesFromCellSetDTO(countResult);
-    final Double[] expectedCounts = CellSetUtils.extractValuesFromCellSetDTO(expectedResult);
+    final List<Double> counts = CellSetUtils.extractValuesFromCellSetDTO(countResult);
+    final List<Double> expectedCounts = CellSetUtils.extractValuesFromCellSetDTO(expectedResult);
 
-    Assertions.assertThat(counts).containsExactly(expectedCounts);
+    Assertions.assertThat(counts).containsExactlyElementsOf(expectedCounts);
   }
 
   private static Map<String, Long> extractApplicationStats(
