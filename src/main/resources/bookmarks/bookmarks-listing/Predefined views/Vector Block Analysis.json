@@ -6,17 +6,16 @@
       "content" : [ {
         "key" : "0",
         "bookmark" : {
-          "name" : "Per-field Analysis",
+          "name" : "Vector Field Analysis",
           "type" : "container",
           "value" : {
             "style" : { },
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Stores].[Store].[ALL].[AllMember])), [Fields].[Field].[Field].Members, Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Stores].[Store].[Store].Members, [Fields].[Field].[Field].Members)) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
-              "refreshInterval" : 10,
               "ranges" : {
                 "row" : {
                   "chunkSize" : 2000,
@@ -56,10 +55,6 @@
                   } ],
                   "hideAddButton" : true,
                   "defaultOptions" : { },
-                  "columns" : [ {
-                    "key" : "[Measures].[DirectMemory.SUM]",
-                    "width" : 153
-                  } ],
                   "expansion" : {
                     "automaticExpansion" : true
                   }
@@ -71,35 +66,9 @@
           "writable" : true
         }
       }, {
-        "key" : "2",
+        "key" : "1",
         "bookmark" : {
-          "name" : "Partition filter",
-          "type" : "container",
-          "value" : {
-            "style" : { },
-            "showTitleBar" : true,
-            "body" : {
-              "configuration" : {
-                "displayedAsSelect" : true,
-                "multipleSelection" : false
-              },
-              "filterKey" : "explicit",
-              "levelDetails" : {
-                "cube" : "MemoryCube",
-                "dimension" : "Chunk Owners",
-                "hierarchy" : "Owner",
-                "level" : "Partition",
-                "caption" : "Partition"
-              }
-            },
-            "containerKey" : "quick-filter"
-          },
-          "writable" : true
-        }
-      }, {
-        "key" : "3",
-        "bookmark" : {
-          "name" : "Store filter",
+          "name" : "Store Filter",
           "type" : "container",
           "value" : {
             "style" : { },
@@ -121,20 +90,45 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Partition Filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Chunk Owners",
+                "hierarchy" : "Owner",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
             "children" : {
               "0" : {
-                "ck" : "3"
+                "ck" : "1"
               },
               "1" : {
                 "ck" : "2"
               }
             },
-            "size" : 0.19,
-            "direction" : "column"
+            "direction" : "column",
+            "size" : 0.19
           },
           "1" : {
             "ck" : "0",
@@ -143,7 +137,7 @@
         },
         "direction" : "column"
       },
-      "name" : "Field analysis",
+      "name" : "Vector field analysis",
       "filters" : {
         "MemoryCube" : [ ]
       }
