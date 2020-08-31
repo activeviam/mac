@@ -80,7 +80,7 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends
   }
 
   @Override
-  protected void loadStatisticsIntoDatastore(
+  protected void feedStatisticsIntoDatastore(
       final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
     // do nothing here so we can do the loading inside the test instead
   }
@@ -89,6 +89,6 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends
   public void testLoading() {
     Assertions
         .assertDoesNotThrow(
-            () -> super.loadStatisticsIntoDatastore(statistics, monitoringDatastore));
+            () -> super.feedStatisticsIntoDatastore(statistics, monitoringDatastore));
   }
 }

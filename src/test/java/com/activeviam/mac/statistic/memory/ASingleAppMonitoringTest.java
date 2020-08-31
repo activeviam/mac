@@ -26,9 +26,7 @@ public abstract class ASingleAppMonitoringTest extends AMonitoringTest {
     setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
         this::beforeExport);
     setupMac();
-
-    statistics = loadMemoryStatistic(statisticsPath);
-    loadStatisticsIntoDatastore(statistics, monitoringDatastore);
+    loadAndImportStatistics();
   }
 
   protected abstract IDatastoreSchemaDescription datastoreSchema();

@@ -948,7 +948,6 @@ public abstract class ATestMemoryStatistic {
                 .build());
 
     assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
-
     checkForUnclassifiedChunks(monitoringDatastore);
     checkForUnrootedChunks(monitoringDatastore);
 

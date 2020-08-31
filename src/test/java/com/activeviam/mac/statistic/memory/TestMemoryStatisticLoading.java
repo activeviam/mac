@@ -6,203 +6,267 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static org.junit.Assert.assertNotEquals;
 
+import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.statistic.memory.descriptions.Application;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplication;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationWithVectors;
 import com.qfs.condition.impl.BaseConditions;
+import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
+import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.IDictionaryCursor;
+import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.fwk.util.impl.TruePredicate;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
-public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
+public class TestMemoryStatisticLoading {
 
-  /**
-   * Assert the number of offheap chunks by filling the datastore used for monitoring AND doing a
-   * query on it for counting. Comparing the value from counting from {@link IMemoryStatistic}.
-   */
-  @Test
-  public void testLoadDatastoreStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
+  public static abstract class AGivenFullApplication extends ASingleAppMonitoringTest {
+    @Override
+    protected IDatastoreSchemaDescription datastoreSchema() {
+      return FullApplication.datastoreDescription();
+    }
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-          final Collection<IMemoryStatistic> storeStats =
-              loadDatastoreMemoryStatFromFolder(exportPath);
-          assertNotEquals(0, storeStats.size());
-          assertLoadsCorrectly(storeStats, getClass());
-        });
+    @Override
+    protected IActivePivotManagerDescription managerDescription(
+        IDatastoreSchemaDescription datastoreSchema) {
+      return FullApplication.managerDescription(datastoreSchema);
+    }
+
+    @Override
+    protected void beforeExport(
+        IDatastore datastore, IActivePivotManager manager) {
+      FullApplication.fill(datastore);
+    }
+
+    @Override
+    protected void loadAndImportStatistics() {
+      // disable statistics loading, as it is to be tested
+    }
   }
 
-  public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
-    createApplicationWithVector(
-        duplicateVectors,
-        (monitoredDatastore, monitoredManager) -> {
-          commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
+  @Nested
+  public class GivenFullApplication extends AGivenFullApplication {
+    @Test
+    public void testLoadDatastoreStats() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath, path ->
+          path.getFileName().toString()
+              .startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath =
-              analysisService.exportMostRecentVersion(
-                  "doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
-          final Collection<IMemoryStatistic> datastoreStats =
-              loadDatastoreMemoryStatFromFolder(exportPath);
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+    }
 
-          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+    @Test
+    public void testLoadPivotStats() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath, path ->
+          path.getFileName().toString()
+              .startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-          // Test that we have the correct count of vector blocks
-          final IDictionaryCursor cursor =
-              monitoringDatastore
-                  .getHead()
-                  .getQueryRunner()
-                  .forStore(CHUNK_STORE)
-                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
-                  .selecting(CHUNK_ID)
-                  .onCurrentThread()
-                  .run();
-          final Set<Long> storeIds =
-              StreamSupport.stream(cursor.spliterator(), false)
-                  .map(record -> record.readLong(0))
-                  .collect(Collectors.toSet());
-          Assertions.assertThat(storeIds).isNotEmpty();
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+    }
 
-          final Set<Long> statIds = new HashSet<>();
-          datastoreStats.forEach(
-              stat ->
-                  stat.accept(
-                      new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
-                        @Override
-                        protected Void getResult() {
-                          return null;
-                        }
+    @Test
+    public void testLoadFullStats() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath);
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-                        @Override
-                        protected boolean match(final IMemoryStatistic statistic) {
-                          if (statistic
-                              .getName()
-                              .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-                            statIds.add(
-                                statistic
-                                    .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
-                                    .asLong());
-                          }
-                          return true; // Iterate over every item
-                        }
-                      }));
-          Assertions.assertThat(storeIds).isEqualTo(statIds);
-        });
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+    }
   }
 
-  @Test
-  public void testLoadPivotStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
+  @Nested
+  public class GivenFullApplicationWithBranches extends AGivenFullApplication {
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
-          final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
-          assertNotEquals(0, pivotStats.size());
-          assertLoadsCorrectly(pivotStats, getClass());
-        });
+    @Override
+    protected void beforeExport(
+        IDatastore datastore, IActivePivotManager manager) {
+      Set<String> branchSet = new HashSet<>();
+      branchSet.add("branch1");
+      branchSet.add("branch2");
+
+      FullApplication.fillWithBranches(monitoredDatastore, branchSet);
+    }
+
+    @Override
+    protected void exportApplicationMemoryStatistics(
+        IDatastore datastore, IActivePivotManager manager, Path exportPath) {
+      final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
+          datastore, manager, datastore.getEpochManager(), exportPath);
+      statisticsPath = analysisService
+          .exportBranches("memoryStatistics", Set.of("branch1", "branch2", "master"));
+    }
+
+    @Test
+    public void testLoadFullStatsWithBranches() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath);
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
+
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+    }
   }
 
-  @Test
-  public void testLoadFullStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
+  @Nested
+  public class GivenFullApplicationWithEpochs extends AGivenFullApplication {
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadFullStats");
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
+    @Override
+    protected void beforeExport(
+        IDatastore datastore, IActivePivotManager manager) {
+      Set<String> branchSet = new HashSet<>();
+      branchSet.add("branch1");
+      branchSet.add("branch2");
+
+      FullApplication.fill(monitoredDatastore);
+      FullApplication.fillWithBranches(monitoredDatastore, branchSet);
+    }
+
+    @Override
+    protected void exportApplicationMemoryStatistics(
+        IDatastore datastore, IActivePivotManager manager, Path exportPath) {
+      final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
+          datastore, manager, datastore.getEpochManager(), exportPath);
+      statisticsPath = analysisService
+          .exportVersions("memoryStatistics", new long[] {1L, 2L});
+    }
+
+    @Test
+    public void testLoadFullStatsWithBranches() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath);
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
+
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+    }
   }
 
-  @Test
-  public void testLoadFullStatsWithBranches() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          Set<String> branchSet = new HashSet<>();
-          branchSet.add("branch1");
-          branchSet.add("branch2");
+  public abstract static class AGivenFullApplicationWithVectors extends ASingleAppMonitoringTest {
 
-          fillApplicationWithBranches(monitoredDatastore, branchSet, false);
+    @Override
+    protected IDatastoreSchemaDescription datastoreSchema() {
+      return FullApplicationWithVectors.datastoreDescription();
+    }
 
-          // Also export master (?)
-          branchSet.add("master");
+    @Override
+    protected IActivePivotManagerDescription managerDescription(
+        IDatastoreSchemaDescription datastoreSchema) {
+      return Application.cubelessManagerDescription();
+    }
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
+    @Override
+    protected void loadAndImportStatistics() {
+      // disable statistics loading, as it is to be tested
+    }
+
+    protected void assertVectorBlockConsistency() {
+      final Set<Long> storeIds = gatherChunkIdsFromMonitoringApp();
+      Assertions.assertThat(storeIds).isNotEmpty();
+
+      final Set<Long> statIds = gatherChunkIdsFromStatistics();
+      Assertions.assertThat(storeIds).isNotEmpty();
+
+      Assertions.assertThat(storeIds).isEqualTo(statIds);
+    }
+
+    protected Set<Long> gatherChunkIdsFromMonitoringApp() {
+      final IDictionaryCursor cursor =
+          monitoringDatastore
+              .getHead()
+              .getQueryRunner()
+              .forStore(DatastoreConstants.CHUNK_STORE)
+              .withCondition(BaseConditions
+                  .Equal(DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
+              .selecting(DatastoreConstants.CHUNK_ID)
+              .onCurrentThread()
+              .run();
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(record -> record.readLong(0))
+          .collect(Collectors.toSet());
+    }
+
+    protected Set<Long> gatherChunkIdsFromStatistics() {
+      final Set<Long> chunkIds = new HashSet<>();
+      statistics.forEach(
+          stat ->
+              stat.accept(
+                  new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
+                    @Override
+                    protected Void getResult() {
+                      return null;
+                    }
+
+                    @Override
+                    protected boolean match(final IMemoryStatistic statistic) {
+                      if (statistic
+                          .getName()
+                          .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+                        chunkIds.add(
+                            statistic
+                                .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
+                                .asLong());
+                      }
+                      return true; // Iterate over every item
+                    }
+                  }));
+      return chunkIds;
+    }
   }
 
-  @Test
-  public void testLoadFullStatsWithEpochs() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          Set<String> branchSet = new HashSet<>();
-          branchSet.add("branch1");
-          branchSet.add("branch2");
-          fillApplication(monitoredDatastore);
-          fillApplicationWithBranches(monitoredDatastore, branchSet, true);
+  @Nested
+  public class GivenFullApplicationWithVectorsWithoutDuplicates extends AGivenFullApplicationWithVectors {
+    @Override
+    protected void beforeExport(
+        IDatastore datastore, IActivePivotManager manager) {
+      FullApplicationWithVectors.fill(datastore);
+    }
 
-          long epochs[] = new long[2];
-          epochs[0] = 1L;
-          epochs[1] = 2L;
+    @Test
+    public void testLoad() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath);
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportVersions("testLoadFullStats", epochs);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+      assertVectorBlockConsistency();
+    }
   }
 
-  @Test
-  public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(false);
-  }
+  @Nested
+  public class GivenFullApplicationWithVectorsWithDuplicates extends AGivenFullApplicationWithVectors {
+    @Override
+    protected void beforeExport(
+        IDatastore datastore, IActivePivotManager manager) {
+      FullApplicationWithVectors.fillWithDuplicates(datastore);
+    }
 
-  @Test
-  public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(true);
-  }
+    @Test
+    public void testLoad() throws IOException {
+      statistics = loadMemoryStatistic(statisticsPath);
+      feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-  /**
-   * Asserts the chunks number and off-heap memory as computed from the loaded datastore are
-   * consistent with the ones computed by visiting the statistic.
-   *
-   * @param statistic
-   */
-  protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
-    assertLoadsCorrectly(Collections.singleton(statistic), getClass());
+      assertNotEquals(0, statistics.size());
+      assertStatisticsConsistency();
+      assertVectorBlockConsistency();
+    }
   }
 }
