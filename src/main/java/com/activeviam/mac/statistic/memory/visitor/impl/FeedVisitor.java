@@ -100,23 +100,13 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       final IRecordFormat format,
       final ChunkStatistic stat,
       final ChunkOwner owner,
-      final String dumpName) {
+      final String dumpName,
+      final ParentType component) {
     final Object[] tuple = new Object[format.getFieldCount()];
     tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
     tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-    return tuple;
-  }
-
-  static Object[] buildComponentTupleFrom(
-      final IRecordFormat format,
-      final ChunkStatistic stat,
-      final ParentType componentType,
-      final String dumpName) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__CHUNK_ID)] = stat.getChunkId();
-    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__COMPONENT)] = componentType;
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__COMPONENT)] = component;
     return tuple;
   }
 

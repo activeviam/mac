@@ -24,7 +24,6 @@ import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -431,7 +430,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // --------------------
     // 4- Chunk to owners
     CopperStore chunkToOwnerStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+        Copper.store(DatastoreConstants.OWNER_STORE)
             .joinToCube(JoinType.LEFT)
             .withDefaultValue(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance())
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
@@ -442,19 +441,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
             .publish(context);
 
-    // --------------------
-    // 5- Chunk to components
-    CopperStore chunkToComponentStore =
-        Copper.store(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
-            .joinToCube()
-            .withDefaultValue(DatastoreConstants.COMPONENT__COMPONENT, ParentType.NO_COMPONENT)
-            .withMapping(DatastoreConstants.COMPONENT__CHUNK_ID, CHUNK_ID_HIERARCHY)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
     CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy(
-                COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
-            .from(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT))
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 
     // --------------------

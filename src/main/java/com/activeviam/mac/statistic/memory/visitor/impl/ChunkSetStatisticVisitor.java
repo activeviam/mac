@@ -193,16 +193,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
       final Object[] ownerTuple =
-          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName);
+          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
+              this.rootComponent);
       FeedVisitor.add(
-          chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
-
-      final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
-      final Object[] componentTuple =
-          FeedVisitor.buildComponentTupleFrom(
-              componentFormat, chunkStatistic, this.rootComponent, this.dumpName);
-      FeedVisitor.add(
-          chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_COMPONENT_STORE, componentTuple);
+          chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);

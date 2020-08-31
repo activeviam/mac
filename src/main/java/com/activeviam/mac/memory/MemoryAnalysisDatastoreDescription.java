@@ -152,34 +152,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   /**
    * Description of the chunk store.
    *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_OWNER_STORE}
+   * @return description of {@link DatastoreConstants#OWNER_STORE}
    */
-  protected IStoreDescription chunkToOwnerStore() {
+  protected IStoreDescription ownerStore() {
     return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+        .withStoreName(DatastoreConstants.OWNER_STORE)
         .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
         .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .build();
-  }
-
-  /**
-   * Description of the chunk store.
-   *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_COMPONENT_STORE}
-   */
-  protected IStoreDescription chunkToComponentStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
-        .withField(DatastoreConstants.COMPONENT__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.COMPONENT__COMPONENT, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
-        .asKeyField()
+        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
         .build();
   }
 
@@ -418,8 +402,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
-        chunkToOwnerStore(),
-        chunkToComponentStore(),
+        ownerStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),

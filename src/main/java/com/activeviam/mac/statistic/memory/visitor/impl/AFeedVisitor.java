@@ -130,21 +130,10 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * Returns the {@link IRecordFormat} of the owner store.
    *
    * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#CHUNK_TO_OWNER_STORE} record format
+   * @return the {@link DatastoreConstants#OWNER_STORE} record format
    */
   protected static IRecordFormat getOwnerFormat(IDatastoreSchemaMetadata storageMetadata) {
-    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_TO_OWNER_STORE);
-  }
-
-  /**
-   * Returns the {@link IRecordFormat} of the component store.
-   *
-   * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#CHUNK_TO_COMPONENT_STORE} record format
-   */
-  protected static IRecordFormat getComponentFormat(IDatastoreSchemaMetadata storageMetadata) {
-    return FeedVisitor.getRecordFormat(
-        storageMetadata, DatastoreConstants.CHUNK_TO_COMPONENT_STORE);
+    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.OWNER_STORE);
   }
 
   /**

@@ -264,7 +264,7 @@ public class DatastoreConstants {
   public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
   /** The name of the store of chunk owners. */
-  public static final String CHUNK_TO_OWNER_STORE = "ChunkToOwner";
+  public static final String OWNER_STORE = "Owner";
 
   /** The chunk ID field in the store of chunk owners. */
   public static final String OWNER__CHUNK_ID = CHUNK_ID;
@@ -272,14 +272,8 @@ public class DatastoreConstants {
   /** The owner field in the store of chunk owners. */
   public static final String OWNER__OWNER = CHUNK__OWNER;
 
-  /** The name of the store of chunk components. */
-  public static final String CHUNK_TO_COMPONENT_STORE = "ChunkToComponent";
-
-  /** The chunk ID field in the store of chunk components. */
-  public static final String COMPONENT__CHUNK_ID = CHUNK_ID;
-
   /** The component field in the store of chunk components. */
-  public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
+  public static final String OWNER__COMPONENT = CHUNK__COMPONENT;
 
   /** The chunk ID field in the store of fields. */
   public static final String FIELD__CHUNK_ID = CHUNK_ID;
