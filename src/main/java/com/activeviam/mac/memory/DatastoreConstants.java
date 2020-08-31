@@ -235,9 +235,9 @@ public class DatastoreConstants {
   public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
   /** Field for the vector block length of the chunk, if relevant. */
-  public static final String VECTOR_BLOCK__LENGTH = "vectorBlockLength";
+  public static final String CHUNK__VECTOR_BLOCK_LENGTH = "vectorBlockLength";
   /** Field for the vector block reference count of the chunk, if relevant. */
-  public static final String VECTOR_BLOCK__REFERENCE_COUNT = "vectorBlockRefCount";
+  public static final String CHUNK__VECTOR_BLOCK_REF_COUNT = "vectorBlockRefCount";
 
   /** Name of the store for joining chunk and level data. */
   public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";

@@ -142,8 +142,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
-        .withNullableField(DatastoreConstants.VECTOR_BLOCK__LENGTH, ILiteralType.LONG)
-        .withNullableField(DatastoreConstants.VECTOR_BLOCK__REFERENCE_COUNT, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();

@@ -561,13 +561,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("MaxMemory.Ratio")
         .publish(context);
 
-    Copper.sum(DatastoreConstants.VECTOR_BLOCK__REFERENCE_COUNT)
+    Copper.sum(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
         .per(Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
         .as("VectorBlock.RefCount")
         .publish(context);
 
-    Copper.max(DatastoreConstants.VECTOR_BLOCK__LENGTH)
+    Copper.max(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
         .per(Copper.level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
         .as("VectorBlock.Length")

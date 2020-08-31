@@ -28,6 +28,7 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -177,15 +178,13 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (!this.fields.isEmpty()) {
+    if (this.fields != null) {
       writeFieldRecordsForChunk(chunkStatistic);
 
       // todo vlg clear this if obsolete
-      FeedVisitor.setTupleElement(
-          tuple,
-          chunkRecordFormat,
-          DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
-          this.fields.peek().iterator().next());
+      FeedVisitor
+          .setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
+              retrieveUniqueField());
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(
@@ -322,17 +321,17 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.rootComponent = ParentType.INDEX;
 
     final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
+    final Collection<String> oldFields = this.fields;
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
-    this.fields.push(List.of(fieldNames));
+    this.fields = List.of(fieldNames);
 
     visitChildren(stat);
 
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
-
-    this.fields.pop();
+    this.fields = oldFields;
 
     // Reset
     this.indexId = null;
@@ -354,29 +353,30 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
+    final ParentType previousParentType = this.directParentType;
+    final String previousParentId = this.directParentId;
+    this.directParentType = ParentType.DICTIONARY;
+    this.directParentId = String.valueOf(this.dictionaryId);
+
+    Collection<String> oldFields = null;
     final IStatisticAttribute fieldAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
 
     final boolean isFieldSpecified = fieldAttr != null;
     if (isFieldSpecified) {
-      this.fields.push(Collections.singleton(fieldAttr.asText()));
+      oldFields = this.fields;
+      this.fields = Collections.singleton(fieldAttr.asText());
     }
-
-    final ParentType previousParentType = this.directParentType;
-    final String previousParentId = this.directParentId;
-    this.directParentType = ParentType.DICTIONARY;
-    this.directParentId = String.valueOf(this.dictionaryId);
 
     visitChildren(stat);
 
     // Reset
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
-
     this.dictionaryId = null;
 
     if (isFieldSpecified) {
-      this.fields.pop();
+      this.fields = oldFields;
     }
 
     return null;

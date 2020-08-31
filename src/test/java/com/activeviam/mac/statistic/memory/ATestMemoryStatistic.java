@@ -52,6 +52,7 @@ import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
+import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import com.quartetfs.fwk.AgentException;
@@ -831,21 +832,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription userManagerDescription =
-        StartBuilding.managerDescription()
-            .withSchema()
-            .withSelection(
-                StartBuilding.selection(schemaDescription)
-                    .fromBaseStore("A")
-                    .withAllFields()
-                    .build())
-            .withCube(
-                StartBuilding.cube("Cube")
-                    .withContributorsCount()
-                    .withSingleLevelDimension("id")
-                    .asDefaultHierarchy()
-                    .build())
-            .build();
+    final IActivePivotManagerDescription userManagerDescription = new ActivePivotManagerDescription();
 
     final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);

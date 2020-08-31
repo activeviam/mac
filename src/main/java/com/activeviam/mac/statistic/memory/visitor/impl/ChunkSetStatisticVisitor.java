@@ -28,6 +28,7 @@ import com.qfs.store.impl.ChunkSet;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -117,16 +118,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
       boolean isFieldSpecified =
           memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD);
+      Collection<String> oldFields = null;
       if (isFieldSpecified) {
         final IStatisticAttribute fieldAttribute =
             memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-        this.fields.push(Collections.singleton(fieldAttribute.asText()));
+        oldFields = this.fields;
+        this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
       FeedVisitor.visitChildren(this, memoryStatistic);
 
       if (isFieldSpecified) {
-        this.fields.pop();
+        this.fields = oldFields;
       }
     } else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
 
@@ -177,10 +180,13 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     } else {
       final boolean isFieldSpecified =
           chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET);
+      Collection<String> oldFields = null;
+
       if (isFieldSpecified) {
         final IStatisticAttribute fieldAttribute =
             chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-        this.fields.add(Collections.singleton(fieldAttribute.asText()));
+        oldFields = this.fields;
+        this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
       final ChunkOwner owner = new StoreOwner(this.store);
@@ -226,13 +232,13 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
       }
-      if (!this.fields.isEmpty()) {
+      if (this.fields != null) {
         writeFieldRecordsForChunk(chunkStatistic);
 
         // todo vlg clear this if obsolete
         FeedVisitor.setTupleElement(
             tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
-            this.fields.peek().iterator().next());
+            retrieveUniqueField());
       }
       if (this.store != null) {
         FeedVisitor.setTupleElement(
@@ -263,7 +269,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       visitChildren(chunkStatistic);
 
       if (isFieldSpecified) {
-        this.fields.pop();
+        this.fields = oldFields;
       }
     }
     return null;
