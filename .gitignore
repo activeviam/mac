@@ -5,3 +5,15 @@
 /statistics/*
 !/statistics/README.txt
 target
+
+# misc. IDE config files
+.project
+.settings/
+.classpath
+*.iml
+.idea/
+.externalToolBuilders
+.metadata
+.recommenders
+.vscode
+.factorypath
