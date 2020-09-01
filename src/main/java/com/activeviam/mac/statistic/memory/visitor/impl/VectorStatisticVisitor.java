@@ -43,6 +43,9 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The partition id of the visited statistic. */
   protected final int partitionId;
 
+  protected final Long epochId;
+  protected final String branch;
+
   /**
    * Constructor.
    *
@@ -61,12 +64,16 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final Instant current,
       final String store,
       final Collection<String> fields,
-      final int partitionId) {
+      final int partitionId,
+      final Long epochId,
+      final String branch) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
     this.fields = fields;
     this.partitionId = partitionId;
+    this.epochId = epochId;
+    this.branch = branch;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -184,6 +191,11 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
     if (this.referenceId != null) {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);

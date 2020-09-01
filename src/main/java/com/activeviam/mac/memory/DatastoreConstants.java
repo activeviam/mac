@@ -166,6 +166,12 @@ public class DatastoreConstants {
   /** Import name field. */
   public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
 
+  /** The epoch corresponding to the chunk. */
+  public static final String VERSION__EPOCH_ID = "epochId";
+
+  /** The branch corresponding to the chunk. */
+  public static final String VERSION__BRANCH = "branch";
+
   // ## REFERENCES_STORE ## Field names of the Reference store
 
   /** Reference name field. */

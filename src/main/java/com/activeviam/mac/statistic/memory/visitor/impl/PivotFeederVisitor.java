@@ -210,6 +210,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
@@ -267,6 +271,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
 
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -427,7 +436,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.rootComponent = ParentType.LEVEL;
 
     final LevelStatisticVisitor levelVisitor =
-        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName);
+        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
+            this.epochId, this.branch);
     levelVisitor.analyse(stat);
 
     this.directParentType = previousParentType;
@@ -490,7 +500,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
               this.current,
               this.pivot,
               null,
-              this.partition);
+              this.partition,
+              this.epochId,
+              this.branch);
       subVisitor.process(statistic);
     } else {
       FeedVisitor.visitChildren(this, statistic);

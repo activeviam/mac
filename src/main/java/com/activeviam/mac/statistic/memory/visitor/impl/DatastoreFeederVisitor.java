@@ -158,6 +158,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     }
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.setTupleElement(
         tuple,
@@ -248,17 +252,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-            this.storageMetadata,
-            this.transaction,
-            this.dumpName,
-            this.current,
-            this.store,
-            this.rootComponent,
-            this.directParentType,
-            this.directParentId,
-            this.partitionId,
-            this.indexId,
-            this.referenceId)
+        this.storageMetadata,
+        this.transaction,
+        this.dumpName,
+        this.current,
+        this.store,
+        this.rootComponent,
+        this.directParentType,
+        this.directParentId,
+        this.partitionId,
+        this.indexId,
+        this.referenceId,
+        this.epochId,
+        this.branch)
         .visit(stat);
   }
 
@@ -278,6 +284,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_CLASS).asText();
     FeedVisitor.setTupleElement(
         tuple, refStoreFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, refStoreFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, refStoreFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(
         referenceStatistic, this.transaction, DatastoreConstants.REFERENCE_STORE, tuple);
@@ -311,6 +321,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
@@ -350,6 +365,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 

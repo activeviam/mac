@@ -51,6 +51,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The partition id of the visited statistic. */
   protected final int partitionId;
 
+  /** The epoch id we are currently reading statistics for. */
+  protected Long epochId = null;
+  /** Branch owning {@link #epochId}. */
+  protected String branch = null;
+
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
 
@@ -84,7 +89,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final String parentId,
       final int partitionId,
       final Long indexId,
-      final Long referenceId) {
+      final Long referenceId,
+      final Long epochId,
+      final String branch) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
@@ -94,6 +101,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.partitionId = partitionId;
     this.indexId = indexId;
     this.referenceId = referenceId;
+    this.epochId = epochId;
+    this.branch = branch;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -214,6 +223,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
       FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
       FeedVisitor.setTupleElement(
@@ -302,7 +315,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             this.current,
             this.store,
             this.fields,
-            this.partitionId);
+            this.partitionId,
+            this.epochId,
+            this.branch);
     subVisitor.process(memoryStatistic);
   }
 

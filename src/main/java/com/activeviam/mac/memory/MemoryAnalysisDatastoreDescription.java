@@ -103,6 +103,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Foreign keys */
         .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
@@ -113,6 +115,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__PARENT_ID)
         .withField(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ILiteralType.OBJECT)
+        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         // Add 5 fields corresponding to the closest parent Id for a given type of parent
         .withField(
             DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG, DEFAULT_COMPONENT_ID_VALUE)
@@ -195,6 +198,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
+
         /* Foreign keys */
         .withField(DatastoreConstants.REFERENCE_FROM_STORE)
         .withField(
@@ -209,6 +215,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         /* Attributes */
         .withField(DatastoreConstants.REFERENCE_NAME)
         .withField(DatastoreConstants.REFERENCE_CLASS)
+        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -224,6 +231,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Attributes */
         .withField(
@@ -231,6 +240,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
+        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -246,11 +256,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Attributes */
         .withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
         .withField(DatastoreConstants.DICTIONARY_CLASS)
+        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -274,6 +287,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Attributes */
         .withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
@@ -282,6 +297,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
         .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
         // TODO(ope) this is a base unit, introduce some versioning with the dump
+        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -343,6 +359,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG)
         .asKeyField()
+
         /* Attributes */
         .withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
         .asKeyField()
