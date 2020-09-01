@@ -13,6 +13,7 @@ import com.qfs.store.IDatastore;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.fwk.AgentException;
+import com.quartetfs.fwk.IPair;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -31,12 +32,14 @@ public abstract class ASingleAppMonitoringTest extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    final ExportedApplication monitoredApplication = setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        this::beforeExport);
-    monitoredDatastore = monitoredApplication.monitoredDatastore;
-    monitoredManager = monitoredApplication.monitoredManager;
-    statisticsPath = monitoredApplication.statisticsPath;
+    final IPair<IDatastore, IActivePivotManager> monitoredApplication =
+        setupMonitoredApplication(datastoreSchemaDescription, managerDescription);
+    monitoredDatastore = monitoredApplication.getLeft();
+    monitoredManager = monitoredApplication.getRight();
 
+    beforeExport(monitoredDatastore, monitoredManager);
+
+    statisticsPath = exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager);
     setupMac();
     statistics = loadAndImportStatistics(statisticsPath);
   }

@@ -6,8 +6,6 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static org.junit.Assert.assertNotEquals;
-
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.descriptions.Application;
@@ -18,6 +16,8 @@ import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
+import com.qfs.multiversion.IEpochManagementPolicy;
+import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
@@ -73,7 +74,7 @@ public class TestMemoryStatisticLoading {
               .startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
     }
 
@@ -84,7 +85,7 @@ public class TestMemoryStatisticLoading {
               .startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
     }
 
@@ -93,7 +94,7 @@ public class TestMemoryStatisticLoading {
       statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
     }
   }
@@ -112,12 +113,13 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected Path exportApplicationMemoryStatistics(
-        IDatastore datastore, IActivePivotManager manager, Path exportPath) {
-      final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-          datastore, manager, datastore.getEpochManager(), exportPath);
-      return analysisService
-          .exportBranches("memoryStatistics", Set.of("branch1", "branch2", "master"));
+    protected IEpochManagementPolicy epochManagementPolicy() {
+      return new KeepAllEpochPolicy();
+    }
+
+    @Override
+    protected BiFunction<IMemoryAnalysisService, String, Path> exportFunction() {
+      return IMemoryAnalysisService::exportApplication;
     }
 
     @Test
@@ -125,7 +127,7 @@ public class TestMemoryStatisticLoading {
       statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
     }
   }
@@ -145,12 +147,13 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected Path exportApplicationMemoryStatistics(
-        IDatastore datastore, IActivePivotManager manager, Path exportPath) {
-      final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-          datastore, manager, datastore.getEpochManager(), exportPath);
-      return analysisService
-          .exportVersions("memoryStatistics", new long[] {1L, 2L});
+    protected IEpochManagementPolicy epochManagementPolicy() {
+      return new KeepAllEpochPolicy();
+    }
+
+    @Override
+    protected BiFunction<IMemoryAnalysisService, String, Path> exportFunction() {
+      return IMemoryAnalysisService::exportApplication;
     }
 
     @Test
@@ -158,7 +161,7 @@ public class TestMemoryStatisticLoading {
       statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
     }
   }
@@ -249,7 +252,7 @@ public class TestMemoryStatisticLoading {
       statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
       assertVectorBlockConsistency();
     }
@@ -268,7 +271,7 @@ public class TestMemoryStatisticLoading {
       statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
-      assertNotEquals(0, statistics.size());
+      Assertions.assertThat(statistics).isNotEmpty();
       assertStatisticsConsistency(statistics);
       assertVectorBlockConsistency();
     }

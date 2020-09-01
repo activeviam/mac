@@ -31,6 +31,8 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
+import com.qfs.multiversion.IEpochManagementPolicy;
+import com.qfs.multiversion.impl.KeepLastEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
@@ -39,14 +41,15 @@ import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.util.impl.QfsFileTestUtils;
-import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import com.quartetfs.fwk.AgentException;
+import com.quartetfs.fwk.IPair;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
+import com.quartetfs.fwk.impl.Pair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +59,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.assertj.core.api.SoftAssertions;
@@ -84,25 +88,24 @@ public abstract class AMonitoringTest {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  protected ExportedApplication setupAndExportMonitoredApplication(
+  protected IPair<IDatastore, IActivePivotManager> setupMonitoredApplication(
       final IDatastoreSchemaDescription datastoreSchemaDescription,
-      final IActivePivotManagerDescription managerDescription,
-      final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport)
+      final IActivePivotManagerDescription managerDescription)
       throws AgentException {
-    return setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        beforeExport, "memoryStatistics");
+    return setupMonitoredApplication(datastoreSchemaDescription, managerDescription,
+        epochManagementPolicy());
   }
 
-  protected ExportedApplication setupAndExportMonitoredApplication(
+  protected IPair<IDatastore, IActivePivotManager> setupMonitoredApplication(
       final IDatastoreSchemaDescription datastoreSchemaDescription,
       final IActivePivotManagerDescription managerDescription,
-      final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport,
-      final String folderSuffix)
+      final IEpochManagementPolicy epochManagementPolicy)
       throws AgentException {
     final IDatastore monitoredDatastore = StartBuilding.datastore()
         .setSchemaDescription(datastoreSchemaDescription)
         .addSchemaDescriptionPostProcessors(
             ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+        .setEpochManagementPolicy(epochManagementPolicy)
         .build();
     resources.register(monitoredDatastore);
 
@@ -112,13 +115,11 @@ public abstract class AMonitoringTest {
         .buildAndStart();
     resources.register(monitoredManager::stop);
 
-    beforeExport.accept(monitoredDatastore, monitoredManager);
-    performGC();
-    final Path statisticsPath =
-        exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager,
-            getTempDirectory(), folderSuffix);
+    return new Pair<>(monitoredDatastore, monitoredManager);
+  }
 
-    return new ExportedApplication(monitoredDatastore, monitoredManager, statisticsPath);
+  protected IEpochManagementPolicy epochManagementPolicy() {
+    return new KeepLastEpochPolicy();
   }
 
   protected void setupMac() throws AgentException {
@@ -158,16 +159,35 @@ public abstract class AMonitoringTest {
   }
 
   protected Path exportApplicationMemoryStatistics(
-      final IDatastore datastore, final IActivePivotManager manager, final Path exportPath,
-      final String folderSuffix) {
+      final IDatastore datastore, final IActivePivotManager manager, final String folderSuffix,
+      final BiFunction<IMemoryAnalysisService, String, Path> exportFunction) {
+    performGC();
+
     final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-        datastore, manager, datastore.getEpochManager(), exportPath);
-    return analysisService.exportMostRecentVersion(folderSuffix);
+        datastore, manager, datastore.getEpochManager(), getTempDirectory());
+    return exportFunction.apply(analysisService, folderSuffix);
   }
 
   protected Path exportApplicationMemoryStatistics(
-      final IDatastore datastore, final IActivePivotManager manager, final Path exportPath) {
-    return exportApplicationMemoryStatistics(datastore, manager, exportPath, "memoryStatistics");
+      final IDatastore datastore, final IActivePivotManager manager,
+      final BiFunction<IMemoryAnalysisService, String, Path> exportFunction) {
+    return exportApplicationMemoryStatistics(datastore, manager, "memoryStatistics",
+        exportFunction);
+  }
+
+  protected Path exportApplicationMemoryStatistics(
+      final IDatastore datastore, final IActivePivotManager manager,
+      final String folderSuffix) {
+    return exportApplicationMemoryStatistics(datastore, manager, folderSuffix, exportFunction());
+  }
+
+  protected Path exportApplicationMemoryStatistics(
+      final IDatastore datastore, final IActivePivotManager manager) {
+    return exportApplicationMemoryStatistics(datastore, manager, "memoryStatistics");
+  }
+
+  protected BiFunction<IMemoryAnalysisService, String, Path> exportFunction() {
+    return IMemoryAnalysisService::exportMostRecentVersion;
   }
 
   protected Path getTempDirectory() {

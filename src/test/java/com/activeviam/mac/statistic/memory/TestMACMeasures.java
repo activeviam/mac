@@ -298,7 +298,6 @@ public class TestMACMeasures extends ASingleAppMonitoringTest {
 
   @Test
   public void testFreedCount() throws QueryException {
-
     final IMultiVersionActivePivot pivot =
         monitoringManager.getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
