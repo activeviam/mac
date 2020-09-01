@@ -41,6 +41,12 @@ public class DatastoreConstants {
   /** Name of the store containing level related facts. */
   public static final String LEVEL_STORE = "Levels";
 
+  /** Name of the store containing field related facts. */
+  public static final String FIELD_STORE = "Field";
+
+  /** Name of the store containing vector block related facts. */
+  public static final String VECTOR_BLOCK_STORE = "VectorBlock";
+
   /** Name of the store containing facts related to the component of the aggregate provider. */
   public static final String PROVIDER_COMPONENT_STORE = "ProviderComponent";
 
@@ -228,6 +234,11 @@ public class DatastoreConstants {
   /** member count field. */
   public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
+  /** Field for the vector block length of the chunk, if relevant. */
+  public static final String CHUNK__VECTOR_BLOCK_LENGTH = "vectorBlockLength";
+  /** Field for the vector block reference count of the chunk, if relevant. */
+  public static final String CHUNK__VECTOR_BLOCK_REF_COUNT = "vectorBlockRefCount";
+
   /** Name of the store for joining chunk and level data. */
   public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
 
@@ -269,6 +280,13 @@ public class DatastoreConstants {
 
   /** The component field in the store of chunk components. */
   public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
+
+  /** The chunk ID field in the store of fields. */
+  public static final String FIELD__CHUNK_ID = CHUNK_ID;
+  /** The field name field in the store of fields. */
+  public static final String FIELD__FIELD_NAME = "field";
+  /** The store name field in the store of fields. */
+  public static final String FIELD__STORE_NAME = "store";
 
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;

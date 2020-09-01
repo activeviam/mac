@@ -28,6 +28,9 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -111,9 +114,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
 
       readEpochAndBranchIfAny(stat);
-      if (!stat.getName().equalsIgnoreCase(MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE)) {
-        assert this.epochId != null;
-      }
+      assert stat.getName().equalsIgnoreCase(MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE)
+          || this.epochId != null;
 
       FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
 
@@ -176,9 +178,13 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.field != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+    if (this.fields != null) {
+      writeFieldRecordsForChunk(chunkStatistic);
+
+      // todo vlg clear this if obsolete
+      FeedVisitor
+          .setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
+              retrieveUniqueField());
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(
@@ -314,11 +320,18 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.directParentId = String.valueOf(this.indexId);
     this.rootComponent = ParentType.INDEX;
 
+    final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
+    final Collection<String> oldFields = this.fields;
+    assert fieldNames != null && fieldNames.length > 0
+        : "Cannot find fields in the attributes of " + stat;
+    this.fields = List.of(fieldNames);
+
     visitChildren(stat);
 
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
+    this.fields = oldFields;
 
     // Reset
     this.indexId = null;
@@ -340,24 +353,32 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
-    final IStatisticAttribute fieldAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-    if (fieldAttr != null) {
-      this.field = fieldAttr.asText();
-    }
-
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
 
+    Collection<String> oldFields = null;
+    final IStatisticAttribute fieldAttr =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+
+    final boolean isFieldSpecified = fieldAttr != null;
+    if (isFieldSpecified) {
+      oldFields = this.fields;
+      this.fields = Collections.singleton(fieldAttr.asText());
+    }
+
     visitChildren(stat);
-    this.directParentType = previousParentType;
-    this.directParentId = previousParentId;
 
     // Reset
+    this.directParentType = previousParentType;
+    this.directParentId = previousParentId;
     this.dictionaryId = null;
-    this.field = null;
+
+    if (isFieldSpecified) {
+      this.fields = oldFields;
+    }
+
     return null;
   }
 
@@ -470,6 +491,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
 
+    // todo vlg: remove if obsolete
     final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;

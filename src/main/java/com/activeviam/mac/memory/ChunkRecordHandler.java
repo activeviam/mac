@@ -90,7 +90,9 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
       if (newOwner == currentOwner
           && newComponent == currentComponent
-          && newPartition == currentPartition) {
+          && newPartition == currentPartition
+          && newStore == currentStore
+          && newField == currentField) {
         // Nothing to change
         return duplicateRecord;
       } else {

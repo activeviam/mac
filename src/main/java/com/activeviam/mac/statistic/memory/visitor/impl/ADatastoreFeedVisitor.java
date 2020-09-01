@@ -7,8 +7,12 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.memory.DatastoreConstants;
+import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
+import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import java.util.Collection;
 
 /**
  * Visitor for chunks from a store export.
@@ -20,8 +24,8 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
 
   /** The name of the store of the visited statistic. */
   protected String store = null;
-  /** Name of the currently visited field. */
-  protected String field = null;
+  /** Names of the currently visited fields. */
+  protected Collection<String> fields;
   /** ID of the current index. */
   protected Long indexId;
   /** ID of the current reference. */
@@ -40,5 +44,38 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
   public ADatastoreFeedVisitor(
       IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
     super(transaction, storageMetadata, dumpName);
+  }
+
+  /**
+   * Feeds the {@link DatastoreConstants#FIELD_STORE} with records associating the chunk of the
+   * given statistic with all fields currently registered in the visitor.
+   *
+   * @param statistic the statistic of the chunk
+   */
+  protected void writeFieldRecordsForChunk(final ChunkStatistic statistic) {
+    final IRecordFormat format = getFieldFormat(this.storageMetadata);
+    Object[] tuple = FeedVisitor.buildFieldTupleFrom(format, statistic);
+
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.FIELD__STORE_NAME, this.store);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+
+    this.fields.stream()
+        .sorted()
+        .forEachOrdered(field -> {
+          FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.FIELD__FIELD_NAME, field);
+          FeedVisitor.add(statistic, this.transaction, DatastoreConstants.FIELD_STORE, tuple);
+        });
+  }
+
+  /**
+   * Retrieves the single field name from {@link #fields}.
+   *
+   * <p>This asserts that there is only one element in the {@link #fields} collection.
+   *
+   * @return the field
+   */
+  protected String retrieveUniqueField() {
+    assert (this.fields.size() == 1);
+    return this.fields.iterator().next();
   }
 }

@@ -142,6 +142,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
+        .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();
@@ -311,6 +313,25 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
+   * Returns the description of {@link DatastoreConstants#FIELD_STORE}.
+   *
+   * @return description of {@link DatastoreConstants#FIELD_STORE}
+   */
+  protected IStoreDescription chunkToFieldStore() {
+    return StartBuilding.store()
+        .withStoreName(DatastoreConstants.FIELD_STORE)
+        .withField(DatastoreConstants.FIELD__CHUNK_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.FIELD__STORE_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.FIELD__FIELD_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .build();
+  }
+
+  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
@@ -407,7 +428,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        applicationStore());
+        applicationStore(),
+        chunkToFieldStore());
   }
 
   @Override
@@ -438,7 +460,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .toStore(DatastoreConstants.APPLICATION_STORE)
             .withName(CHUNK_TO_APP)
             .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
+                DatastoreConstants.CHUNK__DUMP_NAME,
+                DatastoreConstants.APPLICATION__DUMP_NAME)
             .build());
   }
 
@@ -534,10 +557,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         return false;
       }
       StringArrayObject other = (StringArrayObject) obj;
-      if (!Arrays.equals(fieldNames, other.fieldNames)) {
-        return false;
-      }
-      return true;
+      return Arrays.equals(fieldNames, other.fieldNames);
     }
 
     @Override

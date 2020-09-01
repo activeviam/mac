@@ -24,6 +24,7 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Collection;
 
 /**
  * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
@@ -50,6 +51,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param dumpName name of the ongoing import
    * @param current current time
    * @param store store being visited
+   * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
    */
   public VectorStatisticVisitor(
@@ -58,10 +60,12 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final String dumpName,
       final Instant current,
       final String store,
+      final Collection<String> fields,
       final int partitionId) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
+    this.fields = fields;
     this.partitionId = partitionId;
 
     this.chunkRecordFormat =
@@ -192,9 +196,15 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.field != null) {
+    if (this.fields != null) {
+      // todo vlg clear this if obsolete
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME, this.field);
+          tuple,
+          chunkRecordFormat,
+          DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
+          retrieveUniqueField());
+
+      writeFieldRecordsForChunk(statistic);
     }
     if (this.store != null) {
       FeedVisitor.setTupleElement(
@@ -205,6 +215,11 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
+
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH,
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asLong());
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT,
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_BLOCK_REFERENCE_COUNT).asLong());
 
     // Debug
     if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
