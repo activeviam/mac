@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +29,7 @@ public class Tools {
 
   public static int main(final String[] args) {
     if ("extract".equals(args[0])) {
-      extractSnappyFile(args[1]);
+      extractSnappyFileOrDirectory(args[1]);
       return 0;
     } else {
       System.err.println("Unsupported command. Got " + Arrays.toString(args));
@@ -36,26 +37,55 @@ public class Tools {
     }
   }
 
-  public static void extractSnappyFile(final String path) {
-    Objects.requireNonNull(path, "File to uncompress not provided");
+  public static void extractSnappyFileOrDirectory(final String path) {
+    Objects.requireNonNull(path, "file or directory to uncompress was not provided");
 
+    final Path asPath = Paths.get(path);
+    extractSnappyFileOrDirectory(asPath);
+  }
+
+  public static void extractSnappyFileOrDirectory(final Path path) {
+    assertFileExists(path);
+
+    if (Files.isDirectory(path)) {
+      extractSnappyDirectory(path);
+    } else {
+      extractSnappyFile(path);
+    }
+  }
+
+  protected static void assertFileExists(final Path path) {
+    if (!Files.exists(path)) {
+      throw new RuntimeException(path + " does not point to a valid file or directory");
+    }
+  }
+
+  public static void extractSnappyDirectory(final Path path) {
+    try {
+      Files.list(path).forEach(Tools::extractSnappyFileOrDirectory);
+    } catch (IOException exception) {
+      throw new UncheckedIOException(exception);
+    }
+  }
+
+  public static void extractSnappyFile(final Path path) {
+    final String pathAsString = path.toString();
     final String extension = MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
-    boolean isCompressedFile = path.endsWith("." + extension);
+    boolean isCompressedFile = pathAsString.endsWith("." + extension);
     if (!isCompressedFile) {
-      throw new IllegalArgumentException(
-          "Extension of `"
-              + path
-              + "` does not match the list of compressed extensions. Use one of ["
-              + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION
-              + "] to use this tool.");
+      System.out.println("File " + pathAsString
+          + " was skipped as it did not match the list of compressed extensions: "
+          + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
+      return;
     }
 
-    final String subpart = path.substring(0, path.length() - extension.length() - 1);
+    final String subpart =
+        pathAsString.substring(0, pathAsString.length() - extension.length() - 1);
     final Path uncompressedPath =
         Paths.get(subpart.endsWith(".json") ? subpart : subpart + ".json");
     final InputStream rawInputStream;
     try {
-      rawInputStream = new FileInputStream(path);
+      rawInputStream = new FileInputStream(path.toFile());
     } catch (FileNotFoundException e) {
       throw new IllegalArgumentException(String.format("File `%s` does not exist", path), e);
     }
@@ -71,6 +101,6 @@ public class Tools {
       throw new RuntimeException(
           String.format("Failed to extract `%s` to `%s`", path, uncompressedPath), e);
     }
-    System.err.printf("File `%s` extracted to `%s`%n", path, uncompressedPath);
+    System.out.printf("File `%s` extracted to `%s`%n", path, uncompressedPath);
   }
 }
