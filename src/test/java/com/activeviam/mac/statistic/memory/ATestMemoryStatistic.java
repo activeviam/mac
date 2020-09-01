@@ -52,6 +52,7 @@ import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
+import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import com.quartetfs.fwk.AgentException;
@@ -710,6 +711,52 @@ public abstract class ATestMemoryStatistic {
     actions.accept(datastore, manager);
   }
 
+  static void createApplicationWithVectorAndNoCube(
+      final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName(VECTOR_STORE_NAME)
+                    .withField("vectorId", ILiteralType.INT)
+                    .asKeyField()
+                    .withVectorField("vectorInt1", ILiteralType.INT)
+                    .withVectorBlockSize(35)
+                    .withVectorField("vectorInt2", ILiteralType.INT)
+                    .withVectorBlockSize(20)
+                    .withVectorField("vectorLong", ILiteralType.LONG)
+                    .withVectorBlockSize(30)
+                    .withChunkSize(16) // Make it easy to fill a complete block
+                    .build())
+            .build();
+    final IActivePivotManagerDescription userManagerDescription =
+        new ActivePivotManagerDescription();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+
+    final IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start the manager", e);
+    }
+
+    actions.accept(datastore, manager);
+  }
+
   static void commitDataInDatastoreWithVectors(
       final IDatastore monitoredDatastore, final boolean commitDuplicatedVectors)
       throws DatastoreTransactionException {
@@ -813,7 +860,47 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReference()
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithNoCube() {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        new ActivePivotManagerDescription();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReferenceAndNoCube()
       throws AgentException {
 
     final IDatastoreSchemaDescription schemaDescription =
@@ -843,20 +930,8 @@ public abstract class ATestMemoryStatistic {
             .build();
 
     final IActivePivotManagerDescription userManagerDescription =
-        StartBuilding.managerDescription()
-            .withSchema()
-            .withSelection(
-                StartBuilding.selection(schemaDescription)
-                    .fromBaseStore("A")
-                    .withAllReachableFields()
-                    .build())
-            .withCube(
-                StartBuilding.cube("Cube")
-                    .withContributorsCount()
-                    .withSingleLevelDimension("id")
-                    .asDefaultHierarchy()
-                    .build())
-            .build();
+        new ActivePivotManagerDescription();
+
     final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 

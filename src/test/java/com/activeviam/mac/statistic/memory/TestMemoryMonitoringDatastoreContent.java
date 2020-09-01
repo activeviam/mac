@@ -157,7 +157,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithSingleRecord() throws IOException, AgentException {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
 
     // Add a single record
     monitoredApp
@@ -231,7 +231,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithFullChunk() throws IOException, AgentException {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
 
     // Add a full chunk
     monitoredApp
@@ -303,7 +303,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithTwoChunks() throws IOException, AgentException {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
 
     // Add a full chunk + 10 records on the second chunk
     monitoredApp
@@ -386,7 +386,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   @Test
   public void testChunkStructureFieldsWithFreedRows() throws IOException, AgentException {
 
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
     // Add 100 records
     monitoredApp
         .getLeft()
@@ -537,7 +537,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testMappingFromChunkToFields() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
@@ -629,7 +629,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testCompareDumpsOfDifferentEpochs() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
@@ -733,7 +733,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   @Test
   public void testCompareDumpsOfDifferentApps() throws IOException, AgentException {
     // Create First App
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplicationWithNoCube();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
     monitoredApp
@@ -821,7 +821,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   public void testChunkToReferencesDatastoreContentWithReference()
       throws AgentException, IOException {
     final Pair<IDatastore, IActivePivotManager> monitoredApp =
-        createMicroApplicationWithReference();
+        createMicroApplicationWithReferenceAndNoCube();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
@@ -865,8 +865,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testBlocksOfSingleVectors() {
-    createApplicationWithVector(
-        true,
+    createApplicationWithVectorAndNoCube(
         (monitoredDatastore, monitoredManager) -> {
           monitoredDatastore.edit(
               tm -> {
