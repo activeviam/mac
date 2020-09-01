@@ -51,4 +51,26 @@ public class MicroApplication {
 
     return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
   }
+
+  public static IActivePivotManagerDescription managerDescriptionWithLeafBitmap(
+      final IDatastoreSchemaDescription schemaDescription) {
+    final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+        .withSchema()
+        .withSelection(
+            StartBuilding.selection(schemaDescription)
+                .fromBaseStore("A")
+                .withAllFields()
+                .build())
+        .withCube(
+            StartBuilding.cube("Cube")
+                .withContributorsCount()
+                .withSingleLevelDimension("id")
+                .asDefaultHierarchy()
+                .withAggregateProvider()
+                .leaf()
+                .build())
+        .build();
+
+    return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+  }
 }
