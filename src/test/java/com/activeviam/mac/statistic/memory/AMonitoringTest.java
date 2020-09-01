@@ -23,8 +23,6 @@ import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
-import com.qfs.chunk.direct.impl.SlabDirectChunkAllocator;
-import com.qfs.chunk.impl.Chunks;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.LocalResourcesExtension;
@@ -77,12 +75,8 @@ public abstract class AMonitoringTest {
       .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
       .build();
 
-  protected Path statisticsPath;
-  protected IDatastore monitoredDatastore;
-  protected IActivePivotManager monitoredManager;
   protected IDatastore monitoringDatastore;
   protected IActivePivotManager monitoringManager;
-  protected Collection<IMemoryStatistic> statistics;
 
   @BeforeAll
   public static void setUpRegistry() {
@@ -90,29 +84,29 @@ public abstract class AMonitoringTest {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  protected void setupAndExportMonitoredApplication(
+  protected ExportedApplication setupAndExportMonitoredApplication(
       final IDatastoreSchemaDescription datastoreSchemaDescription,
       final IActivePivotManagerDescription managerDescription,
       final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport)
       throws AgentException {
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+    return setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
         beforeExport, "memoryStatistics");
   }
 
-  protected void setupAndExportMonitoredApplication(
+  protected ExportedApplication setupAndExportMonitoredApplication(
       final IDatastoreSchemaDescription datastoreSchemaDescription,
       final IActivePivotManagerDescription managerDescription,
       final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport,
       final String folderSuffix)
       throws AgentException {
-    monitoredDatastore = StartBuilding.datastore()
+    final IDatastore monitoredDatastore = StartBuilding.datastore()
         .setSchemaDescription(datastoreSchemaDescription)
         .addSchemaDescriptionPostProcessors(
             ActivePivotDatastorePostProcessor.createFrom(managerDescription))
         .build();
     resources.register(monitoredDatastore);
 
-    monitoredManager = StartBuilding.manager()
+    final IActivePivotManager monitoredManager = StartBuilding.manager()
         .setDescription(managerDescription)
         .setDatastoreAndPermissions(monitoredDatastore)
         .buildAndStart();
@@ -120,8 +114,11 @@ public abstract class AMonitoringTest {
 
     beforeExport.accept(monitoredDatastore, monitoredManager);
     performGC();
-    statisticsPath = exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager,
-        getTempDirectory(), folderSuffix);
+    final Path statisticsPath =
+        exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager,
+            getTempDirectory(), folderSuffix);
+
+    return new ExportedApplication(monitoredDatastore, monitoredManager, statisticsPath);
   }
 
   protected void setupMac() throws AgentException {
@@ -141,11 +138,9 @@ public abstract class AMonitoringTest {
      * because on some servers (alto), it seems not enough.
      * Plus, MemUtils relies on on heap memory....
      */
-    final SlabDirectChunkAllocator allocator = (SlabDirectChunkAllocator) Chunks.allocator();
     for (int i = 0; i < MAX_GC_STEPS; i++) {
       try {
         System.gc();
-
         Thread.sleep(1 << i); // give gc some times.
 
         // create a soft assertion that allows getting the assertions results of all assertions
@@ -192,14 +187,19 @@ public abstract class AMonitoringTest {
         .buildAndStart();
   }
 
-  protected void loadAndImportStatistics() throws IOException {
-    statistics = loadMemoryStatistics(statisticsPath);
+  protected Collection<IMemoryStatistic> loadAndImportStatistics(final Path statisticsPath)
+      throws IOException {
+    final Collection<IMemoryStatistic> statistics = loadMemoryStatistics(statisticsPath);
     feedStatisticsIntoDatastore(statistics, monitoringDatastore);
+    return statistics;
   }
 
-  protected void loadAndImportStatistics(final Predicate<Path> filter) throws IOException {
-    statistics = loadMemoryStatistics(statisticsPath, filter);
+  protected Collection<IMemoryStatistic> loadAndImportStatistics(
+      final Path statisticsPath, final Predicate<Path> filter)
+      throws IOException {
+    final Collection<IMemoryStatistic> statistics = loadMemoryStatistics(statisticsPath, filter);
     feedStatisticsIntoDatastore(statistics, monitoringDatastore);
+    return statistics;
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistics(final Path path) throws IOException {
@@ -249,7 +249,7 @@ public abstract class AMonitoringTest {
   }
 
 
-  protected void assertStatisticsConsistency() {
+  protected void assertStatisticsConsistency(final Collection<IMemoryStatistic> statistics) {
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics);
 
     assertConsistencyWithSummary(monitoringDatastore, statisticsSummary);
@@ -371,6 +371,21 @@ public abstract class AMonitoringTest {
         System.out.println("Error for " + cursor.getRawRecord());
       }
       throw new AssertionError(count + " chunks without owner or component");
+    }
+  }
+
+  public static class ExportedApplication {
+
+    public final IDatastore monitoredDatastore;
+    public final IActivePivotManager monitoredManager;
+    public final Path statisticsPath;
+
+    public ExportedApplication(
+        final IDatastore monitoredDatastore, final IActivePivotManager monitoredManager,
+        final Path statisticsPath) {
+      this.monitoredDatastore = monitoredDatastore;
+      this.monitoredManager = monitoredManager;
+      this.statisticsPath = statisticsPath;
     }
   }
 }

@@ -27,6 +27,8 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.fwk.util.impl.TruePredicate;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,8 +58,9 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected void loadAndImportStatistics() {
+    protected Collection<IMemoryStatistic> loadAndImportStatistics(final Path path) {
       // disable statistics loading, as it is to be tested
+      return Collections.emptyList();
     }
   }
 
@@ -71,7 +74,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
     }
 
     @Test
@@ -82,7 +85,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
     }
 
     @Test
@@ -91,7 +94,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
     }
   }
 
@@ -105,7 +108,7 @@ public class TestMemoryStatisticLoading {
       branchSet.add("branch1");
       branchSet.add("branch2");
 
-      FullApplication.fillWithBranches(monitoredDatastore, branchSet);
+      FullApplication.fillWithBranches(datastore, branchSet);
     }
 
     @Override
@@ -123,7 +126,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
     }
   }
 
@@ -137,8 +140,8 @@ public class TestMemoryStatisticLoading {
       branchSet.add("branch1");
       branchSet.add("branch2");
 
-      FullApplication.fill(monitoredDatastore);
-      FullApplication.fillWithBranches(monitoredDatastore, branchSet);
+      FullApplication.fill(datastore);
+      FullApplication.fillWithBranches(datastore, branchSet);
     }
 
     @Override
@@ -156,7 +159,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
     }
   }
 
@@ -174,8 +177,9 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected void loadAndImportStatistics() {
+    protected Collection<IMemoryStatistic> loadAndImportStatistics(final Path path) {
       // disable statistics loading, as it is to be tested
+      return Collections.emptyList();
     }
 
     protected void assertVectorBlockConsistency() {
@@ -246,7 +250,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
       assertVectorBlockConsistency();
     }
   }
@@ -265,7 +269,7 @@ public class TestMemoryStatisticLoading {
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
-      assertStatisticsConsistency();
+      assertStatisticsConsistency(statistics);
       assertVectorBlockConsistency();
     }
   }

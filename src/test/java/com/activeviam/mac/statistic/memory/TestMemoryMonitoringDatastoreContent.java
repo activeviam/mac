@@ -24,6 +24,7 @@ import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.ICompiledGetByKey;
@@ -32,6 +33,7 @@ import com.qfs.store.query.impl.CompiledGetByKey;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
 import com.qfs.vector.direct.impl.DirectLongVectorBlock;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -69,13 +71,16 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         MinimalApplication.managerDescription(datastoreSchemaDescription);
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          MinimalApplication.fillApplication(monitoredDatastore);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              MinimalApplication.fillApplication(monitoredDatastore);
+            });
+    final IDatastore monitoredDatastore = monitoredApplication.monitoredDatastore;
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     IDictionary<Object> dic =
         monitoredDatastore.getDictionaries().getDictionary("Sales", "id");
@@ -165,21 +170,23 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 1)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * 100000000);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 1)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * 100000000);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     // Make sure there is only one loaded store
     Assert.assertEquals(1, statistics.size());
@@ -229,22 +236,24 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                // Add a full chunk
-                IntStream.range(0, 256)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * i);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    // Add a full chunk
+                    IntStream.range(0, 256)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     // Make sure there is only one loaded store
     Assert.assertEquals(1, statistics.size());
@@ -288,22 +297,24 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                // Add a full chunk + 10 records on the second chunk
-                IntStream.range(0, 266)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * i);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    // Add a full chunk + 10 records on the second chunk
+                    IntStream.range(0, 266)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     // Make sure there is only one loaded store
     Assert.assertEquals(1, statistics.size());
@@ -357,38 +368,39 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          // Add 100 records
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 100)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-          // Delete 10 records
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(50, 50 + 20)
-                    .forEach(
-                        i -> {
-                          try {
-                            tm.remove("A", i * i);
-                          } catch (NoTransactionException
-                              | DatastoreTransactionException
-                              | IllegalArgumentException
-                              | NullPointerException e) {
-                            throw new QuartetRuntimeException(e);
-                          }
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              // Add 100 records
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+              // Delete 10 records
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(50, 50 + 20)
+                        .forEach(
+                            i -> {
+                              try {
+                                tm.remove("A", i * i);
+                              } catch (NoTransactionException
+                                  | DatastoreTransactionException
+                                  | IllegalArgumentException
+                                  | NullPointerException e) {
+                                throw new QuartetRuntimeException(e);
+                              }
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -438,22 +450,24 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         MicroApplication.managerDescription(datastoreSchemaDescription);
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 10)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * i);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 10)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics(path ->
-        path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath, path ->
+            path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
 
     // Make sure there is only one loaded store
     Assert.assertEquals(1, statistics.size());
@@ -484,21 +498,23 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 10)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 10)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     final List<IMemoryStatistic> dics =
         collectStatistics(
@@ -572,18 +588,21 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 100)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-          monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+              monitoredDatastore.getEpochManager().forceDiscardEpochs(__ -> true);
+            });
+    final IDatastore monitoredDatastore = monitoredApplication.monitoredDatastore;
+    final IActivePivotManager monitoredManager = monitoredApplication.monitoredManager;
 
     setupMac();
 
@@ -680,6 +699,7 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
         Application.cubelessManagerDescription();
 
     // Export first app
+    ExportedApplication monitoredApplication =
         setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
             (monitoredDatastore, monitoredManager) -> {
               monitoredDatastore.edit(
@@ -692,7 +712,8 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
                   });
             },
             "testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> stats = loadMemoryStatistics(statisticsPath);
+    final Collection<IMemoryStatistic> stats =
+        loadMemoryStatistics(monitoredApplication.statisticsPath);
 
     // Create second app
     datastoreSchemaDescription =
@@ -701,6 +722,7 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
         MicroApplication.managerDescriptionWithLeafBitmap(datastoreSchemaDescription);
 
     // Export second app
+    monitoredApplication =
         setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
             (monitoredDatastore, monitoredManager) -> {
               monitoredDatastore.edit(
@@ -713,7 +735,8 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
                   });
             },
             "testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> statsWithBitmap = loadMemoryStatistics(statisticsPath);
+    final Collection<IMemoryStatistic> statsWithBitmap =
+        loadMemoryStatistics(monitoredApplication.statisticsPath);
 
     setupMac();
     feedStatisticsIntoDatastore(stats, monitoringDatastore, "App");
@@ -769,21 +792,22 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 100)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i, i);
-                          tm.add("B", i);
-                        });
-              });
-        });
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i, i);
+                              tm.add("B", i);
+                            });
+                  });
+            });
 
     setupMac();
-    loadAndImportStatistics();
+    loadAndImportStatistics(monitoredApplication.statisticsPath);
 
     final IDictionaryCursor cursor =
         monitoringDatastore
@@ -810,17 +834,18 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
     final IActivePivotManagerDescription managerDescription =
         Application.cubelessManagerDescription();
 
-    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
-        (monitoredDatastore, monitoredManager) -> {
-          monitoredDatastore.edit(
-              tm -> {
-                IntStream.range(0, 24)
-                    .forEach(
-                        i -> {
-                          tm.add(
-                              FullApplicationWithVectors.VECTOR_STORE_NAME,
-                              i,
-                              IntStream.rangeClosed(1, 5).toArray(),
+    final ExportedApplication monitoredApplication =
+        setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+            (monitoredDatastore, monitoredManager) -> {
+              monitoredDatastore.edit(
+                  tm -> {
+                    IntStream.range(0, 24)
+                        .forEach(
+                            i -> {
+                              tm.add(
+                                  FullApplicationWithVectors.VECTOR_STORE_NAME,
+                                  i,
+                                  IntStream.rangeClosed(1, 5).toArray(),
                               IntStream.rangeClosed(10, 20).toArray(),
                               LongStream.rangeClosed(3, 8).toArray());
                         });
@@ -828,9 +853,10 @@ public class TestMemoryMonitoringDatastoreContent extends AMonitoringTest {
         });
 
     setupMac();
-    loadAndImportStatistics();
+    final Collection<IMemoryStatistic> statistics =
+        loadAndImportStatistics(monitoredApplication.statisticsPath);
 
-    assertStatisticsConsistency();
+    assertStatisticsConsistency(statistics);
 
     // Test that we have chunks of single values
     final IDictionaryCursor recordCursor =
