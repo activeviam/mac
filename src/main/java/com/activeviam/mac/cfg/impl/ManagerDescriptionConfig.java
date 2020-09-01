@@ -290,13 +290,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
+
         .withDimension("Versions")
         .withHierarchy(BRANCH_LEVEL)
         .slicing()
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.VERSION__BRANCH)
         .withFirstObjects("master")
-
         .withHierarchy(EPOCH_ID_LEVEL)
         .slicing()
         .withLevelOfSameName()

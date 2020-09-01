@@ -157,6 +157,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
    *
    * @return description of {@link DatastoreConstants#CHUNK_TO_OWNER_STORE}
    */
+  // todo vlg add epoch and branch to owner store too?
   protected IStoreDescription chunkToOwnerStore() {
     return new StoreDescriptionBuilder()
         .withStoreName(DatastoreConstants.CHUNK_TO_OWNER_STORE)

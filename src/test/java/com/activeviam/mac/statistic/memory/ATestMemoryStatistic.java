@@ -14,6 +14,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
+import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
@@ -76,6 +77,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
+import org.assertj.core.util.Streams;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import test.util.impl.DatastoreTestUtils;
@@ -815,6 +817,62 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithKeepAllEpochPolicy() {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedVectorField() {
 
     final IDatastoreSchemaDescription schemaDescription =
@@ -1126,12 +1184,27 @@ public abstract class ATestMemoryStatistic {
    */
   static void assertDatastoreConsistentWithSummary(
       IDatastore monitoringDatastore, StatisticsSummary statisticsSummary) {
-    IDictionaryCursor cursor =
+    // todo vlg?
+    IDictionaryCursor cursor = monitoringDatastore
+        .getHead()
+        .getQueryRunner()
+        .forStore(CHUNK_STORE)
+        .withoutCondition()
+        .selecting(VERSION__EPOCH_ID)
+        .onCurrentThread()
+        .run();
+
+    final long latestEpoch = Streams.stream(cursor)
+        .mapToLong(c -> c.readLong(0))
+        .max()
+        .getAsLong();
+
+    cursor =
         monitoringDatastore
             .getHead()
             .getQueryRunner()
             .forStore(CHUNK_STORE)
-            .withoutCondition()
+            .withCondition(BaseConditions.Equal(VERSION__EPOCH_ID, latestEpoch))
             .selecting(CHUNK__OFF_HEAP_SIZE, CHUNK_ID, CHUNK__CLASS)
             .onCurrentThread()
             .run();
