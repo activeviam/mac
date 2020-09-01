@@ -95,6 +95,16 @@ public abstract class AMonitoringTest {
       final IActivePivotManagerDescription managerDescription,
       final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport)
       throws AgentException {
+    setupAndExportMonitoredApplication(datastoreSchemaDescription, managerDescription,
+        beforeExport, "memoryStatistics");
+  }
+
+  protected void setupAndExportMonitoredApplication(
+      final IDatastoreSchemaDescription datastoreSchemaDescription,
+      final IActivePivotManagerDescription managerDescription,
+      final ThrowingBiConsumer<IDatastore, IActivePivotManager> beforeExport,
+      final String folderSuffix)
+      throws AgentException {
     monitoredDatastore = StartBuilding.datastore()
         .setSchemaDescription(datastoreSchemaDescription)
         .addSchemaDescriptionPostProcessors(
@@ -110,7 +120,8 @@ public abstract class AMonitoringTest {
 
     beforeExport.accept(monitoredDatastore, monitoredManager);
     performGC();
-    exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager, getTempDirectory());
+    statisticsPath = exportApplicationMemoryStatistics(monitoredDatastore, monitoredManager,
+        getTempDirectory(), folderSuffix);
   }
 
   protected void setupMac() throws AgentException {
@@ -151,11 +162,17 @@ public abstract class AMonitoringTest {
     }
   }
 
-  protected void exportApplicationMemoryStatistics(
-      final IDatastore datastore, final IActivePivotManager manager, final Path exportPath) {
+  protected Path exportApplicationMemoryStatistics(
+      final IDatastore datastore, final IActivePivotManager manager, final Path exportPath,
+      final String folderSuffix) {
     final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
         datastore, manager, datastore.getEpochManager(), exportPath);
-    statisticsPath = analysisService.exportMostRecentVersion("memoryStatistics");
+    return analysisService.exportMostRecentVersion(folderSuffix);
+  }
+
+  protected Path exportApplicationMemoryStatistics(
+      final IDatastore datastore, final IActivePivotManager manager, final Path exportPath) {
+    return exportApplicationMemoryStatistics(datastore, manager, exportPath, "memoryStatistics");
   }
 
   protected Path getTempDirectory() {
@@ -176,15 +193,20 @@ public abstract class AMonitoringTest {
   }
 
   protected void loadAndImportStatistics() throws IOException {
-    statistics = loadMemoryStatistic(statisticsPath);
+    statistics = loadMemoryStatistics(statisticsPath);
     feedStatisticsIntoDatastore(statistics, monitoringDatastore);
   }
 
-  protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
-    return loadMemoryStatistic(path, p -> true);
+  protected void loadAndImportStatistics(final Predicate<Path> filter) throws IOException {
+    statistics = loadMemoryStatistics(statisticsPath, filter);
+    feedStatisticsIntoDatastore(statistics, monitoringDatastore);
   }
 
-  protected Collection<IMemoryStatistic> loadMemoryStatistic(
+  protected Collection<IMemoryStatistic> loadMemoryStatistics(final Path path) throws IOException {
+    return loadMemoryStatistics(path, p -> true);
+  }
+
+  protected Collection<IMemoryStatistic> loadMemoryStatistics(
       final Path path, final Predicate<Path> filter) throws IOException {
     return Files.list(path)
         .filter(filter)
@@ -212,13 +234,20 @@ public abstract class AMonitoringTest {
   }
 
   protected void feedStatisticsIntoDatastore(
-      final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
+      final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore,
+      final String dumpName) {
     analysisDatastore.edit(transactionManager ->
         statistics.forEach(statistic ->
             statistic.accept(
                 new FeedVisitor(analysisDatastore.getSchemaMetadata(), transactionManager,
-                    "dump"))));
+                    dumpName))));
   }
+
+  protected void feedStatisticsIntoDatastore(
+      final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
+    feedStatisticsIntoDatastore(statistics, analysisDatastore, "dump");
+  }
+
 
   protected void assertStatisticsConsistency() {
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics);

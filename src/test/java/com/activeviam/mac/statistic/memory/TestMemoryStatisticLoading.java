@@ -65,7 +65,7 @@ public class TestMemoryStatisticLoading {
   public class GivenFullApplication extends AGivenFullApplication {
     @Test
     public void testLoadDatastoreStats() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath, path ->
+      statistics = loadMemoryStatistics(statisticsPath, path ->
           path.getFileName().toString()
               .startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
@@ -76,7 +76,7 @@ public class TestMemoryStatisticLoading {
 
     @Test
     public void testLoadPivotStats() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath, path ->
+      statistics = loadMemoryStatistics(statisticsPath, path ->
           path.getFileName().toString()
               .startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
@@ -87,7 +87,7 @@ public class TestMemoryStatisticLoading {
 
     @Test
     public void testLoadFullStats() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath);
+      statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
@@ -109,17 +109,17 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected void exportApplicationMemoryStatistics(
+    protected Path exportApplicationMemoryStatistics(
         IDatastore datastore, IActivePivotManager manager, Path exportPath) {
       final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
           datastore, manager, datastore.getEpochManager(), exportPath);
-      statisticsPath = analysisService
+      return analysisService
           .exportBranches("memoryStatistics", Set.of("branch1", "branch2", "master"));
     }
 
     @Test
     public void testLoadFullStatsWithBranches() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath);
+      statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
@@ -142,17 +142,17 @@ public class TestMemoryStatisticLoading {
     }
 
     @Override
-    protected void exportApplicationMemoryStatistics(
+    protected Path exportApplicationMemoryStatistics(
         IDatastore datastore, IActivePivotManager manager, Path exportPath) {
       final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
           datastore, manager, datastore.getEpochManager(), exportPath);
-      statisticsPath = analysisService
+      return analysisService
           .exportVersions("memoryStatistics", new long[] {1L, 2L});
     }
 
     @Test
     public void testLoadFullStatsWithBranches() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath);
+      statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
@@ -242,7 +242,7 @@ public class TestMemoryStatisticLoading {
 
     @Test
     public void testLoad() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath);
+      statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());
@@ -261,7 +261,7 @@ public class TestMemoryStatisticLoading {
 
     @Test
     public void testLoad() throws IOException {
-      statistics = loadMemoryStatistic(statisticsPath);
+      statistics = loadMemoryStatistics(statisticsPath);
       feedStatisticsIntoDatastore(statistics, monitoringDatastore);
 
       assertNotEquals(0, statistics.size());

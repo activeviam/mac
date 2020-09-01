@@ -17,7 +17,7 @@ import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
 public class FullApplicationWithVectors {
 
-  protected static final String VECTOR_STORE_NAME = "vectorStore";
+  public static final String VECTOR_STORE_NAME = "vectorStore";
 
   private FullApplicationWithVectors() {
   }
