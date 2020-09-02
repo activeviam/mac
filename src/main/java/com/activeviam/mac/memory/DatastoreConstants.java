@@ -266,10 +266,10 @@ public class DatastoreConstants {
   /** The owner field in the store of chunk owners. */
   public static final String OWNER__OWNER = CHUNK__OWNER;
 
-  /** The component field in the store of chunk components. */
+  /** The component field in the store of chunk owners. */
   public static final String OWNER__COMPONENT = CHUNK__COMPONENT;
 
-  /** The component field in the store of chunk components. */
+  /** The field name field in the store of chunk owners. */
   public static final String OWNER__FIELD = "field";
 
   /** Id of the aggragate provider in the provider component store. */

@@ -150,7 +150,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Description of the chunk store.
+   * Description of the owner store.
    *
    * @return description of {@link DatastoreConstants#OWNER_STORE}
    */
