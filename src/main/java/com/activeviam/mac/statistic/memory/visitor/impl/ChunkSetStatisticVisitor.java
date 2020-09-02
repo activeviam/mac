@@ -195,8 +195,18 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final Object[] ownerTuple =
           FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
               this.rootComponent);
-      FeedVisitor.add(
-          chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
+      // todo vlg refactor this
+      if (this.fields != null) {
+        this.fields.stream()
+            .sorted()
+            .forEachOrdered(field -> {
+              FeedVisitor
+                  .setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD, field);
+              FeedVisitor.add(chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
+            });
+      } else {
+        FeedVisitor.add(chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
+      }
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
@@ -225,14 +235,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       if (this.dictionaryId != null) {
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
-      }
-      if (this.fields != null) {
-        writeFieldRecordsForChunk(chunkStatistic);
-
-        // todo vlg clear this if obsolete
-        FeedVisitor.setTupleElement(
-            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
-            retrieveUniqueField());
       }
       if (this.store != null) {
         FeedVisitor.setTupleElement(

@@ -163,6 +163,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
+        .withNullableField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .asKeyField()
+
         .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
         .build();
   }
@@ -297,25 +300,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#FIELD_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#FIELD_STORE}
-   */
-  protected IStoreDescription chunkToFieldStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.FIELD_STORE)
-        .withField(DatastoreConstants.FIELD__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.FIELD__STORE_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .withField(DatastoreConstants.FIELD__FIELD_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
-
-  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
@@ -411,8 +395,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        applicationStore(),
-        chunkToFieldStore());
+        applicationStore());
   }
 
   @Override

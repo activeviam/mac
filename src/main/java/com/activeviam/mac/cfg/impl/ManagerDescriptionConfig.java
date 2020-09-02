@@ -12,7 +12,6 @@ import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperHierarchy;
 import com.activeviam.copper.api.CopperStore;
-import com.activeviam.copper.store.Mapping.JoinType;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -24,6 +23,7 @@ import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -431,8 +431,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // 4- Chunk to owners
     CopperStore chunkToOwnerStore =
         Copper.store(DatastoreConstants.OWNER_STORE)
-            .joinToCube(JoinType.LEFT)
+            .joinToCube()
             .withDefaultValue(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance())
+            .withDefaultValue(DatastoreConstants.OWNER__COMPONENT, ParentType.NO_COMPONENT)
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
@@ -447,24 +448,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 
-    // --------------------
-    // 6- Chunk to fields
-    CopperStore chunkToFieldStore =
-        Copper.store(DatastoreConstants.FIELD_STORE)
-            .joinToCube()
-            .withMapping(DatastoreConstants.FIELD__CHUNK_ID, CHUNK_ID_HIERARCHY)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
     CopperHierarchy fieldHierarchy =
         Copper
             .newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
-            .from(chunkToFieldStore.field(DatastoreConstants.FIELD__FIELD_NAME))
-            .publish(context);
-
-    CopperHierarchy storeHierarchy =
-        Copper
-            .newSingleLevelHierarchy(STORE_DIMENSION, STORE_HIERARCHY, STORE_HIERARCHY)
-            .from(chunkToFieldStore.field(DatastoreConstants.FIELD__STORE_NAME))
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);
   }
 
