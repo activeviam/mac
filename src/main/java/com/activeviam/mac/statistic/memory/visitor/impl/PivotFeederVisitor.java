@@ -30,7 +30,6 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.impl.ActivePivotManager;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -224,9 +223,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
         this.providerCpnType.toString());
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
 
     if (this.dictionaryId != null) {

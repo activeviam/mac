@@ -24,13 +24,7 @@ import com.qfs.store.record.impl.Records.IDictionaryProvider;
  */
 public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
-  private int sharedOwnerValue = -1;
-  private int sharedComponentValue = -1;
   private int sharedPartitionId = MemoryAnalysisDatastoreDescription.MANY_PARTITIONS;
-  private int sharedStoreId = -1;
-  private int sharedFieldId = -1;
-  private int unknownStoreId = -1;
-  private int unknownFieldId = -1;
   private int defaultDicId = -1;
   private int defaultRefId = -1;
   private int defaultIdxId = -1;
@@ -64,75 +58,32 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       IDictionaryProvider dictionaryProvider) {
     init(storeMetadata, dictionaryProvider);
 
-    final int currentOwner = getDicOwner(previousRecord);
-    final int currentComponent = getDicComponent(previousRecord);
     final int currentPartition = getPartition(previousRecord);
-    final int currentStore = getStore(previousRecord);
-    final int currentField = getField(previousRecord);
     final long currentDicId = getDicId(previousRecord);
     final long currentRefId = getRefId(previousRecord);
     final long currentIdxId = getIdxId(previousRecord);
 
-    if (currentOwner == this.sharedOwnerValue
-        && currentComponent == this.sharedComponentValue
-        && currentPartition == this.sharedPartitionId) {
+    if (currentPartition == this.sharedPartitionId) {
       // We cannot make any change
       return previousRecord;
     } else {
-      final int newOwner = getDicOwner(duplicateRecord);
-      final int newComponent = getDicComponent(duplicateRecord);
       final int newPartition = getPartition(duplicateRecord);
-      final int newStore = getStore(duplicateRecord);
-      final int newField = getField(duplicateRecord);
       final long newDicId = getDicId(duplicateRecord);
       final long newRefId = getRefId(duplicateRecord);
       final long newIdxId = getIdxId(duplicateRecord);
 
-      if (newOwner == currentOwner
-          && newComponent == currentComponent
-          && newPartition == currentPartition
-          && newStore == currentStore
-          && newField == currentField) {
+      if (newPartition == currentPartition) {
         // Nothing to change
         return duplicateRecord;
       } else {
         final IWritableRecord newRecord = copyRecord(duplicateRecord);
 
-        if (newOwner != currentOwner) {
-          // Change the owner to the special value "shared"
-          final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
-          newRecord.writeInt(ownerIdx, this.sharedOwnerValue);
-        }
-        if (newComponent != currentComponent) {
-          final int componentIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__COMPONENT);
-          newRecord.writeInt(componentIdx, this.sharedComponentValue);
-        }
-        if (newPartition != currentPartition) {
-          assert newPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
-          assert currentPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
-          final int partitionIdx =
-              storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
-          newRecord.writeInt(partitionIdx, this.sharedPartitionId);
-        }
-        if (newStore != currentStore) {
-          // If the new record has no store knowledge, use the previous instead
-          final int storeIdx =
-              storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_STORE_NAME);
-          if (newStore == unknownStoreId) {
-            newRecord.write(storeIdx, currentStore);
-          } else {
-            newRecord.write(storeIdx, sharedStoreId);
-          }
-        }
-        if (newField != currentField) {
-          final int fieldIndex =
-              storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_FIELD_NAME);
-          if (newField == unknownFieldId) {
-            newRecord.write(fieldIndex, currentField);
-          } else {
-            newRecord.write(fieldIndex, sharedFieldId);
-          }
-        }
+        assert newPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
+        assert currentPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
+        final int partitionIdx =
+            storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
+        newRecord.writeInt(partitionIdx, this.sharedPartitionId);
+
         // If component-specific ids are both not the default value and do not match, we throw
         // else we keep the non-default
         if (currentDicId != newDicId) {
@@ -171,20 +122,6 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
   private void init(
       final IStoreMetadata storeMetadata, final Records.IDictionaryProvider dictionaryProvider) {
-    if (sharedComponentValue < 0) {
-      final int ownerIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__OWNER);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> ownerDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(ownerIdx);
-      sharedOwnerValue = ownerDictionary.map(MemoryAnalysisDatastoreDescription.SHARED_OWNER);
-
-      final int componentIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__COMPONENT);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> componentDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(componentIdx);
-      sharedComponentValue =
-          componentDictionary.map(MemoryAnalysisDatastoreDescription.SHARED_COMPONENT);
-    }
     if (sharedPartitionId < 0) {
       final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
       @SuppressWarnings("unchecked")
@@ -192,35 +129,6 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
       sharedPartitionId =
           partitionDictionary.map(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS);
-    }
-
-    if (sharedStoreId < 0) {
-      final int storeIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_STORE_NAME);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> storeDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(storeIdx);
-      sharedStoreId = storeDictionary.map(MemoryAnalysisDatastoreDescription.DATASTORE_SHARED);
-    }
-    if (sharedFieldId < 0) {
-      final int fieldIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_FIELD_NAME);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> fieldDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(fieldIdx);
-      sharedFieldId = fieldDictionary.map(MemoryAnalysisDatastoreDescription.DATASTORE_SHARED);
-    }
-    if (unknownStoreId < 0) {
-      final int storeIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_STORE_NAME);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> storeDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(storeIdx);
-      unknownStoreId = storeDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_DATASTORE);
-    }
-    if (unknownFieldId < 0) {
-      final int fieldIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_FIELD_NAME);
-      @SuppressWarnings("unchecked")
-      final IWritableDictionary<Object> fieldDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(fieldIdx);
-      unknownFieldId = fieldDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_DATASTORE);
     }
     if (defaultDicId < 0) {
       final int dicIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
@@ -250,28 +158,8 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
   }
 
-  private int getDicOwner(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__OWNER);
-    return record.readInt(idx);
-  }
-
-  private int getDicComponent(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__COMPONENT);
-    return record.readInt(idx);
-  }
-
   private int getPartition(final IRecordReader record) {
     final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
-    return record.readInt(idx);
-  }
-
-  private int getStore(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_STORE_NAME);
-    return record.readInt(idx);
-  }
-
-  private int getField(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_FIELD_NAME);
     return record.readInt(idx);
   }
 

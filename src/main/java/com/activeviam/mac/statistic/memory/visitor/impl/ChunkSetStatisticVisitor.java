@@ -215,9 +215,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
       if (this.referenceId != null) {
@@ -234,17 +231,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       }
       if (this.fields != null) {
         writeFieldRecordsForChunk(chunkStatistic);
-
-        // todo vlg clear this if obsolete
-        FeedVisitor.setTupleElement(
-            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_FIELD_NAME,
-            retrieveUniqueField());
       }
-      if (this.store != null) {
-        FeedVisitor.setTupleElement(
-            tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
-      }
-
       // Complete chunk info regarding size and usage if not defined by a parent
       if (this.chunkSize != null) {
         FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__SIZE, this.chunkSize);

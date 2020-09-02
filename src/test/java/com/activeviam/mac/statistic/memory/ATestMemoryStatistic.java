@@ -10,14 +10,11 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
-import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -1094,27 +1091,29 @@ public abstract class ATestMemoryStatistic {
 
   static void checkForUnrootedChunks(IDatastore monitoringDatastore) {
     // Check that all chunks have an owner
-    final IDictionaryCursor cursor =
-        monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
-            .withCondition(
-                BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__OWNER, NoOwner.getInstance()),
-                    BaseConditions.Equal(CHUNK__COMPONENT, IRecordFormat.GLOBAL_DEFAULT_STRING)))
-            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER, CHUNK__COMPONENT)
-            .onCurrentThread()
-            .run();
-    if (cursor.hasNext()) {
-      int count = 0;
-      while (cursor.hasNext()) {
-        cursor.next();
-        count += 1;
-        System.out.println("Error for " + cursor.getRawRecord());
-      }
-      throw new AssertionError(count + " chunks without owner or component");
-    }
+    // todo vlg
+    throw new AssertionError();
+//    final IDictionaryCursor cursor =
+//        monitoringDatastore
+//            .getHead()
+//            .getQueryRunner()
+//            .forStore(CHUNK_STORE)
+//            .withCondition(
+//                BaseConditions.Or(
+//                    BaseConditions.Equal(CHUNK__OWNER, NoOwner.getInstance()),
+//                    BaseConditions.Equal(CHUNK__COMPONENT, IRecordFormat.GLOBAL_DEFAULT_STRING)))
+//            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER, CHUNK__COMPONENT)
+//            .onCurrentThread()
+//            .run();
+//    if (cursor.hasNext()) {
+//      int count = 0;
+//      while (cursor.hasNext()) {
+//        cursor.next();
+//        count += 1;
+//        System.out.println("Error for " + cursor.getRawRecord());
+//      }
+//      throw new AssertionError(count + " chunks without owner or component");
+//    }
   }
 
   /**
