@@ -488,7 +488,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
 
-    // todo vlg: remove if obsolete
     final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
