@@ -106,7 +106,9 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
 		final MDXQuery excessMemoryQuery = new MDXQuery(
-				"WITH MEMBER [Measures].[ExcessDirectMemory] AS"
+				"WITH MEMBER [Measures].[Field.COUNT] AS "
+						+ ownershipCountMdxExpression("[Fields].[Field]")
+						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
 						+ " Sum("
 						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
 						+ "   IIF([Measures].[Field.COUNT] > 1,"
@@ -124,5 +126,20 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 		Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
 				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
 						- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
+	}
+
+	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+		return "DistinctCount("
+				+ "  Generate("
+				+ "    NonEmpty("
+				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    ),"
+				+ "    NonEmpty("
+				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    )"
+				+ "  )"
+				+ ")";
 	}
 }
