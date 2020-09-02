@@ -292,14 +292,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
         .withDimension("Versions")
-        .withHierarchy(BRANCH_LEVEL)
+        .withHierarchy("Version")
         .slicing()
-        .withLevelOfSameName()
+        .withLevel(BRANCH_LEVEL)
         .withPropertyName(DatastoreConstants.VERSION__BRANCH)
         .withFirstObjects("master")
-        .withHierarchy(EPOCH_ID_LEVEL)
-        .slicing()
-        .withLevelOfSameName()
+        .withLevel(EPOCH_ID_LEVEL)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withComparator(ReverseOrderComparator.type);
   }
