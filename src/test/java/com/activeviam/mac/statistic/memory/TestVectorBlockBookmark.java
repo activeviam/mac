@@ -40,6 +40,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   StatisticsSummary summary;
 
   public static final int ADDED_DATA_SIZE = 20;
+  public static final int FIELD_SHARING_COUNT = 2;
 
   @BeforeClass
   public static void setupRegistry() {
@@ -169,19 +170,9 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
             + "   [Fields].[Field].[Field].[vector1]"
             + " )");
 
-    final MDXQuery sharedCountQuery = new MDXQuery(
-        "SELECT [Measures].[Field.COUNT] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "   [Owners].[Owner].[Owner].[Store A],"
-            + "   [Fields].[Field].[Field].[vector1]"
-            + " )");
-
     final CellSetDTO refCountResult = pivot.execute(refCountQuery);
-    final CellSetDTO sharedCountResult = pivot.execute(sharedCountQuery);
 
     Assertions.assertThat((long) CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
-        .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(sharedCountResult)
-            * ADDED_DATA_SIZE);
+        .isEqualTo(FIELD_SHARING_COUNT * ADDED_DATA_SIZE);
   }
 }

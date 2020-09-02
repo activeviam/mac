@@ -111,23 +111,50 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testOverviewOwnerTotal() throws QueryException {
+  public void testExclusiveOwnerTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
         new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS " + "FROM [MemoryCube]");
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "NON EMPTY [Chunks].[ChunkId].[ALL].[AllMember].Children ON ROWS "
+                + "FROM [MemoryCube] "
+                + "WHERE [Owners].[Shared].[Shared].[Exclusive Owner]");
 
     final MDXQuery perOwnerQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-                + "[Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
+                + "NON EMPTY [Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
+                + "FROM [MemoryCube] "
+                + "WHERE [Owners].[Shared].[Shared].[Exclusive Owner]");
+
+    final CellSetDTO totalResult = pivot.execute(totalQuery);
+    final CellSetDTO perOwnerResult = pivot.execute(perOwnerQuery);
+
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult))
+        .isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(totalResult));
+  }
+
+  @Test
+  public void testOwnerTotal() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+
+    final MDXQuery perOwnerQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "NON EMPTY [Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
                 + "FROM [MemoryCube]");
 
     final MDXQuery excessMemoryQuery =
         new MDXQuery(
-            "WITH"
+            "WITH MEMBER [Measures].[Owner.COUNT] AS "
+                + ownershipCountMdxExpression("[Owners].[Owner]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"
                 + " Sum("
                 + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -141,13 +168,46 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-            CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
+            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
   }
 
   @Test
-  public void testOverviewStoreTotal() throws QueryException {
+  public void testStoreExclusiveComponentTotal() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+    final MDXQuery storeTotalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+                + "FROM [MemoryCube] "
+                + "WHERE ("
+                + "  [Owners].[Owner].[ALL].[AllMember].[Store A],"
+                + "  [Owners].[Shared].[Shared].[Exclusive Owner],"
+                + "  [Components].[Shared].[Shared].[Exclusive Component]"
+                + ")");
+
+    final MDXQuery perComponentsStoreQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "[Components].[Component].[ALL].[AllMember].Children ON ROWS "
+                + "FROM [MemoryCube] "
+                + "WHERE ("
+                + "  [Owners].[Owner].[ALL].[AllMember].[Store A],"
+                + "  [Shared Owner].[Shared].[Shared].[Exclusive Owner],"
+                + "  [Shared Component].[Shared].[Shared].[Exclusive Component]"
+                + ")");
+
+    final CellSetDTO storeTotalResult = pivot.execute(storeTotalQuery);
+    final CellSetDTO perComponentStoreResult = pivot.execute(perComponentsStoreQuery);
+
+    Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(perComponentStoreResult))
+        .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(storeTotalResult));
+  }
+
+  @Test
+  public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -166,7 +226,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
     final MDXQuery excessMemoryQuery =
         new MDXQuery(
-            "WITH"
+            "WITH MEMBER [Measures].[Component.COUNT] AS "
+                + ownershipCountMdxExpression("[Components].[Component]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"
                 + " Sum("
                 + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -187,7 +248,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testOverviewCubeTotal() throws QueryException {
+  public void testCubeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -206,7 +267,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
     final MDXQuery excessMemoryQuery =
         new MDXQuery(
-            "WITH"
+            "WITH MEMBER [Measures].[Component.COUNT] AS "
+                + ownershipCountMdxExpression("[Components].[Component]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"
                 + " Sum("
                 + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -221,8 +283,23 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-            CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+        CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
+            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
+  }
+
+  protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+    return "DistinctCount("
+        + "  Generate("
+        + "    NonEmpty("
+        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+        + "      {[Measures].[contributors.COUNT]}"
+        + "    ),"
+        + "    NonEmpty("
+        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+        + "      {[Measures].[contributors.COUNT]}"
+        + "    )"
+        + "  )"
+        + ")";
   }
 }
