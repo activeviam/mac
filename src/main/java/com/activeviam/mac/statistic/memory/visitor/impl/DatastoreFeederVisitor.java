@@ -139,19 +139,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final Object[] ownerTuple =
         FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
             this.rootComponent);
-
-    // todo vlg refactor this
-    if (this.fields != null) {
-      this.fields.stream()
-          .sorted()
-          .forEachOrdered(field -> {
-            FeedVisitor
-                .setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD, field);
-            FeedVisitor.add(chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-          });
-    } else {
-      FeedVisitor.add(chunkStatistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-    }
+    FeedVisitor
+        .writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields, ownerFormat,
+            ownerTuple
+        );
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {

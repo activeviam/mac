@@ -169,19 +169,9 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     final Object[] ownerTuple =
         FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, owner, this.dumpName,
             ParentType.VECTOR_BLOCK);
-
-    // todo vlg refactor this
-    if (this.fields != null) {
-      this.fields.stream()
-          .sorted()
-          .forEachOrdered(field -> {
-            FeedVisitor
-                .setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD, field);
-            FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-          });
-    } else {
-      FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-    }
+    FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
+        ownerTuple
+    );
 
     final IRecordFormat format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
