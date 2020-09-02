@@ -8,13 +8,24 @@ package com.activeviam.mac.statistic.memory;
 
 import static org.junit.Assert.assertNotEquals;
 
+import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
+import com.qfs.store.IDatastore;
+import com.qfs.store.query.IDictionaryCursor;
+import com.quartetfs.fwk.util.impl.TruePredicate;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
@@ -40,65 +51,69 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
   }
 
   public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
-    // todo vlg
-    throw new AssertionError();
+    createApplicationWithVector(
+        duplicateVectors,
+        (monitoredDatastore, monitoredManager) -> {
+          commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
 
-//    createApplicationWithVector(
-//        duplicateVectors,
-//        (monitoredDatastore, monitoredManager) -> {
-//          commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
-//
-//          final IMemoryAnalysisService analysisService =
-//              createService(monitoredDatastore, monitoredManager);
-//          final Path exportPath =
-//              analysisService.exportMostRecentVersion(
-//                  "doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
-//          final Collection<IMemoryStatistic> datastoreStats =
-//              loadDatastoreMemoryStatFromFolder(exportPath);
-//
-//          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
-//
-//          // Test that we have the correct count of vector blocks
-//          final IDictionaryCursor cursor =
-//              monitoringDatastore
-//                  .getHead()
-//                  .getQueryRunner()
-//                  .forStore(CHUNK_STORE)
-//                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
-//                  .selecting(CHUNK_ID)
-//                  .onCurrentThread()
-//                  .run();
-//          final Set<Long> storeIds =
-//              StreamSupport.stream(cursor.spliterator(), false)
-//                  .map(record -> record.readLong(0))
-//                  .collect(Collectors.toSet());
-//          Assertions.assertThat(storeIds).isNotEmpty();
-//
-//          final Set<Long> statIds = new HashSet<>();
-//          datastoreStats.forEach(
-//              stat ->
-//                  stat.accept(
-//                      new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
-//                        @Override
-//                        protected Void getResult() {
-//                          return null;
-//                        }
-//
-//                        @Override
-//                        protected boolean match(final IMemoryStatistic statistic) {
-//                          if (statistic
-//                              .getName()
-//                              .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-//                            statIds.add(
-//                                statistic
-//                                    .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
-//                                    .asLong());
-//                          }
-//                          return true; // Iterate over every item
-//                        }
-//                      }));
-//          Assertions.assertThat(storeIds).isEqualTo(statIds);
-//        });
+          final IMemoryAnalysisService analysisService =
+              createService(monitoredDatastore, monitoredManager);
+          final Path exportPath =
+              analysisService.exportMostRecentVersion(
+                  "doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
+          final Collection<IMemoryStatistic> datastoreStats =
+              loadDatastoreMemoryStatFromFolder(exportPath);
+
+          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+
+          // Test that we have the correct count of vector blocks
+          final Set<Long> storeIds =
+              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK);
+          Assertions.assertThat(storeIds).isNotEmpty();
+
+          final Set<Long> statIds = new HashSet<>();
+          datastoreStats.forEach(
+              stat ->
+                  stat.accept(
+                      new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
+                        @Override
+                        protected Void getResult() {
+                          return null;
+                        }
+
+                        @Override
+                        protected boolean match(final IMemoryStatistic statistic) {
+                          if (statistic
+                              .getName()
+                              .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+                            statIds.add(
+                                statistic
+                                    .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
+                                    .asLong());
+                          }
+                          return true; // Iterate over every item
+                        }
+                      }));
+          Assertions.assertThat(storeIds).isEqualTo(statIds);
+        });
+  }
+
+  private Set<Long> retrieveChunksOfType(
+      final IDatastore datastore, final ParentType component) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.COMPONENT__COMPONENT, component))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
   }
 
   @Test

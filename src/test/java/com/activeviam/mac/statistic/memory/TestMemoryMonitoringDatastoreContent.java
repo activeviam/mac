@@ -9,6 +9,7 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.assertj.QfsConditions;
+import com.qfs.chunk.impl.ChunkSingleVector;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.dic.IDictionary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -23,6 +24,8 @@ import com.qfs.store.query.ICompiledGetByKey;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.query.impl.CompiledGetByKey;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
+import com.qfs.vector.direct.impl.DirectLongVectorBlock;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.QuartetRuntimeException;
@@ -40,7 +43,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
@@ -138,7 +144,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                           .read(1);
 
                   Object[] top_obj = query.runInTransaction(keys, true).toTuple();
-                  monitoredChunkSizes[i] = Long.valueOf(top_obj[3].toString());
+                  monitoredChunkSizes[i] = Long.parseLong(top_obj[2].toString());
                 }
               });
           // Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
@@ -857,69 +863,82 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testBlocksOfSingleVectors() {
-    // todo vlg
-    throw new AssertionError();
+    createApplicationWithVector(
+        true,
+        (monitoredDatastore, monitoredManager) -> {
+          monitoredDatastore.edit(
+              tm -> {
+                IntStream.range(0, 24)
+                    .forEach(
+                        i -> {
+                          tm.add(
+                              VECTOR_STORE_NAME,
+                              i,
+                              IntStream.rangeClosed(1, 5).toArray(),
+                              IntStream.rangeClosed(10, 20).toArray(),
+                              LongStream.rangeClosed(3, 8).toArray());
+                        });
+              });
 
-//    createApplicationWithVector(
-//        true,
-//        (monitoredDatastore, monitoredManager) -> {
-//          monitoredDatastore.edit(
-//              tm -> {
-//                IntStream.range(0, 24)
-//                    .forEach(
-//                        i -> {
-//                          tm.add(
-//                              VECTOR_STORE_NAME,
-//                              i,
-//                              IntStream.rangeClosed(1, 5).toArray(),
-//                              IntStream.rangeClosed(10, 20).toArray(),
-//                              LongStream.rangeClosed(3, 8).toArray());
-//                        });
-//              });
-//
-//          final IMemoryAnalysisService analysisService =
-//              createService(monitoredDatastore, monitoredManager);
-//          final Path exportPath =
-//              analysisService.exportMostRecentVersion("testBlocksOfSingleVectors");
-//          final Collection<IMemoryStatistic> datastoreStats =
-//              loadDatastoreMemoryStatFromFolder(exportPath);
-//
-//          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
-//
-//          // Test that we have chunks of single values
-//          final IDictionaryCursor recordCursor =
-//              monitoringDatastore
-//                  .getHead()
-//                  .getQueryRunner()
-//                  .forStore(CHUNK_STORE)
-//                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.RECORDS))
-//                  .selecting(DatastoreConstants.CHUNK__CLASS)
-//                  .onCurrentThread()
-//                  .run();
-//          final Set<String> recordTypes =
-//              StreamSupport.stream(recordCursor.spliterator(), false)
-//                  .map(record -> (String) record.read(0))
-//                  .collect(Collectors.toSet());
-//          Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
-//
-//          // Test that we have chunks of single values
-//          final IDictionaryCursor vectorCursor =
-//              monitoringDatastore
-//                  .getHead()
-//                  .getQueryRunner()
-//                  .forStore(CHUNK_STORE)
-//                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
-//                  .selecting(DatastoreConstants.CHUNK__CLASS)
-//                  .onCurrentThread()
-//                  .run();
-//          final Set<String> vectorTypes =
-//              StreamSupport.stream(vectorCursor.spliterator(), false)
-//                  .map(record -> (String) record.read(0))
-//                  .collect(Collectors.toSet());
-//          Assertions.assertThat(vectorTypes)
-//              .contains(
-//                  DirectIntegerVectorBlock.class.getName(), DirectLongVectorBlock.class.getName());
-//        });
+          final IMemoryAnalysisService analysisService =
+              createService(monitoredDatastore, monitoredManager);
+          final Path exportPath =
+              analysisService.exportMostRecentVersion("testBlocksOfSingleVectors");
+          final Collection<IMemoryStatistic> datastoreStats =
+              loadDatastoreMemoryStatFromFolder(exportPath);
+
+          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+
+          // Test that we have chunks of single values
+          final Set<String> recordTypes = retrieveClassesOfChunks(
+              monitoringDatastore,
+              retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
+          Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
+
+          // Test that we have chunks of single values
+          final Set<String> vectorTypes = retrieveClassesOfChunks(
+              monitoringDatastore,
+              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
+          Assertions.assertThat(vectorTypes)
+              .contains(DirectIntegerVectorBlock.class.getName(),
+                  DirectLongVectorBlock.class.getName());
+        });
+  }
+
+  private Set<Long> retrieveChunksOfType(
+      final IDatastore datastore, final ParentType component) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.COMPONENT__COMPONENT, component))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> retrieveClassesOfChunks(
+      final IDatastore datastore, final Collection<Long> chunks) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withCondition(
+                BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
+            .selecting(DatastoreConstants.CHUNK__CLASS)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> (String) reader.read(0))
+        .collect(Collectors.toSet());
   }
 
   // TODO Test content of all stores similarly
