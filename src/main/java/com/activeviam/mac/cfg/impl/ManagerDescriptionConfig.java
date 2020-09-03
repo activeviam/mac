@@ -175,6 +175,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
+  // todo vlg cleanup
+  protected CopperStore chunkToOwnerStore;
+  protected CopperHierarchy ownerHierarchy;
+  protected CopperHierarchy componentHierarchy;
+  protected CopperHierarchy fieldHierarchy;
+
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
@@ -385,20 +391,66 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    CopperHierarchy ownerHierarchy =
+    ownerHierarchy =
         Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
             .publish(context);
 
-    CopperHierarchy componentHierarchy =
-        Copper
-            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
-            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
-            .publish(context);
+    componentHierarchy = Copper
+        .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+        .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
+        .publish(context);
 
-    CopperHierarchy fieldHierarchy =
+    fieldHierarchy =
         Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
+            .publish(context);
+
+    //    final CopperMeasure ownerMeasure =
+    //        Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER),
+    //            DistinctCountFunction.PLUGIN_KEY)
+    //            .totalOn(ownerHierarchy)
+    //            .per(Copper.level(CHUNK_ID_HIERARCHY))
+    //            .max();
+    //
+    //    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+    //        .from(Copper.combine((CopperElement) ownerMeasure)
+    //            .map(a -> (long) a.read(0) > 1L ? "Shared Owner" : "Exclusive Owner"))
+    //        .withMemberList("Shared Owner", "Exclusive Owner")
+    //        .publish(context);
+    //
+    //    final CopperMeasure componentMeasure =
+    //        Copper.agg(chunkToComponentStore.field(DatastoreConstants.COMPONENT__COMPONENT),
+    //            DistinctCountFunction.PLUGIN_KEY)
+    //            .totalOn(componentHierarchy)
+    //            .per(Copper.level(CHUNK_ID_HIERARCHY))
+    //            .max();
+    //
+    //    Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+    //        .from(Copper.combine((CopperElement) componentMeasure)
+    //            .map(a -> (long) a.read(0) > 1L ? "Shared Component" : "Exclusive Component"))
+    //        .withMemberList("Shared Component", "Exclusive Component")
+    //        .publish(context);
+    //
+    //    final CopperMeasure fieldMeasure =
+    //        Copper.agg(chunkToFieldStore.field(DatastoreConstants.FIELD__FIELD_NAME),
+    //            DistinctCountFunction.PLUGIN_KEY)
+    //            .totalOn(fieldHierarchy)
+    //            .per(Copper.level(CHUNK_ID_HIERARCHY))
+    //            .max();
+    //
+    //    Copper.newSingleLevelHierarchy(FIELD_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+    //        .from(Copper.combine((CopperElement) fieldMeasure)
+    //            .map(a -> (long) a.read(0) > 1L ? "Shared Field" : "Exclusive Field"))
+    //        .withMemberList("Shared Field", "Exclusive Field")
+    //        .publish(context);
+  }
+
+  private void chunkMeasures(final ICopperContext context) {
+    final var directMemory =
+        Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+            .as(DIRECT_MEMORY_SUM)
+            .withFormatter(ByteFormatter.KEY)
             .publish(context);
 
     final CopperMeasure ownerMeasure =
@@ -434,19 +486,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .per(Copper.level(CHUNK_ID_HIERARCHY))
             .max();
 
-    Copper.newSingleLevelHierarchy(FIELD_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
-        .from(Copper.combine((CopperElement) fieldMeasure)
-            .map(a -> (long) a.read(0) > 1L ? "Shared Field" : "Exclusive Field"))
-        .withMemberList("Shared Field", "Exclusive Field")
+    Copper.combine(ownerMeasure, directMemory)
+        .map(reader -> reader.readLong(0) > 1L ? 0L : reader.readLong(1))
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .sum()
+        .map(Double::longValue)
+        .withType(ILiteralType.LONG)
+        .as(DIRECT_MEMORY_SUM + ".exclusiveOwner")
+        .withinFolder(MEMORY_FOLDER)
+        .withFormatter(ByteFormatter.KEY)
         .publish(context);
-  }
-
-  private void chunkMeasures(final ICopperContext context) {
-    final var directMemory =
-        Copper.sum(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .as(DIRECT_MEMORY_SUM)
-            .withFormatter(ByteFormatter.KEY)
-            .publish(context);
 
     Copper.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
         .as(HEAP_MEMORY_SUM)
