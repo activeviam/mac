@@ -1,5 +1,5 @@
 /*
- * (C) ActiveViam 2016
+ * (C) ActiveViam 2016-2020
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
@@ -11,24 +11,24 @@ import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
 /**
- * Formatter displaying byte amounts with units.
+ * Formatter displaying byte amounts with decimal units.
  *
  * @author ActiveViam
  */
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
 public class ByteFormatter implements IFormatter {
 
-  private static final long serialVersionUID = 4778274710157958593L;
+  private static final long serialVersionUID = 1342335544322063849L;
 
   /** Plugin key. */
   public static final String KEY = "ByteFormatter";
 
-  /** Number of bytes in 1 GiB. */
-  protected static final long GB = 1 << 30;
-  /** Number of bytes in 1 MiB. */
-  protected static final long MB = 1 << 20;
-  /** Number of bytes in 1 KiB. */
-  protected static final long KB = 1 << 10;
+  /** Number of bytes in 1 GB. */
+  protected static final long GB = 1_000_000_000;
+  /** Number of bytes in 1 MB. */
+  protected static final long MB = 1_000_000;
+  /** Number of bytes in 1 kB. */
+  protected static final long KB = 1_000;
 
   @Override
   public String getType() {
@@ -48,7 +48,7 @@ public class ByteFormatter implements IFormatter {
    */
   public static String printDataSize(long byteCount) {
     if (byteCount == 0) {
-      return null;
+      return "0 bytes";
     }
 
     final long gb = byteCount / GB;
@@ -56,13 +56,13 @@ public class ByteFormatter implements IFormatter {
     final long kb = (byteCount % MB) / KB;
     final long remaining = (byteCount % KB);
     if (gb > 0) {
-      return dec(gb, mb, "GiB");
+      return dec(gb, mb, "GB");
     } else if (mb > 0) {
-      return dec(mb, kb, "MiB");
+      return dec(mb, kb, "MB");
     } else if (kb > 0) {
-      return dec(kb, remaining, "KiB");
+      return dec(kb, remaining, "kB");
     }
-    return pnz(gb, "GiB") + pnz(mb, "MiB") + pnz(kb, "KiB") + pnz(remaining, "bytes");
+    return pnz(gb, "GB") + pnz(mb, "MB") + pnz(kb, "kB") + pnz(remaining, "bytes");
   }
 
   /**
@@ -80,7 +80,7 @@ public class ByteFormatter implements IFormatter {
     if (decimal == 0) {
       return String.format("%d %s", value, unit);
     } else {
-      return String.format("%.3f %s", value + decimal / 1024.f, unit);
+      return String.format("%.3f %s", value + decimal / 1000.f, unit);
     }
   }
 }
