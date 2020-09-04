@@ -37,7 +37,7 @@ public class ByteFormatter implements IFormatter {
 
   @Override
   public String format(Object object) {
-    return printDataSize((long) object);
+    return printDataSize(((Number) object).longValue());
   }
 
   /**
