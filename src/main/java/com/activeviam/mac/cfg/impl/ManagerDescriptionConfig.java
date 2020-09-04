@@ -460,12 +460,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .per(Copper.level(CHUNK_ID_HIERARCHY))
             .max();
 
-    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
-        .from(Copper.combine((CopperElement) ownerMeasure)
-            .map(a -> (long) a.read(0) > 1L ? "Shared Owner" : "Exclusive Owner"))
-        .withMemberList("Shared Owner", "Exclusive Owner")
-        .publish(context);
-
     final CopperMeasure componentMeasure =
         Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT),
             DistinctCountFunction.PLUGIN_KEY)
@@ -493,6 +487,38 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .map(Double::longValue)
         .withType(ILiteralType.LONG)
         .as(DIRECT_MEMORY_SUM + ".exclusiveOwner")
+        .withinFolder(MEMORY_FOLDER)
+        .withFormatter(ByteFormatter.KEY)
+        .publish(context);
+
+    Copper.combine(componentMeasure, directMemory)
+        .map(reader -> reader.readLong(0) > 1L ? 0L : reader.readLong(1))
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .sum()
+        .map(Double::longValue)
+        .withType(ILiteralType.LONG)
+        .as(DIRECT_MEMORY_SUM + ".exclusiveComponent")
+        .withinFolder(MEMORY_FOLDER)
+        .withFormatter(ByteFormatter.KEY)
+        .publish(context);
+
+    Copper.combine(fieldMeasure, directMemory)
+        .map(reader -> {
+          if (reader.isNull(0)) {
+            return null;
+          }
+
+          if (reader.readLong(0) > 1L) {
+            return 0L;
+          }
+
+          return reader.readLong(1);
+        })
+        .per(Copper.level(CHUNK_ID_HIERARCHY))
+        .sum()
+        .map(Double::longValue)
+        .withType(ILiteralType.LONG)
+        .as(DIRECT_MEMORY_SUM + ".exclusiveField")
         .withinFolder(MEMORY_FOLDER)
         .withFormatter(ByteFormatter.KEY)
         .publish(context);
