@@ -1,0 +1,19 @@
+{
+  "style" : { },
+  "showTitleBar" : true,
+  "body" : {
+    "configuration" : {
+      "displayedAsSelect" : true,
+      "multipleSelection" : false
+    },
+    "filterKey" : "explicit",
+    "levelDetails" : {
+      "cube" : "MemoryCube",
+      "dimension" : "Chunk Owners",
+      "hierarchy" : "Owner",
+      "level" : "Partition",
+      "caption" : "Partition"
+    }
+  },
+  "containerKey" : "quick-filter"
+}
