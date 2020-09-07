@@ -10,6 +10,7 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
+import com.activeviam.copper.api.CopperElement;
 import com.activeviam.copper.api.CopperHierarchy;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
@@ -484,6 +485,24 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(DIRECT_MEMORY_SUM + ".exclusiveField")
         .withinFolder(MEMORY_FOLDER)
         .withFormatter(ByteFormatter.KEY)
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+        .from(Copper.combine((CopperElement) ownerMeasure)
+            .map(a -> (long) a.read(0) > 1L ? "Shared Owner" : "Exclusive Owner"))
+        .withMemberList("Shared Owner", "Exclusive Owner")
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+        .from(Copper.combine((CopperElement) componentMeasure)
+            .map(a -> (long) a.read(0) > 1L ? "Shared Component" : "Exclusive Component"))
+        .withMemberList("Shared Component", "Exclusive Component")
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy(FIELD_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
+        .from(Copper.combine((CopperElement) fieldMeasure)
+            .map(a -> (long) a.read(0) > 1L ? "Shared Field" : "Exclusive Field"))
+        .withMemberList("Shared Field", "Exclusive Field")
         .publish(context);
 
     Copper.sum(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
