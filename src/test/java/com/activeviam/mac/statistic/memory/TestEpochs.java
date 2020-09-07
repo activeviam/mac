@@ -186,9 +186,9 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Set<Long> retrieveRecordChunks() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
+        .forStore(DatastoreConstants.OWNER_STORE)
         .withCondition(
-            BaseConditions.Equal(DatastoreConstants.COMPONENT__COMPONENT, ParentType.RECORDS))
+            BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
         .selecting(DatastoreConstants.CHUNK_ID)
         .onCurrentThread()
         .run();
