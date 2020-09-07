@@ -13,7 +13,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Owner.COUNT], [Measures].[Component.COUNT]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
               "contextValues" : {
                 "MemoryCube" : {
                   "mdx.hiddengrandtotals" : ""
@@ -134,6 +134,57 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Branch filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Versions",
+                "hierarchy" : "Version",
+                "level" : "Branch",
+                "caption" : "Branch"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "6",
+        "bookmark" : {
+          "name" : "Epoch filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : true
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Versions",
+                "hierarchy" : "Version",
+                "level" : "Epoch Id",
+                "caption" : "Epoch Id"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -152,8 +203,26 @@
             "direction" : "column"
           },
           "1" : {
-            "ck" : "0",
-            "size" : 0.8
+            "children" : {
+              "0" : {
+                "ck" : "0",
+                "size" : 0.68
+              },
+              "1" : {
+                "children" : {
+                  "0" : {
+                    "ck" : "5"
+                  },
+                  "1" : {
+                    "ck" : "6"
+                  }
+                },
+                "direction" : "column",
+                "size" : 0.32
+              }
+            },
+            "size" : 0.8,
+            "direction" : "row"
           }
         },
         "direction" : "column"
@@ -282,6 +351,57 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "6",
+        "bookmark" : {
+          "name" : "Branch filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Versions",
+                "hierarchy" : "Version",
+                "level" : "Branch",
+                "caption" : "Branch"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "7",
+        "bookmark" : {
+          "name" : "Epoch filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : true
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Versions",
+                "hierarchy" : "Version",
+                "level" : "Epoch Id",
+                "caption" : "Epoch Id"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -300,8 +420,26 @@
             "direction" : "column"
           },
           "1" : {
-            "ck" : "1",
-            "size" : 0.79
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.67
+              },
+              "1" : {
+                "children" : {
+                  "0" : {
+                    "ck" : "6"
+                  },
+                  "1" : {
+                    "ck" : "7"
+                  }
+                },
+                "direction" : "column",
+                "size" : 0.33
+              }
+            },
+            "size" : 0.79,
+            "direction" : "row"
           }
         },
         "direction" : "column"
