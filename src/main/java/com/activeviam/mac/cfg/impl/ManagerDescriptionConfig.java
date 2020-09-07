@@ -10,7 +10,6 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
-import com.activeviam.copper.api.CopperElement;
 import com.activeviam.copper.api.CopperHierarchy;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperStore;
@@ -380,7 +379,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 4- Chunk to owners
-    CopperStore chunkToOwnerStore =
+    chunkToOwnerStore =
         Copper.store(DatastoreConstants.OWNER_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
@@ -422,12 +421,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .totalOn(componentHierarchy)
             .per(Copper.level(CHUNK_ID_HIERARCHY))
             .max();
-
-    Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, SHARED_HIERARCHY, SHARED_HIERARCHY)
-        .from(Copper.combine((CopperElement) componentMeasure)
-            .map(a -> (long) a.read(0) > 1L ? "Shared Component" : "Exclusive Component"))
-        .withMemberList("Shared Component", "Exclusive Component")
-        .publish(context);
 
     final CopperMeasure fieldMeasure =
         Copper.agg(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD),
