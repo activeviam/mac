@@ -8,13 +8,12 @@ package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_TO_COMPONENT_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_TO_OWNER_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.COMPONENT__COMPONENT;
+import static com.activeviam.mac.memory.DatastoreConstants.OWNER_STORE;
+import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 
 import com.activeviam.builders.FactFilterConditions;
@@ -1105,11 +1104,11 @@ public abstract class ATestMemoryStatistic {
     final Set<Long> chunkStoreChunks =
         retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID, BaseConditions.TRUE);
     final Set<Long> ownerStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, CHUNK_TO_OWNER_STORE, CHUNK_ID,
+        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
             BaseConditions.Not(BaseConditions.Equal(OWNER__OWNER, NoOwner.getInstance())));
     final Set<Long> componentStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, CHUNK_TO_COMPONENT_STORE, CHUNK_ID,
-            BaseConditions.Not(BaseConditions.Equal(COMPONENT__COMPONENT, ParentType.NO_COMPONENT)));
+        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+            BaseConditions.Not(BaseConditions.Equal(OWNER__COMPONENT, ParentType.NO_COMPONENT)));
 
     Assertions.assertThat(ownerStoreChunks)
         .containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
