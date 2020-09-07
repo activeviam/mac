@@ -30,6 +30,7 @@ import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -100,24 +101,40 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       final IRecordFormat format,
       final ChunkStatistic stat,
       final ChunkOwner owner,
-      final String dumpName) {
+      final String dumpName,
+      final ParentType component) {
     final Object[] tuple = new Object[format.getFieldCount()];
     tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
     tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    tuple[format.getFieldIndex(DatastoreConstants.OWNER__COMPONENT)] = component;
     return tuple;
   }
 
-  static Object[] buildComponentTupleFrom(
-      final IRecordFormat format,
-      final ChunkStatistic stat,
-      final ParentType componentType,
-      final String dumpName) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__CHUNK_ID)] = stat.getChunkId();
-    tuple[format.getFieldIndex(DatastoreConstants.COMPONENT__COMPONENT)] = componentType;
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-    return tuple;
+  /**
+   * Writes a record into the {@link DatastoreConstants#OWNER__FIELD} for each given field using the
+   * given tuple as a base.
+   *
+   * <p>This method can modify the "field" element of the given tuple.
+   *
+   *  @param statistic the statistic associated with the chunk
+   * @param transaction the ongoing transaction
+   * @param fields the fields associated with the chunk statistic
+   * @param format the format of the tuple
+   * @param tuple the base tuple to write records with
+   */
+  static void writeOwnerTupleRecordsForFields(
+      final ChunkStatistic statistic, final IOpenedTransaction transaction,
+      final Collection<String> fields, final IRecordFormat format, final Object... tuple) {
+    if (fields == null || fields.isEmpty()) {
+      FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+    } else {
+      fields.forEach(field -> {
+            FeedVisitor
+                .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
+            FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+          });
+    }
   }
 
   static Object[] buildDictionaryTupleFrom(
@@ -144,15 +161,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
         stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] =
         stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
-
-    return tuple;
-  }
-
-  static Object[] buildFieldTupleFrom(
-      final IRecordFormat format, final ChunkStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-
-    tuple[format.getFieldIndex(DatastoreConstants.FIELD__CHUNK_ID)] = stat.getChunkId();
 
     return tuple;
   }
