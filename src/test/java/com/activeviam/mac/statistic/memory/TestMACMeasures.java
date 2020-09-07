@@ -497,7 +497,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         " Crossjoin("
             + "    Hierarchize("
             + "      DrilldownLevel("
-            + "        [Stores].[Store].[ALL].[AllMember]"
+            + "        [Owners].[Owner].[ALL].[AllMember]"
             + "      )"
             + "    ),"
             + "    Hierarchize("

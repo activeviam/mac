@@ -134,16 +134,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
         FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, new StoreOwner(this.store),
-            this.dumpName);
-    FeedVisitor.add(
-        chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
-
-    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
-    final Object[] componentTuple =
-        FeedVisitor.buildComponentTupleFrom(
-            componentFormat, chunkStatistic, this.rootComponent, this.dumpName);
-    FeedVisitor.add(
-        chunkStatistic, transaction, DatastoreConstants.CHUNK_TO_COMPONENT_STORE, componentTuple);
+            this.dumpName, this.rootComponent);
+    FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
+        ownerFormat, ownerTuple);
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
@@ -174,9 +167,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     if (this.dictionaryId != null) {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
-    }
-    if (this.fields != null) {
-      writeFieldRecordsForChunk(chunkStatistic);
     }
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
         this.partitionId;

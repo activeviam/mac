@@ -197,14 +197,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName);
-    FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_OWNER_STORE, ownerTuple);
-
-    final IRecordFormat componentFormat = AFeedVisitor.getComponentFormat(this.storageMetadata);
-    final Object[] componentTuple =
-        FeedVisitor.buildComponentTupleFrom(
-            componentFormat, stat, this.rootComponent, this.dumpName);
-    FeedVisitor.add(stat, transaction, DatastoreConstants.CHUNK_TO_COMPONENT_STORE, componentTuple);
+        FeedVisitor
+            .buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName, this.rootComponent);
+    FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
