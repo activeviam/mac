@@ -66,23 +66,28 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   private void initializeApplication() throws DatastoreTransactionException {
-    monitoredApp = createMicroApplication();
+    monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
     final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
 
     transactionManager.startTransactionOnBranch("branch1", "A");
     IntStream.range(0, 10).forEach(i ->
-        transactionManager.add("A", i));
+        transactionManager.add("A", i, 0.));
     transactionManager.commitTransaction();
 
     transactionManager.startTransactionOnBranch("branch2", "A");
     IntStream.range(10, 20).forEach(i ->
-        transactionManager.add("A", i));
+        transactionManager.add("A", i, 0.));
     transactionManager.commitTransaction();
 
     transactionManager.startTransactionFromBranch("subbranch", "branch2", "A");
     IntStream.range(20, 30).forEach(i ->
-        transactionManager.add("A", i));
+        transactionManager.add("A", i, 0.));
+    transactionManager.commitTransaction();
+
+    transactionManager.startTransactionOnBranch("branch1", "A");
+    IntStream.range(10, 20).forEach(i ->
+        transactionManager.add("A", i, 0.));
     transactionManager.commitTransaction();
   }
 
@@ -125,6 +130,22 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   @Test
+  public void testExpectedEpochs() {
+    final Multimap<String, Long> epochsPerBranch = retrieveEpochsPerBranch();
+
+    Assertions.assertThat(epochsPerBranch.get("master"))
+        .hasSize(1);
+    Assertions.assertThat(epochsPerBranch.get("branch1"))
+        .hasSize(2);
+    Assertions.assertThat(epochsPerBranch.get("branch2"))
+        .hasSize(1);
+    Assertions.assertThat(epochsPerBranch.get("subbranch"))
+        .hasSize(1);
+
+    Assertions.assertThat(epochsPerBranch.values()).doesNotHaveDuplicates();
+  }
+
+  @Test
   public void testMasterHasNoRecordChunks() {
     final Set<Long> recordChunks = retrieveRecordChunks();
     final Multimap<String, Long> chunksPerBranch = retrieveChunksPerBranch(recordChunks);
@@ -133,14 +154,26 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testChunkSetInclusions() {
+  public void testNonEmptyRecordChunks() {
+    final Set<Long> recordChunks = retrieveRecordChunks();
+    final Multimap<String, Long> chunksPerBranch = retrieveChunksPerBranch(recordChunks);
+
+    Assertions.assertThat(chunksPerBranch.get("branch1")).isNotEmpty();
+    Assertions.assertThat(chunksPerBranch.get("branch2")).isNotEmpty();
+    Assertions.assertThat(chunksPerBranch.get("subbranch")).isNotEmpty();
+  }
+
+  @Test
+  public void testRecordChunksInclusions() {
     final Set<Long> recordChunks = retrieveRecordChunks();
     final Multimap<String, Long> chunksPerBranch = retrieveChunksPerBranch(recordChunks);
 
     Assertions.assertThat(chunksPerBranch.get("branch1"))
         .containsAll(chunksPerBranch.get("master"));
+
     Assertions.assertThat(chunksPerBranch.get("branch2"))
         .containsAll(chunksPerBranch.get("master"));
+
     Assertions.assertThat(chunksPerBranch.get("subbranch"))
         .containsAll(chunksPerBranch.get("branch2"));
   }
@@ -156,6 +189,24 @@ public class TestBranches extends ATestMemoryStatistic {
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(c -> (String) c.read(0))
         .collect(Collectors.toSet());
+  }
+
+  protected Multimap<String, Long> retrieveEpochsPerBranch() {
+    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+        .forStore(DatastoreConstants.CHUNK_STORE)
+        .withoutCondition()
+        .selecting(DatastoreConstants.VERSION__BRANCH, DatastoreConstants.VERSION__EPOCH_ID)
+        .onCurrentThread()
+        .run();
+
+    final Multimap<String, Long> epochsPerBranch = HashMultimap.create();
+    for (final IRecordReader reader : cursor) {
+      final String branch = (String) reader.read(0);
+      final long epochId = reader.readLong(1);
+      epochsPerBranch.put(branch, epochId);
+    }
+
+    return epochsPerBranch;
   }
 
   protected Set<Long> retrieveRecordChunks() {
