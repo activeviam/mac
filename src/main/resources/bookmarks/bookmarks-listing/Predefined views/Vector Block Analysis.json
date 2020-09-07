@@ -13,7 +13,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Stores].[Store].[Store].Members, [Fields].[Field].[Field].Members)) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members)) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "ranges" : {
@@ -75,15 +75,16 @@
             "showTitleBar" : true,
             "body" : {
               "configuration" : {
-                "displayedAsSelect" : true
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
               },
               "filterKey" : "explicit",
               "levelDetails" : {
                 "cube" : "MemoryCube",
-                "dimension" : "Stores",
-                "hierarchy" : "Store",
-                "level" : "Store",
-                "caption" : "Store"
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
               }
             },
             "containerKey" : "quick-filter"
@@ -100,7 +101,8 @@
             "showTitleBar" : true,
             "body" : {
               "configuration" : {
-                "displayedAsSelect" : true
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
               },
               "filterKey" : "explicit",
               "levelDetails" : {
