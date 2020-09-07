@@ -20,10 +20,8 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
-import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -432,8 +430,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     CopperStore chunkToOwnerStore =
         Copper.store(DatastoreConstants.OWNER_STORE)
             .joinToCube()
-            .withDefaultValue(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance())
-            .withDefaultValue(DatastoreConstants.OWNER__COMPONENT, ParentType.NO_COMPONENT)
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 

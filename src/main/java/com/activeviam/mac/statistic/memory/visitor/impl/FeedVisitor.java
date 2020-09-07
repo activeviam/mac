@@ -129,9 +129,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     if (fields == null || fields.isEmpty()) {
       FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
     } else {
-      fields.stream()
-          .sorted()
-          .forEachOrdered(field -> {
+      fields.forEach(field -> {
             FeedVisitor
                 .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
             FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
