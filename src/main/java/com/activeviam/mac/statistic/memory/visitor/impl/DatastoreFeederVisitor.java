@@ -8,7 +8,6 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
@@ -132,17 +131,12 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
-
-    final ChunkOwner owner = new StoreOwner(this.store);
-
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
-            this.rootComponent);
-    FeedVisitor
-        .writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields, ownerFormat,
-            ownerTuple
-        );
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, new StoreOwner(this.store),
+            this.dumpName, this.rootComponent);
+    FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
+        ownerFormat, ownerTuple);
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
@@ -174,13 +168,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.store != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
-    }
-    FeedVisitor.setTupleElement(tuple, chunkRecordFormat, DatastoreConstants.CHUNK__OWNER, owner);
-    FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__COMPONENT, this.rootComponent);
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
         this.partitionId;
     if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
@@ -308,7 +295,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.directParentId = String.valueOf(this.indexId);
     this.rootComponent = ParentType.INDEX;
 
-    final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
+    final String[] fieldNames =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
     final Collection<String> oldFields = this.fields;
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
@@ -479,7 +467,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
 
-    final String[] fieldNames = stat.getAttribute(DatastoreConstants.FIELDS).asStringArray();
+    final String[] fieldNames =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
     tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =

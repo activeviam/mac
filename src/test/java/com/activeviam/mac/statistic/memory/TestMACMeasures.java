@@ -308,7 +308,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + measure
                                 + "] ON COLUMNS"
                                 + " FROM [MemoryCube]"
-                                + " WHERE ([Chunk Owners].[Owner].[ALL].[AllMember].FirstChild)");
+                                + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
                     final CellSetDTO result = pivot.execute(query);
                     final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);

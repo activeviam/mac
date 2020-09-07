@@ -193,13 +193,6 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-    if (this.store != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_STORE_NAME, this.store);
-    }
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 

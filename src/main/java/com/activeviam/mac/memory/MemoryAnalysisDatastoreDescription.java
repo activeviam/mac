@@ -8,9 +8,6 @@
 package com.activeviam.mac.memory;
 
 import com.activeviam.builders.StartBuilding;
-import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.entities.NoOwner;
-import com.activeviam.mac.entities.SharedOwner;
 import com.qfs.chunk.IChunk;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.desc.IReferenceDescription;
@@ -47,17 +44,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
   /** Default value for store and field - fields. */
-  public static final String DATASTORE_SHARED = "Shared";
-
-  /** Default value for store and field - fields. */
   public static final String DEFAULT_DATASTORE = "Unknown";
 
   /** Default value for component-specific ids. */
   public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
-  /** Owner value for a chunk held by multiple components. */
-  public static final ChunkOwner SHARED_OWNER = SharedOwner.getInstance();
-  /** Component value for a chunk held by multiple components. */
-  public static final String SHARED_COMPONENT = "shared";
 
   /** Partition value for chunks held by no partitions. */
   public static final int NO_PARTITION = -3;
@@ -105,10 +95,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Foreign keys */
-        .withField(DatastoreConstants.CHUNK__OWNER, ILiteralType.OBJECT, NoOwner.getInstance())
-        .dictionarized()
-        .withField(DatastoreConstants.CHUNK__COMPONENT, ILiteralType.OBJECT)
-        .dictionarized()
         .withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__PARENT_ID)
@@ -116,12 +102,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         // Add 5 fields corresponding to the closest parent Id for a given type of parent
         .withField(
             DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG, DEFAULT_COMPONENT_ID_VALUE)
-        .dictionarized()
-        .withField(
-            DatastoreConstants.CHUNK__PARENT_FIELD_NAME, ILiteralType.STRING, DEFAULT_DATASTORE)
-        .dictionarized()
-        .withField(
-            DatastoreConstants.CHUNK__PARENT_STORE_NAME, ILiteralType.STRING, DEFAULT_DATASTORE)
         .dictionarized()
         .withField(
             DatastoreConstants.CHUNK__PARENT_INDEX_ID,

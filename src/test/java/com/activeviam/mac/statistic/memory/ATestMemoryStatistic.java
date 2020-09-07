@@ -10,19 +10,22 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
+import static com.activeviam.mac.memory.DatastoreConstants.OWNER_STORE;
+import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
+import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.chunk.direct.impl.SlabDirectChunkAllocator;
 import com.qfs.chunk.impl.Chunks;
+import com.qfs.condition.ICondition;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.ResourceRule;
@@ -68,6 +71,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
@@ -75,6 +79,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -1092,29 +1098,40 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
-  static void checkForUnrootedChunks(IDatastore monitoringDatastore) {
+  static void checkForUnrootedChunks(final IDatastore monitoringDatastore) {
     // Check that all chunks have an owner
+
+    final Set<Long> chunkStoreChunks =
+        retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID, BaseConditions.TRUE);
+    final Set<Long> ownerStoreChunks =
+        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+            BaseConditions.Not(BaseConditions.Equal(OWNER__OWNER, NoOwner.getInstance())));
+    final Set<Long> componentStoreChunks =
+        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+            BaseConditions.Not(BaseConditions.Equal(OWNER__COMPONENT, ParentType.NO_COMPONENT)));
+
+    Assertions.assertThat(ownerStoreChunks)
+        .containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
+    Assertions.assertThat(componentStoreChunks)
+        .containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
+  }
+
+  static Set<Long> retrieveAllChunkIds(
+      final IDatastore monitoringDatastore, final String storeName, final String chunkIdFieldName,
+      final ICondition condition) {
     final IDictionaryCursor cursor =
         monitoringDatastore
             .getHead()
             .getQueryRunner()
-            .forStore(CHUNK_STORE)
-            .withCondition(
-                BaseConditions.Or(
-                    BaseConditions.Equal(CHUNK__OWNER, NoOwner.getInstance()),
-                    BaseConditions.Equal(CHUNK__COMPONENT, IRecordFormat.GLOBAL_DEFAULT_STRING)))
-            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__OWNER, CHUNK__COMPONENT)
+            .forStore(storeName)
+            .withCondition(condition)
+            .selecting(chunkIdFieldName)
             .onCurrentThread()
             .run();
-    if (cursor.hasNext()) {
-      int count = 0;
-      while (cursor.hasNext()) {
-        cursor.next();
-        count += 1;
-        System.out.println("Error for " + cursor.getRawRecord());
-      }
-      throw new AssertionError(count + " chunks without owner or component");
-    }
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
   }
 
   /**

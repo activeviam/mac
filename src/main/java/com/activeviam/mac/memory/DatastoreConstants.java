@@ -72,17 +72,8 @@ public class DatastoreConstants {
   /** Index id field. */
   public static final String INDEX_ID = "indexId";
 
-  /** Field name field. */
-  public static final String FIELDS = "fields";
-
   /** Dictionary id field. */
   public static final String DICTIONARY_ID = "dicId";
-
-  /** Field for the name owner of the chunk. */
-  public static final String CHUNK__OWNER = "owner";
-
-  /** Field for the component type of the owner of the chunk. */
-  public static final String CHUNK__COMPONENT = "component";
 
   /** Field for the Id of the direct parent of the chunk. */
   public static final String CHUNK__PARENT_ID = "parentId";
@@ -98,12 +89,6 @@ public class DatastoreConstants {
 
   /** Field for the id of the closest parent reference of the chunk. */
   public static final String CHUNK__PARENT_REF_ID = "parentRefId";
-
-  /** Field for the name of the closest parent field of the chunk. */
-  public static final String CHUNK__PARENT_FIELD_NAME = "parentFieldName";
-
-  /** Field for the name of the closest parent store of the chunk. */
-  public static final String CHUNK__PARENT_STORE_NAME = "parentStoreName";
 
   /** Field for the size of the chunk. */
   public static final String CHUNK__SIZE = "size";
@@ -156,6 +141,12 @@ public class DatastoreConstants {
 
   /** On heap memory footprint size field. */
   public static final String CHUNK__ON_HEAP_SIZE = "onHeapMemorySize";
+
+  /** Field for the vector block length of the chunk, if relevant. */
+  public static final String CHUNK__VECTOR_BLOCK_LENGTH = "vectorBlockLength";
+
+  /** Field for the vector block reference count of the chunk, if relevant. */
+  public static final String CHUNK__VECTOR_BLOCK_REF_COUNT = "vectorBlockRefCount";
 
   /** Import name field. */
   public static final String CHUNK__DUMP_NAME = "dumpName"; // The name of the off-heap dump
@@ -228,11 +219,6 @@ public class DatastoreConstants {
   /** member count field. */
   public static final String LEVEL__MEMBER_COUNT = "memberCount";
 
-  /** Field for the vector block length of the chunk, if relevant. */
-  public static final String CHUNK__VECTOR_BLOCK_LENGTH = "vectorBlockLength";
-  /** Field for the vector block reference count of the chunk, if relevant. */
-  public static final String CHUNK__VECTOR_BLOCK_REF_COUNT = "vectorBlockRefCount";
-
   /** Name of the store for joining chunk and level data. */
   public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
 
@@ -264,10 +250,10 @@ public class DatastoreConstants {
   public static final String OWNER__CHUNK_ID = CHUNK_ID;
 
   /** The owner field in the store of chunk owners. */
-  public static final String OWNER__OWNER = CHUNK__OWNER;
+  public static final String OWNER__OWNER = "owner";
 
   /** The component field in the store of chunk owners. */
-  public static final String OWNER__COMPONENT = CHUNK__COMPONENT;
+  public static final String OWNER__COMPONENT = "component";
 
   /** The field name field in the store of chunk owners. */
   public static final String OWNER__FIELD = "field";

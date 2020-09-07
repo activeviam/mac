@@ -112,9 +112,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK__COMPONENT, ParentType.LEVEL);
     FeedVisitor.setTupleElement(
         tuple,
         format,
