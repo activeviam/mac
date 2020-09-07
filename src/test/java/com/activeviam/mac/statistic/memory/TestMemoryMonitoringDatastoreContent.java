@@ -880,6 +880,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                         });
               });
 
+          monitoredDatastore.getEpochManager().forceDiscardEpochs(node -> true);
+
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath =
