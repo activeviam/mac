@@ -430,7 +430,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .max();
 
     Copper.combine(ownerMeasure, directMemory)
-        .map(reader -> reader.readLong(0) > 1L ? 0L : reader.readLong(1))
+        .map(reader -> {
+          if (reader.isNull(0)) {
+            return null;
+          }
+          if (reader.readLong(0) > 1L) {
+            return 0L;
+          }
+          return reader.readLong(1);
+        })
         .per(Copper.level(CHUNK_ID_HIERARCHY))
         .sum()
         .map(Double::longValue)
@@ -441,7 +449,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     Copper.combine(componentMeasure, directMemory)
-        .map(reader -> reader.readLong(0) > 1L ? 0L : reader.readLong(1))
+        .map(reader -> {
+          if (reader.isNull(0)) {
+            return null;
+          }
+          if (reader.readLong(0) > 1L) {
+            return 0L;
+          }
+          return reader.readLong(1);
+        })
         .per(Copper.level(CHUNK_ID_HIERARCHY))
         .sum()
         .map(Double::longValue)
@@ -456,11 +472,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
           if (reader.isNull(0)) {
             return null;
           }
-
           if (reader.readLong(0) > 1L) {
             return 0L;
           }
-
           return reader.readLong(1);
         })
         .per(Copper.level(CHUNK_ID_HIERARCHY))
