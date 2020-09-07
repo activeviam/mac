@@ -150,36 +150,23 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Description of the chunk store.
+   * Description of the owner store.
    *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_OWNER_STORE}
+   * @return description of {@link DatastoreConstants#OWNER_STORE}
    */
-  protected IStoreDescription chunkToOwnerStore() {
+  protected IStoreDescription ownerStore() {
     return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_OWNER_STORE)
+        .withStoreName(DatastoreConstants.OWNER_STORE)
         .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
         .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .build();
-  }
+        .withNullableField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .asKeyField()
 
-  /**
-   * Description of the chunk store.
-   *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_COMPONENT_STORE}
-   */
-  protected IStoreDescription chunkToComponentStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.CHUNK_TO_COMPONENT_STORE)
-        .withField(DatastoreConstants.COMPONENT__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.COMPONENT__COMPONENT, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
-        .asKeyField()
+        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
         .build();
   }
 
@@ -313,25 +300,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#FIELD_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#FIELD_STORE}
-   */
-  protected IStoreDescription chunkToFieldStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.FIELD_STORE)
-        .withField(DatastoreConstants.FIELD__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.FIELD__STORE_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .withField(DatastoreConstants.FIELD__FIELD_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
-
-  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
@@ -418,8 +386,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
-        chunkToOwnerStore(),
-        chunkToComponentStore(),
+        ownerStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),
@@ -428,8 +395,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        applicationStore(),
-        chunkToFieldStore());
+        applicationStore());
   }
 
   @Override

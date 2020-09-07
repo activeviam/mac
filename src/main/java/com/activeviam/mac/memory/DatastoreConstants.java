@@ -41,12 +41,6 @@ public class DatastoreConstants {
   /** Name of the store containing level related facts. */
   public static final String LEVEL_STORE = "Levels";
 
-  /** Name of the store containing field related facts. */
-  public static final String FIELD_STORE = "Field";
-
-  /** Name of the store containing vector block related facts. */
-  public static final String VECTOR_BLOCK_STORE = "VectorBlock";
-
   /** Name of the store containing facts related to the component of the aggregate provider. */
   public static final String PROVIDER_COMPONENT_STORE = "ProviderComponent";
 
@@ -264,7 +258,7 @@ public class DatastoreConstants {
   public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
   /** The name of the store of chunk owners. */
-  public static final String CHUNK_TO_OWNER_STORE = "ChunkToOwner";
+  public static final String OWNER_STORE = "Owner";
 
   /** The chunk ID field in the store of chunk owners. */
   public static final String OWNER__CHUNK_ID = CHUNK_ID;
@@ -272,21 +266,11 @@ public class DatastoreConstants {
   /** The owner field in the store of chunk owners. */
   public static final String OWNER__OWNER = CHUNK__OWNER;
 
-  /** The name of the store of chunk components. */
-  public static final String CHUNK_TO_COMPONENT_STORE = "ChunkToComponent";
+  /** The component field in the store of chunk owners. */
+  public static final String OWNER__COMPONENT = CHUNK__COMPONENT;
 
-  /** The chunk ID field in the store of chunk components. */
-  public static final String COMPONENT__CHUNK_ID = CHUNK_ID;
-
-  /** The component field in the store of chunk components. */
-  public static final String COMPONENT__COMPONENT = CHUNK__COMPONENT;
-
-  /** The chunk ID field in the store of fields. */
-  public static final String FIELD__CHUNK_ID = CHUNK_ID;
-  /** The field name field in the store of fields. */
-  public static final String FIELD__FIELD_NAME = "field";
-  /** The store name field in the store of fields. */
-  public static final String FIELD__STORE_NAME = "store";
+  /** The field name field in the store of chunk owners. */
+  public static final String OWNER__FIELD = "field";
 
   /** Id of the aggragate provider in the provider component store. */
   public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
