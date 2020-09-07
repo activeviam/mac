@@ -77,6 +77,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param partitionId partition id of the parent if the chunkSet
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
+   * @param epochId the epoch id of the chunkset
+   * @param branch the branch name of the chunkset
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,

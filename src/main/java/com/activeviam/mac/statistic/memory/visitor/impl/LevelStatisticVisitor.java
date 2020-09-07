@@ -50,12 +50,14 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   Long dictionaryId;
 
   /**
-   * Constuctor.
+   * Constructor.
    *
    * @param parent Parent pivot statistic visitor
    * @param transaction current transaction
    * @param storageMetadata datastore metadata schema
-   * @param dumpName name of the import being processsed
+   * @param dumpName name of the import being processed
+   * @param epochId the epoch id of the current statistic
+   * @param branch the branch name of the current statistic
    */
   public LevelStatisticVisitor(
       final PivotFeederVisitor parent,

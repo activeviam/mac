@@ -100,9 +100,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the Chunk Hierarchy. */
   public static final String CHUNK_DIMENSION = "Chunks";
 
-  public static final String BRANCH_LEVEL = "Branch";
-  public static final String EPOCH_ID_LEVEL = "Epoch Id";
-
   /** Name of the component dimension. */
   public static final String COMPONENT_DIMENSION = "Components";
   /** Name of the component analysis hierarchy. */
@@ -119,6 +116,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String STORE_DIMENSION = "Stores";
   /** Name of the store hierarchy. */
   public static final String STORE_HIERARCHY = "Store";
+  /** Name of the version dimension. */
+  public static final String VERSION_DIMENSION = "Versions";
+  /** Name of the version hierarchy. */
+  public static final String VERSION_HIERARCHY = "Version";
+  /** Name of the branch level. */
+  public static final String BRANCH_LEVEL = "Branch";
+  /** Name of the epoch id level. */
+  public static final String EPOCH_ID_LEVEL = "Epoch Id";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -291,8 +296,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
-        .withDimension("Versions")
-        .withHierarchy("Version")
+        .withDimension(VERSION_DIMENSION)
+        .withHierarchy(VERSION_HIERARCHY)
         .slicing()
         .withLevel(BRANCH_LEVEL)
         .withPropertyName(DatastoreConstants.VERSION__BRANCH)

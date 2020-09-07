@@ -43,8 +43,11 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The partition id of the visited statistic. */
   protected final int partitionId;
 
-  protected final Long epochId;
-  protected final String branch;
+  /** The epoch id we are currently reading statistics for. */
+  protected Long epochId;
+
+  /** The branch of the pivot we're currently reading statistics. */
+  protected String branch;
 
   /**
    * Constructor.
@@ -56,6 +59,8 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param store store being visited
    * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
+   * @param epochId the epoch id of the current statistic
+   * @param branch the branch name of the current statistic
    */
   public VectorStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
