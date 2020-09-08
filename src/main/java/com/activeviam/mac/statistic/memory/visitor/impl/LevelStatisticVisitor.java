@@ -56,7 +56,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
    * @param storageMetadata datastore metadata schema
    * @param dumpName name of the import being processed
    * @param epochId the epoch id of the current statistic
-   * @param branch the branch name of the current statistic
    */
   public LevelStatisticVisitor(
       final PivotFeederVisitor parent,

@@ -311,8 +311,13 @@ public class DatastoreConstants {
   /** Maximum Application direct memory. */
   public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
 
+  /** The dump name field in the branch store. */
   public static final String BRANCH__DUMP_NAME = "dumpName";
+
+  /** The epoch id field in the branch store. */
   public static final String BRANCH__EPOCH_ID = "epochId";
+
+  /** The branch name field in the branch store. */
   public static final String BRANCH__NAME = "branch";
 
   private DatastoreConstants() {}
