@@ -194,8 +194,6 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
-    FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     if (this.referenceId != null) {

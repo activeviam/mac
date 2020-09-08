@@ -44,7 +44,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   private String directParentId;
 
   private final Long epochId;
-  private final String branch;
 
   Integer memberCount;
   Long dictionaryId;
@@ -64,13 +63,11 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       final IOpenedTransaction transaction,
       final IDatastoreSchemaMetadata storageMetadata,
       final String dumpName,
-      final Long epochId,
-      final String branch) {
+      final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.parent = parent;
     this.transaction = transaction;
     this.epochId = epochId;
-    this.branch = branch;
 
     this.directParentType = ParentType.LEVEL;
     this.directParentId =
@@ -115,8 +112,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -166,8 +161,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 

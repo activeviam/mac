@@ -30,7 +30,6 @@ import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.impl.ActivePivotManager;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -206,8 +205,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
-    FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.setTupleElement(
@@ -266,8 +263,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -432,7 +427,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     final LevelStatisticVisitor levelVisitor =
         new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
-            this.epochId, this.branch);
+            this.epochId);
     levelVisitor.analyse(stat);
 
     this.directParentType = previousParentType;

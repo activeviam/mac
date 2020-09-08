@@ -141,8 +141,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
             this.rootComponent);
     FeedVisitor
         .writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields, ownerFormat,
-            ownerTuple
-        );
+            ownerTuple);
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
@@ -154,8 +153,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     }
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -203,7 +200,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   public Void visit(final DefaultMemoryStatistic stat) {
     final Long initialEpoch = this.epochId;
     final String initialBranch = this.branch;
-    readEpochAndBranchIfAny(stat);
+
+    // todo vlg refactor
+    if (readEpochAndBranchIfAny(stat)) {
+      final IRecordFormat branchStoreFormat = getBranchStoreFormat(this.storageMetadata);
+      final Object[] tuple = new Object[branchStoreFormat.getFieldCount()];
+      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__DUMP_NAME,
+          this.dumpName);
+      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__EPOCH_ID,
+          this.epochId);
+      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__NAME,
+          this.branch);
+      FeedVisitor.add(stat, this.transaction, DatastoreConstants.BRANCH_STORE, tuple);
+    }
 
     switch (stat.getName()) {
       case MemoryStatisticConstants.STAT_NAME_STORE:
@@ -273,8 +282,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, refStoreFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
-        tuple, refStoreFormat, DatastoreConstants.VERSION__BRANCH, this.branch);
-    FeedVisitor.setTupleElement(
         tuple, refStoreFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(
@@ -309,8 +316,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -353,8 +358,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -479,17 +482,23 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     isVersionColumn = false;
   }
 
-  private void readEpochAndBranchIfAny(final IMemoryStatistic stat) {
+  private boolean readEpochAndBranchIfAny(final IMemoryStatistic stat) {
+    boolean epochOrBranchChanged = false;
+
     final IStatisticAttribute epochAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH);
     if (epochAttr != null) {
       this.epochId = epochAttr.asLong();
+      epochOrBranchChanged = true;
     }
     final IStatisticAttribute branchAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
     if (branchAttr != null) {
       this.branch = branchAttr.asText();
+      epochOrBranchChanged = true;
     }
+
+    return epochOrBranchChanged;
   }
 
   private static Object[] buildIndexTupleFrom(

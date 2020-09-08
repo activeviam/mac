@@ -297,7 +297,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withHierarchy(VERSION_HIERARCHY)
         .slicing()
         .withLevel(BRANCH_LEVEL)
-        .withPropertyName(DatastoreConstants.VERSION__BRANCH)
+        .withPropertyName(DatastoreConstants.BRANCH__NAME)
         .withFirstObjects("master")
         .withLevel(EPOCH_ID_LEVEL)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
@@ -403,8 +403,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__BRANCH, BRANCH_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
 
     Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .as("Dictionary Size")
@@ -418,8 +417,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__BRANCH, BRANCH_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
 
     // Reference name
     Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
@@ -433,8 +431,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__BRANCH, BRANCH_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
 
     //    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
     Copper.newSingleLevelHierarchy("Indices", "Indexed Fields", "Indexed Fields")

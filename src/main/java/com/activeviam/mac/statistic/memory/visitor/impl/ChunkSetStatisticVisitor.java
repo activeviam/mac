@@ -222,8 +222,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.VERSION__BRANCH, this.branch);
-      FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
       FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__OWNER, owner);

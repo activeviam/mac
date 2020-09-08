@@ -53,6 +53,12 @@ public class DatastoreConstants {
   /** Name of the store related to the application. */
   public static final String APPLICATION_STORE = "Application";
 
+  /** The name of the store of chunk owners. */
+  public static final String OWNER_STORE = "Owner";
+
+  /** Name of the store related to the application. */
+  public static final String BRANCH_STORE = "Branch";
+
   // Field names
 
   /** Field containing debug data for the memory statistics. */
@@ -163,9 +169,6 @@ public class DatastoreConstants {
   /** The epoch corresponding to the chunk. */
   public static final String VERSION__EPOCH_ID = "epochId";
 
-  /** The branch corresponding to the chunk. */
-  public static final String VERSION__BRANCH = "branch";
-
   // ## REFERENCES_STORE ## Field names of the Reference store
 
   /** Reference name field. */
@@ -263,9 +266,6 @@ public class DatastoreConstants {
   /** Parent type in the chunk to level store. */
   public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
-  /** The name of the store of chunk owners. */
-  public static final String OWNER_STORE = "Owner";
-
   /** The chunk ID field in the store of chunk owners. */
   public static final String OWNER__CHUNK_ID = CHUNK_ID;
 
@@ -302,14 +302,18 @@ public class DatastoreConstants {
   /** Used on heap memory. */
   public static final String APPLICATION__USED_ON_HEAP = "usedOnHeap";
 
-  /** Maximum Applicaiton on heap memory. */
+  /** Maximum Application on heap memory. */
   public static final String APPLICATION__MAX_ON_HEAP = "maxOnHeap";
 
-  /** used direct momory. */
+  /** Used direct memory. */
   public static final String APPLICATION__USED_OFF_HEAP = "usedOffHeap";
 
   /** Maximum Application direct memory. */
   public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
+
+  public static final String BRANCH__DUMP_NAME = "dumpName";
+  public static final String BRANCH__EPOCH_ID = "epochId";
+  public static final String BRANCH__NAME = "branch";
 
   private DatastoreConstants() {}
 }

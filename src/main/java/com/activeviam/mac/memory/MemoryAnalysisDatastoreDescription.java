@@ -46,6 +46,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   /** Name of the /** Name of the chunk <-> application linking store. */
   public static final String CHUNK_TO_APP = "ChunkToApp";
 
+  public static final String CHUNK_TO_BRANCH = "ChunkToBranch";
+
   /** Default value for store and field - fields. */
   public static final String DATASTORE_SHARED = "Shared";
 
@@ -85,9 +87,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     /** Bitmap Matcher structure. */
     BITMAP_MATCHER,
     /** Level structure. */
-    LEVEL,
-    /** No owning structure. */
-    NO_COMPONENT
+    LEVEL
   }
 
   /**
@@ -115,7 +115,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .dictionarized()
         .withField(DatastoreConstants.CHUNK__PARENT_ID)
         .withField(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ILiteralType.OBJECT)
-        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         // Add 5 fields corresponding to the closest parent Id for a given type of parent
         .withField(
             DatastoreConstants.CHUNK__PARENT_DICO_ID, ILiteralType.LONG, DEFAULT_COMPONENT_ID_VALUE)
@@ -202,7 +201,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         /* Attributes */
         .withField(DatastoreConstants.REFERENCE_NAME)
         .withField(DatastoreConstants.REFERENCE_CLASS)
-        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -222,12 +220,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Attributes */
-        .withField(
-            DatastoreConstants.INDEX_TYPE,
+        .withField(DatastoreConstants.INDEX_TYPE,
             ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
-        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -250,7 +246,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
         .withField(DatastoreConstants.DICTIONARY_CLASS)
-        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -283,8 +278,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             DatastoreConstants.LEVEL__OFF_HEAP_SIZE,
             ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
         .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
-        // TODO(ope) this is a base unit, introduce some versioning with the dump
-        .withField(DatastoreConstants.VERSION__BRANCH, ILiteralType.STRING)
         .build();
   }
 
@@ -312,6 +305,22 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
+        .build();
+  }
+
+  /**
+   * Returns the description of {@link DatastoreConstants#BRANCH_STORE}.
+   *
+   * @return description of {@link DatastoreConstants#BRANCH_STORE}
+   */
+  protected IStoreDescription branchStore() {
+    return StartBuilding.store()
+        .withStoreName(DatastoreConstants.BRANCH_STORE)
+        .withField(DatastoreConstants.BRANCH__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.BRANCH__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.BRANCH__NAME, ILiteralType.STRING)
         .build();
   }
 
@@ -412,6 +421,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
+        branchStore(),
         applicationStore());
   }
 
@@ -445,6 +455,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .withMapping(
                 DatastoreConstants.CHUNK__DUMP_NAME,
                 DatastoreConstants.APPLICATION__DUMP_NAME)
+            .build(),
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.CHUNK_STORE)
+            .toStore(DatastoreConstants.BRANCH_STORE)
+            .withName(CHUNK_TO_BRANCH)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.BRANCH__DUMP_NAME)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.BRANCH__EPOCH_ID)
             .build());
   }
 
