@@ -30,6 +30,8 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -180,9 +182,9 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Set<String> retrieveBranches() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
+        .forStore(DatastoreConstants.BRANCH_STORE)
         .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__BRANCH)
+        .selecting(DatastoreConstants.BRANCH__NAME)
         .onCurrentThread()
         .run();
 
@@ -193,9 +195,9 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Multimap<String, Long> retrieveEpochsPerBranch() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
+        .forStore(DatastoreConstants.BRANCH_STORE)
         .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__BRANCH, DatastoreConstants.VERSION__EPOCH_ID)
+        .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)
         .onCurrentThread()
         .run();
 
@@ -228,17 +230,37 @@ public class TestBranches extends ATestMemoryStatistic {
         .forStore(DatastoreConstants.CHUNK_STORE)
         .withCondition(
             BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()))
-        .selecting(DatastoreConstants.VERSION__BRANCH, DatastoreConstants.CHUNK_ID)
+        .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
         .onCurrentThread()
         .run();
 
+    final Map<Long, String> epochToBranch = retrieveEpochToBranchMapping();
+
     final Multimap<String, Long> chunksPerEpoch = HashMultimap.create();
     for (final IRecordReader reader : cursor) {
-      final String branch = (String) reader.read(0);
+      final String branch = epochToBranch.get(reader.readLong(0));
       final long chunkId = reader.readLong(1);
       chunksPerEpoch.put(branch, chunkId);
     }
 
     return chunksPerEpoch;
+  }
+
+  protected Map<Long, String> retrieveEpochToBranchMapping() {
+    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+        .forStore(DatastoreConstants.BRANCH_STORE)
+        .withoutCondition()
+        .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)
+        .onCurrentThread()
+        .run();
+
+    final Map<Long, String> epochToBranch = new HashMap<>();
+    for (final IRecordReader reader : cursor) {
+      final long epochId = reader.readLong(1);
+      final String branch = (String) reader.read(0);
+      epochToBranch.put(epochId, branch);
+    }
+
+    return epochToBranch;
   }
 }
