@@ -333,16 +333,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
+    Collection<String> oldFields = this.fields;
 
-    Collection<String> oldFields = null;
-    final IStatisticAttribute fieldAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-
-    final boolean isFieldSpecified = fieldAttr != null;
-    if (isFieldSpecified) {
-      oldFields = this.fields;
-      this.fields = Collections.singleton(fieldAttr.asText());
-    }
+    readFieldsIfAny(stat);
 
     visitChildren(stat);
 
@@ -350,10 +343,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.dictionaryId = null;
-
-    if (isFieldSpecified) {
-      this.fields = oldFields;
-    }
+    this.fields = oldFields;
 
     return null;
   }
@@ -458,6 +448,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
     if (branchAttr != null) {
       this.branch = branchAttr.asText();
+    }
+  }
+
+  private void readFieldsIfAny(final IMemoryStatistic stat) {
+    IStatisticAttribute fieldAttr =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+    if (fieldAttr != null) {
+      this.fields = Collections.singleton(fieldAttr.asText());
+    } else {
+      IStatisticAttribute multipleFieldsAttr =
+          stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
+      if (multipleFieldsAttr != null) {
+        this.fields = List.of(multipleFieldsAttr.asStringArray());
+      }
     }
   }
 
