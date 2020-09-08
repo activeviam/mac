@@ -27,6 +27,7 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -497,6 +498,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
+    Arrays.sort(fieldNames);
     tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =
         new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
 
