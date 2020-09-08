@@ -7,9 +7,6 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import com.activeviam.copper.api.Copper;
-import com.activeviam.copper.api.CopperStore;
-import com.activeviam.copper.store.Mapping.JoinType;
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -36,7 +33,7 @@ import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
-import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
+import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
@@ -77,8 +74,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 	@BeforeEach
 	public void setupAndExportApplication() throws AgentException, IOException {
 		final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
-		final IActivePivotManagerDescription managerDescription =
-				managerDescription(datastoreSchemaDescription);
+		final IActivePivotManagerDescription managerDescription = new ActivePivotManagerDescription();
 
 		monitoredDatastore = resources.create(StartBuilding.datastore()
 				.setSchemaDescription(datastoreSchemaDescription)
@@ -115,57 +111,28 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 								.withStoreName("Currency")
 								.withField("currency", ILiteralType.STRING)
 								.asKeyField()
-								.withField("countryId", ILiteralType.INT)
 								.build())
-				.build();
-	}
-
-	protected IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription datastoreSchemaDescription) {
-		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(StartBuilding.selection(datastoreSchemaDescription)
-						.fromBaseStore("Forex")
-						.withAllReachableFields()
+				.withReference(StartBuilding.reference()
+						.fromStore("Forex")
+						.toStore("Currency")
+						.withName("currencyReference")
+						.withMapping("currency", "currency")
 						.build())
-				.withCube(StartBuilding.cube("Cube")
-						.withContributorsCount()
-						.withCalculations(context -> {
-							// these joins make Forex.currency and Forex.targetCurrency share the same dictionary
-							CopperStore currencyStore1 = Copper.store("Currency").joinToCube(JoinType.INNER)
-									.withMapping("currency", "Currency");
-
-							Copper.newSingleLevelHierarchy("Currency", "Geography", "Geography")
-									.from(currencyStore1.field("countryId"))
-									.slicing()
-									.publish(context);
-
-							CopperStore currencyStore2 = Copper.store("Currency").joinToCube(JoinType.INNER)
-									.withMapping("currency", "Target Currency");
-
-							Copper.newSingleLevelHierarchy("Target Currency", "Geography", "Geography")
-									.from(currencyStore2.field("countryId"))
-									.slicing()
-									.publish(context);
-						})
-						.withSingleLevelDimension("Currency")
-						.withPropertyName("currency")
-						.withSingleLevelDimension("Target Currency")
-						.withPropertyName("targetCurrency")
+				.withReference(StartBuilding.reference()
+						.fromStore("Forex")
+						.toStore("Currency")
+						.withName("targetCurrencyReference")
+						.withMapping("targetCurrency", "currency")
 						.build())
 				.build();
-
-		return ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchemaDescription);
 	}
-
 
 	protected void fillApplication() {
 		final String[] currencies = new String[] {"EUR", "GBP", "USD"};
 
 		monitoredDatastore.edit(transactionManager -> {
-			int countryId = 0;
 			for (final String currency : currencies) {
-				transactionManager.add("Currency", currency, countryId++);
+				transactionManager.add("Currency", currency);
 				for (final String targetCurrency : currencies) {
 					transactionManager.add("Forex", currency, targetCurrency);
 				}
@@ -219,8 +186,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 				.getDictionaryId();
 
 		final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
-		Assertions.assertThat(chunkIdsForDictionary)
-				.isNotEmpty();
+		Assertions.assertThat(chunkIdsForDictionary).isNotEmpty();
 	}
 
 	@Test
@@ -230,17 +196,17 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 				.getDictionaryId();
 
 		final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
-		final Map<Long, Multimap<String, String>> fieldsPerChunk =
-				extractOwnerAndFieldsPerChunkId(chunkIdsForDictionary);
+		final Map<Long, Multimap<String, String>> ownersAndFieldsPerChunk =
+				extractOwnersAndFieldsPerChunkId(chunkIdsForDictionary);
 
 		SoftAssertions.assertSoftly(assertions -> {
-			for (final Multimap<String, String> fieldsForChunk : fieldsPerChunk.values()) {
-				assertions.assertThat(fieldsForChunk.keySet())
+			for (final Multimap<String, String> ownersAndFieldsForChunk : ownersAndFieldsPerChunk.values()) {
+				assertions.assertThat(ownersAndFieldsForChunk.keySet())
 						.containsOnly("Currency", "Forex");
 
-				assertions.assertThat(fieldsForChunk.get("Currency"))
+				assertions.assertThat(ownersAndFieldsForChunk.get("Currency"))
 						.containsExactlyInAnyOrder("currency");
-				assertions.assertThat(fieldsForChunk.get("Forex"))
+				assertions.assertThat(ownersAndFieldsForChunk.get("Forex"))
 						.containsExactlyInAnyOrder("currency", "targetCurrency");
 			}
 		});
@@ -260,7 +226,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 				.collect(Collectors.toSet());
 	}
 
-	protected Map<Long, Multimap<String, String>> extractOwnerAndFieldsPerChunkId(
+	protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
 			final Collection<Long> chunkIdSubset) {
 		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
 				.forStore(DatastoreConstants.OWNER_STORE)
