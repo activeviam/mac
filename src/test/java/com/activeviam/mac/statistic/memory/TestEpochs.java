@@ -17,6 +17,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.multiversion.impl.Epoch;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
@@ -80,6 +81,9 @@ public class TestEpochs extends ATestMemoryStatistic {
     monitoredApp.getLeft().edit(transactionManager -> {
       transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
     });
+
+   monitoredApp.getRight().getActivePivots().get("Cube")
+        .commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
@@ -117,7 +121,7 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Set<Long> epochIds = retrieveEpochIds();
 
     Assertions.assertThat(epochIds)
-        .containsExactlyInAnyOrder(1L, 2L, 3L);
+        .containsExactlyInAnyOrder(1L, 2L, 3L, 10L);
   }
 
   @Test
