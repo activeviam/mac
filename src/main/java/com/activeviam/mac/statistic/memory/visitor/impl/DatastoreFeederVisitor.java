@@ -201,16 +201,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final Long initialEpoch = this.epochId;
     final String initialBranch = this.branch;
 
-    // todo vlg refactor
     if (readEpochAndBranchIfAny(stat)) {
       final IRecordFormat branchStoreFormat = getBranchStoreFormat(this.storageMetadata);
-      final Object[] tuple = new Object[branchStoreFormat.getFieldCount()];
-      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__DUMP_NAME,
-          this.dumpName);
-      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__EPOCH_ID,
-          this.epochId);
-      FeedVisitor.setTupleElement(tuple, branchStoreFormat, DatastoreConstants.BRANCH__NAME,
-          this.branch);
+      final Object[] tuple = FeedVisitor
+          .buildBranchTupleFrom(branchStoreFormat, stat, this.dumpName, this.epochId, this.branch);
       FeedVisitor.add(stat, this.transaction, DatastoreConstants.BRANCH_STORE, tuple);
     }
 
