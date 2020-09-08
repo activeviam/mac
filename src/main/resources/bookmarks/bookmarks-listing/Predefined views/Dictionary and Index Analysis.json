@@ -173,8 +173,8 @@
               "filterKey" : "explicit",
               "levelDetails" : {
                 "cube" : "MemoryCube",
-                "dimension" : "Chunk Owners",
-                "hierarchy" : "Owner",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
                 "level" : "Partition",
                 "caption" : "Partition"
               }
