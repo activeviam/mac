@@ -393,11 +393,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
-        .as("Dictionary Size")
-        .withFormatter(NUMBER_FORMATTER)
-        .publish(context);
-
     // --------------------
     // 2- Chunk to references
     CopperStore chunkToReferenceStore =
@@ -448,6 +443,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);
+
+    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
+        .divide(Copper.count())
+        .per(fieldHierarchy.level(FIELD_HIERARCHY))
+        .sum()
+        .map(Number::longValue)
+        .as("Dictionary Size")
+        .withFormatter(NUMBER_FORMATTER)
+        .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {

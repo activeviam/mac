@@ -837,6 +837,17 @@ public abstract class ATestMemoryStatistic {
                     .dictionarized()
                     .withChunkSize(MICROAPP_CHUNK_SIZE)
                     .build())
+            .withStore(StartBuilding.store()
+                .withStoreName("B")
+                .withField("id0", ILiteralType.INT)
+                .asKeyField()
+                .build())
+            .withReference(StartBuilding.reference()
+                .fromStore("A")
+                .toStore("B")
+                .withName("ref")
+                .withMapping("id0", "id0")
+                .build())
             .build();
 
     final IActivePivotManagerDescription userManagerDescription = new ActivePivotManagerDescription();

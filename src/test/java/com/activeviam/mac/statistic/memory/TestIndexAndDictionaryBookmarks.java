@@ -13,10 +13,12 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
+import com.qfs.store.record.impl.Records.IDictionaryProvider;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.AxisDTO;
 import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
+import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
@@ -28,6 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -65,7 +68,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 		monitoredApp.getLeft()
 				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-						.forEach(i -> tm.add("A", i, i * i, -i, -i * i)));
+						.forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
 	}
 
 	private Path generateMemoryStatistics() {
@@ -101,14 +104,15 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 	}
 
 	@Test
-	public void testIndexedFields() throws QueryException {
+	public void testIndexedFieldsForStoreA() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
 		final MDXQuery totalQuery =
 				new MDXQuery(
 						"SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
-								+ " FROM [MemoryCube]");
+								+ " FROM [MemoryCube]"
+								+ " WHERE [Owners].[Owner].[Owner].[Store A]");
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
@@ -117,17 +121,16 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 				.hasSize(1);
 
 		final List<AxisPositionDTO> indexedFieldsPosition = axes.get(0).getPositions();
-		Assertions.assertThat(indexedFieldsPosition)
-				.hasSize(1);
 
-		Assertions.assertThat(indexedFieldsPosition.get(0).getMembers())
-				.extracting(member -> member.getPath().getPath())
+		Assertions.assertThat(indexedFieldsPosition)
+				.extracting(position -> position.getMembers().get(0).getPath().getPath())
 				.containsExactlyInAnyOrder(
-						new String[] {"AllMember", "id0, id1, id2"});
+						new String[] {"AllMember", "id0, id1, id2"},
+						new String[] {"AllMember", "id0"});
 	}
 
 	@Test
-	public void testDictionarizedFields() throws QueryException {
+	public void testDictionarizedFieldsForStoreB() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -141,7 +144,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 								+ "   [Measures].[Dictionary Size]"
 								+ " ) ON COLUMNS"
 								+ " FROM [MemoryCube]"
-								+ " WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY]");
+								+ " WHERE ("
+								+ "   [Owners].[Owner].[Owner].[Store B]"
+								+ " )");
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
@@ -154,9 +159,73 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 		Assertions.assertThat(dictionarizedFieldsPositions)
 				.extracting(position -> position.getMembers().get(0).getPath().getPath())
 				.containsExactlyInAnyOrder(
-						new String[] {"AllMember", "id0"},
-						new String[] {"AllMember", "id1"},
-						new String[] {"AllMember", "id2"},
-						new String[] {"AllMember", "field"});
+						new String[] {"AllMember", "id0"});
+	}
+
+	@Test
+	public void testDictionarySizeTotal() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery totalQuery =
+				new MDXQuery(
+						"SELECT NON EMPTY"
+								+ "   Except(Hierarchize(DrilldownLevel("
+								+ "     [Fields].[Field].[ALL].[AllMember])),"
+								+ "     [Fields].[Field].[Field].[N/A]"
+								+ "   ) ON COLUMNS,"
+								+ " [Measures].[Dictionary Size] ON ROWS"
+								+ " FROM [MemoryCube]"
+								+ " WHERE ("
+								+ "   [Owners].[Owner].[Owner].[Store A]"
+								+ " )");
+
+		final CellSetDTO result = pivot.execute(totalQuery);
+
+		Assertions.assertThat(result.getCells().stream()
+				.skip(1)
+				.mapToLong(x -> (long) x.getValue())
+				.sum())
+				.isEqualTo((long) result.getCells().get(0).getValue());
+	}
+
+	@Test
+	public void testDictionarySizesPerField() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery totalQuery =
+				new MDXQuery(
+						"SELECT NON EMPTY"
+								+ "   Except("
+								+ "     [Fields].[Field].[Field].Members,"
+								+ "     [Fields].[Field].[Field].[N/A]"
+								+ "   ) ON COLUMNS,"
+								+ " [Measures].[Dictionary Size] ON ROWS"
+								+ " FROM [MemoryCube]"
+								+ " WHERE ("
+								+ "   [Owners].[Owner].[Owner].[Store A],"
+								+ "   [Components].[Component].[Component].[DICTIONARY]"
+								+ " )");
+
+		final CellSetDTO result = pivot.execute(totalQuery);
+
+		final IDictionaryProvider dictionaryProvider =
+				monitoredApp.getLeft().getDictionaries().getStoreDictionaries("A");
+
+		SoftAssertions.assertSoftly(assertions -> {
+			final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
+			for (final CellDTO cell : result.getCells()) {
+				final String fieldName =
+						positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
+
+				final long expectedDictionarySize = dictionaryProvider
+						.getDictionary(monitoredApp.getLeft().getSchemaMetadata().getFieldIndex("A", fieldName))
+						.size();
+
+				assertions.assertThat((long) cell.getValue())
+						.isEqualTo(expectedDictionarySize);
+			}
+		});
 	}
 }
