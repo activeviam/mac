@@ -1109,12 +1109,7 @@ public abstract class ATestMemoryStatistic {
               });
         });
 
-    final StatisticsSummary statisticsSummary =
-        MemoryStatisticsTestUtils.getStatisticsSummary(
-            new TestMemoryStatisticBuilder()
-                .withCreatorClasses(klass)
-                .withChildren(statistics)
-                .build());
+    final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
 
     assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
 
@@ -1122,6 +1117,16 @@ public abstract class ATestMemoryStatistic {
     checkForUnrootedChunks(monitoringDatastore);
 
     return monitoringDatastore;
+  }
+
+  protected static StatisticsSummary computeStatisticsSummary(
+      final Collection<? extends IMemoryStatistic> statistics,
+      final Class<?> creatorClass) {
+    return MemoryStatisticsTestUtils.getStatisticsSummary(
+        new TestMemoryStatisticBuilder()
+            .withCreatorClasses(creatorClass)
+            .withChildren(statistics)
+            .build());
   }
 
   static void checkForUnclassifiedChunks(IDatastore monitoringDatastore) {
@@ -1184,7 +1189,6 @@ public abstract class ATestMemoryStatistic {
    */
   static void assertDatastoreConsistentWithSummary(
       IDatastore monitoringDatastore, StatisticsSummary statisticsSummary) {
-    // todo vlg?
     IDictionaryCursor cursor = monitoringDatastore
         .getHead()
         .getQueryRunner()

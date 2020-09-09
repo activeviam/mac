@@ -44,6 +44,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   private Pair<IDatastore, IActivePivotManager> monitoredApp;
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private IMemoryStatistic statistics;
 
   @BeforeClass
   public static void setupRegistry() {
@@ -56,9 +57,9 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    statistics = loadMemoryStatFromFolder(exportPath);
 
-    initializeMonitoringApplication(stats);
+    initializeMonitoringApplication(statistics);
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -114,6 +115,11 @@ public class TestEpochs extends ATestMemoryStatistic {
   public void tearDown() throws AgentException {
     monitoringApp.getLeft().close();
     monitoringApp.getRight().stop();
+  }
+
+  @Test
+  public void testStatisticConsistency() {
+    ATestMemoryStatistic.assertLoadsCorrectly(statistics.getChildren(), TestEpochs.class);
   }
 
   @Test
