@@ -9,7 +9,7 @@
     "levelDetails" : {
       "cube" : "MemoryCube",
       "dimension" : "Versions",
-      "hierarchy" : "Version",
+      "hierarchy" : "Branch",
       "level" : "Branch",
       "caption" : "Branch"
     }

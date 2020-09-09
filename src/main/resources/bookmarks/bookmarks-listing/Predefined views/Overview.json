@@ -150,7 +150,7 @@
               "levelDetails" : {
                 "cube" : "MemoryCube",
                 "dimension" : "Versions",
-                "hierarchy" : "Version",
+                "hierarchy" : "Branch",
                 "level" : "Branch",
                 "caption" : "Branch"
               }
@@ -176,7 +176,7 @@
               "levelDetails" : {
                 "cube" : "MemoryCube",
                 "dimension" : "Versions",
-                "hierarchy" : "Version",
+                "hierarchy" : "Epoch Id",
                 "level" : "Epoch Id",
                 "caption" : "Epoch Id"
               }
@@ -367,7 +367,7 @@
               "levelDetails" : {
                 "cube" : "MemoryCube",
                 "dimension" : "Versions",
-                "hierarchy" : "Version",
+                "hierarchy" : "Branch",
                 "level" : "Branch",
                 "caption" : "Branch"
               }
@@ -393,7 +393,7 @@
               "levelDetails" : {
                 "cube" : "MemoryCube",
                 "dimension" : "Versions",
-                "hierarchy" : "Version",
+                "hierarchy" : "Epoch Id",
                 "level" : "Epoch Id",
                 "caption" : "Epoch Id"
               }

@@ -118,9 +118,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the version hierarchy. */
   public static final String VERSION_HIERARCHY = "Version";
   /** Name of the branch level. */
-  public static final String BRANCH_LEVEL = "Branch";
+  public static final String BRANCH_HIERARCHY = "Branch";
   /** Name of the epoch id level. */
-  public static final String EPOCH_ID_LEVEL = "Epoch Id";
+  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -294,12 +294,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
         .withDimension(VERSION_DIMENSION)
-        .withHierarchy(VERSION_HIERARCHY)
+        .withHierarchy(BRANCH_HIERARCHY)
         .slicing()
-        .withLevel(BRANCH_LEVEL)
+        .withLevel(BRANCH_HIERARCHY)
         .withPropertyName(DatastoreConstants.BRANCH__NAME)
         .withFirstObjects("master")
-        .withLevel(EPOCH_ID_LEVEL)
+
+        .withHierarchy(EPOCH_ID_HIERARCHY)
+        .slicing()
+        .withLevel(EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withComparator(ReverseOrderComparator.type);
   }
@@ -403,7 +406,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
     Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .as("Dictionary Size")
@@ -417,7 +420,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
     // Reference name
     Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
@@ -431,7 +434,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_LEVEL);
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
     //    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
     Copper.newSingleLevelHierarchy("Indices", "Indexed Fields", "Indexed Fields")

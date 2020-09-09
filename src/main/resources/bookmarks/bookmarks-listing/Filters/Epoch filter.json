@@ -10,7 +10,7 @@
     "levelDetails" : {
       "cube" : "MemoryCube",
       "dimension" : "Versions",
-      "hierarchy" : "Version",
+      "hierarchy" : "Epoch Id",
       "level" : "Epoch Id",
       "caption" : "Epoch Id"
     }
