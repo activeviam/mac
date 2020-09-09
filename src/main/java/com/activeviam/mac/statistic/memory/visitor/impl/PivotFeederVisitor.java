@@ -498,8 +498,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
               this.pivot,
               null,
               this.partition,
-              this.epochId,
-              this.branch);
+              this.epochId);
       subVisitor.process(statistic);
     } else {
       FeedVisitor.visitChildren(this, statistic);

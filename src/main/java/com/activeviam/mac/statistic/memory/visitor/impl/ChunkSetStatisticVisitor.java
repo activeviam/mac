@@ -48,13 +48,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   private final ParentType rootComponent;
   private final ParentType directParentType;
   private final String directParentId;
+
   /** The partition id of the visited statistic. */
   protected final int partitionId;
 
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId = null;
-  /** Branch owning {@link #epochId}. */
-  protected String branch = null;
 
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
@@ -78,7 +77,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
    * @param epochId the epoch id of the chunkset
-   * @param branch the branch name of the chunkset
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
@@ -92,8 +90,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final int partitionId,
       final Long indexId,
       final Long referenceId,
-      final Long epochId,
-      final String branch) {
+      final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
@@ -104,7 +101,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.indexId = indexId;
     this.referenceId = referenceId;
     this.epochId = epochId;
-    this.branch = branch;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -304,8 +300,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             this.store,
             this.fields,
             this.partitionId,
-            this.epochId,
-            this.branch);
+            this.epochId);
     subVisitor.process(memoryStatistic);
   }
 
