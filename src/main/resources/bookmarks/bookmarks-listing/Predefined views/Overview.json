@@ -300,57 +300,6 @@
           },
           "writable" : true
         }
-      }, {
-        "key" : "6",
-        "bookmark" : {
-          "name" : "Branch filter",
-          "type" : "container",
-          "value" : {
-            "style" : { },
-            "showTitleBar" : true,
-            "body" : {
-              "configuration" : {
-                "displayedAsSelect" : true
-              },
-              "filterKey" : "explicit",
-              "levelDetails" : {
-                "cube" : "MemoryCube",
-                "dimension" : "Versions",
-                "hierarchy" : "Branch",
-                "level" : "Branch",
-                "caption" : "Branch"
-              }
-            },
-            "containerKey" : "quick-filter"
-          },
-          "writable" : true
-        }
-      }, {
-        "key" : "7",
-        "bookmark" : {
-          "name" : "Epoch filter",
-          "type" : "container",
-          "value" : {
-            "style" : { },
-            "showTitleBar" : true,
-            "body" : {
-              "configuration" : {
-                "displayedAsSelect" : true,
-                "multipleSelection" : true
-              },
-              "filterKey" : "explicit",
-              "levelDetails" : {
-                "cube" : "MemoryCube",
-                "dimension" : "Versions",
-                "hierarchy" : "Epoch Id",
-                "level" : "Epoch Id",
-                "caption" : "Epoch Id"
-              }
-            },
-            "containerKey" : "quick-filter"
-          },
-          "writable" : true
-        }
       } ],
       "layout" : {
         "children" : {
