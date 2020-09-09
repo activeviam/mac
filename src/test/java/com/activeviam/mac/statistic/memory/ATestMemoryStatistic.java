@@ -22,6 +22,8 @@ import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.qfs.chunk.direct.impl.SlabDirectChunkAllocator;
 import com.qfs.chunk.impl.Chunks;
 import com.qfs.condition.impl.BaseConditions;
@@ -62,22 +64,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
-import org.assertj.core.util.Streams;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import test.util.impl.DatastoreTestUtils;
@@ -1180,6 +1178,19 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
+  protected static class VersionedChunkInfo {
+
+    public long epochId;
+    public long offHeapSize;
+    public String chunkClass;
+
+    public VersionedChunkInfo(long epochId, long offHeapSize, String chunkClass) {
+      this.epochId = epochId;
+      this.offHeapSize = offHeapSize;
+      this.chunkClass = chunkClass;
+    }
+  }
+
   /**
    * Asserts the monitoring datastore contains chunks consistent with what the statistics summary
    * says.
@@ -1189,75 +1200,59 @@ public abstract class ATestMemoryStatistic {
    */
   static void assertDatastoreConsistentWithSummary(
       IDatastore monitoringDatastore, StatisticsSummary statisticsSummary) {
-    IDictionaryCursor cursor = monitoringDatastore
-        .getHead()
-        .getQueryRunner()
-        .forStore(CHUNK_STORE)
-        .withoutCondition()
-        .selecting(VERSION__EPOCH_ID)
-        .onCurrentThread()
-        .run();
 
-    final long latestEpoch = Streams.stream(cursor)
-        .mapToLong(c -> c.readLong(0))
-        .max()
-        .getAsLong();
+    final Map<Long, VersionedChunkInfo> latestChunkInfos =
+        extractLatestChunkInfos(monitoringDatastore);
 
-    cursor =
-        monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(VERSION__EPOCH_ID, latestEpoch))
-            .selecting(CHUNK__OFF_HEAP_SIZE, CHUNK_ID, CHUNK__CLASS)
-            .onCurrentThread()
-            .run();
-
-    // Count all chunks plus the total allocated amount of bytes
-    final LongAdder sum = new LongAdder();
-    final LongAdder countFromStore = new LongAdder();
-    Map<String, Collection<Long>> chunkIdsByClass = new HashMap<>();
-    while (cursor.hasNext()) {
-      cursor.next();
-      IRecordReader reader = cursor.getRecord();
-      sum.add((long) reader.read(CHUNK__OFF_HEAP_SIZE));
-      countFromStore.increment();
-      final String chunkClass = (String) reader.read(CHUNK__CLASS);
-      final long chunkId = (long) reader.read(CHUNK_ID);
-      final Collection<Long> v = chunkIdsByClass.computeIfAbsent(chunkClass, __ -> new HashSet<>());
-      if (!v.add(chunkId)) {
-        System.out.println("Chunk ID " + chunkId + " already existed.");
-        final IDictionaryCursor chunkIdCursor =
-            monitoringDatastore
-                .getHead()
-                .getQueryRunner()
-                .forStore(CHUNK_STORE)
-                .withCondition(BaseConditions.Equal(CHUNK_ID, chunkId))
-                .selectingAllStoreFields()
-                .onCurrentThread()
-                .run();
-        while (chunkIdCursor.hasNext()) {
-          chunkIdCursor.next();
-          System.out.println(Arrays.toString(chunkIdCursor.getRecord().toTuple()));
-        }
-      }
-    }
+    final long chunkCount = latestChunkInfos.size();
+    final long totalChunkOffHeapSize = latestChunkInfos.values().stream()
+        .mapToLong(chunk -> chunk.offHeapSize)
+        .sum();
+    Multimap<String, Long> chunkIdsByClass = HashMultimap.create();
+    latestChunkInfos.forEach((key, value) -> chunkIdsByClass.put(value.chunkClass, key));
 
     SoftAssertions.assertSoftly(
         assertions -> {
           assertions
-              .assertThat(sum.longValue())
+              .assertThat(totalChunkOffHeapSize)
               .as("off-heap memory computed on monitoring datastore")
               .isEqualTo(statisticsSummary.offHeapMemory);
           assertions
-              .assertThat(countFromStore.longValue())
+              .assertThat(chunkCount)
               .as("total number of chunks loaded in monitoring store")
               .isEqualTo(statisticsSummary.numberDistinctChunks);
           assertions
-              .assertThat(chunkIdsByClass)
+              .assertThat(chunkIdsByClass.asMap())
               .as("Classes of the loaded chunks")
               .containsAllEntriesOf(statisticsSummary.chunkIdsByClass);
         });
+  }
+
+  static Map<Long, VersionedChunkInfo> extractLatestChunkInfos(final IDatastore datastore) {
+    IDictionaryCursor cursor = datastore
+        .getHead()
+        .getQueryRunner()
+        .forStore(CHUNK_STORE)
+        .withoutCondition()
+        .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
+        .onCurrentThread()
+        .run();
+
+    final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
+    for (final IRecordReader reader : cursor) {
+      final long chunkId = reader.readLong(0);
+      final long epochId = reader.readLong(1);
+
+      final VersionedChunkInfo chunkInfo = latestChunkInfos.get(chunkId);
+      if (chunkInfo == null || chunkInfo.epochId < epochId) {
+        final long offHeapSize = reader.readLong(2);
+        final String chunkClass = (String) reader.read(3);
+        latestChunkInfos.put(chunkId,
+            new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
+      }
+    }
+
+    return latestChunkInfos;
   }
 
   static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {
