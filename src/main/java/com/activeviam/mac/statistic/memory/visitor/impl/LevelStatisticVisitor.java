@@ -43,25 +43,30 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   private ParentType directParentType;
   private String directParentId;
 
+  private final Long epochId;
+
   Integer memberCount;
   Long dictionaryId;
 
   /**
-   * Constuctor.
+   * Constructor.
    *
    * @param parent Parent pivot statistic visitor
    * @param transaction current transaction
    * @param storageMetadata datastore metadata schema
-   * @param dumpName name of the import being processsed
+   * @param dumpName name of the import being processed
+   * @param epochId the epoch id of the current statistic
    */
   public LevelStatisticVisitor(
       final PivotFeederVisitor parent,
       final IOpenedTransaction transaction,
       final IDatastoreSchemaMetadata storageMetadata,
-      final String dumpName) {
+      final String dumpName,
+      final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.parent = parent;
     this.transaction = transaction;
+    this.epochId = epochId;
 
     this.directParentType = ParentType.LEVEL;
     this.directParentId =
@@ -106,6 +111,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
@@ -124,7 +131,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     }
 
     final IRecordReader r =
-        this.chunkIdCQ.runInTransaction(new Object[] {stat.getChunkId(), this.dumpName}, false);
+        this.chunkIdCQ
+            .runInTransaction(new Object[] {stat.getChunkId(), this.dumpName, this.epochId}, false);
     if (r != null) {
       // There is already an entry that has likely been set by the DatastoreFeederVisitor. We do not
       // need to keep on
@@ -149,6 +157,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);

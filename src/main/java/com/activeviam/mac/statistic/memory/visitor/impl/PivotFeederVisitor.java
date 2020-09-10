@@ -204,6 +204,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
@@ -258,6 +260,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
 
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -328,6 +333,13 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   private void processPivot(final IMemoryStatistic stat) {
 
     readEpochAndBranchIfAny(stat);
+
+    if (readEpochAndBranchIfAny(stat)) {
+      final IRecordFormat branchStoreFormat = getBranchStoreFormat(this.storageMetadata);
+      final Object[] tuple = FeedVisitor
+          .buildBranchTupleFrom(branchStoreFormat, stat, this.dumpName, this.epochId, this.branch);
+      FeedVisitor.add(stat, this.transaction, DatastoreConstants.BRANCH_STORE, tuple);
+    }
 
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
@@ -418,7 +430,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.rootComponent = ParentType.LEVEL;
 
     final LevelStatisticVisitor levelVisitor =
-        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName);
+        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
+            this.epochId);
     levelVisitor.analyse(stat);
 
     this.directParentType = previousParentType;
@@ -481,7 +494,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
               this.current,
               this.pivot,
               null,
-              this.partition);
+              this.partition,
+              this.epochId);
       subVisitor.process(statistic);
     } else {
       FeedVisitor.visitChildren(this, statistic);
@@ -530,13 +544,16 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     }
   }
 
-  private void readEpochAndBranchIfAny(final IMemoryStatistic stat) {
+  private boolean readEpochAndBranchIfAny(final IMemoryStatistic stat) {
+    boolean epochOrBranchChanged = false;
+
     final IStatisticAttribute epochAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH);
     if (epochAttr != null) {
       final Long epoch = epochAttr.asLong();
       assert this.epochId == null || epoch.equals(this.epochId);
       this.epochId = epoch;
+      epochOrBranchChanged = true;
     }
     final IStatisticAttribute branchAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
@@ -544,7 +561,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       final String branch = branchAttr.asText();
       assert this.branch == null || this.branch.equals(branch);
       this.branch = branch;
+      epochOrBranchChanged = true;
     }
+
+    return epochOrBranchChanged;
   }
 
   private static Object[] buildProviderTupleFrom(

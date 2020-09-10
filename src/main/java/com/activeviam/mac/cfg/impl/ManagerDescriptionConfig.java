@@ -90,15 +90,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the Chunk Hierarchy. */
   public static final String CHUNK_DIMENSION = "Chunks";
 
-  /** Name of the DictionaryID AH. */
-  public static final String DICO_ID_HIERARCHY = "Dictionary ID";
-
-  /** Name of the DictionaryID AH. */
-  public static final String INDEX_ID_HIERARCHY = "Index ID";
-
-  /** Name of the ReferenceID AH. */
-  public static final String REF_ID_HIERARCHY = "Reference ID";
-
   /** Name of the component dimension. */
   public static final String COMPONENT_DIMENSION = "Components";
   /** Name of the component analysis hierarchy. */
@@ -115,6 +106,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String STORE_DIMENSION = "Stores";
   /** Name of the store hierarchy. */
   public static final String STORE_HIERARCHY = "Store";
+  /** Name of the version dimension. */
+  public static final String VERSION_DIMENSION = "Versions";
+  /** Name of the version hierarchy. */
+  public static final String VERSION_HIERARCHY = "Version";
+  /** Name of the branch level. */
+  public static final String BRANCH_HIERARCHY = "Branch";
+  /** Name of the epoch id level. */
+  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -277,7 +276,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID);
+        .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
+
+        .withDimension(VERSION_DIMENSION)
+        .withHierarchy(BRANCH_HIERARCHY)
+        .slicing()
+        .withLevel(BRANCH_HIERARCHY)
+        .withPropertyName(DatastoreConstants.BRANCH__NAME)
+        .withFirstObjects("master")
+
+        .withHierarchy(EPOCH_ID_HIERARCHY)
+        .slicing()
+        .withLevel(EPOCH_ID_HIERARCHY)
+        .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
+        .withComparator(ReverseOrderComparator.type);
   }
 
   private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
@@ -378,7 +390,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.store(DatastoreConstants.DICTIONARY_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
     Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .as("Dictionary Size")
@@ -391,7 +404,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.store(DatastoreConstants.REFERENCE_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
     // Reference name
     Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
@@ -404,9 +418,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
+    //    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
+    Copper.newSingleLevelHierarchy("Indices", "Indexed Fields", "Indexed Fields")
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 

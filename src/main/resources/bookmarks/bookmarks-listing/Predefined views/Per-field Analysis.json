@@ -138,8 +138,26 @@
             "direction" : "column"
           },
           "1" : {
-            "ck" : "0",
-            "size" : 0.81
+            "children" : {
+              "0" : {
+                "ck" : "0",
+                "size" : 0.78
+              },
+              "1" : {
+                "children" : {
+                  "0" : {
+                    "ck" : "4"
+                  },
+                  "1" : {
+                    "ck" : "5"
+                  }
+                },
+                "direction" : "column",
+                "size" : 0.22
+              }
+            },
+            "size" : 0.81,
+            "direction" : "row"
           }
         },
         "direction" : "column"

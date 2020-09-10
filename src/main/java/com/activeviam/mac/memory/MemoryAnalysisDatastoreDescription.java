@@ -40,8 +40,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   /** Name of the provider component <-> provider store. */
   public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
-  /** Name of the /** Name of the chunk <-> application linking store. */
+  /** Name of the chunk -> application linking store. */
   public static final String CHUNK_TO_APP = "ChunkToApp";
+
+  /** Name of the chunk -> branch reference. */
+  public static final String CHUNK_TO_BRANCH = "ChunkToBranch";
 
   /** Default value for store and field - fields. */
   public static final String DEFAULT_DATASTORE = "Unknown";
@@ -92,6 +95,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
 
         /* Foreign keys */
@@ -162,6 +167,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
+
         /* Foreign keys */
         .withField(DatastoreConstants.REFERENCE_FROM_STORE)
         .withField(
@@ -191,10 +199,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Attributes */
-        .withField(
-            DatastoreConstants.INDEX_TYPE,
+        .withField(DatastoreConstants.INDEX_TYPE,
             ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
@@ -212,6 +221,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.DICTIONARY_ID, ILiteralType.LONG)
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
+        .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
 
         /* Attributes */
@@ -241,6 +252,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
 
         /* Attributes */
         .withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
@@ -248,7 +261,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             DatastoreConstants.LEVEL__OFF_HEAP_SIZE,
             ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
         .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
-        // TODO(ope) this is a base unit, introduce some versioning with the dump
         .build();
   }
 
@@ -280,6 +292,22 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
+   * Returns the description of {@link DatastoreConstants#BRANCH_STORE}.
+   *
+   * @return description of {@link DatastoreConstants#BRANCH_STORE}
+   */
+  protected IStoreDescription branchStore() {
+    return StartBuilding.store()
+        .withStoreName(DatastoreConstants.BRANCH_STORE)
+        .withField(DatastoreConstants.BRANCH__DUMP_NAME, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.BRANCH__EPOCH_ID, ILiteralType.LONG)
+        .asKeyField()
+        .withField(DatastoreConstants.BRANCH__NAME, ILiteralType.STRING)
+        .build();
+  }
+
+  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
@@ -291,6 +319,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG)
         .asKeyField()
+
         /* Attributes */
         .withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
         .asKeyField()
@@ -375,6 +404,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
+        branchStore(),
         applicationStore());
   }
 
@@ -408,6 +438,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .withMapping(
                 DatastoreConstants.CHUNK__DUMP_NAME,
                 DatastoreConstants.APPLICATION__DUMP_NAME)
+            .build(),
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.CHUNK_STORE)
+            .toStore(DatastoreConstants.BRANCH_STORE)
+            .withName(CHUNK_TO_BRANCH)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.BRANCH__DUMP_NAME)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.BRANCH__EPOCH_ID)
             .build());
   }
 

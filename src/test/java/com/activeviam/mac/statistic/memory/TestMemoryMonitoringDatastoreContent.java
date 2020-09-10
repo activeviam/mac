@@ -124,24 +124,35 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                         Arrays.asList(
                             DatastoreConstants.CHUNK__PARENT_ID,
                             DatastoreConstants.CHUNK__CLASS,
-                            DatastoreConstants.CHUNK__SIZE));
-                Object keys[] = new Object[2];
+                            DatastoreConstants.CHUNK__SIZE,
+                            DatastoreConstants.VERSION__EPOCH_ID));
+                Object keys[] = new Object[3];
 
                 int chunkDumpNameFieldIdx =
                     monitoringDatastore
                         .getSchema()
                         .getStore(DatastoreConstants.CHUNK_STORE)
                         .getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME);
+                int epochIdFieldIdx =
+                    monitoringDatastore
+                        .getSchema()
+                        .getStore(DatastoreConstants.CHUNK_STORE)
+                        .getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID);
 
                 for (int i = 0; i < chunkIds.length; i++) {
                   keys[0] = chunkIds[i];
-                  keys[1] =
-                      monitoringDatastore
+                  keys[1] = monitoringDatastore
                           .getSchema()
                           .getStore(DatastoreConstants.CHUNK_STORE)
                           .getDictionaryProvider()
                           .getDictionary(chunkDumpNameFieldIdx)
                           .read(1);
+                  keys[2] = monitoringDatastore
+                      .getSchema()
+                      .getStore(DatastoreConstants.CHUNK_STORE)
+                      .getDictionaryProvider()
+                      .getDictionary(epochIdFieldIdx)
+                      .read(1);
 
                   Object[] top_obj = query.runInTransaction(keys, true).toTuple();
                   monitoredChunkSizes[i] = Long.parseLong(top_obj[2].toString());

@@ -165,6 +165,19 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
+  static Object[] buildBranchTupleFrom(
+      final IRecordFormat format, final IMemoryStatistic statistic,
+      final String dumpName, final long epochId, final String branch) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__DUMP_NAME,
+        dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__EPOCH_ID,
+        epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__NAME,
+        branch);
+    return tuple;
+  }
+
   @Override
   public Void visit(DefaultMemoryStatistic stat) {
     switch (stat.getName()) {

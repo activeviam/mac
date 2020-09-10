@@ -48,8 +48,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   private final ParentType rootComponent;
   private final ParentType directParentType;
   private final String directParentId;
+
   /** The partition id of the visited statistic. */
   protected final int partitionId;
+
+  /** The epoch id we are currently reading statistics for. */
+  protected Long epochId = null;
 
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
@@ -72,6 +76,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param partitionId partition id of the parent if the chunkSet
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
+   * @param epochId the epoch id of the chunkset
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
@@ -84,7 +89,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final String parentId,
       final int partitionId,
       final Long indexId,
-      final Long referenceId) {
+      final Long referenceId,
+      final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
@@ -94,6 +100,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.partitionId = partitionId;
     this.indexId = indexId;
     this.referenceId = referenceId;
+    this.epochId = epochId;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -210,6 +217,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
@@ -282,7 +291,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             this.current,
             this.store,
             this.fields,
-            this.partitionId);
+            this.partitionId,
+            this.epochId);
     subVisitor.process(memoryStatistic);
   }
 

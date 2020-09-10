@@ -77,7 +77,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Provider store.
+   * Returns the {@link IRecordFormat} of the Provider store.
    *
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#PROVIDER_STORE} record format
@@ -87,7 +87,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Level store.
+   * Returns the {@link IRecordFormat} of the Level store.
    *
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#LEVEL_STORE} record format
@@ -97,7 +97,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Index store.
+   * Returns the {@link IRecordFormat} of the Index store.
    *
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#INDEX_STORE} record format
@@ -107,7 +107,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Reference store.
+   * Returns the {@link IRecordFormat} of the Reference store.
    *
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#REFERENCE_STORE} record format
@@ -117,7 +117,17 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Dictionary store.
+   * Returns the {@link IRecordFormat} of the Branch store.
+   *
+   * @param storageMetadata metadata of the application datastore
+   * @return the {@link DatastoreConstants#BRANCH_STORE} record format
+   */
+  protected static IRecordFormat getBranchStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
+    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.BRANCH_STORE);
+  }
+
+  /**
+   * Returns the {@link IRecordFormat} of the Dictionary store.
    *
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#DICTIONARY_STORE} record format
