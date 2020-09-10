@@ -83,6 +83,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     NO_COMPONENT
   }
 
+  public enum UsedByVersion {
+    FALSE,
+    TRUE,
+    UNKNOWN
+  }
+
   /**
    * Description of the chunk store.
    *
@@ -127,6 +133,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
+        .withField(DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT,
+            UsedByVersion.UNKNOWN)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
