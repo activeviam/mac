@@ -155,7 +155,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       logger.warning("Dictionary does not state its class " + stat);
       dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
     }
-    //
+
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] =
         stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();

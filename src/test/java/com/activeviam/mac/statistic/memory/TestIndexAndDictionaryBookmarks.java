@@ -41,6 +41,10 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 	private Pair<IDatastore, IActivePivotManager> monitoredApp;
 	private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
+	// todo vlg move back in setup
+	Path exportPath;
+	IMemoryStatistic stats;
+
 	public static final int ADDED_DATA_SIZE = 20;
 
 	@BeforeClass
@@ -52,9 +56,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 	public void setup() throws AgentException {
 		initializeApplication();
 
-		final Path exportPath = generateMemoryStatistics();
+		exportPath = generateMemoryStatistics();
 
-		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+		stats = loadMemoryStatFromFolder(exportPath);
 
 		initializeMonitoringApplication(stats);
 
@@ -197,10 +201,13 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 		final MDXQuery totalQuery =
 				new MDXQuery(
 						"SELECT NON EMPTY"
+								+ " Crossjoin("
 								+ "   Except("
 								+ "     [Fields].[Field].[Field].Members,"
 								+ "     [Fields].[Field].[Field].[N/A]"
-								+ "   ) ON COLUMNS,"
+								+ "   )"
+								+ ", [Chunks].[ChunkId].[ChunkId].Members)"
+								+ " ON COLUMNS,"
 								+ " [Measures].[Dictionary Size] ON ROWS"
 								+ " FROM [MemoryCube]"
 								+ " WHERE ("

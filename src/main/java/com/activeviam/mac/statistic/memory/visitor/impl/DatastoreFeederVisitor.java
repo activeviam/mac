@@ -12,6 +12,7 @@ import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.StringArrayObject;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -344,15 +345,17 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
+    Collection<String> oldFields = this.fields;
+    readFieldsIfAny(stat);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.DICTIONARY_FIELDS,
+        new StringArrayObject(this.fields.toArray(new String[0])));
+
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
-    Collection<String> oldFields = this.fields;
-
-    readFieldsIfAny(stat);
 
     visitChildren(stat);
 
@@ -474,18 +477,24 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     return epochOrBranchChanged;
   }
 
-  private void readFieldsIfAny(final IMemoryStatistic stat) {
+  private boolean readFieldsIfAny(final IMemoryStatistic stat) {
     IStatisticAttribute fieldAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+
+    boolean areFieldsSpecified = false;
     if (fieldAttr != null) {
       this.fields = Collections.singleton(fieldAttr.asText());
+      areFieldsSpecified = true;
     } else {
       IStatisticAttribute multipleFieldsAttr =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS);
       if (multipleFieldsAttr != null) {
         this.fields = List.of(multipleFieldsAttr.asStringArray());
+        areFieldsSpecified = true;
       }
     }
+
+    return areFieldsSpecified;
   }
 
   private static Object[] buildIndexTupleFrom(

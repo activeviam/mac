@@ -75,7 +75,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Indexed Fields].[Indexed Fields].[ALL].[AllMember]))) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember]))) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "ranges" : {
