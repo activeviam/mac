@@ -42,16 +42,4 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
       IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
     super(transaction, storageMetadata, dumpName);
   }
-
-  /**
-   * Retrieves the single field name from {@link #fields}.
-   *
-   * <p>This asserts that there is only one element in the {@link #fields} collection.
-   *
-   * @return the field
-   */
-  protected String retrieveUniqueField() {
-    assert (this.fields.size() == 1);
-    return this.fields.iterator().next();
-  }
 }

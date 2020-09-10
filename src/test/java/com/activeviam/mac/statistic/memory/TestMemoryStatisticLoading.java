@@ -6,11 +6,9 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static org.junit.Assert.assertNotEquals;
 
+import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -69,19 +67,8 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
 
           // Test that we have the correct count of vector blocks
-          final IDictionaryCursor cursor =
-              monitoringDatastore
-                  .getHead()
-                  .getQueryRunner()
-                  .forStore(CHUNK_STORE)
-                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
-                  .selecting(CHUNK_ID)
-                  .onCurrentThread()
-                  .run();
           final Set<Long> storeIds =
-              StreamSupport.stream(cursor.spliterator(), false)
-                  .map(record -> record.readLong(0))
-                  .collect(Collectors.toSet());
+              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK);
           Assertions.assertThat(storeIds).isNotEmpty();
 
           final Set<Long> statIds = new HashSet<>();
@@ -109,6 +96,24 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
                       }));
           Assertions.assertThat(storeIds).isEqualTo(statIds);
         });
+  }
+
+  private Set<Long> retrieveChunksOfType(
+      final IDatastore datastore, final ParentType component) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.OWNER_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
   }
 
   @Test

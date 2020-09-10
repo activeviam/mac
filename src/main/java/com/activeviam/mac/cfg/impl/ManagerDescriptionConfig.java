@@ -57,17 +57,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
    * <p>This Cube is based from Chunk facts
    */
   public static final String MONITORING_CUBE = "MemoryCube";
-  /** The index-related cube. */
-  public static final String INDEX_CUBE = "Indexes";
-  /** The dictionary related cube. */
-  public static final String DICTIONARY_CUBE = "Dictionaries";
-  /** The provider related cube. */
-  public static final String PROVIDER_CUBE = "Providers";
-  /** The references related Cube. */
-  public static final String REFERENCE_CUBE = "References";
 
   /** Measure of the summed off-heap memory footprint. */
   public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
+
   /**
    * Measure of the summed on-heap memory footprint.
    *
@@ -160,8 +153,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
   /** The name of the hierarchy of owner components. */
-  public static final String OWNER_COMPONENT_HIERARCHY = "Owner component";
-  /** The name of the hierarchy of chunk ids. */
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
   /** The name of the hierarchy of partitions. */
   public static final String PARTITION_HIERARCHY = "Partition";
@@ -254,16 +245,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "Class of the chunks")
-        .withDimension("Chunk Owners")
-        .withHierarchy(OWNER_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__OWNER)
-        .withLevel(PARTITION_HIERARCHY)
+        .withDimension("Partitions")
+        .withSingleLevelHierarchy(PARTITION_HIERARCHY)
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
-        .withHierarchy(OWNER_COMPONENT_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__COMPONENT)
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
         .withHierarchyOfSameName()
         .slicing()

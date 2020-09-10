@@ -1,7 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__COMPONENT;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertArrayEquals;
 
@@ -123,7 +122,6 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                             .getDictionaryProvider(),
                         0,
                         Arrays.asList(
-                            DatastoreConstants.CHUNK__OWNER,
                             DatastoreConstants.CHUNK__PARENT_ID,
                             DatastoreConstants.CHUNK__CLASS,
                             DatastoreConstants.CHUNK__SIZE,
@@ -157,7 +155,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                       .read(1);
 
                   Object[] top_obj = query.runInTransaction(keys, true).toTuple();
-                  monitoredChunkSizes[i] = Long.valueOf(top_obj[3].toString());
+                  monitoredChunkSizes[i] = Long.parseLong(top_obj[2].toString());
                 }
               });
           // Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
@@ -893,6 +891,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                         });
               });
 
+          monitoredDatastore.getEpochManager().forceDiscardEpochs(node -> true);
+
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath =
@@ -903,39 +903,55 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
 
           // Test that we have chunks of single values
-          final IDictionaryCursor recordCursor =
-              monitoringDatastore
-                  .getHead()
-                  .getQueryRunner()
-                  .forStore(CHUNK_STORE)
-                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.RECORDS))
-                  .selecting(DatastoreConstants.CHUNK__CLASS)
-                  .onCurrentThread()
-                  .run();
-          final Set<String> recordTypes =
-              StreamSupport.stream(recordCursor.spliterator(), false)
-                  .map(record -> (String) record.read(0))
-                  .collect(Collectors.toSet());
+          final Set<String> recordTypes = retrieveClassesOfChunks(
+              monitoringDatastore,
+              retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
           Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
 
           // Test that we have chunks of single values
-          final IDictionaryCursor vectorCursor =
-              monitoringDatastore
-                  .getHead()
-                  .getQueryRunner()
-                  .forStore(CHUNK_STORE)
-                  .withCondition(BaseConditions.Equal(CHUNK__COMPONENT, ParentType.VECTOR_BLOCK))
-                  .selecting(DatastoreConstants.CHUNK__CLASS)
-                  .onCurrentThread()
-                  .run();
-          final Set<String> vectorTypes =
-              StreamSupport.stream(vectorCursor.spliterator(), false)
-                  .map(record -> (String) record.read(0))
-                  .collect(Collectors.toSet());
+          final Set<String> vectorTypes = retrieveClassesOfChunks(
+              monitoringDatastore,
+              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
           Assertions.assertThat(vectorTypes)
-              .contains(
-                  DirectIntegerVectorBlock.class.getName(), DirectLongVectorBlock.class.getName());
+              .contains(DirectIntegerVectorBlock.class.getName(),
+                  DirectLongVectorBlock.class.getName());
         });
+  }
+
+  private Set<Long> retrieveChunksOfType(
+      final IDatastore datastore, final ParentType component) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.OWNER_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> retrieveClassesOfChunks(
+      final IDatastore datastore, final Collection<Long> chunks) {
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withCondition(
+                BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
+            .selecting(DatastoreConstants.CHUNK__CLASS)
+            .onCurrentThread()
+            .run();
+
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> (String) reader.read(0))
+        .collect(Collectors.toSet());
   }
 
   // TODO Test content of all stores similarly
