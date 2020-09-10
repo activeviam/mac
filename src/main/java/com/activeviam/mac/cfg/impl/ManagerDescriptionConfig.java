@@ -420,9 +420,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    //    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
+    // todo vlg constants for these AHs
     Copper.newSingleLevelHierarchy("Indices", "Indexed Fields", "Indexed Fields")
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy("Indices", "Index Type", "Index Type")
+        .from(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
         .publish(context);
 
     // --------------------
