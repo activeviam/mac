@@ -373,6 +373,16 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     return null;
   }
 
+  /**
+   * Checks whether or not the given storage specification concerns a single field.
+   *
+   * <p>Due to how {@link DictionaryManager} exports its dictionaries, dictionary entries that are
+   * not {@link com.qfs.dic.impl.FieldStorageSpecification}s should be ignored, as they are
+   * duplicates with potentially wrong field attributions.
+   *
+   * @param storageSpecification a string representing a storage specification
+   * @return whether or not it corresponds to a single field storage specification
+   */
   protected boolean isSingleFieldStorage(final String storageSpecification) {
     return storageSpecification.startsWith("F");
   }
