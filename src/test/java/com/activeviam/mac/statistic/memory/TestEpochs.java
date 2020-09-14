@@ -83,11 +83,12 @@ public class TestEpochs extends ATestMemoryStatistic {
       transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
     });
 
-   monitoredApp.getRight().getActivePivots().get("Cube")
+    monitoredApp.getRight().getActivePivots().get("Cube")
         .commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
+    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
