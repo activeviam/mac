@@ -393,10 +393,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    Copper.newSingleLevelHierarchy("Dictionaries", "Dictionarized Fields", "Dictionarized Fields")
-        .from(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_FIELDS))
-        .publish(context);
-
     // --------------------
     // 2- Chunk to references
     CopperStore chunkToReferenceStore =
@@ -443,8 +439,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .publish(context);
 
     CopperHierarchy componentHierarchy =
-        Copper
-            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+        Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 
@@ -453,20 +448,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);
 
-    //    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
-    //        .divide(Copper.count())
-    //        .per(fieldHierarchy.level(FIELD_HIERARCHY))
-    //        .sum()
-    //        .map(Number::longValue)
-    //        .as("Dictionary Size")
-    //        .withFormatter(NUMBER_FORMATTER)
-    //        .publish(context);
-
     Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .divide(Copper.count())
-        //        .per(fieldHierarchy.level(FIELD_HIERARCHY))
-        //        .sum()
-        //        .map(Number::longValue)
+        .per(fieldHierarchy.level(FIELD_HIERARCHY))
+        .sum()
+        .map(Number::longValue)
         .as("Dictionary Size")
         .withFormatter(NUMBER_FORMATTER)
         .publish(context);

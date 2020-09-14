@@ -204,9 +204,6 @@ public class DatastoreConstants {
   /** Dictionary class field. */
   public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 
-  // todo vlg documentation
-  public static final String DICTIONARY_FIELDS = "dictionaryFields";
-
   /** Field for the {@link ActivePivotManager} name. */
   public static final String LEVEL__MANAGER_ID = "managerId";
 

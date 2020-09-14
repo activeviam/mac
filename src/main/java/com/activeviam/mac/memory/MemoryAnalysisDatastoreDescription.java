@@ -228,7 +228,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.DICTIONARY_SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.DICTIONARY_ORDER, ILiteralType.INT)
         .withField(DatastoreConstants.DICTIONARY_CLASS)
-        .withField(DatastoreConstants.DICTIONARY_FIELDS, ILiteralType.OBJECT)
         .build();
   }
 
