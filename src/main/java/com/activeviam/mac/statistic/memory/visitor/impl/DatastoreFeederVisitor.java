@@ -335,12 +335,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final DictionaryStatistic stat) {
-    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 
+    final IStatisticAttribute storageSpecification =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORAGE_SPECIFICATION);
+
+    if (storageSpecification != null && !isSingleFieldStorage(storageSpecification.asText())) {
+      return null;
+    }
+
+    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor
+        .setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -363,6 +371,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.fields = oldFields;
 
     return null;
+  }
+
+  protected boolean isSingleFieldStorage(final String storageSpecification) {
+    return storageSpecification.startsWith("F");
   }
 
   /**
