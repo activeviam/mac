@@ -148,7 +148,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .withNullableField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
         .asKeyField()
 
         .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
