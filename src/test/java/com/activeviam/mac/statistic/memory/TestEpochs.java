@@ -11,10 +11,12 @@ import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.qfs.condition.ICondition;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.multiversion.impl.Epoch;
@@ -69,18 +71,35 @@ public class TestEpochs extends ATestMemoryStatistic {
   private void initializeApplication() {
     monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
+    // epoch 1
     monitoredApp.getLeft().edit(transactionManager -> {
       IntStream.range(0, 10)
           .forEach(i -> transactionManager.add("A", i, 0.));
     });
 
+    // epoch 2
     monitoredApp.getLeft().edit(transactionManager -> {
       IntStream.range(10, 20)
           .forEach(i -> transactionManager.add("A", i, 1.));
     });
 
+    // epoch 3
+    // drop partition from epoch 2
     monitoredApp.getLeft().edit(transactionManager -> {
       transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
+    });
+
+    // epoch 4
+    // make sure to add a new chunk on the 0-valued partition
+    monitoredApp.getLeft().edit(transactionManager -> {
+      IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
+          .forEach(i -> transactionManager.add("A", i, 0.));
+    });
+
+    // epoch 5
+    // remaining chunks from epoch 4, but not used by version
+    monitoredApp.getLeft().edit(transactionManager -> {
+      transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20));
     });
 
     monitoredApp.getRight().getActivePivots().get("Cube")
@@ -128,7 +147,7 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Set<Long> epochIds = retrieveEpochIds();
 
     Assertions.assertThat(epochIds)
-        .containsExactlyInAnyOrder(1L, 2L, 3L, 10L);
+        .containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 10L);
   }
 
   @Test
@@ -158,16 +177,37 @@ public class TestEpochs extends ATestMemoryStatistic {
   @Test
   public void testChunkVersioning() {
     final Set<Long> recordChunks = retrieveRecordChunks();
-    final Multimap<Long, Long> chunksPerEpoch = retrieveChunksPerEpoch(recordChunks);
+    final Multimap<Long, Long> chunksPerEpoch =
+        retrieveChunksPerEpoch(recordChunks, BaseConditions.True());
 
     Assertions.assertThat(chunksPerEpoch.get(3L))
         .containsExactlyInAnyOrderElementsOf(chunksPerEpoch.get(1L));
 
     Assertions.assertThat(chunksPerEpoch.get(2L))
-        .hasSize(2 * chunksPerEpoch.get(1L).size());
+        .hasSizeGreaterThan(chunksPerEpoch.get(1L).size());
 
     Assertions.assertThat(chunksPerEpoch.get(2L))
         .containsAll(chunksPerEpoch.get(1L));
+
+    Assertions.assertThat(chunksPerEpoch.get(4L))
+        .containsAll(chunksPerEpoch.get(3L));
+
+    Assertions.assertThat(chunksPerEpoch.get(5L))
+        .isEqualTo(chunksPerEpoch.get(3L));
+  }
+
+  @Test
+  public void testUsedByVersionFlag() {
+    final Set<Long> recordChunks = retrieveRecordChunks();
+    final Multimap<Long, Long> chunksPerEpochUsedByVersion = retrieveChunksPerEpoch(recordChunks,
+            BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
+    final Multimap<Long, Long> chunksPerEpochNoFilter = retrieveChunksPerEpoch(recordChunks,
+            BaseConditions.True());
+
+    Assertions.assertThat(chunksPerEpochNoFilter.get(5L))
+        .isEqualTo(chunksPerEpochNoFilter.get(4L));
+    Assertions.assertThat(chunksPerEpochUsedByVersion.get(5L))
+        .hasSizeLessThan(chunksPerEpochUsedByVersion.get(4L).size());
   }
 
   @Test
@@ -209,11 +249,13 @@ public class TestEpochs extends ATestMemoryStatistic {
         .collect(Collectors.toSet());
   }
 
-  protected Multimap<Long, Long> retrieveChunksPerEpoch(final Collection<Long> chunkSet) {
+  protected Multimap<Long, Long> retrieveChunksPerEpoch(
+      final Collection<Long> chunkSet, final ICondition filter) {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
         .forStore(DatastoreConstants.CHUNK_STORE)
-        .withCondition(
-            BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()))
+        .withCondition(BaseConditions.And(
+            BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()),
+            filter))
         .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
         .onCurrentThread()
         .run();
