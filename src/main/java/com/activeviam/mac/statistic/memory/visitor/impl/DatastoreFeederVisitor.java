@@ -65,6 +65,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   /** Branch owning {@link #epochId}. */
   protected String branch = null;
 
+  /**
+   * Whether or not the currently visited statistics were flagged as used by the current version.
+   */
   protected UsedByVersion usedByVersion = UsedByVersion.UNKNOWN;
 
   /** Type of the root component visited. */

@@ -58,6 +58,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
    * @param epochId the epoch id of the current statistic
+   * @param usedByVersion the used by version flag for the current statistic
    */
   public VectorStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,

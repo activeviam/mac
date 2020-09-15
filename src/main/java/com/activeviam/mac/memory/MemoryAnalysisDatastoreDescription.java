@@ -83,9 +83,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     NO_COMPONENT
   }
 
+  /** Characterizes whether or not a chunk is used by the version it appears in. */
   public enum UsedByVersion {
+    /** Not used by the version. */
     FALSE,
+    /** Used by the version. */
     TRUE,
+    /** Cannot tell if the chunk belongs to the version. */
     UNKNOWN
   }
 

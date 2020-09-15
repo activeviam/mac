@@ -54,6 +54,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
+
+  /**
+   * Whether or not the currently visited statistics were flagged as used by the current version.
+   */
   protected UsedByVersion usedByVersion;
 
   /** ID of the current {@link ChunkSet}. */
@@ -74,10 +78,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param rootComponent highest component holding the ChunkSet
    * @param parentType structure type of the parent of the Chunkset
    * @param parentId id of the parent of the ChunkSet
-   * @param partitionId partition id of the parent if the chunkSet
+   * @param partitionId partition id of the parent of the ChunkSet
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
    * @param epochId the epoch id of the chunkset
+   * @param usedByVersion the used by version flag for the Chunkset
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
