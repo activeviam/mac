@@ -157,10 +157,8 @@ public class TestEpochs extends ATestMemoryStatistic {
     // the same number of records is added between epochs 0 -> 1 and 1 -> 2
     // with a different value on the partitioned field: twice as many partitions
     Assertions.assertThat(partitionsPerEpoch.get(2L))
+        .containsAll(partitionsPerEpoch.get(1L))
         .hasSize(2 * partitionsPerEpoch.get(1L).size());
-
-    Assertions.assertThat(partitionsPerEpoch.get(2L))
-        .containsAll(partitionsPerEpoch.get(1L));
   }
 
   @Test
@@ -168,26 +166,22 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Multimap<Long, Integer> partitionsPerEpoch = retrievePartitionsPerEpoch();
 
     Assertions.assertThat(partitionsPerEpoch.get(3L))
-        .hasSizeLessThan(partitionsPerEpoch.get(2L).size());
-
-    Assertions.assertThat(partitionsPerEpoch.get(3L))
+        .hasSizeLessThan(partitionsPerEpoch.get(2L).size())
         .containsExactlyInAnyOrderElementsOf(partitionsPerEpoch.get(1L));
   }
 
   @Test
-  public void testChunkVersioning() {
+  public void testChunkInclusions() {
     final Set<Long> recordChunks = retrieveRecordChunks();
     final Multimap<Long, Long> chunksPerEpoch =
         retrieveChunksPerEpoch(recordChunks, BaseConditions.True());
 
-    Assertions.assertThat(chunksPerEpoch.get(3L))
-        .containsExactlyInAnyOrderElementsOf(chunksPerEpoch.get(1L));
-
     Assertions.assertThat(chunksPerEpoch.get(2L))
+        .containsAll(chunksPerEpoch.get(1L))
         .hasSizeGreaterThan(chunksPerEpoch.get(1L).size());
 
-    Assertions.assertThat(chunksPerEpoch.get(2L))
-        .containsAll(chunksPerEpoch.get(1L));
+    Assertions.assertThat(chunksPerEpoch.get(3L))
+        .containsExactlyInAnyOrderElementsOf(chunksPerEpoch.get(1L));
 
     Assertions.assertThat(chunksPerEpoch.get(4L))
         .containsAll(chunksPerEpoch.get(3L));
@@ -199,15 +193,19 @@ public class TestEpochs extends ATestMemoryStatistic {
   @Test
   public void testUsedByVersionFlag() {
     final Set<Long> recordChunks = retrieveRecordChunks();
-    final Multimap<Long, Long> chunksPerEpochUsedByVersion = retrieveChunksPerEpoch(recordChunks,
-            BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
-    final Multimap<Long, Long> chunksPerEpochNoFilter = retrieveChunksPerEpoch(recordChunks,
-            BaseConditions.True());
 
-    Assertions.assertThat(chunksPerEpochNoFilter.get(5L))
-        .isEqualTo(chunksPerEpochNoFilter.get(4L));
-    Assertions.assertThat(chunksPerEpochUsedByVersion.get(5L))
-        .hasSizeLessThan(chunksPerEpochUsedByVersion.get(4L).size());
+    final Multimap<Long, Long> chunksPerEpochUsedByVersion = retrieveChunksPerEpoch(recordChunks,
+        BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
+
+    final Multimap<Long, Long> chunksPerEpochNoFilter = retrieveChunksPerEpoch(recordChunks,
+        BaseConditions.True());
+
+    Assertions.assertThat(chunksPerEpochNoFilter.get(4L))
+        .isEqualTo(chunksPerEpochNoFilter.get(5L));
+
+    Assertions.assertThat(chunksPerEpochUsedByVersion.get(4L))
+        .hasSizeGreaterThan(chunksPerEpochUsedByVersion.get(5L).size())
+        .containsAll(chunksPerEpochUsedByVersion.get(5L));
   }
 
   @Test
@@ -215,9 +213,7 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Multimap<Long, Long> dictionariesPerEpoch = retrieveDictionariesPerEpoch();
 
     Assertions.assertThat(dictionariesPerEpoch.get(3L))
-        .hasSizeLessThan(dictionariesPerEpoch.get(2L).size());
-
-    Assertions.assertThat(dictionariesPerEpoch.get(3L))
+        .hasSizeLessThan(dictionariesPerEpoch.get(2L).size())
         .containsExactlyInAnyOrderElementsOf(dictionariesPerEpoch.get(1L));
   }
 
@@ -229,9 +225,7 @@ public class TestEpochs extends ATestMemoryStatistic {
         .containsExactlyInAnyOrderElementsOf(indicesPerEpoch.get(1L));
 
     Assertions.assertThat(indicesPerEpoch.get(2L))
-        .hasSizeGreaterThan(indicesPerEpoch.get(1L).size());
-
-    Assertions.assertThat(indicesPerEpoch.get(2L))
+        .hasSizeGreaterThan(indicesPerEpoch.get(1L).size())
         .containsAll(indicesPerEpoch.get(1L));
   }
 
