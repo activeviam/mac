@@ -177,12 +177,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.chunkSetId =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 
-    // todo vlg refactor
     final IStatisticAttribute usedByVersionAttribute =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion =
-          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
+      this.usedByVersion = usedByVersionAttribute.asBoolean()
+          ? UsedByVersion.TRUE
+          : UsedByVersion.FALSE;
     }
 
     FeedVisitor.visitChildren(this, statistic);

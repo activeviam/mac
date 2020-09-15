@@ -137,12 +137,13 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
-    // todo vlg refactor
+
     final IStatisticAttribute usedByVersionAttribute =
         chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion =
-          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
+      this.usedByVersion = usedByVersionAttribute.asBoolean()
+          ? UsedByVersion.TRUE
+          : UsedByVersion.FALSE;
     }
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
