@@ -15,6 +15,7 @@ import com.qfs.desc.IStoreDescription;
 import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
+import com.qfs.pool.impl.QFSPools;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
@@ -45,9 +46,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
   /** Name of the chunk -> branch reference. */
   public static final String CHUNK_TO_BRANCH = "ChunkToBranch";
-
-  /** Default value for store and field - fields. */
-  public static final String DEFAULT_DATASTORE = "Unknown";
 
   /** Default value for component-specific ids. */
   public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
@@ -130,6 +128,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
+        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.CHUNK_ID,
+            DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__EPOCH_ID)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();
   }
@@ -148,10 +148,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .withNullableField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
         .asKeyField()
 
         .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
+
+        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.OWNER__CHUNK_ID,
+            DatastoreConstants.CHUNK__DUMP_NAME)
         .build();
   }
 
@@ -495,6 +498,15 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IReferenceDescription> getSameDictionaryDescriptions() {
     // TODO(ope) report same fields, as some are shared
     return Collections.emptyList();
+  }
+
+  /**
+   * Returns the value with which to do modulo partitioning on the chunk store.
+   *
+   * @return the modulo partitioning value
+   */
+  private static int partitioningModulo() {
+    return QFSPools.getMixedWorkloadThreadCount();
   }
 
   /**

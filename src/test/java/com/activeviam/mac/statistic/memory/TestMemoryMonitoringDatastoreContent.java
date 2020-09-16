@@ -307,7 +307,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     // offheap
     Assertions.assertThat(list.size()).isEqualTo(2);
     Assertions.assertThat(list)
-        .containsExactly(new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
+        .containsExactlyInAnyOrder(new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
   }
 
   @Test
