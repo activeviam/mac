@@ -252,6 +252,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
           cpnFormat,
           DatastoreConstants.PROVIDER_COMPONENT__TYPE,
           this.providerCpnType.toString());
+      FeedVisitor
+          .setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
 
       this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
     }
@@ -373,6 +375,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID, this.pivot);
+    FeedVisitor
+        .setTupleElement(tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.PROVIDER__MANAGER_ID, this.manager);
 
