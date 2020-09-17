@@ -199,6 +199,12 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] ownerTuple =
         FeedVisitor
             .buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName, this.rootComponent);
+    final IStatisticAttribute fieldAttribute =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+    if (fieldAttribute != null) {
+      FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
+          fieldAttribute.asText());
+    }
     FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
