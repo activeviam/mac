@@ -177,6 +177,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.chunkSetId =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 
+    final UsedByVersion previousUsedByVersion = this.usedByVersion;
     final IStatisticAttribute usedByVersionAttribute =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
@@ -192,7 +193,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.chunkSize = null;
     this.freeRows = null;
     this.nonWrittenRows = null;
-    this.usedByVersion = UsedByVersion.UNKNOWN;
+    this.usedByVersion = previousUsedByVersion;
 
     return null;
   }
