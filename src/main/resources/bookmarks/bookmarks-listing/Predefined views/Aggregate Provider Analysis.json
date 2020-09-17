@@ -1,0 +1,84 @@
+{
+  "style" : { },
+  "showTitleBar" : false,
+  "body" : {
+    "pages" : [ {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Aggregate Provider Analysis",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[Manager].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderCategory].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Cube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "c-treeCells-member",
+                    "width" : 449
+                  } ],
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "ck" : "1"
+      },
+      "name" : "Page 1",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    } ]
+  },
+  "containerKey" : "dashboard"
+}
