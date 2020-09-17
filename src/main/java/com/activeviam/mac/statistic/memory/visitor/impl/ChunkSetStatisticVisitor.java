@@ -69,7 +69,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param transaction ongoing transaction
    * @param dumpName name of the ongoing import
    * @param current current time
-   * @param store store being visited
+   * @param owner owner being visited
    * @param rootComponent highest component holding the ChunkSet
    * @param parentType structure type of the parent of the Chunkset
    * @param parentId id of the parent of the ChunkSet
@@ -83,7 +83,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final IOpenedTransaction transaction,
       final String dumpName,
       final Instant current,
-      final String store,
+      final ChunkOwner owner,
       final ParentType rootComponent,
       final ParentType parentType,
       final String parentId,
@@ -93,7 +93,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
-    this.store = store;
+    this.owner = owner;
     this.rootComponent = rootComponent;
     this.directParentType = parentType;
     this.directParentId = parentId;
@@ -164,8 +164,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   public Void visit(final ChunkSetStatistic statistic) {
     this.chunkSize = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_LENGTH).asInt();
     this.freeRows = statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FREED_ROWS).asInt();
-    this.nonWrittenRows =
-        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_NOT_WRITTEN_ROWS).asInt();
+    final IStatisticAttribute nonWrittenRowsAttribute =
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_NOT_WRITTEN_ROWS);
+    this.nonWrittenRows = nonWrittenRowsAttribute != null ? nonWrittenRowsAttribute.asInt() : 0;
     this.chunkSetId =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 
@@ -196,16 +197,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      final ChunkOwner owner = new StoreOwner(this.store);
-
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
       final Object[] ownerTuple =
-          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
-              this.rootComponent);
-      FeedVisitor
-          .writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields, ownerFormat,
-              ownerTuple
-          );
+          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic,
+              new StoreOwner(this.owner.getName()), this.dumpName, this.rootComponent);
+      FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
+          ownerFormat, ownerTuple);
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
@@ -289,7 +286,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             this.transaction,
             this.dumpName,
             this.current,
-            this.store,
+            this.owner,
             this.fields,
             this.partitionId,
             this.epochId);

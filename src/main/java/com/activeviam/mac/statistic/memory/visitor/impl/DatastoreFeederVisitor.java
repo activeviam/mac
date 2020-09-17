@@ -133,8 +133,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   public Void visit(final ChunkStatistic chunkStatistic) {
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, new StoreOwner(this.store),
-            this.dumpName, this.rootComponent);
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, this.owner, this.dumpName,
+            this.rootComponent);
     FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
         ownerFormat, ownerTuple);
 
@@ -235,7 +235,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.transaction,
         this.dumpName,
         this.current,
-        this.store,
+        this.owner,
         this.rootComponent,
         this.directParentType,
         this.directParentId,
@@ -385,12 +385,12 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
             () -> "No store name in stat " + stat);
-    this.store = nameAttr.asText();
+    this.owner = new StoreOwner(nameAttr.asText());
 
     // Explore the store children
     visitChildren(stat);
 
-    this.store = null;
+    this.owner = null;
   }
 
   /**
