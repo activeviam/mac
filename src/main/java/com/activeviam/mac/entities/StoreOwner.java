@@ -19,6 +19,11 @@ public class StoreOwner implements ChunkOwner {
   private final String name;
 
   @Override
+  public String getType() {
+    return "Store";
+  }
+
+  @Override
   public String toString() {
     return "Store " + this.name;
   }

@@ -29,6 +29,11 @@ public final class SharedOwner implements ChunkOwner {
   }
 
   @Override
+  public String getType() {
+    return "Shared";
+  }
+
+  @Override
   public String toString() {
     return "Shared";
   }

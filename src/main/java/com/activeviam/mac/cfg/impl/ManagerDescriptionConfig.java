@@ -11,6 +11,7 @@ import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperHierarchy;
+import com.activeviam.copper.api.CopperLevelValues;
 import com.activeviam.copper.api.CopperStore;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -20,6 +21,7 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.agg.impl.SingleValueFunction;
@@ -95,6 +97,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String OWNER_DIMENSION = "Owners";
   /** Name of the component analysis hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the component analysis hierarchy. */
+  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
   /** Name of the component dimension. */
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the component analysis hierarchy. */
@@ -145,6 +149,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
   /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+  /** The name of the hierarchy of provider categories. */
+  public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
   /** The name of the hierarchy of pivots. */
   public static final String PIVOT_HIERARCHY = "Pivot";
   /** The name of the hierarchy of managers. */
@@ -261,9 +267,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         //        .withHierarchy(PIVOT_HIERARCHY)
         //        .withLevelOfSameName()
         //        .withPropertyName(DatastoreConstants.PROVIDER__PIVOT_ID)
-        //        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
-        //        .withLevelOfSameName()
-        //        .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
+        .withLevelOfSameName()
+        .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
+        .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
+        .withLevelOfSameName()
+        .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
         //        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
         //        .withLevelOfSameName()
         //        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
@@ -331,7 +340,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 1- Chunk to Dicos
-    CopperStore chunkToDicoStore =
+    final CopperStore chunkToDicoStore =
         Copper.store(DatastoreConstants.DICTIONARY_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
@@ -345,7 +354,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 2- Chunk to references
-    CopperStore chunkToReferenceStore =
+    final CopperStore chunkToReferenceStore =
         Copper.store(DatastoreConstants.REFERENCE_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
@@ -359,7 +368,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 3- Chunk to indexes
-    CopperStore chunkToIndexStore =
+    final CopperStore chunkToIndexStore =
         Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
@@ -373,23 +382,32 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 4- Chunk to owners
-    CopperStore chunkToOwnerStore =
+    final CopperStore chunkToOwnerStore =
         Copper.store(DatastoreConstants.OWNER_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    CopperHierarchy ownerHierarchy =
+    final CopperHierarchy ownerHierarchy =
         Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
             .publish(context);
 
-    CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+    final CopperLevelValues ownerTypeValues = ownerHierarchy.level(OWNER_HIERARCHY)
+        .map(ChunkOwner::getType);
+
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
+        .from(ownerTypeValues)
+        .withMemberList("Cube", "Store", "None", "Shared")
+        .publish(context);
+
+    final CopperHierarchy componentHierarchy =
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 
-    CopperHierarchy fieldHierarchy =
+    final CopperHierarchy fieldHierarchy =
         Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);

@@ -17,6 +17,8 @@ public interface ChunkOwner extends Comparable<ChunkOwner> {
    */
   String getName();
 
+  String getType();
+
   @Override
   default int compareTo(ChunkOwner o) {
     return this.toString().compareTo(o.toString());
