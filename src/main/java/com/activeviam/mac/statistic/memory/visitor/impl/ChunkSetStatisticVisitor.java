@@ -9,7 +9,6 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -199,9 +198,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       }
 
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-      final Object[] ownerTuple =
-          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic,
-              new StoreOwner(this.owner.getName()), this.dumpName, this.rootComponent);
+      final Object[] ownerTuple = FeedVisitor.buildOwnerTupleFrom(
+          ownerFormat, chunkStatistic, this.owner, this.dumpName, this.rootComponent);
       FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
           ownerFormat, ownerTuple);
 
