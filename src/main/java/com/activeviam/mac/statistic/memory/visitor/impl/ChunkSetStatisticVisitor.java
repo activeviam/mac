@@ -125,11 +125,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
       boolean isFieldSpecified =
           memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD);
-      Collection<String> oldFields = null;
+      final Collection<String> oldFields = this.fields;
       if (isFieldSpecified) {
         final IStatisticAttribute fieldAttribute =
             memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
-        oldFields = this.fields;
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
@@ -153,6 +152,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       this.chunkSize = previousSize;
       this.freeRows = previousFree;
       this.nonWrittenRows = previousNonWritten;
+    } else if (memoryStatistic.getName().contains("VectorHistory")) {
+      FeedVisitor.visitChildren(this, memoryStatistic);
     } else {
       handleUnknownDefaultStatistic(memoryStatistic);
     }
