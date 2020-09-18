@@ -29,7 +29,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
- * PivotMemoryStatisticConstants.STAT_NAME_LEVEL} named statistics.
+ * PivotMemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
  *
  * @author ActiveViam
  */
@@ -106,6 +106,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
         FeedVisitor.buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName, ParentType.LEVEL);
+    FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
+        this.parent.directParentId);
     FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
