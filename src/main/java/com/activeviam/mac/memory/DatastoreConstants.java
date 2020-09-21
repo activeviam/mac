@@ -142,6 +142,9 @@ public class DatastoreConstants {
   /** Chunk class field. */
   public static final String CHUNK__CLASS = "class";
 
+  /** Used by version field. */
+  public static final String CHUNK__USED_BY_VERSION = "usedByVersion";
+
   /** Direct memory footprint size field. */
   public static final String CHUNK__OFF_HEAP_SIZE = "offHeapMemorySize";
 

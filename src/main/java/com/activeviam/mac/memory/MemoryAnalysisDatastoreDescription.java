@@ -81,6 +81,16 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     NO_COMPONENT
   }
 
+  /** Characterizes whether or not a chunk is used by the version it appears in. */
+  public enum UsedByVersion {
+    /** Not used by the version. */
+    FALSE,
+    /** Used by the version. */
+    TRUE,
+    /** Cannot tell if the chunk belongs to the version. */
+    UNKNOWN
+  }
+
   /**
    * Description of the chunk store.
    *
@@ -125,6 +135,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
+        .withField(DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT,
+            UsedByVersion.UNKNOWN).dictionarized()
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)

@@ -11,6 +11,7 @@ import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -44,6 +45,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
 
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
+  private final UsedByVersion usedByVersion;
 
   /** The fields corresponding to the vector block statistic. */
   protected Collection<String> fields;
@@ -59,6 +61,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
    * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
    * @param epochId the epoch id of the current statistic
+   * @param usedByVersion the used by version flag for the current statistic
    */
   public VectorStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
@@ -68,13 +71,15 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
       final ChunkOwner owner,
       final Collection<String> fields,
       final int partitionId,
-      final Long epochId) {
+      final Long epochId,
+      final UsedByVersion usedByVersion) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.fields = fields;
     this.owner = owner;
     this.partitionId = partitionId;
     this.epochId = epochId;
+    this.usedByVersion = usedByVersion;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -176,8 +181,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
         FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, this.owner, this.dumpName,
             ParentType.VECTOR_BLOCK);
     FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
-        ownerTuple
-    );
+        ownerTuple);
 
     final IRecordFormat format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
@@ -189,6 +193,8 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__USED_BY_VERSION, this.usedByVersion);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
