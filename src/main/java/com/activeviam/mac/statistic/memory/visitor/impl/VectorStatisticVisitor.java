@@ -7,7 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.activeviam.mac.entities.StoreOwner;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -32,7 +32,7 @@ import java.util.Collection;
  *
  * @author ActiveViam
  */
-public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
+public class VectorStatisticVisitor extends AFeedVisitor<Void> {
 
   /** The record format of the store that stores the chunks. */
   protected final IRecordFormat chunkRecordFormat;
@@ -47,6 +47,9 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   protected Long epochId;
   private final UsedByVersion usedByVersion;
 
+  /** The fields corresponding to the vector block statistic. */
+  protected Collection<String> fields;
+
   /**
    * Constructor.
    *
@@ -54,7 +57,7 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param transaction ongoing transaction
    * @param dumpName name of the ongoing import
    * @param current current time
-   * @param store store being visited
+   * @param owner owner being visited
    * @param fields the fields related to the current statistic
    * @param partitionId partition id of the parent if the chunkSet
    * @param epochId the epoch id of the current statistic
@@ -65,15 +68,15 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final IOpenedTransaction transaction,
       final String dumpName,
       final Instant current,
-      final String store,
+      final ChunkOwner owner,
       final Collection<String> fields,
       final int partitionId,
       final Long epochId,
       final UsedByVersion usedByVersion) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
-    this.store = store;
     this.fields = fields;
+    this.owner = owner;
     this.partitionId = partitionId;
     this.epochId = epochId;
     this.usedByVersion = usedByVersion;
@@ -175,8 +178,8 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, new StoreOwner(this.store),
-            this.dumpName, ParentType.VECTOR_BLOCK);
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, this.owner, this.dumpName,
+            ParentType.VECTOR_BLOCK);
     FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
         ownerTuple);
 
@@ -193,18 +196,6 @@ public class VectorStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__USED_BY_VERSION, this.usedByVersion);
 
-    if (this.referenceId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
-    }
-    if (this.indexId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
-    }
-    if (this.dictionaryId != null) {
-      FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
-    }
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
 
