@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
@@ -28,6 +29,8 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   protected final IDatastoreSchemaMetadata storageMetadata;
   /** Name of the import. */
   protected final String dumpName;
+  /** Owner of the visited statistics. */
+  protected ChunkOwner owner = null;
 
   /**
    * Constuctor.

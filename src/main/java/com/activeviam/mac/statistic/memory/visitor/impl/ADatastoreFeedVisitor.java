@@ -19,8 +19,6 @@ import java.util.Collection;
  */
 public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
 
-  /** The name of the store of the visited statistic. */
-  protected String store = null;
   /** Names of the currently visited fields. */
   protected Collection<String> fields;
   /** ID of the current index. */

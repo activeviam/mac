@@ -7,8 +7,6 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -65,12 +63,14 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       final Long epochId) {
     super(transaction, storageMetadata, dumpName);
     this.parent = parent;
+    this.owner = parent.owner;
     this.transaction = transaction;
     this.epochId = epochId;
 
     this.directParentType = ParentType.LEVEL;
     this.directParentId =
-        parent.pivot + "/" + parent.dimension + "/" + parent.hierarchy + "/" + parent.level;
+        parent.owner.getName() + "/" + parent.dimension + "/" + parent.hierarchy + "/"
+            + parent.level;
 
     this.chunkIdCQ =
         this.transaction
@@ -101,11 +101,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     recordLevelForStructure(this.directParentType, this.directParentId);
 
-    final ChunkOwner owner = new CubeOwner(this.parent.pivot);
-
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName, ParentType.LEVEL);
+    final Object[] ownerTuple = FeedVisitor
+        .buildOwnerTupleFrom(ownerFormat, stat, this.owner, this.dumpName, ParentType.LEVEL);
     FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
         this.parent.directParentId);
     FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
@@ -216,7 +214,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, this.parent.manager);
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, this.parent.pivot);
+        tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, this.owner.getName());
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION, this.parent.dimension);
     FeedVisitor.setTupleElement(
