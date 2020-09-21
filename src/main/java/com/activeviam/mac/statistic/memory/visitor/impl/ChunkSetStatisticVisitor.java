@@ -8,11 +8,11 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Workaround;
-import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
 import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -53,7 +53,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   protected final int partitionId;
 
   /** The epoch id we are currently reading statistics for. */
-  protected Long epochId = null;
+  protected Long epochId;
+
+  /**
+   * Whether or not the currently visited statistics were flagged as used by the current version.
+   */
+  protected UsedByVersion usedByVersion;
 
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
@@ -73,10 +78,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param rootComponent highest component holding the ChunkSet
    * @param parentType structure type of the parent of the Chunkset
    * @param parentId id of the parent of the ChunkSet
-   * @param partitionId partition id of the parent if the chunkSet
+   * @param partitionId partition id of the parent of the ChunkSet
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
    * @param epochId the epoch id of the chunkset
+   * @param usedByVersion the used by version flag for the Chunkset
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
@@ -90,7 +96,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final int partitionId,
       final Long indexId,
       final Long referenceId,
-      final Long epochId) {
+      final Long epochId,
+      final UsedByVersion usedByVersion) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.store = store;
@@ -101,6 +108,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.indexId = indexId;
     this.referenceId = referenceId;
     this.epochId = epochId;
+    this.usedByVersion = usedByVersion;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -169,6 +177,15 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.chunkSetId =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNKSET_ID).asLong();
 
+    final UsedByVersion previousUsedByVersion = this.usedByVersion;
+    final IStatisticAttribute usedByVersionAttribute =
+        statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
+    if (usedByVersionAttribute != null) {
+      this.usedByVersion = usedByVersionAttribute.asBoolean()
+          ? UsedByVersion.TRUE
+          : UsedByVersion.FALSE;
+    }
+
     FeedVisitor.visitChildren(this, statistic);
 
     // Reset
@@ -176,6 +193,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.chunkSize = null;
     this.freeRows = null;
     this.nonWrittenRows = null;
+    this.usedByVersion = previousUsedByVersion;
 
     return null;
   }
@@ -196,16 +214,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      final ChunkOwner owner = new StoreOwner(this.store);
-
       final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
       final Object[] ownerTuple =
-          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, owner, this.dumpName,
-              this.rootComponent);
-      FeedVisitor
-          .writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields, ownerFormat,
-              ownerTuple
-          );
+          FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, new StoreOwner(this.store),
+              this.dumpName, this.rootComponent);
+      FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
+          ownerFormat, ownerTuple);
 
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
@@ -219,6 +233,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.CHUNK__USED_BY_VERSION, this.usedByVersion);
 
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
@@ -292,7 +308,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             this.store,
             this.fields,
             this.partitionId,
-            this.epochId);
+            this.epochId,
+            this.usedByVersion);
     subVisitor.process(memoryStatistic);
   }
 

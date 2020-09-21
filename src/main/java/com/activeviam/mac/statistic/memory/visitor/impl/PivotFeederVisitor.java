@@ -15,6 +15,7 @@ import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -495,7 +496,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
               this.pivot,
               null,
               this.partition,
-              this.epochId);
+              this.epochId,
+              UsedByVersion.UNKNOWN);
       subVisitor.process(statistic);
     } else {
       FeedVisitor.visitChildren(this, statistic);
