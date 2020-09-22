@@ -3,7 +3,7 @@
   "showTitleBar" : true,
   "body" : {
     "serverUrl" : "",
-    "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Stores].[Store].[Store].Members, [Fields].[Field].[Field].Members)) ON ROWS, {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+    "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members)), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
     "contextValues" : { },
     "updateMode" : "once",
     "ranges" : {
