@@ -67,8 +67,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected String hierarchy;
   /** level being currently visited. */
   protected String level;
-  /** Type of the aggregate Provider being currently visited. */
-  protected ProviderCpnType providerCpnType;
   /** Type of the root structure. */
   protected ParentType rootComponent;
   /** Type of the direct parent structure. */
@@ -226,11 +224,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
-    FeedVisitor.setTupleElement(
-        tuple,
-        format,
-        DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
-        this.providerCpnType.toString());
 
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
 
@@ -250,24 +243,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   public Void visit(final DictionaryStatistic stat) {
     final ProviderCpnType cpnType = detectProviderComponent(stat);
     if (cpnType != null) {
-      assert this.providerCpnType == null;
       assert this.rootComponent == null;
-      this.providerCpnType = cpnType;
       this.rootComponent = getCorrespondingParentType(cpnType);
-
-      final IRecordFormat cpnFormat = getProviderCpnFormat();
-      final Object[] cpnTuple = buildProviderComponentTupleFrom(cpnFormat, stat);
-      FeedVisitor.setTupleElement(
-          cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, this.providerId);
-      FeedVisitor.setTupleElement(
-          cpnTuple,
-          cpnFormat,
-          DatastoreConstants.PROVIDER_COMPONENT__TYPE,
-          this.providerCpnType.toString());
-      FeedVisitor
-          .setTupleElement(cpnTuple, cpnFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-
-      this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
@@ -472,22 +449,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   }
 
   private void processProviderComponent(final IMemoryStatistic stat, final ProviderCpnType type) {
-    this.providerCpnType = Objects.requireNonNull(type, "Null provider type");
-    final IRecordFormat format = getProviderCpnFormat();
-    final Object[] tuple = buildProviderComponentTupleFrom(format, stat);
-
-    FeedVisitor.setTupleElement(
-        tuple,
-        format,
-        DatastoreConstants.PROVIDER_COMPONENT__TYPE,
-        this.providerCpnType.toString());
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, this.providerId);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-
-    FeedVisitor.checkTuple(tuple, format);
-    this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, tuple);
-
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = getCorrespondingParentType(type);
@@ -500,7 +461,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
-    this.providerCpnType = null;
   }
 
   private void processChunkObject(final IMemoryStatistic statistic) {
@@ -603,16 +563,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
             .asText(); // JIT, BITMAP, LEAF
     tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__CATEGORY)] = getProviderCategory(stat);
-
-    return tuple;
-  }
-
-  private static Object[] buildProviderComponentTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-
-    tuple[format.getFieldIndex(DatastoreConstants.PROVIDER_COMPONENT__CLASS)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS).asText();
 
     return tuple;
   }
