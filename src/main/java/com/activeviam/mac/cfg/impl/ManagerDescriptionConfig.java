@@ -11,6 +11,7 @@ import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperHierarchy;
+import com.activeviam.copper.api.CopperLevelValues;
 import com.activeviam.copper.api.CopperStore;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -20,6 +21,7 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.agg.impl.SingleValueFunction;
@@ -38,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 
 /**
  * Manager Description Config that defines the manager description which contains the cube
@@ -93,8 +96,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String COMPONENT_HIERARCHY = "Component";
   /** Name of the component dimension. */
   public static final String OWNER_DIMENSION = "Owners";
-  /** Name of the component analysis hierarchy. */
+  /** Name of the owner  hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the owner type hierarchy. */
+  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
   /** Name of the component dimension. */
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the component analysis hierarchy. */
@@ -389,6 +394,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
             .publish(context);
+
+    final CopperLevelValues ownerTypeValues = ownerHierarchy.level(OWNER_HIERARCHY)
+        .map(ChunkOwner::getType);
+
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
+        .from(ownerTypeValues)
+        .withMemberList("Cube", "Store", "None", "Shared")
+        .publish(context);
 
     CopperHierarchy componentHierarchy =
         Copper
