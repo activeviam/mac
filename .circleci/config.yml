@@ -56,7 +56,7 @@ jobs:
             - mac-java-{{ .Branch }}-
             - mac-java-
       - run:
-          name: Analyse project
+          name: Analyze project
           command: |
             mvn -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN sonar:sonar
 
@@ -81,5 +81,4 @@ workflows:
               only:
                 - develop
           context: rnd-server
-
 
