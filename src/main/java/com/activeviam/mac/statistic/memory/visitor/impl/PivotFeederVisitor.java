@@ -150,10 +150,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         // other way
       case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
       case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
-        processProvider(stat);
-        break;
       case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
-        processFullProvider(stat);
+        processProvider(stat);
         break;
       case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER_PARTITION:
         processPartition(stat);
@@ -363,11 +361,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     }
     this.epochId = null;
     this.branch = null;
-  }
-
-  private void processFullProvider(final IMemoryStatistic stat) {
-    // Ignore this provider, only consider its underlying providers
-    visitChildren(stat);
   }
 
   private void processProvider(final IMemoryStatistic stat) {
