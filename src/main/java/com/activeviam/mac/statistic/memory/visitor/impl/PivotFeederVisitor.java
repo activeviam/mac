@@ -72,6 +72,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   /** id of the direct parent structure. */
   protected String directParentId;
 
+  /** Whether or not to ignore the field attributes of the visited statistics. */
   protected boolean ignoreFieldSpecifications = false;
       // todo vlg: refactor: split ChunkSetStatisticVisitor?
 

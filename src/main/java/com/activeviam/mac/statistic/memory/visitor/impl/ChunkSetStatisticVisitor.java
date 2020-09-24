@@ -45,10 +45,13 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The export date, found on the first statistics we read. */
   protected final Instant current;
 
+  /** Type of the root structure. */
   protected final ParentType rootComponent;
+  /** Type of the direct parent structure. */
   protected final ParentType directParentType;
+  /** id of the direct parent structure. */
   protected final String directParentId;
-
+  /** Aggregate provider being currently visited. */
   protected final Long providerId;
 
   /** The partition id of the visited statistic. */
@@ -69,7 +72,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   private Integer freeRows;
   private Integer nonWrittenRows;
 
-  private final boolean ignoreFieldSpecifications;
+  /** Whether or not to ignore the field attributes of the visited statistics. */
+  protected final boolean ignoreFieldSpecifications;
 
   /**
    * Constructor.
@@ -85,8 +89,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param partitionId partition id of the parent of the ChunkSet
    * @param indexId index id of the Chunkset
    * @param referenceId reference id of the chunkset
+   * @param providerId id of the parent provider
    * @param epochId the epoch id of the chunkset
    * @param usedByVersion the used by version flag for the Chunkset
+   * @param ignoreFieldSpecifications whether or not to attribute the visited chunkset's chunks to
+   * the encountered fields
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,
