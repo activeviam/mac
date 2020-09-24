@@ -59,8 +59,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Integer partition;
   /** Dictionary being currently visited. */
   protected Long dictionaryId;
-  /** ChunkSet being visited. */
-  protected Long chunkSetId;
   /** dimension being currently visited. */
   protected String dimension;
   /** hierarchy being currently visited. */
@@ -73,6 +71,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected ParentType directParentType;
   /** id of the direct parent structure. */
   protected String directParentId;
+
+  protected boolean ignoreFieldSpecifications = false;
+      // todo vlg: refactor: split ChunkSetStatisticVisitor?
 
   /** Tree Printer. */
   protected StatisticTreePrinter printer;
@@ -191,8 +192,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         this.partition,
         null,
         null,
+        this.providerId,
         this.epochId,
-        UsedByVersion.UNKNOWN)
+        UsedByVersion.UNKNOWN,
+        this.ignoreFieldSpecifications)
         .visit(stat);
   }
 
@@ -242,9 +245,16 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final DictionaryStatistic stat) {
     final ProviderCpnType cpnType = detectProviderComponent(stat);
+    final boolean previousIgnoreFieldSpecifications = this.ignoreFieldSpecifications;
     if (cpnType != null) {
       assert this.rootComponent == null;
       this.rootComponent = getCorrespondingParentType(cpnType);
+
+      if (cpnType == ProviderCpnType.BITMAP_MATCHER
+          || cpnType == ProviderCpnType.POINT_INDEX
+          || cpnType == ProviderCpnType.POINT_MAPPING) {
+        this.ignoreFieldSpecifications = true;
+      }
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
@@ -279,6 +289,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.dictionaryId = null;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
+    this.ignoreFieldSpecifications = previousIgnoreFieldSpecifications;
 
     return null;
   }
@@ -427,7 +438,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final LevelStatisticVisitor levelVisitor =
         new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
             this.epochId);
-    levelVisitor.analyse(stat);
+    levelVisitor.analyze(stat);
 
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;

@@ -259,8 +259,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.partitionId,
         this.indexId,
         this.referenceId,
+        null,
         this.epochId,
-        this.usedByVersion)
+        this.usedByVersion,
+        false)
         .visit(stat);
   }
 

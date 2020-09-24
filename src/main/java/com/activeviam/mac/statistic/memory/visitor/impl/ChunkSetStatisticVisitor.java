@@ -45,9 +45,11 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   /** The export date, found on the first statistics we read. */
   protected final Instant current;
 
-  private final ParentType rootComponent;
-  private final ParentType directParentType;
-  private final String directParentId;
+  protected final ParentType rootComponent;
+  protected final ParentType directParentType;
+  protected final String directParentId;
+
+  protected final Long providerId;
 
   /** The partition id of the visited statistic. */
   protected final int partitionId;
@@ -66,6 +68,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
   private Integer chunkSize;
   private Integer freeRows;
   private Integer nonWrittenRows;
+
+  private final boolean ignoreFieldSpecifications;
 
   /**
    * Constructor.
@@ -96,8 +100,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       final int partitionId,
       final Long indexId,
       final Long referenceId,
+      final Long providerId,
       final Long epochId,
-      final UsedByVersion usedByVersion) {
+      final UsedByVersion usedByVersion,
+      final boolean ignoreFieldSpecifications) {
     super(transaction, storageMetadata, dumpName);
     this.current = current;
     this.owner = owner;
@@ -107,8 +113,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.partitionId = partitionId;
     this.indexId = indexId;
     this.referenceId = referenceId;
+    this.providerId = providerId;
     this.epochId = epochId;
     this.usedByVersion = usedByVersion;
+    this.ignoreFieldSpecifications = ignoreFieldSpecifications;
 
     this.chunkRecordFormat =
         this.storageMetadata
@@ -134,7 +142,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       boolean isFieldSpecified =
           memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD);
       final Collection<String> oldFields = this.fields;
-      if (isFieldSpecified) {
+      if (isFieldSpecified && !ignoreFieldSpecifications) {
         final IStatisticAttribute fieldAttribute =
             memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         this.fields = Collections.singleton(fieldAttribute.asText());
@@ -209,7 +217,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET);
       Collection<String> oldFields = null;
 
-      if (isFieldSpecified) {
+      if (isFieldSpecified && !ignoreFieldSpecifications) {
         final IStatisticAttribute fieldAttribute =
             chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         oldFields = this.fields;
@@ -250,6 +258,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       if (this.dictionaryId != null) {
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+      }
+      if (this.providerId != null) {
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
       }
       // Complete chunk info regarding size and usage if not defined by a parent
       if (this.chunkSize != null) {

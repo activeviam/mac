@@ -43,8 +43,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final Long epochId;
 
-  Integer memberCount;
-  Long dictionaryId;
+  protected Integer memberCount;
+  private Long dictionaryId;
 
   /**
    * Constructor.
@@ -86,7 +86,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
    *
    * @param root parent of the children to ve visited
    */
-  public void analyse(final IMemoryStatistic root) {
+  public void analyze(final IMemoryStatistic root) {
     visitChildren(root);
   }
 
@@ -202,6 +202,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         break;
       default:
         visitChildren(stat);
+        break;
     }
     return null;
   }
