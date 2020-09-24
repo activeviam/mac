@@ -112,7 +112,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 				new MDXQuery(
 						"SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
 								+ " FROM [MemoryCube]"
-								+ " WHERE [Owners].[Owner].[Owner].[Store A]");
+								+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
@@ -139,13 +139,13 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 						"SELECT NonEmpty("
 								+ "   Except("
 								+ "     [Fields].[Field].[Field].Members,"
-								+ "     [Fields].[Field].[Field].[N/A]"
+								+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
 								+ "   ),"
 								+ "   [Measures].[Dictionary Size]"
 								+ " ) ON COLUMNS"
 								+ " FROM [MemoryCube]"
 								+ " WHERE ("
-								+ "   [Owners].[Owner].[Owner].[Store B]"
+								+ "   [Owners].[Owner].[ALL].[AllMember].[Store B]"
 								+ " )");
 
 		final CellSetDTO result = pivot.execute(totalQuery);
@@ -167,26 +167,31 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery totalQuery =
-				new MDXQuery(
-						"SELECT NON EMPTY"
-								+ "   Except(Hierarchize(DrilldownLevel("
-								+ "     [Fields].[Field].[ALL].[AllMember])),"
-								+ "     [Fields].[Field].[Field].[N/A]"
-								+ "   ) ON COLUMNS,"
-								+ " [Measures].[Dictionary Size] ON ROWS"
-								+ " FROM [MemoryCube]"
-								+ " WHERE ("
-								+ "   [Owners].[Owner].[Owner].[Store A]"
-								+ " )");
+		final MDXQuery totalQuery = new MDXQuery(
+				"SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
+						+ " [Measures].[Dictionary Size] ON ROWS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final CellSetDTO result = pivot.execute(totalQuery);
+		final MDXQuery perFieldQuery = new MDXQuery(
+				"SELECT NonEmpty("
+						+ "   Except("
+						+ "     [Fields].[Field].[Field].Members,"
+						+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
+						+ "   ),"
+						+ "   [Measures].[Dictionary Size]"
+						+ " ) ON COLUMNS,"
+						+ " [Measures].[Dictionary Size] ON ROWS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		Assertions.assertThat(result.getCells().stream()
-				.skip(1)
+		final CellSetDTO total = pivot.execute(totalQuery);
+		final CellSetDTO perField = pivot.execute(perFieldQuery);
+
+		Assertions.assertThat(perField.getCells().stream()
 				.mapToLong(x -> (long) x.getValue())
 				.sum())
-				.isEqualTo((long) result.getCells().get(0).getValue());
+				.isEqualTo((long) total.getCells().get(0).getValue());
 	}
 
 	@Test
@@ -199,13 +204,13 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 						"SELECT NON EMPTY"
 								+ "   Except("
 								+ "     [Fields].[Field].[Field].Members,"
-								+ "     [Fields].[Field].[Field].[N/A]"
+								+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
 								+ "   ) ON COLUMNS,"
 								+ " [Measures].[Dictionary Size] ON ROWS"
 								+ " FROM [MemoryCube]"
 								+ " WHERE ("
-								+ "   [Owners].[Owner].[Owner].[Store A],"
-								+ "   [Components].[Component].[Component].[DICTIONARY]"
+								+ "   [Owners].[Owner].[ALL].[AllMember].[Store A],"
+								+ "   [Components].[Component].[ALL].[AllMember].[DICTIONARY]"
 								+ " )");
 
 		final CellSetDTO result = pivot.execute(totalQuery);
