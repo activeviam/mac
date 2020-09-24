@@ -1,6 +1,12 @@
 version: 2.1
 
 executors:
+  jdk11-docker:
+    docker:
+      - image: circleci/openjdk:11-jdk-node
+    environment:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
   vm:
     environment:
       LANG: C.UTF-8
@@ -37,6 +43,23 @@ jobs:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
 
+  sonar_analysis:
+    executor: jdk11-docker
+    # A large machine is needed to perform the whole analysis, as it requires a lot of memory
+    resource_class: large
+    working_directory: ~/activepivot
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - mac-java-{{ .Branch }}-
+            - mac-java-
+      - run:
+          name: Analyse project
+          command: |
+            mvn -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN sonar:sonar
+
 
 workflows:
   version: 2
@@ -49,4 +72,14 @@ workflows:
               ignore:
                 - /5.\d+/
           context: rnd-server
+
+  code-analysis:
+    jobs:
+      - sonar_analysis:
+          filters:
+            branches:
+              only:
+                - develop
+          context: rnd-server
+
 
