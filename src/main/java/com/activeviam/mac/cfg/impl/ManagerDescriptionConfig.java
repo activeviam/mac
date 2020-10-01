@@ -98,18 +98,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String OWNER_DIMENSION = "Owners";
   /** Name of the component analysis hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
-  /** Name of the component dimension. */
+  /** Name of the field dimension. */
   public static final String FIELD_DIMENSION = "Fields";
-  /** Name of the component analysis hierarchy. */
-  public static final String FIELD_HIERARCHY = "Field";
-  /** Name of the store dimension. */
-  public static final String STORE_DIMENSION = "Stores";
-  /** Name of the store hierarchy. */
-  public static final String STORE_HIERARCHY = "Store";
+  /** Name of the index dimension. */
+  public static final String INDEX_DIMENSION = "Indices";
   /** Name of the version dimension. */
   public static final String VERSION_DIMENSION = "Versions";
-  /** Name of the version hierarchy. */
-  public static final String VERSION_HIERARCHY = "Version";
   /** Name of the branch level. */
   public static final String BRANCH_HIERARCHY = "Branch";
   /** Name of the epoch id level. */
@@ -140,6 +134,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   /** The name of the hierarchy of indexed fields. */
   public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+  /** The name of the hierarchy of indexed fields. */
+  public static final String INDEX_TYPE_HIERARCHY = "Index Type";
+  /** Name of the field analysis hierarchy. */
+  public static final String FIELD_HIERARCHY = "Field";
   /** The name of the hierarchy of reference names. */
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
   /** The name of the hierarchy of provider ids. */
@@ -396,11 +394,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
-        .as("Dictionary Size")
-        .withFormatter(NUMBER_FORMATTER)
-        .publish(context);
-
     // --------------------
     // 2- Chunk to references
     CopperStore chunkToReferenceStore =
@@ -424,9 +417,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    //    Copper.newSingleLevelHierarchy(INDEXED_FIELDS_HIERARCHY)
-    Copper.newSingleLevelHierarchy("Indices", "Indexed Fields", "Indexed Fields")
+    Copper.newSingleLevelHierarchy(INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy(INDEX_DIMENSION, INDEX_TYPE_HIERARCHY, INDEX_TYPE_HIERARCHY)
+        .from(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
         .publish(context);
 
     // --------------------
@@ -451,6 +447,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);
+
+    Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
+        .divide(Copper.count())
+        .per(fieldHierarchy.level(FIELD_HIERARCHY))
+        .sum()
+        .map(Number::longValue)
+        .as("Dictionary Size")
+        .withFormatter(NUMBER_FORMATTER)
+        .publish(context);
   }
 
   private void chunkMeasures(final ICopperContext context) {

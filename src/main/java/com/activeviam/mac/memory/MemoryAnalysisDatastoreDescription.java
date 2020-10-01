@@ -218,8 +218,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Attributes */
-        .withField(DatastoreConstants.INDEX_TYPE,
-            ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
+        .withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
         .build();
