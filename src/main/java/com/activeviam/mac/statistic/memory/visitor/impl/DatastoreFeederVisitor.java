@@ -12,6 +12,7 @@ import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -64,6 +65,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   protected Long epochId = null;
   /** Branch owning {@link #epochId}. */
   protected String branch = null;
+
+  /**
+   * Whether or not the currently visited statistics were flagged as used by the current version.
+   */
+  protected UsedByVersion usedByVersion = UsedByVersion.UNKNOWN;
 
   /** Type of the root component visited. */
   protected ParentType rootComponent;
@@ -132,10 +138,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final ChunkStatistic chunkStatistic) {
+
+    final IStatisticAttribute usedByVersionAttribute =
+        chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
+    if (usedByVersionAttribute != null) {
+      this.usedByVersion = usedByVersionAttribute.asBoolean()
+          ? UsedByVersion.TRUE
+          : UsedByVersion.FALSE;
+    }
+
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, new StoreOwner(this.store),
-            this.dumpName, this.rootComponent);
+        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, this.owner, this.dumpName,
+            this.rootComponent);
     FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
         ownerFormat, ownerTuple);
 
@@ -171,6 +186,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
+    tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__USED_BY_VERSION)] =
+        this.usedByVersion;
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
         this.partitionId;
     if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
@@ -236,14 +253,15 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.transaction,
         this.dumpName,
         this.current,
-        this.store,
+        this.owner,
         this.rootComponent,
         this.directParentType,
         this.directParentId,
         this.partitionId,
         this.indexId,
         this.referenceId,
-        this.epochId)
+        this.epochId,
+        this.usedByVersion)
         .visit(stat);
   }
 
@@ -408,12 +426,12 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
             () -> "No store name in stat " + stat);
-    this.store = nameAttr.asText();
+    this.owner = new StoreOwner(nameAttr.asText());
 
     // Explore the store children
     visitChildren(stat);
 
-    this.store = null;
+    this.owner = null;
   }
 
   /**

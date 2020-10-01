@@ -287,7 +287,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .slicing()
         .withLevel(EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
-        .withComparator(ReverseOrderComparator.type);
+        .withComparator(ReverseOrderComparator.type)
+
+        .withSingleLevelHierarchy("Used by Version")
+        .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION);
   }
 
   private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
