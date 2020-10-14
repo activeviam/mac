@@ -21,6 +21,7 @@ import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
+import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
@@ -429,6 +430,31 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     for (int i = 0; i < chunkSizes.length; i++) {
       Assertions.assertThat(DeletedRatio[i]).isEqualTo(DeletedRows[i] / chunkSizes[i]);
     }
+  }
+
+  @Test
+  public void testDictionarySize() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+    final MDXQuery query =
+        new MDXQuery("SELECT"
+            + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+            + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
+            + " FROM [MemoryCube]"
+            + " WHERE ("
+            + "  [Owners].[Owner].[Owner].[Store A],"
+            + "  [Fields].[Field].[Field].[id]"
+            + " )");
+    CellSetDTO res = pivot.execute(query);
+
+    final long expectedDictionarySize = monitoredApp.getLeft().getDictionaries()
+        .getDictionary("A", "id")
+        .size();
+
+    Assertions.assertThat(res.getCells())
+        .isNotEmpty()
+        .extracting(CellDTO::getValue)
+        .containsOnly(expectedDictionarySize);
   }
 
   @Test

@@ -821,6 +821,61 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithIndexedFields() {
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id0", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("id1", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("id2", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("field", ILiteralType.INT)
+                    .dictionarized()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .withStore(StartBuilding.store()
+                .withStoreName("B")
+                .withField("id0", ILiteralType.INT)
+                .asKeyField()
+                .build())
+            .withReference(StartBuilding.reference()
+                .fromStore("A")
+                .toStore("B")
+                .withName("ref")
+                .withMapping("id0", "id0")
+                .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription = new ActivePivotManagerDescription();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithKeepAllEpochPolicy() {
 
     final IDatastoreSchemaDescription schemaDescription =
