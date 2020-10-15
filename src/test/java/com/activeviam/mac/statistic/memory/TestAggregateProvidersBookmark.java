@@ -161,6 +161,42 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 	}
 
 	@Test
+	public void testFullAggregateStoreTotal() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery recordQuery = new MDXQuery(
+				"SELECT NON EMPTY Except("
+						+ "  [Fields].[Field].[Field].Members,"
+						+ "  [Fields].[Field].[ALL].[AllMember].[N/A]"
+						+ ") ON ROWS,"
+						+ "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Full],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
+						+ ")");
+
+		final MDXQuery totalQuery = new MDXQuery(
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Full],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
+						+ ")");
+
+		final CellSetDTO result = pivot.execute(recordQuery);
+		final CellSetDTO totalResult = pivot.execute(totalQuery);
+
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(result))
+				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
+	}
+
+	@Test
 	public void testPartialBitmapAggregateStoreFields() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -190,6 +226,42 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 	}
 
 	@Test
+	public void testPartialBitmapAggregateStoreTotal() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery recordQuery = new MDXQuery(
+				"SELECT NON EMPTY Except("
+						+ "  [Fields].[Field].[Field].Members,"
+						+ "  [Fields].[Field].[ALL].[AllMember].[N/A]"
+						+ ") ON ROWS,"
+						+ "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Partial],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
+						+ ")");
+
+		final MDXQuery totalQuery = new MDXQuery(
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Partial],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
+						+ ")");
+
+		final CellSetDTO result = pivot.execute(recordQuery);
+		final CellSetDTO totalResult = pivot.execute(totalQuery);
+
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(result))
+				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
+	}
+
+	@Test
 	public void testPartialLeafAggregateStoreFields() throws QueryException {
 		final IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -216,6 +288,42 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 				new String[] {"AllMember", "measure2.SUM"},
 				new String[] {"AllMember", "update.TIMESTAMP"}
 		);
+	}
+
+	@Test
+	public void testPartialLeafAggregateStoreTotal() throws QueryException {
+		final IMultiVersionActivePivot pivot =
+				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+
+		final MDXQuery recordQuery = new MDXQuery(
+				"SELECT NON EMPTY Except("
+						+ "  [Fields].[Field].[Field].Members,"
+						+ "  [Fields].[Field].[ALL].[AllMember].[N/A]"
+						+ ") ON ROWS,"
+						+ "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Partial],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[LEAF]"
+						+ ")");
+
+		final MDXQuery totalQuery = new MDXQuery(
+				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+						+ "FROM [MemoryCube]"
+						+ "WHERE ("
+						+ "  [Owners].[Owner Type].[ALL].[AllMember].[Cube],"
+						+ "  [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE],"
+						+ "  [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[Partial],"
+						+ "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[LEAF]"
+						+ ")");
+
+		final CellSetDTO result = pivot.execute(recordQuery);
+		final CellSetDTO totalResult = pivot.execute(totalQuery);
+
+		Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(result))
+				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
 	}
 
 	@Test
