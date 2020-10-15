@@ -416,7 +416,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE ([Owners].[Owner Type].[ALL].[AllMember].[Cube], [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE ([Owners].[Owner Type].[ALL].[AllMember].[Cube], [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])",
                 "updateMode" : "once"
               }
             },
@@ -567,7 +567,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[LEVEL]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Fields].[Field].[Field].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[LEVEL]",
                 "updateMode" : "once"
               }
             },
