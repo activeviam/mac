@@ -143,14 +143,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
   /** The name of the hierarchy of provider ids. */
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
-  /** The name of the hierarchy of provider partitions. */
-  public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
   /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
   /** The name of the hierarchy of provider categories. */
   public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
-  /** The name of the hierarchy of pivots. */
-  public static final String PIVOT_HIERARCHY = "Pivot";
   /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
   /** The name of the hierarchy of owner components. */
@@ -261,19 +257,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
-        // todo vlg: delete these (made redundant by the new Owner, Component and Partition hierarchies)
-        //        .withHierarchy(PIVOT_HIERARCHY)
-        //        .withLevelOfSameName()
-        //        .withPropertyName(DatastoreConstants.PROVIDER__PIVOT_ID)
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
         .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
-        //        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
-        //        .withLevelOfSameName()
-        //        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
