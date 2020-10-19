@@ -13,7 +13,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Order(Crossjoin(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), [Owners].[Owner].[Owner].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Order(Crossjoin(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), [Owners].[Owner].[Owner].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -146,7 +146,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]) ON ROWS FROM [MemoryCube]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store]",
                 "updateMode" : "once"
               }
             },
@@ -201,7 +201,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store]",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -332,7 +332,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY Order(Crossjoin(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM])), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
+                "mdx" : "SELECT NON EMPTY Order(Crossjoin(TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]), TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM])), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store]",
                 "updateMode" : "once"
               }
             },

@@ -25,7 +25,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Owners].[Owner].[Owner].Members ON ROWS FROM [MemoryCube]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Owners].[Owner].[Owner].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
                 "updateMode" : "once"
               }
             },

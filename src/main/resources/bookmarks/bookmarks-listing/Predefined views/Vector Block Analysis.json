@@ -87,7 +87,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Fields].[Field].[Field].Members ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Fields].[Field].[Field].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
                 "updateMode" : "once"
               },
               "isConnected" : true
@@ -249,7 +249,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].[Owner].Members) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
+                "mdx" : "SELECT NON EMPTY Order(Crossjoin(TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]), TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM])), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
                 "updateMode" : "once"
               }
             },
