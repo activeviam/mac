@@ -7,65 +7,107 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescription;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithVectors;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.condition.impl.BaseConditions;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
+import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.QfsFileTestUtils;
+import com.quartetfs.fwk.AgentException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class TestMemoryStatisticLoadingWithReverseOrder extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestMemoryStatisticLoadingWithReverseOrder {
 
-	@Test
-	public void testLoadDatastoreStats() {
-		createApplication(
-				(monitoredDatastore, monitoredManager) -> {
-					fillApplication(monitoredDatastore);
+	@RegisterExtension
+	protected static ActiveViamPropertyExtension propertyExtension =
+			new ActiveViamPropertyExtensionBuilder()
+					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+					.build();
 
-					final IMemoryAnalysisService analysisService =
-							createService(monitoredDatastore, monitoredManager);
-					final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-					final List<? extends IMemoryStatistic> storeStats =
-							new ArrayList<>(loadMemoryStatFromFolder(exportPath).getChildren());
+	@RegisterExtension
+	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-					Collections.shuffle(storeStats);
+	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
-					Assertions.assertThat(storeStats).isNotEmpty();
-					assertLoadsCorrectly(storeStats, getClass());
-				});
+	protected static final long SEED = 10928L;
+	protected static Random rng;
+
+	@BeforeAll
+	public static void initSeed() {
+		rng = new Random(SEED);
 	}
 
 	@Test
-	public void testLoadDatastoreStatsWithVectors() {
-		createApplicationWithVector(true,
-				(monitoredDatastore, monitoredManager) -> {
-					commitDataInDatastoreWithVectors(monitoredDatastore, false);
+	public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
+		final Application monitoredApplication = MonitoringTestUtils
+				.setupApplication(new FullApplicationDescription(), resources);
 
-					final IMemoryAnalysisService analysisService =
-							createService(monitoredDatastore, monitoredManager);
-					final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-					final List<? extends IMemoryStatistic> storeStats =
-							new ArrayList<>(loadMemoryStatFromFolder(exportPath).getChildren());
+		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+				monitoredApplication.getDatastore(),
+				monitoredApplication.getManager(), tempDir, "testLoadDatastoreStatsWithReverseOrder");
 
-					Collections.shuffle(storeStats);
+		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
+				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
 
-					Assertions.assertThat(storeStats).isNotEmpty();
-					final IDatastore monitoringDatastore = assertLoadsCorrectly(storeStats, getClass());
+		Collections.shuffle(storeStats, rng);
 
-					final Set<Long> vectorBlocks = extractVectorBlocks(monitoringDatastore);
-					assertVectorBlockAttributesArePresent(monitoringDatastore, vectorBlocks);
-				});
+		Assertions.assertThat(storeStats).isNotEmpty();
+		MonitoringTestUtils.assertLoadsCorrectly(new TestMemoryStatisticBuilder()
+						.withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
+						.withChildren(storeStats)
+						.build(),
+				resources);
+	}
+
+	@Test
+	public void testLoadDatastoreStatsWithVectors()
+			throws AgentException, DatastoreTransactionException {
+		final Application monitoredApplication = MonitoringTestUtils
+				.setupApplication(new FullApplicationDescriptionWithVectors(), resources);
+
+		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+				monitoredApplication.getDatastore(),
+				monitoredApplication.getManager(), tempDir, "testLoadDatastoreStatsWithReverseOrder");
+
+		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
+				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
+
+		Collections.shuffle(storeStats, rng);
+
+		Assertions.assertThat(storeStats).isNotEmpty();
+		final IDatastore monitoringDatastore = MonitoringTestUtils.assertLoadsCorrectly(
+				new TestMemoryStatisticBuilder()
+						.withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
+						.withChildren(storeStats)
+						.build(),
+				resources);
+
+		final Set<Long> vectorBlocks = extractVectorBlocks(monitoringDatastore);
+		assertVectorBlockAttributesArePresent(monitoringDatastore, vectorBlocks);
 	}
 
 	protected void assertVectorBlockAttributesArePresent(

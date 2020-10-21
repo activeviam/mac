@@ -7,11 +7,17 @@ import static org.junit.Assert.assertArrayEquals;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithKeepAllEpochPolicy2;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.assertj.QfsConditions;
 import com.qfs.chunk.impl.ChunkSingleVector;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.dic.IDictionary;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
@@ -24,6 +30,7 @@ import com.qfs.store.query.ICompiledGetByKey;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.query.impl.CompiledGetByKey;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
 import com.qfs.vector.direct.impl.DirectLongVectorBlock;
 import com.quartetfs.biz.pivot.IActivePivotManager;
@@ -49,120 +56,133 @@ import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestMemoryMonitoringDatastoreContent {
 
-  /**
-   * Tests the consistency between the chunks of an ActivePivot application and its the monitoring
-   * data obtained by loading exported data.
-   */
-  @Test
-  public void testDatastoreMonitoringValues() {
+	@RegisterExtension
+	protected static ActiveViamPropertyExtension propertyExtension =
+			new ActiveViamPropertyExtensionBuilder()
+					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+					.build();
 
-    createMinimalApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplicationMinimal(monitoredDatastore);
-          performGC();
+	@RegisterExtension
+	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-          final IMemoryAnalysisService analysisService =
-              TestMemoryStatisticLoading.createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportApplication("testLoadComplete");
+	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
-          final IMemoryStatistic fullStats =
-              TestMemoryStatisticLoading.loadMemoryStatFromFolder(exportPath);
-          final Datastore monitoringDatastore =
-              (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
+	/**
+	 * Tests the consistency between the chunks of an ActivePivot application and its the monitoring
+	 * data obtained by loading exported data.
+	 */
+	@Test
+	public void testDatastoreMonitoringValues() throws AgentException, DatastoreTransactionException {
 
-          IDictionary<Object> dic =
-              monitoredDatastore.getDictionaries().getDictionary("Sales", "id");
+		final Application monitoredApplication = MonitoringTestUtils.setupApplication(
+				new MicroApplicationDescriptionWithKeepAllEpochPolicy2(),
+				resources);
 
-          final long[] chunkIds = new long[2];
-          final long[] chunkSizes = new long[2];
+		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+				monitoredApplication.getDatastore(),
+				monitoredApplication.getManager(),
+				tempDir,
+				"testDatastoreMonitoringValues");
 
-          AtomicInteger rnk = new AtomicInteger();
-          final long[] monitoredChunkSizes = new long[2];
+		final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+		final Datastore monitoringDatastore =
+				(Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
-          // Check all the chunks held by the Dictionary of that key field of the store
-          IMemoryStatistic stat = dic.getMemoryStatistic();
+		IDictionary<Object> dic = monitoredApplication.getDatastore()
+				.getDictionaries().getDictionary("Sales", "id");
 
-          stat.getChildren()
-              .forEach(
-                  (c_st) -> {
-                    c_st.getChildren()
-                        .forEach(
-                            (c_c_st) -> {
-                              c_c_st
-                                  .getChildren()
-                                  .forEach(
-                                      (c_c_c_st) -> {
-                                        chunkSizes[rnk.get()] =
-                                            c_c_c_st.getAttribute("length").asLong();
-                                        chunkIds[rnk.get()] =
-                                            c_c_c_st.getAttribute("chunkId").asLong();
-                                        rnk.getAndIncrement();
-                                      });
-                            });
-                  });
+		final long[] chunkIds = new long[2];
+		final long[] chunkSizes = new long[2];
 
-          monitoringDatastore.edit(
-              tm -> {
-                fullStats.accept(
-                    new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
+		AtomicInteger rnk = new AtomicInteger();
+		final long[] monitoredChunkSizes = new long[2];
 
-                final ICompiledGetByKey query =
-                    new CompiledGetByKey(
-                        monitoringDatastore.getSchema(),
-                        monitoringDatastore
-                            .getSchemaMetadata()
-                            .getStoreMetadata(DatastoreConstants.CHUNK_STORE),
-                        monitoringDatastore
-                            .getSchema()
-                            .getStore(DatastoreConstants.CHUNK_STORE)
-                            .getDictionaryProvider(),
-                        0,
-                        Arrays.asList(
-                            DatastoreConstants.CHUNK__PARENT_ID,
-                            DatastoreConstants.CHUNK__CLASS,
-                            DatastoreConstants.CHUNK__SIZE,
-                            DatastoreConstants.VERSION__EPOCH_ID));
-                Object keys[] = new Object[3];
+		// Check all the chunks held by the Dictionary of that key field of the store
+		IMemoryStatistic stat = dic.getMemoryStatistic();
 
-                int chunkDumpNameFieldIdx =
-                    monitoringDatastore
-                        .getSchema()
-                        .getStore(DatastoreConstants.CHUNK_STORE)
-                        .getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME);
-                int epochIdFieldIdx =
-                    monitoringDatastore
-                        .getSchema()
-                        .getStore(DatastoreConstants.CHUNK_STORE)
-                        .getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID);
+		stat.getChildren()
+				.forEach(
+						(c_st) -> {
+							c_st.getChildren()
+									.forEach(
+											(c_c_st) -> {
+												c_c_st
+														.getChildren()
+														.forEach(
+																(c_c_c_st) -> {
+																	chunkSizes[rnk.get()] =
+																			c_c_c_st.getAttribute("length").asLong();
+																	chunkIds[rnk.get()] =
+																			c_c_c_st.getAttribute("chunkId").asLong();
+																	rnk.getAndIncrement();
+																});
+											});
+						});
 
-                for (int i = 0; i < chunkIds.length; i++) {
-                  keys[0] = chunkIds[i];
-                  keys[1] = monitoringDatastore
-                          .getSchema()
-                          .getStore(DatastoreConstants.CHUNK_STORE)
-                          .getDictionaryProvider()
-                          .getDictionary(chunkDumpNameFieldIdx)
-                          .read(1);
-                  keys[2] = monitoringDatastore
-                      .getSchema()
-                      .getStore(DatastoreConstants.CHUNK_STORE)
-                      .getDictionaryProvider()
-                      .getDictionary(epochIdFieldIdx)
-                      .read(1);
+		monitoringDatastore.edit(
+				tm -> {
+					fullStats.accept(
+							new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
 
-                  Object[] top_obj = query.runInTransaction(keys, true).toTuple();
-                  monitoredChunkSizes[i] = Long.parseLong(top_obj[2].toString());
-                }
-              });
-          // Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
-          // Cube are identical
-          assertArrayEquals(chunkSizes, monitoredChunkSizes);
-        });
-  }
+					final ICompiledGetByKey query =
+							new CompiledGetByKey(
+									monitoringDatastore.getSchema(),
+									monitoringDatastore
+											.getSchemaMetadata()
+											.getStoreMetadata(DatastoreConstants.CHUNK_STORE),
+									monitoringDatastore
+											.getSchema()
+											.getStore(DatastoreConstants.CHUNK_STORE)
+											.getDictionaryProvider(),
+									0,
+									Arrays.asList(
+											DatastoreConstants.CHUNK__PARENT_ID,
+											DatastoreConstants.CHUNK__CLASS,
+											DatastoreConstants.CHUNK__SIZE,
+											DatastoreConstants.VERSION__EPOCH_ID));
+					Object keys[] = new Object[3];
+
+					int chunkDumpNameFieldIdx =
+							monitoringDatastore
+									.getSchema()
+									.getStore(DatastoreConstants.CHUNK_STORE)
+									.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME);
+					int epochIdFieldIdx =
+							monitoringDatastore
+									.getSchema()
+									.getStore(DatastoreConstants.CHUNK_STORE)
+									.getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID);
+
+					for (int i = 0; i < chunkIds.length; i++) {
+						keys[0] = chunkIds[i];
+						keys[1] = monitoringDatastore
+								.getSchema()
+								.getStore(DatastoreConstants.CHUNK_STORE)
+								.getDictionaryProvider()
+								.getDictionary(chunkDumpNameFieldIdx)
+								.read(1);
+						keys[2] = monitoringDatastore
+								.getSchema()
+								.getStore(DatastoreConstants.CHUNK_STORE)
+								.getDictionaryProvider()
+								.getDictionary(epochIdFieldIdx)
+								.read(1);
+
+						Object[] top_obj = query.runInTransaction(keys, true).toTuple();
+						monitoredChunkSizes[i] = Long.parseLong(top_obj[2].toString());
+					}
+				});
+		// Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
+		// Cube are identical
+		assertArrayEquals(chunkSizes, monitoredChunkSizes);
+	}
 
   @Test
   public void testChunkStructureFieldsWithSingleRecord() throws IOException, AgentException {

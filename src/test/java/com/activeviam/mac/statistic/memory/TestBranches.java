@@ -7,120 +7,70 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithKeepAllEpochPolicy;
+import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.store.transaction.ITransactionManager;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
+import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
+@ExtendWith(RegistrySetupExtension.class)
 public class TestBranches extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-  @BeforeClass
-  public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
-  }
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  @Before
+  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+
+  protected Application monitoredApplication;
+  protected Application monitoringApplication;
+
+  @BeforeEach
   public void setup() throws AgentException, DatastoreTransactionException {
-    initializeApplication();
+    monitoredApplication = MonitoringTestUtils.setupApplication(
+        new MicroApplicationDescriptionWithKeepAllEpochPolicy(),
+        resources);
 
-    final Path exportPath = generateMemoryStatistics();
+    final Path exportPath = MonitoringTestUtils.exportApplication(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        this.getClass().getSimpleName());
 
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
-    initializeMonitoringApplication(stats);
-
-    IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-    Assertions.assertThat(pivot).isNotNull();
-  }
-
-  private void initializeApplication() throws DatastoreTransactionException {
-    monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
-
-    final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
-
-    transactionManager.startTransactionOnBranch("branch1", "A");
-    IntStream.range(0, 10).forEach(i ->
-        transactionManager.add("A", i, 0.));
-    transactionManager.commitTransaction();
-
-    transactionManager.startTransactionOnBranch("branch2", "A");
-    IntStream.range(10, 20).forEach(i ->
-        transactionManager.add("A", i, 0.));
-    transactionManager.commitTransaction();
-
-    transactionManager.startTransactionFromBranch("subbranch", "branch2", "A");
-    IntStream.range(20, 30).forEach(i ->
-        transactionManager.add("A", i, 0.));
-    transactionManager.commitTransaction();
-
-    transactionManager.startTransactionOnBranch("branch1", "A");
-    IntStream.range(10, 20).forEach(i ->
-        transactionManager.add("A", i, 0.));
-    transactionManager.commitTransaction();
-  }
-
-  private Path generateMemoryStatistics() {
-    performGC();
-
-    final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-    return analysisService.exportApplication("testBranches");
-  }
-
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
-
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
-
-    monitoringDatastore.edit(
-        tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
-  }
-
-  @After
-  public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    monitoringApplication = MonitoringTestUtils
+        .setupApplication(new MonitoringApplicationDescription(stats), resources);
   }
 
   @Test
@@ -181,7 +131,7 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Set<String> retrieveBranches() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+    final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
         .forStore(DatastoreConstants.BRANCH_STORE)
         .withoutCondition()
         .selecting(DatastoreConstants.BRANCH__NAME)
@@ -194,7 +144,7 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Multimap<String, Long> retrieveEpochsPerBranch() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+    final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
         .forStore(DatastoreConstants.BRANCH_STORE)
         .withoutCondition()
         .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)
@@ -212,7 +162,7 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Set<Long> retrieveRecordChunks() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+    final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
         .forStore(DatastoreConstants.OWNER_STORE)
         .withCondition(
             BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
@@ -226,7 +176,7 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Multimap<String, Long> retrieveChunksPerBranch(final Collection<Long> chunkSet) {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+    final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
         .forStore(DatastoreConstants.CHUNK_STORE)
         .withCondition(
             BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()))
@@ -247,7 +197,7 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Map<Long, String> retrieveEpochToBranchMapping() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
+    final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
         .forStore(DatastoreConstants.BRANCH_STORE)
         .withoutCondition()
         .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)

@@ -159,6 +159,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.activeviam.activepivot</groupId>
+      <artifactId>activepivot-copper2-test</artifactId>
+      <version>${activepivot.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>

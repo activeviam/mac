@@ -6,96 +6,211 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static org.junit.Assert.assertNotEquals;
-
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescription;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithBranches;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithDuplicateVectors;
+import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithVectors;
+import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.condition.impl.BaseConditions;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.IDictionaryCursor;
+import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.QfsFileTestUtils;
+import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.util.impl.TruePredicate;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestMemoryStatisticLoading {
+
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
+
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
+
+  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
   /**
    * Assert the number of offheap chunks by filling the datastore used for monitoring AND doing a
    * query on it for counting. Comparing the value from counting from {@link IMemoryStatistic}.
    */
   @Test
-  public void testLoadDatastoreStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
+  public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
+    final Application monitoredApplication = MonitoringTestUtils
+        .setupApplication(new FullApplicationDescription(), resources);
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-          final Collection<IMemoryStatistic> storeStats =
-              loadDatastoreMemoryStatFromFolder(exportPath);
-          assertNotEquals(0, storeStats.size());
-          assertLoadsCorrectly(storeStats, getClass());
-        });
+    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        "testLoadDatastoreStats");
+
+    final IMemoryStatistic storeStat =
+        MonitoringTestUtils.loadDatastoreMemoryStatFromFolder(exportPath);
+
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
   }
 
-  public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
-    createApplicationWithVector(
-        duplicateVectors,
-        (monitoredDatastore, monitoredManager) -> {
-          commitDataInDatastoreWithVectors(monitoredDatastore, duplicateVectors);
+  @Test
+  public void testLoadPivotStats() throws AgentException, DatastoreTransactionException {
+    final Application monitoredApplication = MonitoringTestUtils
+        .setupApplication(new FullApplicationDescription(), resources);
 
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath =
-              analysisService.exportMostRecentVersion(
-                  "doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
-          final Collection<IMemoryStatistic> datastoreStats =
-              loadDatastoreMemoryStatFromFolder(exportPath);
+    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        "testLoadPivotStats");
 
-          final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
+    final IMemoryStatistic storeStat =
+        MonitoringTestUtils.loadPivotMemoryStatFromFolder(exportPath);
 
-          // Test that we have the correct count of vector blocks
-          final Set<Long> storeIds =
-              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK);
-          Assertions.assertThat(storeIds).isNotEmpty();
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
+  }
 
-          final Set<Long> statIds = new HashSet<>();
-          datastoreStats.forEach(
-              stat ->
-                  stat.accept(
-                      new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
-                        @Override
-                        protected Void getResult() {
-                          return null;
-                        }
+  @Test
+  public void testLoadFullStats() throws AgentException, DatastoreTransactionException {
+    final Application monitoredApplication = MonitoringTestUtils
+        .setupApplication(new FullApplicationDescription(), resources);
 
-                        @Override
-                        protected boolean match(final IMemoryStatistic statistic) {
-                          if (statistic
-                              .getName()
-                              .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
-                            statIds.add(
-                                statistic
-                                    .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
-                                    .asLong());
-                          }
-                          return true; // Iterate over every item
-                        }
-                      }));
-          Assertions.assertThat(storeIds).isEqualTo(statIds);
-        });
+    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        "testLoadFullStats");
+
+    final IMemoryStatistic storeStat =
+        MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
+  }
+
+  @Test
+  public void testLoadFullStatsWithBranches() throws AgentException, DatastoreTransactionException {
+    final Set<String> branches = new HashSet<>();
+    branches.add("branch1");
+    branches.add("branch2");
+
+    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
+        new FullApplicationDescriptionWithBranches(branches),
+        resources);
+
+    final Path exportPath = MonitoringTestUtils.exportBranches(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        "testLoadFullStatsWithBranches",
+        branches);
+
+    final IMemoryStatistic storeStat =
+        MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
+  }
+
+  @Test
+  public void testLoadFullStatsWithEpochs() throws AgentException, DatastoreTransactionException {
+    final Set<String> branches = new HashSet<>();
+    branches.add("branch1");
+    branches.add("branch2");
+    final long[] epochs = new long[] {1L, 2L};
+
+    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
+        new FullApplicationDescriptionWithBranches(branches),
+        resources);
+
+    final Path exportPath = MonitoringTestUtils.exportVersions(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        "testLoadFullStatsWithEpochs",
+        epochs);
+
+    final IMemoryStatistic storeStat =
+        MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
+  }
+
+  @Test
+  public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
+    doTestLoadMonitoringDatastoreWithVectors(new FullApplicationDescriptionWithVectors());
+  }
+
+  @Test
+  public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
+    doTestLoadMonitoringDatastoreWithVectors(new FullApplicationDescriptionWithDuplicateVectors());
+  }
+
+  public void doTestLoadMonitoringDatastoreWithVectors(
+      ITestApplicationDescription applicationDescription) throws Exception {
+
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(applicationDescription, resources);
+
+    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(), tempDir, "testLoadMonitoringDatastoreWithVectors");
+
+    final IMemoryStatistic storeStat = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+
+    Assertions.assertThat(storeStat.getChildren()).isNotEmpty();
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
+
+    final Set<Long> storeIds = retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK);
+    Assertions.assertThat(storeIds).isNotEmpty();
+
+    final Set<Long> statIds = new HashSet<>();
+    storeStat.getChildren().forEach(stat ->
+        stat.accept(
+            new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
+              @Override
+              protected Void getResult() {
+                return null;
+              }
+
+              @Override
+              protected boolean match(final IMemoryStatistic statistic) {
+                if (statistic
+                    .getName()
+                    .equals(MemoryStatisticConstants.STAT_NAME_VECTOR_BLOCK)) {
+                  statIds.add(
+                      statistic
+                          .getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID)
+                          .asLong());
+                }
+                return true; // Iterate over every item
+              }
+            }));
+    Assertions.assertThat(storeIds).isEqualTo(statIds);
   }
 
   private Set<Long> retrieveChunksOfType(
@@ -114,100 +229,5 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(reader -> reader.readLong(0))
         .collect(Collectors.toSet());
-  }
-
-  @Test
-  public void testLoadPivotStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
-
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
-          final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
-          assertNotEquals(0, pivotStats.size());
-          assertLoadsCorrectly(pivotStats, getClass());
-        });
-  }
-
-  @Test
-  public void testLoadFullStats() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          fillApplication(monitoredDatastore);
-
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportMostRecentVersion("testLoadFullStats");
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
-  }
-
-  @Test
-  public void testLoadFullStatsWithBranches() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          Set<String> branchSet = new HashSet<>();
-          branchSet.add("branch1");
-          branchSet.add("branch2");
-
-          fillApplicationWithBranches(monitoredDatastore, branchSet, false);
-
-          // Also export master (?)
-          branchSet.add("master");
-
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
-  }
-
-  @Test
-  public void testLoadFullStatsWithEpochs() {
-    createApplication(
-        (monitoredDatastore, monitoredManager) -> {
-          Set<String> branchSet = new HashSet<>();
-          branchSet.add("branch1");
-          branchSet.add("branch2");
-          fillApplication(monitoredDatastore);
-          fillApplicationWithBranches(monitoredDatastore, branchSet, true);
-
-          long epochs[] = new long[2];
-          epochs[0] = 1L;
-          epochs[1] = 2L;
-
-          final IMemoryAnalysisService analysisService =
-              createService(monitoredDatastore, monitoredManager);
-          final Path exportPath = analysisService.exportVersions("testLoadFullStats", epochs);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
-          assertNotEquals(null, fullStats);
-          assertLoadsCorrectly(fullStats);
-        });
-  }
-
-  @Test
-  public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(false);
-  }
-
-  @Test
-  public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(true);
-  }
-
-  /**
-   * Asserts the chunks number and off-heap memory as computed from the loaded datastore are
-   * consistent with the ones computed by visiting the statistic.
-   *
-   * @param statistic
-   */
-  protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
-    assertLoadsCorrectly(Collections.singleton(statistic), getClass());
   }
 }

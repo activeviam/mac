@@ -7,106 +7,79 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.copper.testing.CubeTester;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithIndexedFields;
+import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
+import com.qfs.junit.LocalResourcesExtension;
+import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
+import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.store.IDatastore;
 import com.qfs.store.record.impl.Records.IDictionaryProvider;
-import com.quartetfs.biz.pivot.IActivePivotManager;
+import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.dto.AxisDTO;
 import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
 import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestIndexAndDictionaryBookmarks {
 
-	private Pair<IDatastore, IActivePivotManager> monitoredApp;
-	private Pair<IDatastore, IActivePivotManager> monitoringApp;
+	@RegisterExtension
+	protected static ActiveViamPropertyExtension propertyExtension =
+			new ActiveViamPropertyExtensionBuilder()
+					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+					.build();
 
-	public static final int ADDED_DATA_SIZE = 20;
+	@RegisterExtension
+	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	@BeforeClass
-	public static void setupRegistry() {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
-	@Before
-	public void setup() throws AgentException {
-		initializeApplication();
+	protected Application monitoredApplication;
+	protected Application monitoringApplication;
+	protected StatisticsSummary statisticsSummary;
+	protected CubeTester tester;
 
-		final Path exportPath = generateMemoryStatistics();
+	@BeforeEach
+	public void setup() throws AgentException, DatastoreTransactionException {
+		monitoredApplication = MonitoringTestUtils.setupApplication(
+				new MicroApplicationDescriptionWithIndexedFields(),
+				resources);
 
-		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+				monitoredApplication.getDatastore(),
+				monitoredApplication.getManager(),
+				tempDir,
+				this.getClass().getSimpleName());
 
-		initializeMonitoringApplication(stats);
+		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+		statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-		Assertions.assertThat(pivot).isNotNull();
-	}
+		monitoringApplication = MonitoringTestUtils
+				.setupApplication(new MonitoringApplicationDescription(stats), resources);
 
-	private void initializeApplication() {
-		monitoredApp = createMicroApplicationWithIndexedFields();
-
-		monitoredApp.getLeft()
-				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-						.forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
-	}
-
-	private Path generateMemoryStatistics() {
-		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
-
-		performGC();
-
-		final MemoryAnalysisService analysisService =
-				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-		return analysisService.exportMostRecentVersion("testOverview");
-	}
-
-	private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-		final IDatastore monitoringDatastore =
-				StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
-
-		IActivePivotManager manager =
-				StartBuilding.manager()
-						.setDescription(config.managerDescription())
-						.setDatastoreAndPermissions(monitoringDatastore)
-						.buildAndStart();
-		monitoringApp = new Pair<>(monitoringDatastore, manager);
-
-		monitoringDatastore.edit(
-				tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
-	}
-
-	@After
-	public void tearDown() throws AgentException {
-		monitoringApp.getLeft().close();
-		monitoringApp.getRight().stop();
+		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
 	}
 
 	@Test
 	public void testIndexedFieldsForStoreA() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		final IMultiVersionActivePivot pivot = tester.pivot();
 
 		final MDXQuery totalQuery =
 				new MDXQuery(
@@ -116,11 +89,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
-		final List<AxisDTO> axes = result.getAxes();
-		Assertions.assertThat(axes)
-				.hasSize(1);
-
-		final List<AxisPositionDTO> indexedFieldsPosition = axes.get(0).getPositions();
+		final List<AxisPositionDTO> indexedFieldsPosition = result.getAxes().get(0).getPositions();
 
 		Assertions.assertThat(indexedFieldsPosition)
 				.extracting(position -> position.getMembers().get(0).getPath().getPath())
@@ -131,8 +100,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 	@Test
 	public void testDictionarizedFieldsForStoreB() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		final IMultiVersionActivePivot pivot = tester.pivot();
 
 		final MDXQuery totalQuery =
 				new MDXQuery(
@@ -150,11 +118,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
-		final List<AxisDTO> axes = result.getAxes();
-		Assertions.assertThat(axes)
-				.hasSize(1);
-
-		final List<AxisPositionDTO> dictionarizedFieldsPositions = axes.get(0).getPositions();
+		final List<AxisPositionDTO> dictionarizedFieldsPositions =
+				result.getAxes().get(0).getPositions();
 
 		Assertions.assertThat(dictionarizedFieldsPositions)
 				.extracting(position -> position.getMembers().get(0).getPath().getPath())
@@ -164,8 +129,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 	@Test
 	public void testDictionarySizeTotal() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		final IMultiVersionActivePivot pivot = tester.pivot();
 
 		final MDXQuery totalQuery = new MDXQuery(
 				"SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
@@ -196,8 +160,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 	@Test
 	public void testDictionarySizesPerField() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+		final IMultiVersionActivePivot pivot = tester.pivot();
 
 		final MDXQuery totalQuery =
 				new MDXQuery(
@@ -215,8 +178,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
 		final CellSetDTO result = pivot.execute(totalQuery);
 
-		final IDictionaryProvider dictionaryProvider =
-				monitoredApp.getLeft().getDictionaries().getStoreDictionaries("A");
+		final IDictionaryProvider dictionaryProvider = monitoredApplication.getDatastore()
+				.getDictionaries().getStoreDictionaries("A");
 
 		SoftAssertions.assertSoftly(assertions -> {
 			final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
@@ -225,7 +188,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 						positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
 
 				final long expectedDictionarySize = dictionaryProvider
-						.getDictionary(monitoredApp.getLeft().getSchemaMetadata().getFieldIndex("A", fieldName))
+						.getDictionary(monitoredApplication.getDatastore()
+								.getSchemaMetadata().getFieldIndex("A", fieldName))
 						.size();
 
 				assertions.assertThat((long) cell.getValue())
