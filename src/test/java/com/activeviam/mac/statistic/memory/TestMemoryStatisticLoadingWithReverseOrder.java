@@ -64,7 +64,8 @@ public class TestMemoryStatisticLoadingWithReverseOrder {
 	@Test
 	public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
 		final Application monitoredApplication = MonitoringTestUtils
-				.setupApplication(new FullApplicationDescription(), resources);
+				.setupApplication(new FullApplicationDescription(), resources,
+						FullApplicationDescription::fillWithGenericData);
 
 		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
 				monitoredApplication.getDatastore(),
@@ -87,7 +88,9 @@ public class TestMemoryStatisticLoadingWithReverseOrder {
 	public void testLoadDatastoreStatsWithVectors()
 			throws AgentException, DatastoreTransactionException {
 		final Application monitoredApplication = MonitoringTestUtils
-				.setupApplication(new FullApplicationDescriptionWithVectors(), resources);
+				.setupApplication(new FullApplicationDescriptionWithVectors(),
+						resources,
+						FullApplicationDescriptionWithVectors::fillWithGenericData);
 
 		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
 				monitoredApplication.getDatastore(),

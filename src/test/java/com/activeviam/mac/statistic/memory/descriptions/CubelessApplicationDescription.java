@@ -8,8 +8,6 @@
 package com.activeviam.mac.statistic.memory.descriptions;
 
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.store.IDatastore;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 
@@ -30,10 +28,5 @@ public class CubelessApplicationDescription implements ITestApplicationDescripti
 	public IActivePivotManagerDescription managerDescription(
 			IDatastoreSchemaDescription schemaDescription) {
 		return new ActivePivotManagerDescription();
-	}
-
-	@Override
-	public void fill(IDatastore datastore) throws DatastoreTransactionException {
-		underlyingApplication.fill(datastore);
 	}
 }

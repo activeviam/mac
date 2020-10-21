@@ -11,6 +11,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IDatastore;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import java.time.LocalDate;
@@ -81,30 +82,28 @@ public class MinimalApplicationDescription implements ITestApplicationDescriptio
 		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
 	}
 
-	@Override
-	public void fill(IDatastore datastore) {
+	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		datastore.edit(
 				tm -> {
 					final int peopleCount = STORE_PEOPLE_COUNT;
 					final int productCount = STORE_PRODUCT_COUNT;
 
 					final Random r = new Random(47605);
-					IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
-							.forEach(
-									i -> {
-										final int seller = r.nextInt(peopleCount);
-										int buyer;
-										do {
-											buyer = r.nextInt(peopleCount);
-										} while (buyer == seller);
-										tm.add(
-												"Sales",
-												i,
-												String.valueOf(seller),
-												String.valueOf(buyer),
-												LocalDate.now().plusDays(-r.nextInt(7)),
-												(long) r.nextInt(productCount));
-									});
+					IntStream.range(0, 1000).forEach(
+							i -> {
+								final int seller = r.nextInt(peopleCount);
+								int buyer;
+								do {
+									buyer = r.nextInt(peopleCount);
+								} while (buyer == seller);
+								tm.add(
+										"Sales",
+										i,
+										String.valueOf(seller),
+										String.valueOf(buyer),
+										LocalDate.now().plusDays(-r.nextInt(7)),
+										(long) r.nextInt(productCount));
+							});
 				});
 	}
 }

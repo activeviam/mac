@@ -22,10 +22,10 @@ import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.copper.testing.query.CubeTesterImpl;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.NoOwner;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.statistic.memory.descriptions.CubelessApplicationDescription;
 import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
+import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -46,6 +46,7 @@ import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
@@ -69,14 +70,16 @@ import test.util.impl.DatastoreTestUtils;
 public class MonitoringTestUtils {
 
 	public static final int MAX_GC_STEPS = 10;
+	public static final String DEFAULT_DUMP_NAME = "testDump";
 
 	private MonitoringTestUtils() {
 	}
 
 	public static Application setupApplication(
 			ITestApplicationDescription applicationDescription,
-			AResourcesExtension resourcesExtension)
-			throws AgentException, DatastoreTransactionException {
+			AResourcesExtension resourcesExtension,
+			ThrowingBiConsumer<IDatastore, IActivePivotManager> operations)
+			throws AgentException {
 
 		final IDatastoreSchemaDescription datastoreSchemaDescription =
 				applicationDescription.datastoreDescription();
@@ -98,9 +101,46 @@ public class MonitoringTestUtils {
 				.buildAndStart();
 		resourcesExtension.register(manager::stop);
 
-		applicationDescription.fill(datastore);
+		operations.accept(datastore, manager);
 
 		return new Application(datastore, manager);
+	}
+
+	public static Application setupMonitoringApplication(
+			IMemoryStatistic statistics,
+			AResourcesExtension resourcesExtension)
+			throws AgentException {
+
+		final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+		final IDatastoreSchemaDescription datastoreSchemaDescription = config.schemaDescription();
+		final IActivePivotManagerDescription managerDescription = config.managerDescription();
+
+		final IDatastore datastore = resourcesExtension.create(StartBuilding.datastore()
+				.setSchemaDescription(datastoreSchemaDescription)
+				.addSchemaDescriptionPostProcessors(
+						ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+				::build);
+
+		final IActivePivotManager manager = StartBuilding.manager()
+				.setDescription(managerDescription)
+				.setDatastoreAndPermissions(datastore)
+				.buildAndStart();
+		resourcesExtension.register(manager::stop);
+
+		feedStatisticsIntoDatastore(statistics, datastore);
+
+		return new Application(datastore, manager);
+	}
+
+	protected static void feedStatisticsIntoDatastore(
+			IMemoryStatistic statistics, IDatastore datastore) {
+		feedStatisticsIntoDatastore(statistics, datastore, DEFAULT_DUMP_NAME);
+	}
+
+	protected static void feedStatisticsIntoDatastore(
+			IMemoryStatistic statistics, IDatastore datastore, String dumpName) {
+		datastore.edit(transactionManager -> statistics.accept(
+				new FeedVisitor(datastore.getSchemaMetadata(), transactionManager, dumpName)));
 	}
 
 	public static Path exportApplication(
@@ -248,13 +288,17 @@ public class MonitoringTestUtils {
 	}
 
 	public static IDatastore createAnalysisDatastore(
-			IMemoryStatistic statistic,
-			AResourcesExtension resourcesExtension) throws AgentException, DatastoreTransactionException {
-		return setupApplication(
-				new CubelessApplicationDescription(
-						new MonitoringApplicationDescription(statistic)),
-				resourcesExtension)
-				.getDatastore();
+			IMemoryStatistic statistics,
+			AResourcesExtension resourcesExtension) {
+		final IDatastore datastore = createAnalysisDatastore(resourcesExtension);
+		feedStatisticsIntoDatastore(statistics, datastore);
+		return datastore;
+	}
+
+	public static IDatastore createAnalysisDatastore(AResourcesExtension resourcesExtension) {
+		return resourcesExtension.create(StartBuilding.datastore()
+				.setSchemaDescription(new MemoryAnalysisDatastoreDescription())
+				::build);
 	}
 
 	/**

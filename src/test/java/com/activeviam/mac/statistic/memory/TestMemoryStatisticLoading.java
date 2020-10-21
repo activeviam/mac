@@ -9,10 +9,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescription;
-import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithBranches;
-import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithDuplicateVectors;
 import com.activeviam.mac.statistic.memory.descriptions.FullApplicationDescriptionWithVectors;
-import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -23,15 +20,22 @@ import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.store.IDatastore;
+import com.qfs.store.NoTransactionException;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.store.transaction.ITransactionManager;
 import com.qfs.util.impl.QfsFileTestUtils;
+import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.util.impl.TruePredicate;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -59,7 +63,8 @@ public class TestMemoryStatisticLoading {
   @Test
   public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
     final Application monitoredApplication = MonitoringTestUtils
-        .setupApplication(new FullApplicationDescription(), resources);
+        .setupApplication(new FullApplicationDescription(), resources,
+            FullApplicationDescription::fillWithGenericData);
 
     final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
         monitoredApplication.getDatastore(),
@@ -77,7 +82,8 @@ public class TestMemoryStatisticLoading {
   @Test
   public void testLoadPivotStats() throws AgentException, DatastoreTransactionException {
     final Application monitoredApplication = MonitoringTestUtils
-        .setupApplication(new FullApplicationDescription(), resources);
+        .setupApplication(new FullApplicationDescription(), resources,
+            FullApplicationDescription::fillWithGenericData);
 
     final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
         monitoredApplication.getDatastore(),
@@ -95,7 +101,8 @@ public class TestMemoryStatisticLoading {
   @Test
   public void testLoadFullStats() throws AgentException, DatastoreTransactionException {
     final Application monitoredApplication = MonitoringTestUtils
-        .setupApplication(new FullApplicationDescription(), resources);
+        .setupApplication(new FullApplicationDescription(), resources,
+            FullApplicationDescription::fillWithGenericData);
 
     final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
         monitoredApplication.getDatastore(),
@@ -117,8 +124,9 @@ public class TestMemoryStatisticLoading {
     branches.add("branch2");
 
     final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new FullApplicationDescriptionWithBranches(branches),
-        resources);
+        new FullApplicationDescription(),
+        resources,
+        (datastore, manager) -> fillDatastore(datastore, manager, branches));
 
     final Path exportPath = MonitoringTestUtils.exportBranches(
         monitoredApplication.getDatastore(),
@@ -134,6 +142,43 @@ public class TestMemoryStatisticLoading {
     MonitoringTestUtils.assertLoadsCorrectly(storeStat, resources);
   }
 
+  protected void fillDatastore(
+      IDatastore datastore, IActivePivotManager manager, Set<String> branches) {
+    FullApplicationDescription.fillWithGenericData(datastore, manager);
+
+    branches.forEach(
+        br_string -> {
+          ITransactionManager tm = datastore.getTransactionManager();
+          try {
+            tm.startTransactionOnBranch(br_string, "Sales");
+          } catch (IllegalArgumentException | DatastoreTransactionException e) {
+            throw new RuntimeException(e);
+          }
+          final Random r = new Random(47605);
+          IntStream.range(0, 1000)
+              .forEach(
+                  i -> {
+                    final int seller = r.nextInt(FullApplicationDescription.STORE_PEOPLE_COUNT);
+                    int buyer;
+                    do {
+                      buyer = r.nextInt(FullApplicationDescription.STORE_PEOPLE_COUNT);
+                    } while (buyer == seller);
+                    tm.add(
+                        "Sales",
+                        i,
+                        String.valueOf(seller),
+                        String.valueOf(buyer),
+                        LocalDate.now().plusDays(-r.nextInt(7)),
+                        (long) r.nextInt(FullApplicationDescription.STORE_PRODUCT_COUNT));
+                  });
+          try {
+            tm.commitTransaction();
+          } catch (NoTransactionException | DatastoreTransactionException e) {
+            throw new RuntimeException(e);
+          }
+        });
+  }
+
   @Test
   public void testLoadFullStatsWithEpochs() throws AgentException, DatastoreTransactionException {
     final Set<String> branches = new HashSet<>();
@@ -142,8 +187,9 @@ public class TestMemoryStatisticLoading {
     final long[] epochs = new long[] {1L, 2L};
 
     final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new FullApplicationDescriptionWithBranches(branches),
-        resources);
+        new FullApplicationDescription(),
+        resources,
+        (datastore, manager) -> fillDatastore(datastore, manager, branches));
 
     final Path exportPath = MonitoringTestUtils.exportVersions(
         monitoredApplication.getDatastore(),
@@ -161,19 +207,22 @@ public class TestMemoryStatisticLoading {
 
   @Test
   public void testLoadMonitoringDatastoreWithVectorsWODuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(new FullApplicationDescriptionWithVectors());
+    doTestLoadMonitoringDatastoreWithVectors(
+        FullApplicationDescriptionWithVectors::fillWithGenericData);
   }
 
   @Test
   public void testLoadMonitoringDatastoreWithDuplicate() throws Exception {
-    doTestLoadMonitoringDatastoreWithVectors(new FullApplicationDescriptionWithDuplicateVectors());
+    doTestLoadMonitoringDatastoreWithVectors(
+        FullApplicationDescriptionWithVectors::fillWithDuplicateVectors);
   }
 
   public void doTestLoadMonitoringDatastoreWithVectors(
-      ITestApplicationDescription applicationDescription) throws Exception {
+      ThrowingBiConsumer<IDatastore, IActivePivotManager> operations) throws Exception {
 
     final Application monitoredApplication =
-        MonitoringTestUtils.setupApplication(applicationDescription, resources);
+        MonitoringTestUtils.setupApplication(new FullApplicationDescriptionWithVectors(), resources,
+            operations);
 
     final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
         monitoredApplication.getDatastore(),

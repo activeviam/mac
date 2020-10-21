@@ -10,8 +10,6 @@ package com.activeviam.mac.statistic.memory.descriptions;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.multiversion.IEpochManagementPolicy;
 import com.qfs.multiversion.impl.KeepLastEpochPolicy;
-import com.qfs.store.IDatastore;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 
 public interface ITestApplicationDescription {
@@ -19,8 +17,6 @@ public interface ITestApplicationDescription {
 	IDatastoreSchemaDescription datastoreDescription();
 
 	IActivePivotManagerDescription managerDescription(IDatastoreSchemaDescription schemaDescription);
-
-	void fill(IDatastore datastore) throws DatastoreTransactionException;
 
 	default IEpochManagementPolicy epochManagementPolicy() {
 		return new KeepLastEpochPolicy();

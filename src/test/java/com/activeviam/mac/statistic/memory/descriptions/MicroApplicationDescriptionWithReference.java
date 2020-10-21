@@ -10,7 +10,6 @@ package com.activeviam.mac.statistic.memory.descriptions;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
-import com.qfs.store.IDatastore;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
@@ -64,9 +63,4 @@ public class MicroApplicationDescriptionWithReference implements ITestApplicatio
 				.build();
 
 		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);	}
-
-	@Override
-	public void fill(IDatastore datastore) {
-
-	}
 }

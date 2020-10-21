@@ -11,6 +11,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IDatastore;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import java.util.stream.IntStream;
 
 public class MicroApplicationDescriptionWithReferenceAndSameFieldName
@@ -47,8 +48,7 @@ public class MicroApplicationDescriptionWithReferenceAndSameFieldName
 				.build();
 	}
 
-	@Override
-	public void fill(IDatastore datastore) {
+	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		datastore.edit(tm -> {
 			IntStream.range(0, ADDED_DATA_SIZE)
 					.forEach(i -> tm.add("A", i, i * i));

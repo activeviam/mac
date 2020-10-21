@@ -11,7 +11,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IDatastore;
-import com.qfs.store.transaction.DatastoreTransactionException;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import java.util.stream.IntStream;
@@ -57,8 +57,7 @@ public class MicroApplicationDescriptionWithIndexedFields implements ITestApplic
 		return new ActivePivotManagerDescription();
 	}
 
-	@Override
-	public void fill(IDatastore datastore) throws DatastoreTransactionException {
+	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		datastore.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
 				.forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
 	}

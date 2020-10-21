@@ -2,7 +2,6 @@ package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescription;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -27,7 +26,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 @ExtendWith(RegistrySetupExtension.class)
 public class TestOverviewBookmark {
-
 	@RegisterExtension
 	protected static ActiveViamPropertyExtension propertyExtension =
 			new ActiveViamPropertyExtensionBuilder()
@@ -48,7 +46,8 @@ public class TestOverviewBookmark {
 	public void setup() throws AgentException, DatastoreTransactionException {
 		monitoredApplication = MonitoringTestUtils.setupApplication(
 				new MicroApplicationDescription(),
-				resources);
+				resources,
+				MicroApplicationDescription::fillWithGenericData);
 
 		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
 				monitoredApplication.getDatastore(),
@@ -59,8 +58,7 @@ public class TestOverviewBookmark {
 		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 		statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		monitoringApplication = MonitoringTestUtils
-				.setupApplication(new MonitoringApplicationDescription(stats), resources);
+		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
 		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
 	}

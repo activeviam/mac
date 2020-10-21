@@ -11,12 +11,16 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IDatastore;
+import com.qfs.store.query.IDictionaryCursor;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
 public class FullApplicationDescriptionWithVectors implements ITestApplicationDescription {
 
 	public static final String VECTOR_STORE_NAME = "vectorStore";
+	public static final int VECTOR_COUNT = 10;
+	public static final int VECTOR_SIZE = 10;
 
 	@Override
 	public IDatastoreSchemaDescription datastoreDescription() {
@@ -63,17 +67,13 @@ public class FullApplicationDescriptionWithVectors implements ITestApplicationDe
 		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
 	}
 
-	@Override
-	public void fill(IDatastore datastore) {
-		final int nbOfVectors = 10;
-		final int vectorSize = 10;
-
+	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		// 3 vectors of same size with same values (but not copied one from another), v1, v3 of ints and
 		// v2 of long
-		final int[] v1 = new int[vectorSize];
-		final int[] v3 = new int[vectorSize];
-		final long[] v2 = new long[vectorSize];
-		for (int j = 0; j < vectorSize; j++) {
+		final int[] v1 = new int[VECTOR_SIZE];
+		final int[] v3 = new int[VECTOR_SIZE];
+		final long[] v2 = new long[VECTOR_SIZE];
+		for (int j = 0; j < VECTOR_SIZE; j++) {
 			v1[j] = j;
 			v2[j] = j;
 			v3[j] = j;
@@ -82,9 +82,36 @@ public class FullApplicationDescriptionWithVectors implements ITestApplicationDe
 		// add the same vectors over and over
 		datastore.edit(
 				tm -> {
-					for (int i = 0; i < nbOfVectors; i++) {
+					for (int i = 0; i < VECTOR_COUNT; i++) {
 						tm.add(VECTOR_STORE_NAME, i, v1, v3, v2);
 					}
+				});
+	}
+
+	public static void fillWithDuplicateVectors(IDatastore datastore, IActivePivotManager manager) {
+		fillWithGenericData(datastore, manager);
+
+		final int[] v1 = new int[VECTOR_SIZE];
+		final long[] v2 = new long[VECTOR_SIZE];
+		for (int j = 0; j < VECTOR_SIZE; j++) {
+			v1[j] = j;
+			v2[j] = j;
+		}
+
+		IDictionaryCursor cursor =
+				datastore
+						.getHead()
+						.getQueryManager()
+						.forStore(VECTOR_STORE_NAME)
+						.withoutCondition()
+						.selecting("vectorInt1")
+						.run();
+
+		final Object vec = cursor.next() ? cursor.getRecord().read("vectorInt1") : null;
+
+		datastore.edit(
+				tm -> {
+					tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2);
 				});
 	}
 }

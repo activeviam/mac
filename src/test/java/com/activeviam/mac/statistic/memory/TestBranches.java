@@ -10,7 +10,6 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithKeepAllEpochPolicy;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -20,10 +19,13 @@ import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.store.transaction.ITransactionManager;
 import com.qfs.util.impl.QfsFileTestUtils;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,10 +59,11 @@ public class TestBranches extends ATestMemoryStatistic {
   protected Application monitoringApplication;
 
   @BeforeEach
-  public void setup() throws AgentException, DatastoreTransactionException {
+  public void setup() throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
         new MicroApplicationDescriptionWithKeepAllEpochPolicy(),
-        resources);
+        resources,
+        TestBranches::fillDatastore);
 
     final Path exportPath = MonitoringTestUtils.exportApplication(
         monitoredApplication.getDatastore(),
@@ -68,9 +72,32 @@ public class TestBranches extends ATestMemoryStatistic {
         this.getClass().getSimpleName());
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
+  }
 
-    monitoringApplication = MonitoringTestUtils
-        .setupApplication(new MonitoringApplicationDescription(stats), resources);
+  private static void fillDatastore(IDatastore datastore, IActivePivotManager manager)
+      throws DatastoreTransactionException {
+    final ITransactionManager transactionManager = datastore.getTransactionManager();
+
+    transactionManager.startTransactionOnBranch("branch1", "A");
+    IntStream.range(0, 10).forEach(i ->
+        transactionManager.add("A", i, 0.));
+    transactionManager.commitTransaction();
+
+    transactionManager.startTransactionOnBranch("branch2", "A");
+    IntStream.range(10, 20).forEach(i ->
+        transactionManager.add("A", i, 0.));
+    transactionManager.commitTransaction();
+
+    transactionManager.startTransactionFromBranch("subbranch", "branch2", "A");
+    IntStream.range(20, 30).forEach(i ->
+        transactionManager.add("A", i, 0.));
+    transactionManager.commitTransaction();
+
+    transactionManager.startTransactionOnBranch("branch1", "A");
+    IntStream.range(10, 20).forEach(i ->
+        transactionManager.add("A", i, 0.));
+    transactionManager.commitTransaction();
   }
 
   @Test

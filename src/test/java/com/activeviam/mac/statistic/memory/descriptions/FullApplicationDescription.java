@@ -12,6 +12,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
 import com.qfs.store.IDatastore;
+import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public class FullApplicationDescription implements ITestApplicationDescription {
 
 	public static final int STORE_PEOPLE_COUNT = 10;
 	public static final int STORE_PRODUCT_COUNT = 20;
-	protected final AtomicInteger operationsBatch = new AtomicInteger();
+	protected static final AtomicInteger operationsBatch = new AtomicInteger();
 
 	@Override
 	public IDatastoreSchemaDescription datastoreDescription() {
@@ -224,8 +225,7 @@ public class FullApplicationDescription implements ITestApplicationDescription {
 		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
 	}
 
-	@Override
-	public void fill(IDatastore datastore) {
+	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		datastore.edit(
 				tm -> {
 					final int peopleCount = STORE_PEOPLE_COUNT;

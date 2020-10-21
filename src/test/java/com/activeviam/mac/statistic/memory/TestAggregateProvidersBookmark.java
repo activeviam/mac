@@ -9,14 +9,12 @@ package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithPartialProviders;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
@@ -50,9 +48,12 @@ public class TestAggregateProvidersBookmark {
 	protected CubeTester tester;
 
 	@BeforeEach
-	public void setup() throws AgentException, DatastoreTransactionException {
+	public void setup() throws AgentException {
 		monitoredApplication = MonitoringTestUtils
-				.setupApplication(new MicroApplicationDescriptionWithPartialProviders(), resources);
+				.setupApplication(
+						new MicroApplicationDescriptionWithPartialProviders(),
+						resources,
+						MicroApplicationDescriptionWithPartialProviders::fillWithGenericData);
 
 		final Path exportPath =
 				MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
@@ -61,8 +62,7 @@ public class TestAggregateProvidersBookmark {
 						this.getClass().getSimpleName());
 
 		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-		monitoringApplication = MonitoringTestUtils
-				.setupApplication(new MonitoringApplicationDescription(stats), resources);
+		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
 		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
 	}

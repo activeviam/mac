@@ -5,7 +5,6 @@ import static com.qfs.util.impl.ThrowingLambda.cast;
 import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescription;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -66,7 +65,8 @@ public class TestMACMeasures {
   @BeforeEach
   public void setup() throws AgentException, DatastoreTransactionException {
     monitoredApplication = MonitoringTestUtils
-        .setupApplication(new MicroApplicationDescription(), resources);
+        .setupApplication(new MicroApplicationDescription(), resources,
+            MicroApplicationDescription::fillWithGenericData);
 
     final Path exportPath =
         MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
@@ -78,8 +78,7 @@ public class TestMACMeasures {
     applicationStatistics = extractApplicationStats(stats);
     statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-    monitoringApplication = MonitoringTestUtils
-        .setupApplication(new MonitoringApplicationDescription(stats), resources);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
     tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
   }

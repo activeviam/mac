@@ -2,7 +2,6 @@ package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescription;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -11,7 +10,6 @@ import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
@@ -20,9 +18,9 @@ import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -47,9 +45,10 @@ public class TestFieldsBookmark {
 	protected CubeTester tester;
 
 	@BeforeEach
-	public void setup() throws AgentException, DatastoreTransactionException {
+	public void setup() throws AgentException {
 		monitoredApplication = MonitoringTestUtils
-				.setupApplication(new MicroApplicationDescription(), resources);
+				.setupApplication(new MicroApplicationDescription(), resources,
+						MicroApplicationDescription::fillWithGenericData);
 
 		final Path exportPath =
 				MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
@@ -60,13 +59,12 @@ public class TestFieldsBookmark {
 		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 		statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		monitoringApplication = MonitoringTestUtils
-				.setupApplication(new MonitoringApplicationDescription(stats), resources);
+		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
 		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
 	}
 
-	@Ignore("wrong field counts, should be updated after Field.COUNT is removed")
+	@Disabled("wrong field counts, should be updated after Field.COUNT is removed")
 	@Test
 	public void testStoreTotal() throws QueryException {
 		final IMultiVersionActivePivot pivot = tester.pivot();

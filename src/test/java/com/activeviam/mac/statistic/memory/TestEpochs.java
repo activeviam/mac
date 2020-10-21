@@ -12,8 +12,8 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
-import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithKeepAllEpochPolicy2;
-import com.activeviam.mac.statistic.memory.descriptions.MonitoringApplicationDescription;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescription;
+import com.activeviam.mac.statistic.memory.descriptions.MicroApplicationDescriptionWithKeepAllEpochPolicy;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,8 +67,40 @@ public class TestEpochs extends ATestMemoryStatistic {
   @BeforeEach
   public void setup() throws AgentException, DatastoreTransactionException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithKeepAllEpochPolicy2(),
-        resources);
+        new MicroApplicationDescriptionWithKeepAllEpochPolicy(),
+        resources,
+        (datastore, manager) -> {
+          // epoch 1
+          datastore.edit(transactionManager -> {
+            IntStream.range(0, 10)
+                .forEach(i -> transactionManager.add("A", i, 0.));
+          });
+
+          // epoch 2
+          datastore.edit(transactionManager -> {
+            IntStream.range(10, 20)
+                .forEach(i -> transactionManager.add("A", i, 1.));
+          });
+
+          // epoch 3
+          // drop partition from epoch 2
+          datastore.edit(transactionManager -> {
+            transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
+          });
+
+          // epoch 4
+          // make sure to add a new chunk on the 0-valued partition
+          datastore.edit(transactionManager -> {
+            IntStream.range(20, 20 + MicroApplicationDescription.CHUNK_SIZE)
+                .forEach(i -> transactionManager.add("A", i, 0.));
+          });
+
+          // epoch 5
+          // remaining chunks from epoch 4, but not used by version
+          datastore.edit(transactionManager -> {
+            transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20));
+          });
+        });
 
     monitoredApplication.getManager().getActivePivots().get("Cube")
         .commit(new Epoch(10L));
@@ -81,8 +114,7 @@ public class TestEpochs extends ATestMemoryStatistic {
     stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-    monitoringApplication = MonitoringTestUtils
-        .setupApplication(new MonitoringApplicationDescription(stats), resources);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
     tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
   }
