@@ -40,7 +40,8 @@ public class TestAggregateProvidersBookmark {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+	protected static Path tempDir =
+			QfsFileTestUtils.createTempDirectory(TestAggregateProvidersBookmark.class);
 
 	protected Application monitoredApplication;
 	protected Application monitoringApplication;

@@ -54,7 +54,8 @@ public class TestMemoryStatisticLoading {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
 
   /**
    * Assert the number of offheap chunks by filling the datastore used for monitoring AND doing a

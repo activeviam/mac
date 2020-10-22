@@ -69,7 +69,8 @@ public class TestMemoryMonitoringDatastoreContent {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+	protected static Path tempDir =
+			QfsFileTestUtils.createTempDirectory(TestMemoryMonitoringDatastoreContent.class);
 
 	/**
 	 * Tests the consistency between the chunks of an ActivePivot application and its the monitoring

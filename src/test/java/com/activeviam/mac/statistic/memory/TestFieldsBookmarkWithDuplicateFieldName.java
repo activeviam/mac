@@ -17,7 +17,6 @@ import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
@@ -43,7 +42,8 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(TestFieldsBookmarkWithDuplicateFieldName.class);
 
   protected Application monitoredApplication;
   protected Application monitoringApplication;
@@ -51,7 +51,7 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
   protected CubeTester tester;
 
   @BeforeEach
-  public void setup() throws AgentException, DatastoreTransactionException {
+  public void setup() throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
         new MicroApplicationDescriptionWithReferenceAndSameFieldName(),
         resources,

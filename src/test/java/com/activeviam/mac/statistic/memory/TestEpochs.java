@@ -56,7 +56,7 @@ public class TestEpochs {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestEpochs.class);
 
   protected Application monitoredApplication;
   protected Application monitoringApplication;

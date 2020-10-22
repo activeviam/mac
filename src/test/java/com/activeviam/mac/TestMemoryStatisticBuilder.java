@@ -6,6 +6,7 @@
  */
 package com.activeviam.mac;
 
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.impl.GenericMonitoringStatisticBuilder;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -17,14 +18,12 @@ import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /** @author ActiveViam */
-public class TestMemoryStatisticBuilder
-    extends GenericMonitoringStatisticBuilder<
-        IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
+public class TestMemoryStatisticBuilder extends GenericMonitoringStatisticBuilder<
+    IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
     implements IMemoryStatisticBuilder {
 
   /** Name of the statistic */
@@ -47,7 +46,7 @@ public class TestMemoryStatisticBuilder
     IStatisticAttribute parentClass =
         attributes.get(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS);
     if (parentClass == null) {
-      throw new QuartetRuntimeException(
+      throw new ActiveViamRuntimeException(
           "It is mandatory to add a parent class to statistic with name '" + name + "'");
     }
 

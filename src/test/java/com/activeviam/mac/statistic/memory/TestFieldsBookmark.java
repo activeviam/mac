@@ -36,7 +36,7 @@ public class TestFieldsBookmark {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestFieldsBookmark.class);
 
 	protected Application monitoredApplication;
 	protected Application monitoringApplication;

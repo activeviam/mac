@@ -9,7 +9,6 @@ package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.mac.statistic.memory.Application;
 import com.activeviam.mac.statistic.memory.MonitoringTestUtils;
-import com.activeviam.mac.statistic.memory.TestMACMeasures;
 import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -51,7 +50,8 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+  protected static Path tempDir = QfsFileTestUtils
+      .createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
 
   protected Application monitoredApplication;
   protected Path exportPath;

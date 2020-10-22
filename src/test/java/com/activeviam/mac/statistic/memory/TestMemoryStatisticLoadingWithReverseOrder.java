@@ -29,12 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -51,15 +49,8 @@ public class TestMemoryStatisticLoadingWithReverseOrder {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
-
-	protected static final long SEED = 10928L;
-	protected static Random rng;
-
-	@BeforeAll
-	public static void initSeed() {
-		rng = new Random(SEED);
-	}
+	protected static Path tempDir =
+			QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoadingWithReverseOrder.class);
 
 	@Test
 	public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
@@ -74,7 +65,7 @@ public class TestMemoryStatisticLoadingWithReverseOrder {
 		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
 				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
 
-		Collections.shuffle(storeStats, rng);
+		Collections.reverse(storeStats);
 
 		Assertions.assertThat(storeStats).isNotEmpty();
 		MonitoringTestUtils.assertLoadsCorrectly(new TestMemoryStatisticBuilder()
@@ -99,7 +90,7 @@ public class TestMemoryStatisticLoadingWithReverseOrder {
 		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
 				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
 
-		Collections.shuffle(storeStats, rng);
+		Collections.reverse(storeStats);
 
 		Assertions.assertThat(storeStats).isNotEmpty();
 		final IDatastore monitoringDatastore = MonitoringTestUtils.assertLoadsCorrectly(

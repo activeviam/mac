@@ -14,7 +14,6 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
@@ -63,7 +62,7 @@ public class TestMACMeasures {
   protected CubeTester tester;
 
   @BeforeEach
-  public void setup() throws AgentException, DatastoreTransactionException {
+  public void setup() throws AgentException {
     monitoredApplication = MonitoringTestUtils
         .setupApplication(new MicroApplicationDescription(), resources,
             MicroApplicationDescription::fillWithGenericData);

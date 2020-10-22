@@ -18,7 +18,6 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.store.record.impl.Records.IDictionaryProvider;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
@@ -48,7 +47,8 @@ public class TestIndexAndDictionaryBookmarks {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+	protected static Path tempDir =
+			QfsFileTestUtils.createTempDirectory(TestIndexAndDictionaryBookmarks.class);
 
 	protected Application monitoredApplication;
 	protected Application monitoringApplication;
@@ -56,7 +56,7 @@ public class TestIndexAndDictionaryBookmarks {
 	protected CubeTester tester;
 
 	@BeforeEach
-	public void setup() throws AgentException, DatastoreTransactionException {
+	public void setup() throws AgentException {
 		monitoredApplication = MonitoringTestUtils.setupApplication(
 				new MicroApplicationDescriptionWithIndexedFields(),
 				resources,

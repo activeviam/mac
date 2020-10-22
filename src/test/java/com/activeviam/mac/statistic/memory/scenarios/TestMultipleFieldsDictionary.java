@@ -12,7 +12,6 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.statistic.memory.Application;
 import com.activeviam.mac.statistic.memory.MonitoringTestUtils;
-import com.activeviam.mac.statistic.memory.TestMACMeasures;
 import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -61,7 +60,8 @@ public class TestMultipleFieldsDictionary {
 	@RegisterExtension
 	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
+	protected static Path tempDir =
+			QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
 
 	protected Application monitoredApplication;
 	protected Application monitoringApplication;
