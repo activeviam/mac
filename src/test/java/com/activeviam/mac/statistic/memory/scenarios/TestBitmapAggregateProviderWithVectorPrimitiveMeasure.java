@@ -7,176 +7,125 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.statistic.memory.Application;
+import com.activeviam.mac.statistic.memory.MonitoringTestUtils;
+import com.activeviam.mac.statistic.memory.TestMACMeasures;
+import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.literal.ILiteralType;
-import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
-import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import com.quartetfs.fwk.AgentException;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * The scenario this test produces created a situation where the dictionary used by the point index
  * of the aggregate store of the cube would leak into subsequent chunks.
  */
-public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure {
+
+  public static final int RECORD_COUNT = 10;
 
   @RegisterExtension
-  protected LocalResourcesExtension resources = new LocalResourcesExtension();
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-  protected static final Path TEMP_DIRECTORY =
-      QfsFileTestUtils.createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static final int RECORD_COUNT = 100;
+  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
-  protected IDatastore datastore;
-  protected IActivePivotManager manager;
-  protected Path statisticsPath;
-
-  @BeforeAll
-  public static void setupRegistry() {
-    PivotTestUtils.setUpRegistry(OnHeapPivotMemoryQuantifierPlugin.class);
-  }
+  protected Application monitoredApplication;
+  protected Path exportPath;
 
   @BeforeEach
-  public void setupAndExportApplication() throws AgentException {
-    final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
-    final IActivePivotManagerDescription managerDescription =
-        managerDescription(datastoreSchemaDescription);
+  public void setup() throws AgentException {
+    monitoredApplication = MonitoringTestUtils.setupApplication(
+        new ScenarioApplication(),
+        resources,
+        ScenarioApplication::fill);
 
-    datastore = StartBuilding.datastore()
-        .setSchemaDescription(datastoreSchemaDescription)
-        .addSchemaDescriptionPostProcessors(
-            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-        .build();
+    exportPath = MonitoringTestUtils.exportMostRecentVersion(
+        monitoredApplication.getDatastore(),
+        monitoredApplication.getManager(),
+        tempDir,
+        this.getClass().getSimpleName());
 
-    manager = StartBuilding.manager()
-        .setDescription(managerDescription)
-        .setDatastoreAndPermissions(datastore)
-        .buildAndStart();
-
-    fillApplication();
-    performGC();
-    exportApplicationMemoryStatistics();
   }
-
-  protected IDatastoreSchemaDescription datastoreSchema() {
-    return StartBuilding.datastoreSchema()
-        .withStore(
-            StartBuilding.store()
-                .withStoreName("Store")
-                .withField("id", ILiteralType.INT)
-                .asKeyField()
-                .withVectorField("vectorMeasure", ILiteralType.DOUBLE)
-                .withVectorBlockSize(4)
-                .withChunkSize(2)
-                .build())
-        .build();
-  }
-
-  protected IActivePivotManagerDescription managerDescription(
-      final IDatastoreSchemaDescription datastoreSchema) {
-    final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-        .withSchema()
-        .withSelection(
-            StartBuilding.selection(datastoreSchema)
-                .fromBaseStore("Store")
-                .withAllFields()
-                .build())
-        .withCube(
-            StartBuilding.cube("Cube")
-                .withContributorsCount()
-                .withAggregatedMeasure()
-                .sum("vectorMeasure")
-                .withSingleLevelDimension("id")
-                .withPropertyName("id")
-                .withAggregateProvider()
-                .bitmap()
-                .build())
-        .build();
-
-    return ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchema);
-  }
-
-  protected void fillApplication() {
-    datastore.edit(transactionManager -> {
-      for (int i = 0; i < RECORD_COUNT; ++i) {
-        transactionManager.add("Store", i, new double[] {i, -i});
-      }
-    });
-  }
-
-  protected void exportApplicationMemoryStatistics() {
-    final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-        datastore, manager, datastore.getEpochManager(),
-        TestBitmapAggregateProviderWithVectorPrimitiveMeasure.TEMP_DIRECTORY);
-    statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
-  }
-
-  @AfterEach
-  public void teardown() throws AgentException {
-    manager.stop();
-    datastore.stop();
-  }
-
 
   @Test
-  public void testLoading() throws IOException {
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
-
-    final IDatastore analysisDatastore = createAnalysisDatastore();
-    Assertions
-        .assertDoesNotThrow(() -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
+  public void testLoading() {
+    final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+    Assertions.assertDoesNotThrow(() ->
+        MonitoringTestUtils.createAnalysisDatastore(stats, resources));
   }
 
-  protected IDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
-  }
+  private static final class ScenarioApplication implements ITestApplicationDescription {
 
-  protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
-    return Files.list(path)
-        .map(file -> {
-          try {
-            return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-          } catch (IOException exception) {
-            throw new ActiveViamRuntimeException(exception);
-          }
-        })
-        .collect(Collectors.toList());
-  }
+    @Override
+    public IDatastoreSchemaDescription datastoreDescription() {
+      return StartBuilding.datastoreSchema()
+          .withStore(
+              StartBuilding.store()
+                  .withStoreName("Store")
+                  .withField("id", ILiteralType.INT)
+                  .asKeyField()
+                  .withVectorField("vectorMeasure", ILiteralType.DOUBLE)
+                  .withVectorBlockSize(4)
+                  .withChunkSize(2)
+                  .build())
+          .build();
+    }
 
-  protected void loadStatisticsIntoDatastore(
-      final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-    analysisDatastore.edit(transactionManager ->
-        statistics.forEach(statistic ->
-            statistic.accept(
-                new FeedVisitor(analysisDatastore.getSchemaMetadata(), transactionManager,
-                    "test"))));
+    @Override
+    public IActivePivotManagerDescription managerDescription(
+        IDatastoreSchemaDescription schemaDescription) {
+      final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
+          .withSchema()
+          .withSelection(
+              StartBuilding.selection(schemaDescription)
+                  .fromBaseStore("Store")
+                  .withAllFields()
+                  .build())
+          .withCube(
+              StartBuilding.cube("Cube")
+                  .withContributorsCount()
+                  .withAggregatedMeasure()
+                  .sum("vectorMeasure")
+                  .withSingleLevelDimension("id")
+                  .withPropertyName("id")
+                  .withAggregateProvider()
+                  .bitmap()
+                  .build())
+          .build();
+
+      return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+    }
+
+    public static void fill(IDatastore datastore, IActivePivotManager manager) {
+      datastore.edit(transactionManager -> {
+        for (int i = 0; i < RECORD_COUNT; ++i) {
+          transactionManager.add("Store", i, new double[] {i, -i});
+        }
+      });
+    }
   }
 }

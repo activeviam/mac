@@ -45,7 +45,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @ExtendWith(RegistrySetupExtension.class)
-public class TestEpochs extends ATestMemoryStatistic {
+public class TestEpochs {
 
   @RegisterExtension
   protected static ActiveViamPropertyExtension propertyExtension =
@@ -65,7 +65,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   protected CubeTester tester;
 
   @BeforeEach
-  public void setup() throws AgentException, DatastoreTransactionException {
+  public void setup() throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
         new MicroApplicationDescriptionWithKeepAllEpochPolicy(),
         resources,

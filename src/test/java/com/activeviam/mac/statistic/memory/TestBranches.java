@@ -42,7 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @ExtendWith(RegistrySetupExtension.class)
-public class TestBranches extends ATestMemoryStatistic {
+public class TestBranches {
 
   @RegisterExtension
   protected static ActiveViamPropertyExtension propertyExtension =

@@ -31,7 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @ExtendWith(RegistrySetupExtension.class)
-public class TestVectorBlockBookmark extends ATestMemoryStatistic {
+public class TestVectorBlockBookmark {
 
 	@RegisterExtension
 	protected static ActiveViamPropertyExtension propertyExtension =

@@ -7,14 +7,18 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.statistic.memory.Application;
+import com.activeviam.mac.statistic.memory.MonitoringTestUtils;
+import com.activeviam.mac.statistic.memory.TestMACMeasures;
+import com.activeviam.mac.statistic.memory.descriptions.ITestApplicationDescription;
+import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
 import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.properties.impl.ActiveViamProperty;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
@@ -23,22 +27,14 @@ import com.qfs.dic.ISchemaDictionaryProvider;
 import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.literal.ILiteralType;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,140 +44,56 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
+@ExtendWith(RegistrySetupExtension.class)
+public class TestMultipleFieldsDictionary {
 
 	@RegisterExtension
-	protected LocalResourcesExtension resources = new LocalResourcesExtension();
+	protected static ActiveViamPropertyExtension propertyExtension =
+			new ActiveViamPropertyExtensionBuilder()
+					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+					.build();
 
-	protected static final Path TEMP_DIRECTORY =
-			QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
+	@RegisterExtension
+	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected IDatastore monitoredDatastore;
-	protected IActivePivotManager monitoredManager;
-	protected Path statisticsPath;
-	protected IDatastore monitoringDatastore;
+	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestMACMeasures.class);
 
-	@BeforeAll
-	public static void setupRegistry() {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+	protected Application monitoredApplication;
+	protected Application monitoringApplication;
 
 	@BeforeEach
-	public void setupAndExportApplication() throws AgentException, IOException {
-		final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
-		final IActivePivotManagerDescription managerDescription = new ActivePivotManagerDescription();
+	public void setup() throws AgentException {
+		monitoredApplication = MonitoringTestUtils.setupApplication(
+				new ScenarioApplication(),
+				resources,
+				ScenarioApplication::fill);
 
-		monitoredDatastore = resources.create(StartBuilding.datastore()
-				.setSchemaDescription(datastoreSchemaDescription)
-				.addSchemaDescriptionPostProcessors(
-						ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-				::build);
+		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+				monitoredApplication.getDatastore(),
+				monitoredApplication.getManager(),
+				tempDir,
+				this.getClass().getSimpleName());
 
-		monitoredManager = StartBuilding.manager()
-				.setDescription(managerDescription)
-				.setDatastoreAndPermissions(monitoredDatastore)
-				.buildAndStart();
-		resources.register(monitoredManager::stop);
-
-		fillApplication();
-		performGC();
-		exportApplicationMemoryStatistics();
-
-		monitoringDatastore = createAnalysisDatastore();
-		loadStatisticsIntoDatastore(loadMemoryStatistic(statisticsPath), monitoringDatastore);
-	}
-
-	protected IDatastoreSchemaDescription datastoreSchema() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("Forex")
-								.withField("currency", ILiteralType.STRING)
-								.asKeyField()
-								.withField("targetCurrency", ILiteralType.STRING)
-								.asKeyField()
-								.build())
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("Currency")
-								.withField("currency", ILiteralType.STRING)
-								.asKeyField()
-								.build())
-				.withReference(StartBuilding.reference()
-						.fromStore("Forex")
-						.toStore("Currency")
-						.withName("currencyReference")
-						.withMapping("currency", "currency")
-						.build())
-				.withReference(StartBuilding.reference()
-						.fromStore("Forex")
-						.toStore("Currency")
-						.withName("targetCurrencyReference")
-						.withMapping("targetCurrency", "currency")
-						.build())
-				.build();
-	}
-
-	protected void fillApplication() {
-		final String[] currencies = new String[] {"EUR", "GBP", "USD"};
-
-		monitoredDatastore.edit(transactionManager -> {
-			for (final String currency : currencies) {
-				transactionManager.add("Currency", currency);
-				for (final String targetCurrency : currencies) {
-					transactionManager.add("Forex", currency, targetCurrency);
-				}
-			}
-		});
-	}
-
-	protected void exportApplicationMemoryStatistics() {
-		final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-				monitoredDatastore, monitoredManager, monitoredDatastore.getEpochManager(), TEMP_DIRECTORY);
-		statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
-	}
-
-	protected IDatastore createAnalysisDatastore() {
-		final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-		return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
-	}
-
-	protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
-		return Files.list(path)
-				.map(file -> {
-					try {
-						return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-					} catch (IOException exception) {
-						throw new ActiveViamRuntimeException(exception);
-					}
-				})
-				.collect(Collectors.toList());
-	}
-
-	protected void loadStatisticsIntoDatastore(
-			final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-		analysisDatastore.edit(transactionManager ->
-				statistics.forEach(statistic ->
-						statistic.accept(
-								new FeedVisitor(analysisDatastore.getSchemaMetadata(), transactionManager,
-										"test"))));
+		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 	}
 
 	@Test
 	public void testDictionaryIsShared() {
-		final ISchemaDictionaryProvider dictionaries = monitoredDatastore.getDictionaries();
+		final ISchemaDictionaryProvider dictionaries =
+				monitoredApplication.getDatastore().getDictionaries();
 		Assertions.assertThat(dictionaries.getDictionary("Forex", "currency"))
 				.isSameAs(dictionaries.getDictionary("Forex", "targetCurrency"));
 	}
 
 	@Test
 	public void testDictionaryHasAtLeastOneChunk() {
-		final long dictionaryId = monitoredDatastore.getDictionaries()
+		final long dictionaryId = monitoredApplication.getDatastore().getDictionaries()
 				.getDictionary("Forex", "currency")
 				.getDictionaryId();
 
@@ -191,7 +103,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
 	@Test
 	public void testDictionaryChunkFields() {
-		final long dictionaryId = monitoredDatastore.getDictionaries()
+		final long dictionaryId = monitoredApplication.getDatastore().getDictionaries()
 				.getDictionary("Forex", "currency")
 				.getDictionaryId();
 
@@ -200,7 +112,8 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 				extractOwnersAndFieldsPerChunkId(chunkIdsForDictionary);
 
 		SoftAssertions.assertSoftly(assertions -> {
-			for (final Multimap<String, String> ownersAndFieldsForChunk : ownersAndFieldsPerChunk.values()) {
+			for (final Multimap<String, String> ownersAndFieldsForChunk : ownersAndFieldsPerChunk
+					.values()) {
 				assertions.assertThat(ownersAndFieldsForChunk.keySet())
 						.containsOnly("Currency", "Forex");
 
@@ -213,7 +126,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 	}
 
 	protected Set<Long> extractChunkIdsForDictionary(final long dictionaryId) {
-		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
+		final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
 				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(
 						BaseConditions.Equal(DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId))
@@ -228,7 +141,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
 	protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
 			final Collection<Long> chunkIdSubset) {
-		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
+		final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
 				.forStore(DatastoreConstants.OWNER_STORE)
 				.withCondition(BaseConditions.And(
 						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
@@ -248,5 +161,60 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 		}
 
 		return fieldsPerChunk;
+	}
+
+	private static final class ScenarioApplication
+			implements ITestApplicationDescription {
+
+		@Override
+		public IDatastoreSchemaDescription datastoreDescription() {
+			return StartBuilding.datastoreSchema()
+					.withStore(
+							StartBuilding.store()
+									.withStoreName("Forex")
+									.withField("currency", ILiteralType.STRING)
+									.asKeyField()
+									.withField("targetCurrency", ILiteralType.STRING)
+									.asKeyField()
+									.build())
+					.withStore(
+							StartBuilding.store()
+									.withStoreName("Currency")
+									.withField("currency", ILiteralType.STRING)
+									.asKeyField()
+									.build())
+					.withReference(StartBuilding.reference()
+							.fromStore("Forex")
+							.toStore("Currency")
+							.withName("currencyReference")
+							.withMapping("currency", "currency")
+							.build())
+					.withReference(StartBuilding.reference()
+							.fromStore("Forex")
+							.toStore("Currency")
+							.withName("targetCurrencyReference")
+							.withMapping("targetCurrency", "currency")
+							.build())
+					.build();
+		}
+
+		@Override
+		public IActivePivotManagerDescription managerDescription(
+				IDatastoreSchemaDescription schemaDescription) {
+			return new ActivePivotManagerDescription();
+		}
+
+		public static void fill(IDatastore datastore, IActivePivotManager manager) {
+			final String[] currencies = new String[] {"EUR", "GBP", "USD"};
+
+			datastore.edit(transactionManager -> {
+				for (final String currency : currencies) {
+					transactionManager.add("Currency", currency);
+					for (final String targetCurrency : currencies) {
+						transactionManager.add("Forex", currency, targetCurrency);
+					}
+				}
+			});
+		}
 	}
 }
