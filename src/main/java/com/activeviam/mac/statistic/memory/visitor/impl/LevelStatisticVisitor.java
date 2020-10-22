@@ -146,10 +146,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(DictionaryStatistic stat) {
-    if (this.dictionaryId != null) {
-      throw new RuntimeException("Already visited a dictionary: " + this.dictionaryId);
-    }
-
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
@@ -158,6 +154,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
+    final Long previousDictionaryId = this.dictionaryId;
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
 
@@ -170,6 +167,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     visitChildren(stat);
     // Do not nullify dictionaryId. It is done after visiting the whole level
 
+    this.dictionaryId = previousDictionaryId;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
