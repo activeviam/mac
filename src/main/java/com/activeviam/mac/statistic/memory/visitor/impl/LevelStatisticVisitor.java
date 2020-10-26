@@ -165,7 +165,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     // We are processing a hierarchy/level
     visitChildren(stat);
-    // Do not nullify dictionaryId. It is done after visiting the whole level
 
     this.dictionaryId = previousDictionaryId;
     this.directParentType = previousParentType;
