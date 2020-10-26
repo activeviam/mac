@@ -55,7 +55,7 @@ public class TestNullableLevelDictionary {
 	protected static final Path TEMP_DIRECTORY =
 			QfsFileTestUtils.createTempDirectory(TestNullableLevelDictionary.class);
 
-	protected static final int RECORD_COUNT = 100;
+	protected static final int RECORD_COUNT = 10;
 
 	protected IDatastore datastore;
 	protected IActivePivotManager manager;
