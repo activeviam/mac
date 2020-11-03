@@ -138,7 +138,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(
             DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT, UsedByVersion.UNKNOWN)
         .dictionarized()
-        .withField("latest", ILiteralType.BOOLEAN)
+        .withField(DatastoreConstants.CHUNK__IS_LATEST_EPOCH, ILiteralType.BOOLEAN)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)

@@ -163,6 +163,9 @@ public class DatastoreConstants {
   /** The epoch corresponding to the chunk. */
   public static final String VERSION__EPOCH_ID = "epochId";
 
+  /** The epoch corresponding to the chunk. */
+  public static final String CHUNK__IS_LATEST_EPOCH = "isLatestEpoch";
+
   // ## REFERENCES_STORE ## Field names of the Reference store
 
   /** Reference name field. */

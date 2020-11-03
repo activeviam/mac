@@ -34,7 +34,7 @@ public class DatastoreCalculations {
 
   public static void fillLatestEpochColumn(
       IOpenedTransaction transactionManager,
-      IDictionary<?> epochDictionary,
+      IDictionary<Object> epochDictionary,
       IDictionary<Object> chunkDictionary,
       IDictionary<Object> dumpNameDictionary)
       throws DatastoreTransactionException {
@@ -59,7 +59,7 @@ public class DatastoreCalculations {
             DatastoreConstants.CHUNK_ID,
             DatastoreConstants.CHUNK__DUMP_NAME,
             DatastoreConstants.VERSION__EPOCH_ID,
-            "latest"),
+            DatastoreConstants.CHUNK__IS_LATEST_EPOCH),
         BaseConditions.TRUE,
         new UpdateLatestColumnProcedure(maxEpochIdAcceptor.getResult(),
             chunkDictionary,
@@ -78,15 +78,16 @@ public class DatastoreCalculations {
 
     @Override
     public void onResult(int partitionId, ICursor result) {
+      final IRecordFormat format = result.getRecordFormat();
+      final int chunkIdIndex = format.getFieldIndex(DatastoreConstants.CHUNK_ID);
+      final int dumpNameIndex = format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME);
+      final int epochIdIndex = format.getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID);
+
       for (final IRecordReader reader : result) {
         maxima.merge(
-            new EpochIdKey(
-                reader.readInt(
-                    reader.getFormat().getFieldIndex(DatastoreConstants.CHUNK_ID)),
-                reader.readInt(
-                    reader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME))),
-            epochDictionary.readLong(reader.readInt(
-                reader.getFormat().getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID))),
+            new EpochIdKey(reader.readInt(chunkIdIndex),
+                reader.readInt(dumpNameIndex)),
+            epochDictionary.readLong(reader.readInt(epochIdIndex)),
             Math::max);
       }
     }
@@ -130,7 +131,7 @@ public class DatastoreCalculations {
 
     @Override
     public void init(IRecordFormat selectionFormat, IRecordFormat storeFormat) {
-      this.fieldIndex = storeFormat.getFieldIndex("latest");
+      this.fieldIndex = storeFormat.getFieldIndex(DatastoreConstants.CHUNK__IS_LATEST_EPOCH);
     }
 
     @Override
@@ -140,8 +141,8 @@ public class DatastoreCalculations {
           dumpNameDictionary.getPosition(selectedRecord.read(1)));
 
       recordWriter.writeBoolean(
-          this.fieldIndex, maxEpochIds.get(key)
-              .equals(selectedRecord.readLong(2)));
+          this.fieldIndex,
+          maxEpochIds.get(key).equals(selectedRecord.readLong(2)));
     }
   }
 }

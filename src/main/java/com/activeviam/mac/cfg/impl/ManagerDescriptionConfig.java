@@ -108,6 +108,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String BRANCH_HIERARCHY = "Branch";
   /** Name of the epoch id level. */
   public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+  /** Name of the latest epoch level. */
+  public static final String IS_LATEST_EPOCH_HIERARCHY = "Latest Epoch";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -285,10 +287,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withLevel(EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withComparator(ReverseOrderComparator.type)
-        .withHierarchy("latest")
+        .withHierarchy(IS_LATEST_EPOCH_HIERARCHY)
         .slicing()
         .withLevelOfSameName()
-        .withPropertyName("latest")
+        .withPropertyName(DatastoreConstants.CHUNK__IS_LATEST_EPOCH)
         .withFirstObjects(true, false)
         .withSingleLevelHierarchy("Used by Version")
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION);
