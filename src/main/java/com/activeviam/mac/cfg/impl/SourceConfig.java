@@ -10,7 +10,9 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreCalculations;
+import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.qfs.dic.ISchemaDictionaryProvider;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.msg.csv.ICsvDataProvider;
@@ -221,7 +223,17 @@ public class SourceConfig {
                     }
                   });
 
-              DatastoreCalculations.fillLatestEpochColumn(tm);
+              final ISchemaDictionaryProvider dictionaries = datastore.getDictionaries();
+              DatastoreCalculations.fillLatestEpochColumn(tm,
+                  dictionaries.getDictionary(
+                      DatastoreConstants.CHUNK_STORE,
+                      DatastoreConstants.VERSION__EPOCH_ID),
+                  dictionaries.getDictionary(
+                      DatastoreConstants.CHUNK_STORE,
+                      DatastoreConstants.CHUNK_ID),
+                  dictionaries.getDictionary(
+                      DatastoreConstants.CHUNK_STORE,
+                      DatastoreConstants.CHUNK__DUMP_NAME));
             });
 
     if (info.isPresent()) {

@@ -10,9 +10,10 @@ package com.activeviam.mac.memory;
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.qfs.chunk.IArrayReader;
 import com.qfs.chunk.IArrayWriter;
+import com.qfs.concurrent.ICompletionSync;
 import com.qfs.condition.impl.BaseConditions;
+import com.qfs.dic.IDictionary;
 import com.qfs.store.query.ICursor;
-import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.query.IPartitionedResultAcceptor;
 import com.qfs.store.query.condition.impl.RecordQuery;
 import com.qfs.store.record.IRecordFormat;
@@ -21,7 +22,6 @@ import com.qfs.store.selection.impl.Selection;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.IOpenedTransaction;
 import com.qfs.store.transaction.ITransactionManager.IUpdateWhereProcedure;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,9 +32,15 @@ public class DatastoreCalculations {
   private DatastoreCalculations() {
   }
 
-  public static void fillLatestEpochColumn(IOpenedTransaction transactionManager)
+  public static void fillLatestEpochColumn(
+      IOpenedTransaction transactionManager,
+      IDictionary<?> epochDictionary,
+      IDictionary<Object> chunkDictionary,
+      IDictionary<Object> dumpNameDictionary)
       throws DatastoreTransactionException {
-    final IDictionaryCursor cursor = transactionManager
+    final MaxEpochIdAcceptor maxEpochIdAcceptor = new MaxEpochIdAcceptor(epochDictionary);
+
+    final ICompletionSync completion = transactionManager
         .getQueryRunner()
         .forQuery(
             new RecordQuery(DatastoreConstants.CHUNK_STORE,
@@ -42,21 +48,10 @@ public class DatastoreCalculations {
                 DatastoreConstants.CHUNK_ID,
                 DatastoreConstants.CHUNK__DUMP_NAME,
                 DatastoreConstants.VERSION__EPOCH_ID))
-        //				.withAcceptor(new MaxEpochIdAcceptor())
+        .withAcceptor(maxEpochIdAcceptor)
         .run();
 
-    final Map<Key, Long> maxEpochIds = new HashMap<>();
-    for (IRecordReader reader : cursor) {
-      long id = reader.readLong(0);
-      String dump = (String) reader.read(1);
-      long epoch = reader.readLong(2);
-
-      Key key = new Key(id, dump);
-      Long current = maxEpochIds.putIfAbsent(key, epoch);
-      if (current != null && current.compareTo(epoch) < 0) {
-        maxEpochIds.put(key, epoch);
-      }
-    }
+    completion.awaitCompletion();
 
     transactionManager.updateWhere(
         new Selection(
@@ -66,26 +61,34 @@ public class DatastoreCalculations {
             DatastoreConstants.VERSION__EPOCH_ID,
             "latest"),
         BaseConditions.TRUE,
-        new UpdateLatestColumnProcedure(maxEpochIds));
+        new UpdateLatestColumnProcedure(maxEpochIdAcceptor.getResult(),
+            chunkDictionary,
+            dumpNameDictionary));
   }
 
   private static class MaxEpochIdAcceptor implements IPartitionedResultAcceptor {
 
-    private final ConcurrentMap<Key, Long> maxima;
+    private final ConcurrentMap<EpochIdKey, Long> maxima;
+    private final IDictionary<?> epochDictionary;
 
-    public MaxEpochIdAcceptor() {
+    public MaxEpochIdAcceptor(IDictionary<?> epochDictionary) {
       maxima = new ConcurrentHashMap<>();
+      this.epochDictionary = epochDictionary;
     }
 
     @Override
     public void onResult(int partitionId, ICursor result) {
-      final IRecordReader reader = result.getRecord();
-      maxima.merge(
-          new Key(
-              (Long) reader.read(DatastoreConstants.CHUNK_ID),
-              (String) reader.read(DatastoreConstants.CHUNK__DUMP_NAME)),
-          (Long) reader.read(DatastoreConstants.VERSION__EPOCH_ID),
-          Math::max);
+      for (final IRecordReader reader : result) {
+        maxima.merge(
+            new EpochIdKey(
+                reader.readInt(
+                    reader.getFormat().getFieldIndex(DatastoreConstants.CHUNK_ID)),
+                reader.readInt(
+                    reader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME))),
+            epochDictionary.readLong(reader.readInt(
+                reader.getFormat().getFieldIndex(DatastoreConstants.VERSION__EPOCH_ID))),
+            Math::max);
+      }
     }
 
     @Override
@@ -97,25 +100,32 @@ public class DatastoreCalculations {
       throw new ActiveViamRuntimeException(ex);
     }
 
-    public Map<Key, Long> getResult() {
+    public Map<EpochIdKey, Long> getResult() {
       return maxima;
     }
   }
 
   @Data
-  private static class Key {
+  private static class EpochIdKey {
 
-    private final Long chunkId;
-    private final String dumpName;
+    private final int chunkId;
+    private final int dumpName;
   }
 
   private static class UpdateLatestColumnProcedure implements IUpdateWhereProcedure {
 
     private int fieldIndex;
-    private final Map<Key, Long> maxEpochIds;
+    private final Map<EpochIdKey, Long> maxEpochIds;
+    private final IDictionary<Object> chunkDictionary;
+    private final IDictionary<Object> dumpNameDictionary;
 
-    public UpdateLatestColumnProcedure(Map<Key, Long> maxEpochIds) {
+    public UpdateLatestColumnProcedure(
+        Map<EpochIdKey, Long> maxEpochIds,
+        IDictionary<Object> chunkDictionary,
+        IDictionary<Object> dumpNameDictionary) {
       this.maxEpochIds = maxEpochIds;
+      this.chunkDictionary = chunkDictionary;
+      this.dumpNameDictionary = dumpNameDictionary;
     }
 
     @Override
@@ -125,8 +135,9 @@ public class DatastoreCalculations {
 
     @Override
     public void execute(IArrayReader selectedRecord, IArrayWriter recordWriter) {
-      Key key = new Key(selectedRecord.readLong(0),
-          (String) selectedRecord.read(1));
+      EpochIdKey key = new EpochIdKey(
+          chunkDictionary.getPosition(selectedRecord.read(0)),
+          dumpNameDictionary.getPosition(selectedRecord.read(1)));
 
       recordWriter.writeBoolean(
           this.fieldIndex, maxEpochIds.get(key)
