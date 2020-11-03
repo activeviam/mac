@@ -17,6 +17,7 @@ import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
 import com.activeviam.desc.build.ISelectionDescriptionBuilder;
 import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
+import com.activeviam.desc.build.dimensions.IHierarchyBuilder;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
@@ -39,6 +40,7 @@ import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -160,6 +162,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
+  @Value("${statistic.slicingEpochHierarchy:true}")
+  protected boolean slicingEpochHierarchy;
+
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
@@ -218,77 +223,82 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
       final ICanStartBuildingDimensions builder) {
-    return builder
-        // FROM ChunkStore
-        .withDimension(CHUNK_DIMENSION)
-        .withHierarchy(CHUNK_ID_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK_ID)
-        .withHierarchy(CHUNK_TYPE_LEVEL)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
-        .withHierarchy(CHUNK_PARENT_ID_LEVEL)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
-        .withProperty("description", "What are chunks for")
-        .withSingleLevelHierarchy(CHUNK_DICO_ID_LEVEL)
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
-        .withSingleLevelHierarchy(CHUNK_INDEX_ID_LEVEL)
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
-        .withSingleLevelHierarchy(CHUNK_REF_ID_LEVEL)
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
-        .withHierarchy(CHUNK_CLASS_LEVEL)
-        .withLevelOfSameName()
-        .withPropertyName(
-            prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
-        .withFormatter(ClassFormatter.KEY)
-        .withProperty("description", "Class of the chunks")
-        .withDimension("Partitions")
-        .withSingleLevelHierarchy(PARTITION_HIERARCHY)
-        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-        .withFormatter(PartitionIdFormatter.KEY)
-        .withDimension(CHUNK_DUMP_NAME_LEVEL)
-        .withHierarchyOfSameName()
-        .slicing()
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-        .withComparator(ReverseOrderComparator.type)
-        .withHierarchy("Date")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.APPLICATION__DATE)
-        .withType(ILevelInfo.LevelType.TIME)
-        .withComparator(ReverseOrderComparator.type)
-        .withProperty("description", "Date at which statistics were retrieved")
-        .withDimension("Aggregate Provider")
-        .withHierarchy(MANAGER_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
-        .withHierarchy(PIVOT_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
-        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-        .withHierarchy(PROVIDER_ID_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
+    final IHierarchyBuilder intermediateBuilder =
+        builder
+            // FROM ChunkStore
+            .withDimension(CHUNK_DIMENSION)
+            .withHierarchy(CHUNK_ID_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK_ID)
+            .withHierarchy(CHUNK_TYPE_LEVEL)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
+            .withHierarchy(CHUNK_PARENT_ID_LEVEL)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
+            .withProperty("description", "What are chunks for")
+            .withSingleLevelHierarchy(CHUNK_DICO_ID_LEVEL)
+            .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
+            .withSingleLevelHierarchy(CHUNK_INDEX_ID_LEVEL)
+            .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
+            .withSingleLevelHierarchy(CHUNK_REF_ID_LEVEL)
+            .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
+            .withHierarchy(CHUNK_CLASS_LEVEL)
+            .withLevelOfSameName()
+            .withPropertyName(
+                prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
+            .withFormatter(ClassFormatter.KEY)
+            .withProperty("description", "Class of the chunks")
+            .withDimension("Partitions")
+            .withSingleLevelHierarchy(PARTITION_HIERARCHY)
+            .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+            .withFormatter(PartitionIdFormatter.KEY)
+            .withDimension(CHUNK_DUMP_NAME_LEVEL)
+            .withHierarchyOfSameName()
+            .slicing()
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
+            .withComparator(ReverseOrderComparator.type)
+            .withHierarchy("Date")
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.APPLICATION__DATE)
+            .withType(ILevelInfo.LevelType.TIME)
+            .withComparator(ReverseOrderComparator.type)
+            .withProperty("description", "Date at which statistics were retrieved")
+            .withDimension("Aggregate Provider")
+            .withHierarchy(MANAGER_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
+            .withHierarchy(PIVOT_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
+            .withHierarchy(PROVIDER_TYPE_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
+            .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+            .withHierarchy(PROVIDER_ID_HIERARCHY)
+            .withLevelOfSameName()
+            .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
+            .withDimension(VERSION_DIMENSION)
+            .withHierarchy(BRANCH_HIERARCHY)
+            .slicing()
+            .withLevel(BRANCH_HIERARCHY)
+            .withPropertyName(DatastoreConstants.BRANCH__NAME)
+            .withFirstObjects("master")
+            .withHierarchy(EPOCH_ID_HIERARCHY);
 
-        .withDimension(VERSION_DIMENSION)
-        .withHierarchy(BRANCH_HIERARCHY)
-        .slicing()
-        .withLevel(BRANCH_HIERARCHY)
-        .withPropertyName(DatastoreConstants.BRANCH__NAME)
-        .withFirstObjects("master")
+    //    if (slicingEpochHierarchy) {
+    //      intermediateBuilder.slicing();
+    //    }
 
-        .withHierarchy(EPOCH_ID_HIERARCHY)
-        .slicing()
+    return intermediateBuilder
         .withLevel(EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withComparator(ReverseOrderComparator.type)
-
+        .withSingleLevelHierarchy("latest")
+        .withPropertyName("latest")
         .withSingleLevelHierarchy("Used by Version")
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION);
   }
@@ -304,15 +314,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private ICalculatedMemberDescription[] calculatedMembers() {
     return new ICalculatedMemberDescription[] {
-        createMdxMeasureDescription("Owner.COUNT",
-            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Component.COUNT",
-            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Field.COUNT",
-            ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
-            OWNERSHIP_FOLDER)
+      createMdxMeasureDescription(
+          "Owner.COUNT",
+          ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
+          OWNERSHIP_FOLDER),
+      createMdxMeasureDescription(
+          "Component.COUNT",
+          ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
+          OWNERSHIP_FOLDER),
+      createMdxMeasureDescription(
+          "Field.COUNT",
+          ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
+          OWNERSHIP_FOLDER)
     };
   }
 
@@ -343,7 +356,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         + "      {[Measures].[contributors.COUNT]}"
         + "    ),"
         + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+        + "      "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children,"
         + "      {[Measures].[contributors.COUNT]}"
         + "    )"
         + "  )"
@@ -417,7 +432,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, EPOCH_ID_HIERARCHY);
 
-    Copper.newSingleLevelHierarchy(INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+    Copper.newSingleLevelHierarchy(
+            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -439,7 +455,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .publish(context);
 
     CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+        Copper.newSingleLevelHierarchy(
+                COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 

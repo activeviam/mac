@@ -9,6 +9,7 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
+import com.activeviam.mac.memory.DatastoreCalculations;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -219,6 +220,8 @@ public class SourceConfig {
                       LOGGER.fine("Application processed " + stat);
                     }
                   });
+
+              DatastoreCalculations.fillLatestEpochColumn(tm);
             });
 
     if (info.isPresent()) {

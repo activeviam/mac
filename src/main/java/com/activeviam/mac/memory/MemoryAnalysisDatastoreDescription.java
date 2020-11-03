@@ -135,13 +135,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT,
-            UsedByVersion.UNKNOWN).dictionarized()
+        .withField(
+            DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT, UsedByVersion.UNKNOWN)
+        .dictionarized()
+        .withField("latest", ILiteralType.BOOLEAN)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
-        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.CHUNK_ID,
-            DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__EPOCH_ID)
+        .withModuloPartitioning(
+            partitioningModulo(),
+            DatastoreConstants.CHUNK_ID,
+            DatastoreConstants.CHUNK__DUMP_NAME,
+            DatastoreConstants.VERSION__EPOCH_ID)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();
   }
@@ -162,10 +167,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
         .asKeyField()
-
         .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
-
-        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.OWNER__CHUNK_ID,
+        .withModuloPartitioning(
+            partitioningModulo(),
+            DatastoreConstants.OWNER__CHUNK_ID,
             DatastoreConstants.CHUNK__DUMP_NAME)
         .build();
   }
@@ -218,7 +223,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Attributes */
-        .withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
+        .withField(
+            DatastoreConstants.INDEX_TYPE,
+            ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
         .build();
@@ -450,8 +457,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .toStore(DatastoreConstants.APPLICATION_STORE)
             .withName(CHUNK_TO_APP)
             .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                DatastoreConstants.APPLICATION__DUMP_NAME)
+                DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
