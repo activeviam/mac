@@ -123,10 +123,10 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * Returns the {@link IRecordFormat} of the Branch store.
    *
    * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#BRANCH_STORE} record format
+   * @return the {@link DatastoreConstants#VERSION_STORE} record format
    */
-  protected static IRecordFormat getBranchStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
-    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.BRANCH_STORE);
+  protected static IRecordFormat getVersionStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
+    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.VERSION_STORE);
   }
 
   /**

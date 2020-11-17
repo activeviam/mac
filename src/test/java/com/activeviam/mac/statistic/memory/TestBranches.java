@@ -182,9 +182,9 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Set<String> retrieveBranches() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.BRANCH_STORE)
+        .forStore(DatastoreConstants.VERSION_STORE)
         .withoutCondition()
-        .selecting(DatastoreConstants.BRANCH__NAME)
+        .selecting(DatastoreConstants.VERSION__BRANCH_NAME)
         .onCurrentThread()
         .run();
 
@@ -195,9 +195,9 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Multimap<String, Long> retrieveEpochsPerBranch() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.BRANCH_STORE)
+        .forStore(DatastoreConstants.VERSION_STORE)
         .withoutCondition()
-        .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)
+        .selecting(DatastoreConstants.VERSION__BRANCH_NAME, DatastoreConstants.VERSION__EPOCH_ID)
         .onCurrentThread()
         .run();
 
@@ -248,9 +248,9 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Map<Long, String> retrieveEpochToBranchMapping() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.BRANCH_STORE)
+        .forStore(DatastoreConstants.VERSION_STORE)
         .withoutCondition()
-        .selecting(DatastoreConstants.BRANCH__NAME, DatastoreConstants.BRANCH__EPOCH_ID)
+        .selecting(DatastoreConstants.VERSION__BRANCH_NAME, DatastoreConstants.VERSION__EPOCH_ID)
         .onCurrentThread()
         .run();
 

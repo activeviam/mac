@@ -32,14 +32,14 @@ public class DatastoreCalculations {
       final ISchemaDictionaryProvider dictionaries) {
 
     final IDictionary<Object> epochDictionary = dictionaries.getDictionary(
-        DatastoreConstants.BRANCH_STORE,
+        DatastoreConstants.VERSION_STORE,
         DatastoreConstants.VERSION__EPOCH_ID);
 
     final DistinctAcceptor acceptor = new DistinctAcceptor(epochDictionary);
     final ICompletionSync epochsCursor = transaction.getQueryRunner().forQuery(
-        new RecordQuery(DatastoreConstants.BRANCH_STORE,
+        new RecordQuery(DatastoreConstants.VERSION_STORE,
             BaseConditions.TRUE,
-            DatastoreConstants.BRANCH__EPOCH_ID))
+            DatastoreConstants.VERSION__EPOCH_ID))
         .withAcceptor(acceptor)
         .run();
     epochsCursor.awaitCompletion();
@@ -52,12 +52,8 @@ public class DatastoreCalculations {
             DatastoreConstants.VERSION__EPOCH_ID,
             DatastoreSchemaDescriptionUtil.createPath(
                 MemoryAnalysisDatastoreDescription.CHUNK_TO_BRANCH,
-                DatastoreConstants.BRANCH__NAME)))
+                DatastoreConstants.VERSION__BRANCH_NAME)))
         .run();
-
-    transaction.getQueryRunner().forStore().withoutCondition()
-        .selecting()
-        .
 
     return;
   }

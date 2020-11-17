@@ -34,6 +34,7 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
+import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
@@ -163,11 +164,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
-    return StartBuilding.managerDescription()
-        .withSchema("MemorySchema")
-        .withSelection(memorySelection())
-        .withCube(memoryCube())
-        .build();
+    return ActivePivotManagerBuilder.postProcess(
+        StartBuilding.managerDescription()
+            .withSchema("MemorySchema")
+            .withSelection(memorySelection())
+            .withCube(memoryCube())
+            .build(), userSchemaDescription());
   }
 
   @Override
@@ -277,20 +279,38 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
         .withDimension(VERSION_DIMENSION)
-        .withHierarchy(BRANCH_HIERARCHY)
-        .slicing()
-        .withLevel(BRANCH_HIERARCHY)
-        .withPropertyName(DatastoreConstants.BRANCH__NAME)
-        .withFirstObjects("master")
+        //        .withHierarchy(BRANCH_HIERARCHY)
+        //        .slicing()
+        //        .withLevel(BRANCH_HIERARCHY)
+        //        .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
+        //        .withFirstObjects("master")
 
         .withHierarchy(EPOCH_ID_HIERARCHY)
-        .slicing()
+        //        .slicing()
         .withLevel(EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withComparator(ReverseOrderComparator.type)
 
+        //        .withHierarchy("View EpochId")
+        //        .slicing()
+        //        .withLevel("View EpochId")
+        //        .withPropertyName("viewEpochId")
+        //        .withComparator(ReverseOrderComparator.type)
+
         .withSingleLevelHierarchy("Used by Version")
-        .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION);
+        .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
+
+        //        .withDimension(OWNER_DIMENSION)
+        //        .withSingleLevelHierarchy(OWNER_HIERARCHY)
+        //        .withPropertyName(DatastoreConstants.OWNER__OWNER)
+        //        .withSingleLevelHierarchy(COMPONENT_HIERARCHY)
+        //        .withPropertyName(DatastoreConstants.OWNER__COMPONENT)
+        //
+        //        .withDimension(FIELD_DIMENSION)
+        //        .withSingleLevelHierarchy(FIELD_HIERARCHY)
+        //        .withPropertyName(DatastoreConstants.OWNER__FIELD)
+
+        ;
   }
 
   private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
@@ -386,6 +406,58 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // Define Copper Joins
 
     // --------------------
+    // 4- Chunk to owners
+
+    CopperStore epochViewStore =
+        Copper.store("EpochView")
+            .joinToCube()
+//            .withMapping("owner", OWNER_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+            .withMapping("baseEpochId", EPOCH_ID_HIERARCHY);
+
+    CopperHierarchy ownerHierarchy =
+        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
+            .from(epochViewStore.field("owner"))
+            .publish(context);
+
+    CopperStore chunkToOwnerStore =
+        Copper.store(DatastoreConstants.OWNER_STORE)
+            .joinToCube()
+            .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
+            .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
+
+//    CopperHierarchy ownerHierarchy =
+//        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
+//            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
+//            .withMembers("EpochView", "owner")
+//            .publish(context);
+
+    CopperHierarchy componentHierarchy =
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
+            .publish(context);
+
+    CopperHierarchy fieldHierarchy =
+        Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
+            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
+            .publish(context);
+
+
+    Copper.newSingleLevelHierarchy("Versions", "View EpochId", "View EpochId")
+        .from(epochViewStore.field("viewEpochId"))
+        .slicing()
+        .withComparator(ReverseOrderComparator.type)
+        .publish(context);
+
+    Copper.newSingleLevelHierarchy("Versions", "Branch", "Branch")
+        .from(epochViewStore.field("ChunkToBranch/branch"))
+        .slicing()
+        .withFirstObjects("master")
+        .publish(context);
+
+    // --------------------
     // 1- Chunk to Dicos
     CopperStore chunkToDicoStore =
         Copper.store(DatastoreConstants.DICTIONARY_STORE)
@@ -425,32 +497,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
         .publish(context);
 
-    // --------------------
-    // 4- Chunk to owners
-    CopperStore chunkToOwnerStore =
-        Copper.store(DatastoreConstants.OWNER_STORE)
-            .joinToCube()
-            .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-    CopperHierarchy ownerHierarchy =
-        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
-            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
-            .publish(context);
-
-    CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
-            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
-            .publish(context);
-
-    CopperHierarchy fieldHierarchy =
-        Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
-            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
-            .publish(context);
-
     Copper.sum(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .divide(Copper.count())
-        .per(fieldHierarchy.level(FIELD_HIERARCHY))
+        .per(Copper.level(FIELD_HIERARCHY))
         .sum()
         .map(Number::longValue)
         .as("Dictionary Size")

@@ -165,15 +165,15 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  static Object[] buildBranchTupleFrom(
+  static Object[] buildVersionTupleFrom(
       final IRecordFormat format, final IMemoryStatistic statistic,
       final String dumpName, final long epochId, final String branch) {
     final Object[] tuple = new Object[format.getFieldCount()];
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__DUMP_NAME,
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__DUMP_NAME,
         dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__EPOCH_ID,
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID,
         epochId);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__NAME,
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__BRANCH_NAME,
         branch);
     return tuple;
   }
@@ -185,14 +185,16 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
       case MemoryStatisticConstants.STAT_NAME_STORE:
         final DatastoreFeederVisitor visitor =
-            new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
+            new DatastoreFeederVisitor(
+                this.storageMetadata, this.transaction, this.dumpName);
         visitor.startFrom(stat);
         break;
       case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
       case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
       case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
         final PivotFeederVisitor feed =
-            new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
+            new PivotFeederVisitor(
+                this.storageMetadata, this.transaction, this.dumpName);
         feed.startFrom(stat);
         break;
       default:

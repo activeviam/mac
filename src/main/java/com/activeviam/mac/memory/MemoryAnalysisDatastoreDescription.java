@@ -146,6 +146,20 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
+  protected IStoreDescription epochViewStore() {
+    return StartBuilding.store()
+        .withStoreName("EpochView")
+        .withField("owner", ILiteralType.OBJECT)
+        .asKeyField()
+        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
+        .asKeyField()
+        .withField("baseEpochId", ILiteralType.LONG)
+        .asKeyField()
+        .withField("viewEpochId", ILiteralType.LONG)
+        .asKeyField()
+        .build();
+  }
+
   /**
    * Description of the owner store.
    *
@@ -306,18 +320,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#BRANCH_STORE}.
+   * Returns the description of {@link DatastoreConstants#VERSION_STORE}.
    *
-   * @return description of {@link DatastoreConstants#BRANCH_STORE}
+   * @return description of {@link DatastoreConstants#VERSION_STORE}
    */
-  protected IStoreDescription branchStore() {
+  protected IStoreDescription versionStore() {
     return StartBuilding.store()
-        .withStoreName(DatastoreConstants.BRANCH_STORE)
-        .withField(DatastoreConstants.BRANCH__DUMP_NAME, ILiteralType.STRING)
+        .withStoreName(DatastoreConstants.VERSION_STORE)
+        .withField(DatastoreConstants.VERSION__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
-        .withField(DatastoreConstants.BRANCH__EPOCH_ID, ILiteralType.LONG)
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField(DatastoreConstants.BRANCH__NAME, ILiteralType.STRING)
+        .withField(DatastoreConstants.VERSION__BRANCH_NAME, ILiteralType.STRING)
         .build();
   }
 
@@ -418,7 +432,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        branchStore(),
+        epochViewStore(),
+        versionStore(),
         applicationStore());
   }
 
@@ -454,12 +469,21 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
                 DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_STORE)
-            .toStore(DatastoreConstants.BRANCH_STORE)
+            .fromStore("EpochView")
+            .toStore(DatastoreConstants.VERSION_STORE)
             .withName(CHUNK_TO_BRANCH)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.BRANCH__DUMP_NAME)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.BRANCH__EPOCH_ID)
-            .build());
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__DUMP_NAME)
+            .withMapping("viewEpochId", DatastoreConstants.VERSION__EPOCH_ID)
+            .build()/*,
+        StartBuilding.reference()
+            .fromStore(DatastoreConstants.OWNER_STORE)
+            .toStore("EpochView")
+            .withName("OwnerToEpochView")
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
+            .withMapping(DatastoreConstants.OWNER__OWNER, "owner")
+            //            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, "baseEpochId")
+            //            .dontIndexOwner()
+            .build()*/);
   }
 
   private Stream<IReferenceDescription> getPivotAndProviderReferences() {

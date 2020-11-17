@@ -341,10 +341,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     readEpochAndBranchIfAny(stat);
 
     if (readEpochAndBranchIfAny(stat)) {
-      final IRecordFormat branchStoreFormat = getBranchStoreFormat(this.storageMetadata);
+      final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
       final Object[] tuple = FeedVisitor
-          .buildBranchTupleFrom(branchStoreFormat, stat, this.dumpName, this.epochId, this.branch);
-      FeedVisitor.add(stat, this.transaction, DatastoreConstants.BRANCH_STORE, tuple);
+          .buildVersionTupleFrom(versionStoreFormat, stat, this.dumpName, this.epochId,
+              this.branch);
+      FeedVisitor.add(stat, this.transaction, DatastoreConstants.VERSION_STORE, tuple);
     }
 
     final IStatisticAttribute idAttr =
