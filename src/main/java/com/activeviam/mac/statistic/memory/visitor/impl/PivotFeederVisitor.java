@@ -201,12 +201,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkStatistic stat) {
 
-    //    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    //    final Object[] ownerTuple =
-    //        FeedVisitor
-    //            .buildOwnerTupleFrom(ownerFormat, stat, this.owner, this.dumpName, this.rootComponent);
-    //    FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -451,14 +445,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.directParentId = previousParentId;
     this.rootComponent = null;
 
-    // Maybe instead explicitly visit specific children: Dico, Members
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.LEVEL__MEMBER_COUNT, levelVisitor.memberCount);
-    //		if (!this.hierarchy.equals(IMeasureHierarchy.MEASURE_HIERARCHY) &&
-    // !this.level.equals(ILevelInfo.ClassificationType.ALL.name())) {
-    //			FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DICTIONARY_ID,
-    // levelVisitor.dictionaryId);
-    //		}
 
     this.transaction.add(DatastoreConstants.LEVEL_STORE, tuple);
 

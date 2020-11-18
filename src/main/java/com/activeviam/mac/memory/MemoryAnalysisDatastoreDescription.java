@@ -42,10 +42,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
   /** Name of the chunk -> application linking store. */
-  public static final String CHUNK_TO_APP = "ChunkToApp";
+  public static final String CHUNK_TO_APP = "chunkToApp";
 
   /** Name of the chunk -> branch reference. */
-  public static final String CHUNK_TO_BRANCH = "ChunkToBranch";
+  public static final String EPOCH_VIEW_TO_VERSION = "epochViewToVersion";
 
   /** Default value for component-specific ids. */
   public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
@@ -154,39 +154,15 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
   protected IStoreDescription epochViewStore() {
     return StartBuilding.store()
-        .withStoreName("EpochView")
-        .withField("owner", ILiteralType.OBJECT)
+        .withStoreName(DatastoreConstants.EPOCH_VIEW_STORE)
+        .withField(DatastoreConstants.EPOCH_VIEW__OWNER, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .withField("baseEpochId", ILiteralType.LONG)
+        .withField(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField("viewEpochId", ILiteralType.LONG)
+        .withField(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-        .build();
-  }
-
-  /**
-   * Description of the owner store.
-   *
-   * @return description of {@link DatastoreConstants#OWNER_STORE}
-   */
-  protected IStoreDescription ownerStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.OWNER_STORE)
-        .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME)
-        .asKeyField()
-        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
-        .asKeyField()
-
-        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
-
-        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.OWNER__CHUNK_ID,
-            DatastoreConstants.CHUNK__DUMP_NAME)
         .build();
   }
 
@@ -429,7 +405,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
-//        ownerStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),
@@ -475,21 +450,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
                 DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         StartBuilding.reference()
-            .fromStore("EpochView")
+            .fromStore(DatastoreConstants.EPOCH_VIEW_STORE)
             .toStore(DatastoreConstants.VERSION_STORE)
-            .withName(CHUNK_TO_BRANCH)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__DUMP_NAME)
-            .withMapping("viewEpochId", DatastoreConstants.VERSION__EPOCH_ID)
-            .build()/*,
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.OWNER_STORE)
-            .toStore("EpochView")
-            .withName("OwnerToEpochView")
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK__DUMP_NAME)
-            .withMapping(DatastoreConstants.OWNER__OWNER, "owner")
-            //            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, "baseEpochId")
-            //            .dontIndexOwner()
-            .build()*/);
+            .withName(EPOCH_VIEW_TO_VERSION)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME,
+                DatastoreConstants.VERSION__DUMP_NAME)
+            .withMapping(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID,
+                DatastoreConstants.VERSION__EPOCH_ID)
+            .build());
   }
 
   private Stream<IReferenceDescription> getPivotAndProviderReferences() {

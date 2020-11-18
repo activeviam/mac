@@ -147,13 +147,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
           : UsedByVersion.FALSE;
     }
 
-    //    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    //    final Object[] ownerTuple =
-    //        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, this.owner, this.dumpName,
-    //            this.rootComponent);
-    //    FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
-    //        ownerFormat, ownerTuple);
-
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
       FeedVisitor.setTupleElement(
@@ -198,11 +191,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(chunkStatistic);
     }
-    // Set the chunk data to be added to the Chunk store
-//    FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
-    FeedVisitor
-        .writeChunkTupleForFields(chunkStatistic, transaction, this.fields, chunkRecordFormat,
-            tuple);
+
+    FeedVisitor.writeChunkTupleForFields(
+        chunkStatistic, transaction, this.fields, chunkRecordFormat, tuple);
 
     visitChildren(chunkStatistic);
 

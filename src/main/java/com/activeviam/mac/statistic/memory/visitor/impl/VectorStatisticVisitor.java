@@ -176,13 +176,6 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   protected void visitVectorBlock(final ChunkStatistic statistic) {
     assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
-//    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-//    final Object[] ownerTuple =
-//        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, this.owner, this.dumpName,
-//            ParentType.VECTOR_BLOCK);
-//    FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
-//        ownerTuple);
-
     final IRecordFormat format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
@@ -214,10 +207,8 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
           StatisticTreePrinter.getTreeAsString(statistic);
     }
     // Set the chunk data to be added to the Chunk store
-//    FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
-    FeedVisitor
-        .writeChunkTupleForFields(statistic, transaction, this.fields, chunkRecordFormat,
-            tuple);
+    FeedVisitor.writeChunkTupleForFields(statistic, transaction, this.fields, chunkRecordFormat,
+        tuple);
 
     visitChildren(statistic);
   }

@@ -10,9 +10,9 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
+import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperMeasureToAggregateAbove;
 import com.activeviam.copper.api.CopperStore;
-import com.activeviam.copper.api.CopperStoreField;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -30,6 +30,7 @@ import com.qfs.literal.ILiteralType;
 import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
+import com.qfs.store.query.IQuery;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
@@ -65,6 +66,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Measure of the summed off-heap memory footprint. */
   public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
 
+  public static final String DIRECT_MEMORY_RATIO = "DirectMemory.Ratio";
+
+  public static final String CHUNK_COUNT = "Chunks.COUNT";
+
   /**
    * Measure of the summed on-heap memory footprint.
    *
@@ -96,24 +101,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   /** Name of the component dimension. */
   public static final String COMPONENT_DIMENSION = "Components";
-  /** Name of the component analysis hierarchy. */
-  public static final String COMPONENT_HIERARCHY = "Component";
   /** Name of the component dimension. */
   public static final String OWNER_DIMENSION = "Owners";
-  /** Name of the component analysis hierarchy. */
-  public static final String OWNER_HIERARCHY = "Owner";
   /** Name of the field dimension. */
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the index dimension. */
   public static final String INDEX_DIMENSION = "Indices";
   /** Name of the version dimension. */
   public static final String VERSION_DIMENSION = "Versions";
-  /** Name of the branch level. */
-  public static final String BRANCH_HIERARCHY = "Branch";
-  /** Name of the epoch id level. */
-  public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
-  /** Name of the epoch id level. */
-  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+  public static final String AGGREGATE_PROVIDER_DIMENSION = "Aggregate Provider";
+  public static final String PARTITION_DIMENSION = "Partitions";
+  public static final String USED_BY_VERSION_DIMENSION = "Used by Version";
 
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
@@ -124,14 +122,30 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
 
+  public static final String USED_MEMORY_RATIO = "UsedMemory.Ratio";
+  public static final String MAX_MEMORY_RATIO = "MaxMemory.Ratio";
+
+  public static final String DICTIONARY_SIZE = "Dictionary Size";
+
+  public static final String VECTOR_BLOCK_REFCOUNT = "VectorBlock.RefCount";
+  public static final String VECTOR_BLOCK_SIZE = "VectorBlock.Length";
+
   /** Measure of the size of Chunks (in Bytes). */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
 
   /** Measure of the the non written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
 
+  public static final String NON_WRITTEN_ROWS_RATIO = "NonWrittenRows.Ratio";
+
   /** Measure of the deleted rows in Chunks. */
   public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
+
+  public static final String DELETED_ROWS_RATIO = "DeletedRows.Ratio";
+
+  public static final String COMITTED_ROWS = "CommittedRows";
+  public static final String COMITTED_CHUNK = "ComittedChunk";
+  public static final String COMMITTED_MEMORY_RATIO = "CommittedMemory.Ratio";
 
   /** Formatter for Numbers. */
   public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
@@ -142,7 +156,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
   /** The name of the hierarchy of indexed fields. */
   public static final String INDEX_TYPE_HIERARCHY = "Index Type";
-  /** Name of the field analysis hierarchy. */
+  /** Name of the owner hierarchy. */
+  public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the component hierarchy. */
+  public static final String COMPONENT_HIERARCHY = "Component";
+  /** Name of the field hierarchy. */
   public static final String FIELD_HIERARCHY = "Field";
   /** The name of the hierarchy of reference names. */
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
@@ -160,6 +178,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
   /** The name of the hierarchy of partitions. */
   public static final String PARTITION_HIERARCHY = "Partition";
+  /** Name of the branch hierarchy. */
+  public static final String BRANCH_HIERARCHY = "Branch";
+  /** Name of the internal epoch id hierarchy. */
+  public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
+  /** Name of the epoch id hierarchy. */
+  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+  public static final String DATE_HIERARCHY = "Date";
 
   /** The name of the folder for measures related to chunk ownership. */
   public static final String OWNERSHIP_FOLDER = "Ownership";
@@ -249,11 +274,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
         .withHierarchy(CHUNK_CLASS_LEVEL)
         .withLevelOfSameName()
-        .withPropertyName(
-            prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
+        .withPropertyName(prefixField(DatastoreConstants.CHUNK_STORE,
+            DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "Class of the chunks")
-        .withDimension("Partitions")
+        .withDimension(PARTITION_DIMENSION)
         .withSingleLevelHierarchy(PARTITION_HIERARCHY)
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
@@ -263,13 +288,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
         .withComparator(ReverseOrderComparator.type)
-        .withHierarchy("Date")
+        .withHierarchy(DATE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.APPLICATION__DATE)
         .withType(ILevelInfo.LevelType.TIME)
         .withComparator(ReverseOrderComparator.type)
         .withProperty("description", "Date at which statistics were retrieved")
-        .withDimension("Aggregate Provider")
+        .withDimension(AGGREGATE_PROVIDER_DIMENSION)
         .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
@@ -287,26 +312,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
 
         .withDimension(VERSION_DIMENSION)
-        //        .withHierarchy(BRANCH_HIERARCHY)
-        //        .slicing()
-        //        .withLevel(BRANCH_HIERARCHY)
-        //        .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
-        //        .withFirstObjects("master")
-
         .withHierarchy(INTERNAL_EPOCH_ID_HIERARCHY)
-        //        .slicing()
         .hidden()
         .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
-        //        .withComparator(ReverseOrderComparator.type)
 
-        //        .withHierarchy("View EpochId")
-        //        .slicing()
-        //        .withLevel("View EpochId")
-        //        .withPropertyName("viewEpochId")
-        //        .withComparator(ReverseOrderComparator.type)
-
-        .withSingleLevelHierarchy("Used by Version")
+        .withSingleLevelHierarchy(USED_BY_VERSION_DIMENSION)
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
 
         .withDimension(OWNER_DIMENSION)
@@ -414,58 +425,32 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     // Define Copper Joins
 
     // --------------------
-    // 4- Chunk to owners
+    // Epoch view store
 
     CopperStore epochViewStore =
-        Copper.store("EpochView")
+        Copper.store(DatastoreConstants.EPOCH_VIEW_STORE)
             .joinToCube()
-            //            .withMapping("owner", OWNER_HIERARCHY)
+            .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping("baseEpochId", INTERNAL_EPOCH_ID_HIERARCHY);
-
-    //    CopperHierarchy ownerHierarchy =
-    //        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
-    //            .from(epochViewStore.field("owner"))
-    //            .publish(context);
-
-    //    CopperStore chunkToOwnerStore =
-    //        Copper.store(DatastoreConstants.OWNER_STORE)
-    //            .joinToCube()
-    //            .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
-    //            .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
-    //            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
-
-    //    CopperHierarchy ownerHierarchy =
-    //        Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
-    //            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
-    //            .withMembers("EpochView", "owner")
-    //            .publish(context);
-
-    //    CopperHierarchy componentHierarchy =
-    //        Copper
-    //            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
-    //            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
-    //            .publish(context);
-    //
-    //    CopperHierarchy fieldHierarchy =
-    //        Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
-    //            .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
-    //            .publish(context);
+            .withMapping(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
-        .from(epochViewStore.field("viewEpochId"))
+        .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
         .slicing()
         .withComparator(ReverseOrderComparator.type)
         .publish(context);
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, BRANCH_HIERARCHY, BRANCH_HIERARCHY)
-        .from(epochViewStore.field("ChunkToBranch/branch"))
+        .from(epochViewStore.field(
+            MemoryAnalysisDatastoreDescription.EPOCH_VIEW_TO_VERSION
+                + IQuery.PATH_SEPARATOR
+                + DatastoreConstants.VERSION__BRANCH_NAME))
         .slicing()
         .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
         .publish(context);
 
     // --------------------
-    // 1- Chunk to Dicos
+    // Dictionary store
     chunkToDicoStore = Copper.store(DatastoreConstants.DICTIONARY_STORE)
         .joinToCube()
         .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
@@ -473,7 +458,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     // --------------------
-    // 2- Chunk to references
+    // Reference store
     CopperStore chunkToReferenceStore =
         Copper.store(DatastoreConstants.REFERENCE_STORE)
             .joinToCube()
@@ -481,13 +466,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
-    // Reference name
     Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
         .from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
         .publish(context);
 
     // --------------------
-    // 3- Chunk to indexes
+    // Index store
     CopperStore chunkToIndexStore =
         Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
@@ -511,18 +495,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             Copper.level(CHUNK_DUMP_NAME_LEVEL));
   }
 
-  private CopperMeasureToAggregateAbove perChunkAggregation(final CopperStoreField field) {
-    return Copper.agg(field, SingleValueFunction.PLUGIN_KEY)
-        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
-            Copper.level(CHUNK_DUMP_NAME_LEVEL));
-  }
-
   private void chunkMeasures(final ICopperContext context) {
     Copper.constant(1L)
         .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
             Copper.level(CHUNK_DUMP_NAME_LEVEL))
         .sum()
-        .as("Chunks.COUNT")
+        .as(CHUNK_COUNT)
         .publish(context);
 
     Copper.max(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
@@ -532,12 +510,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .filter(Copper.level(COMPONENT_HIERARCHY).eq(ParentType.DICTIONARY))
         .per(Copper.level(FIELD_HIERARCHY))
         .sum()
-        .map(Number::longValue)
-        .as("Dictionary Size")
+        .as(DICTIONARY_SIZE)
         .withFormatter(NUMBER_FORMATTER)
         .publish(context);
 
-    final var directMemory =
+    final CopperMeasure directMemory =
         perChunkAggregation(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
             .sum()
             .as(DIRECT_MEMORY_SUM)
@@ -550,18 +527,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(ByteFormatter.KEY)
         .publish(context);
 
-    final var chunkSize =
+    final CopperMeasure chunkSize =
         perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
             .sum()
             .as(CHUNK_SIZE_SUM)
             .withFormatter(ByteFormatter.KEY)
             .publish(context);
 
-    perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
-        .sum()
-        .as(NON_WRITTEN_ROWS_COUNT)
-        .withFormatter(NUMBER_FORMATTER)
-        .publish(context);
+    final CopperMeasure nonWrittenRowsCount =
+        perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
+            .sum()
+            .as(NON_WRITTEN_ROWS_COUNT)
+            .withFormatter(NUMBER_FORMATTER)
+            .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__FREE_ROWS)
         .sum()
@@ -570,40 +548,36 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withType(ILiteralType.DOUBLE)
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
-        .as("DeletedRows.Ratio")
+        .as(DELETED_ROWS_RATIO)
         .publish(context);
 
-    perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
-        .sum()
-        .withFormatter(NUMBER_FORMATTER)
-        .as(NON_WRITTEN_ROWS_COUNT)
+    nonWrittenRowsCount
         .withType(ILiteralType.DOUBLE)
-        .as("0") // FIXME: workaround
+        .as("0") // FIXME: workaround PIVOT-4458
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
-        .as("NonWrittenRows.Ratio")
+        .as(NON_WRITTEN_ROWS_RATIO)
         .publish(context);
 
-    chunkSize
-        .minus(perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
-            .sum())
+    final CopperMeasure committedRows = chunkSize
+        .minus(nonWrittenRowsCount)
         .withFormatter(NUMBER_FORMATTER)
         .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
-        .as("CommittedRows")
+        .as(COMITTED_ROWS)
         .publish(context);
 
-    Copper.measure("CommittedRows")
+    committedRows
         .divide(chunkSize)
         .multiply(directMemory)
         .withType(ILiteralType.LONG)
         .withFormatter(ByteFormatter.KEY)
-        .as("CommittedChunk")
+        .as(COMITTED_CHUNK)
         .publish(context);
 
-    Copper.measure("CommittedRows")
+    committedRows
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
-        .as("CommittedMemory.Ratio")
+        .as(COMMITTED_MEMORY_RATIO)
         .publish(context);
 
     directMemory
@@ -611,7 +585,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("1") // FIXME: workaround
         .divide(directMemory.grandTotal())
         .withFormatter(PERCENT_FORMATTER)
-        .as("DirectMemory.Ratio")
+        .as(DIRECT_MEMORY_RATIO)
         .publish(context);
 
     directMemory
@@ -619,7 +593,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("2") // FIXME: workaround
         .divide(Copper.measure(USED_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
-        .as("UsedMemory.Ratio")
+        .as(USED_MEMORY_RATIO)
         .publish(context);
 
     directMemory
@@ -627,21 +601,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as("3") // FIXME: workaround
         .divide(Copper.measure(MAX_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
-        .as("MaxMemory.Ratio")
+        .as(MAX_MEMORY_RATIO)
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
         .sum()
         .per(Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
-        .as("VectorBlock.RefCount")
+        .as(VECTOR_BLOCK_REFCOUNT)
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
         .sum()
         .per(Copper.level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
-        .as("VectorBlock.Length")
+        .as(VECTOR_BLOCK_SIZE)
         .publish(context);
   }
 

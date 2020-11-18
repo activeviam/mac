@@ -216,12 +216,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      //      final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-      //      final Object[] ownerTuple = FeedVisitor.buildOwnerTupleFrom(
-      //          ownerFormat, chunkStatistic, this.owner, this.dumpName, this.rootComponent);
-      //      FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
-      //          ownerFormat, ownerTuple);
-
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
@@ -274,10 +268,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }
       // Set the chunk data to be added to the Chunk store
-      //      FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
-      FeedVisitor
-          .writeChunkTupleForFields(chunkStatistic, transaction, fields, format,
-              tuple);
+      FeedVisitor.writeChunkTupleForFields(chunkStatistic, transaction, fields, format, tuple);
 
       visitChildren(chunkStatistic);
 
