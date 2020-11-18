@@ -85,7 +85,7 @@ public class TestMemoryStatisticLoadingWithReverseOrder extends ATestMemoryStati
 
 	protected Set<Long> extractVectorBlocks(final IDatastore monitoringDatastore) {
 		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
-				.forStore(DatastoreConstants.OWNER_STORE)
+				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(
 						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.VECTOR_BLOCK))
 				.selecting(DatastoreConstants.CHUNK_ID)

@@ -176,12 +176,12 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   protected void visitVectorBlock(final ChunkStatistic statistic) {
     assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
-    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, this.owner, this.dumpName,
-            ParentType.VECTOR_BLOCK);
-    FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
-        ownerTuple);
+//    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
+//    final Object[] ownerTuple =
+//        FeedVisitor.buildOwnerTupleFrom(ownerFormat, statistic, this.owner, this.dumpName,
+//            ParentType.VECTOR_BLOCK);
+//    FeedVisitor.writeOwnerTupleRecordsForFields(statistic, transaction, this.fields, ownerFormat,
+//        ownerTuple);
 
     final IRecordFormat format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
@@ -189,12 +189,16 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.VECTOR_BLOCK);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__PARENT_ID, "None");
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.OWNER__COMPONENT, ParentType.VECTOR_BLOCK);
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__USED_BY_VERSION, this.usedByVersion);
+        tuple, format, DatastoreConstants.CHUNK__USED_BY_VERSION, this.usedByVersion);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PARTITION_ID, this.partitionId);
@@ -210,7 +214,10 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
           StatisticTreePrinter.getTreeAsString(statistic);
     }
     // Set the chunk data to be added to the Chunk store
-    FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+//    FeedVisitor.add(statistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+    FeedVisitor
+        .writeChunkTupleForFields(statistic, transaction, this.fields, chunkRecordFormat,
+            tuple);
 
     visitChildren(statistic);
   }

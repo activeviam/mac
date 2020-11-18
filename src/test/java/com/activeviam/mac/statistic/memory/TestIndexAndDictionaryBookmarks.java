@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
@@ -93,8 +93,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 						.buildAndStart();
 		monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-		monitoringDatastore.edit(
-				tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+		final MemoryStatisticDatastoreFeeder feeder =
+				new MemoryStatisticDatastoreFeeder(data, "storeA");
+		monitoringDatastore.edit(feeder::feedDatastore);
 	}
 
 	@After

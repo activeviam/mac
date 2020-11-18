@@ -11,9 +11,7 @@ import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -97,19 +95,19 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  static Object[] buildOwnerTupleFrom(
-      final IRecordFormat format,
-      final ChunkStatistic stat,
-      final ChunkOwner owner,
-      final String dumpName,
-      final ParentType component) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__COMPONENT)] = component;
-    return tuple;
-  }
+//  static Object[] buildOwnerTupleFrom(
+//      final IRecordFormat format,
+//      final ChunkStatistic stat,
+//      final ChunkOwner owner,
+//      final String dumpName,
+//      final ParentType component) {
+//    final Object[] tuple = new Object[format.getFieldCount()];
+//    tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
+//    tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
+//    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+//    tuple[format.getFieldIndex(DatastoreConstants.OWNER__COMPONENT)] = component;
+//    return tuple;
+//  }
 
   /**
    * Writes a record into the {@link DatastoreConstants#OWNER__FIELD} for each given field using the
@@ -123,17 +121,30 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    * @param format the format of the tuple
    * @param tuple the base tuple to write records with
    */
-  static void writeOwnerTupleRecordsForFields(
+  //  static void writeOwnerTupleRecordsForFields(
+  //      final ChunkStatistic statistic, final IOpenedTransaction transaction,
+  //      final Collection<String> fields, final IRecordFormat format, final Object... tuple) {
+  //    if (fields == null || fields.isEmpty()) {
+  //      FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+  //    } else {
+  //      fields.forEach(field -> {
+  //            FeedVisitor
+  //                .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
+  //            FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+  //          });
+  //    }
+  //  }
+  static void writeChunkTupleForFields(
       final ChunkStatistic statistic, final IOpenedTransaction transaction,
       final Collection<String> fields, final IRecordFormat format, final Object... tuple) {
     if (fields == null || fields.isEmpty()) {
-      FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+      FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
     } else {
       fields.forEach(field -> {
-            FeedVisitor
-                .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
-            FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
-          });
+        FeedVisitor
+            .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
+        FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
+      });
     }
   }
 

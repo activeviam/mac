@@ -12,17 +12,16 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.OWNER_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
+import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -1160,13 +1159,9 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-    monitoringDatastore.edit(
-        tm -> {
-          statistics.forEach(
-              stat -> {
-                stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
-              });
-        });
+    final MemoryStatisticDatastoreFeeder feeder =
+        new MemoryStatisticDatastoreFeeder(statistics, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
 
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
 
@@ -1220,10 +1215,10 @@ public abstract class ATestMemoryStatistic {
     final Set<Long> chunkStoreChunks =
         retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID, BaseConditions.TRUE);
     final Set<Long> ownerStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+        retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID,
             BaseConditions.Not(BaseConditions.Equal(OWNER__OWNER, NoOwner.getInstance())));
     final Set<Long> componentStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+        retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID,
             BaseConditions.Not(BaseConditions.Equal(OWNER__COMPONENT, ParentType.NO_COMPONENT)));
 
     Assertions.assertThat(ownerStoreChunks)

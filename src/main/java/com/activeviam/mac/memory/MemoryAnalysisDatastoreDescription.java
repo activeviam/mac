@@ -106,6 +106,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
+        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
+        .asKeyField()
+        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
+        .asKeyField()
 
         /* Foreign keys */
         .withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
@@ -170,9 +176,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withStoreName(DatastoreConstants.OWNER_STORE)
         .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
-        .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
+        .asKeyField()
+        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
         .asKeyField()
@@ -423,7 +429,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
-        ownerStore(),
+//        ownerStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),

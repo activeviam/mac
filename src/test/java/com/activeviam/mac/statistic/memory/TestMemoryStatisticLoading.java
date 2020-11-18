@@ -104,7 +104,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
         datastore
             .getHead()
             .getQueryRunner()
-            .forStore(DatastoreConstants.OWNER_STORE)
+            .forStore(DatastoreConstants.CHUNK_STORE)
             .withCondition(
                 BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
             .selecting(DatastoreConstants.CHUNK_ID)

@@ -9,10 +9,7 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.statistic.memory.visitor.impl.EpochVisitor;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
-import com.google.common.collect.SortedSetMultimap;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.msg.csv.ICsvDataProvider;
@@ -23,7 +20,6 @@ import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
 import com.qfs.store.impl.Datastore;
 import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
-import gnu.trove.set.TLongSet;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -36,7 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -210,55 +205,11 @@ public class SourceConfig {
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
     final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
-    final EpochVisitor epochVisitor = new EpochVisitor();
-    statistics.forEach(statistic -> {
-      statistic.accept(epochVisitor);
-    });
-    final TLongSet datastoreEpochs = epochVisitor.getDatastoreEpochs();
-    final SortedSetMultimap<ChunkOwner, Long> epochsPerOwner = epochVisitor.getEpochsPerOwner();
+    final MemoryStatisticDatastoreFeeder feeder =
+        new MemoryStatisticDatastoreFeeder(statistics, dumpName);
 
     final Optional<IDatastoreSchemaTransactionInformation> info =
-        this.datastore.edit(
-            tm -> {
-              statistics.forEach(
-                  stat -> {
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                      LOGGER.fine("Starting feed the application with " + stat);
-                    }
-
-                    stat.accept(
-                        new FeedVisitor(
-                            this.datastore.getSchemaMetadata(), tm, dumpName));
-
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                      LOGGER.fine("Application processed " + stat);
-                    }
-                  });
-
-              datastoreEpochs.forEach(epochId -> {
-                for (final ChunkOwner owner : epochsPerOwner.keySet()) {
-                  final SortedSet<Long> epochs = epochsPerOwner.get(owner);
-                  if (!epochs.contains(epochId)) {
-                    final SortedSet<Long> priorEpochs = epochs.headSet(epochId);
-                    if (!priorEpochs.isEmpty()) {
-                      final long baseEpoch = priorEpochs.last();
-                      LOGGER.info("owner:" + owner.toString()
-                          + ", baseEpoch:" + baseEpoch
-                          + ", viewEpoch:" + epochId);
-                      tm.add("EpochView", owner, dumpName, baseEpoch, epochId);
-                    }
-                  } else {
-                    // todo refactor
-                    tm.add("EpochView", owner, dumpName, epochId, epochId);
-                  }
-                }
-
-                return true;
-              });
-
-              //              DatastoreCalculations
-              //                  .replicateChunksForMissingEpochs(tm, datastore.getDictionaries());
-            });
+        this.datastore.edit(feeder::feedDatastore);
 
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";

@@ -229,7 +229,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 	protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
 			final Collection<Long> chunkIdSubset) {
 		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
-				.forStore(DatastoreConstants.OWNER_STORE)
+				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(BaseConditions.And(
 						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
 						BaseConditions.In(DatastoreConstants.OWNER__CHUNK_ID, chunkIdSubset.toArray())))
