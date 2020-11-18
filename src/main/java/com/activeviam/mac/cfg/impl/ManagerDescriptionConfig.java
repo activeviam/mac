@@ -32,6 +32,8 @@ import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.store.query.IQuery;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
+import com.quartetfs.biz.pivot.cube.dimension.IDimension;
+import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
@@ -191,7 +193,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
-
   private CopperStore chunkToDicoStore;
 
   @Bean
@@ -246,6 +247,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
         .withSharedMdxContext()
+
+        .withDefaultMember()
+        .onHierarchy(MdxNamingUtil.hierarchyUniqueName(
+            IDimension.MEASURES,
+            IHierarchy.MEASURES))
+        .withMemberPath(CHUNK_COUNT)
+
         .withCalculatedMembers(calculatedMembers())
         .end()
         .build();
@@ -426,7 +434,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // Epoch view store
-
     CopperStore epochViewStore =
         Copper.store(DatastoreConstants.EPOCH_VIEW_STORE)
             .joinToCube()
@@ -490,25 +497,29 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private CopperMeasureToAggregateAbove perChunkAggregation(final String fieldName) {
-    return Copper.agg(fieldName, SingleValueFunction.PLUGIN_KEY)
-        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
-            Copper.level(CHUNK_DUMP_NAME_LEVEL));
+    return perChunkAggregation(
+        Copper.agg(fieldName, SingleValueFunction.PLUGIN_KEY));
+  }
+
+  private CopperMeasureToAggregateAbove perChunkAggregation(final CopperMeasure measure) {
+    return measure.per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
+        Copper.level(CHUNK_DUMP_NAME_LEVEL));
   }
 
   private void chunkMeasures(final ICopperContext context) {
-    Copper.constant(1L)
-        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
-            Copper.level(CHUNK_DUMP_NAME_LEVEL))
+    perChunkAggregation(Copper.constant(1L))
         .sum()
         .as(CHUNK_COUNT)
         .publish(context);
 
     Copper.max(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
-        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
+        .filter(Copper.level(COMPONENT_HIERARCHY)
+            .eq(ParentType.DICTIONARY))
+        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(EPOCH_ID_HIERARCHY),
             Copper.level(CHUNK_DUMP_NAME_LEVEL))
         .custom(SingleValueFunction.PLUGIN_KEY)
-        .filter(Copper.level(COMPONENT_HIERARCHY).eq(ParentType.DICTIONARY))
-        .per(Copper.level(FIELD_HIERARCHY))
+        .per(Copper.level(FIELD_HIERARCHY),
+            Copper.level(OWNER_HIERARCHY))
         .sum()
         .as(DICTIONARY_SIZE)
         .withFormatter(NUMBER_FORMATTER)
