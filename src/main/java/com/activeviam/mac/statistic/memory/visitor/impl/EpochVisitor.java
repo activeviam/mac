@@ -36,6 +36,7 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
 	public EpochVisitor() {
 		this.datastoreEpochs = new TLongHashSet();
+		// todo vlg: use another class for this? (unstable)
 		this.epochsPerOwner = SortedSetMultimapBuilder
 				.hashKeys()
 				.treeSetValues()
