@@ -128,8 +128,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     Assertions.assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
             EpochViewComparator.normalEpochView(1L),
-            EpochViewComparator.distributedEpochView(5L),
-            EpochViewComparator.distributedEpochView(1L));
+            EpochViewComparator.distributedEpochView("QueryCubeA", 5L),
+            EpochViewComparator.distributedEpochView("QueryCubeB", 1L));
   }
 
   protected Set<String> retrieveViewEpochIds() {

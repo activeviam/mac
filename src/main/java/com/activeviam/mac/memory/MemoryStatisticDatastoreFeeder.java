@@ -112,7 +112,7 @@ public class MemoryStatisticDatastoreFeeder {
                   owner,
                   dumpName,
                   ~epochId,
-                  EpochViewComparator.distributedEpochView(~epochId)));
+                  EpochViewComparator.distributedEpochView(owner.getName(), ~epochId)));
         }
       }
     }

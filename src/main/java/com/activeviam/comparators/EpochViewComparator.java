@@ -9,13 +9,15 @@ package com.activeviam.comparators;
 
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.ordering.IComparator;
+import java.text.MessageFormat;
 
 @QuartetExtendedPluginValue(intf = IComparator.class, key = EpochViewComparator.PLUGIN_KEY)
 public class EpochViewComparator implements IComparator<String> {
 
   public static final String PLUGIN_KEY = "EpochViewComparator";
 
-  public static final String DISTRIBUTED_EPOCH_PREFIX = "[DISTRIBUTED] ";
+  private static final String DISTRIBUTED_EPOCH_PREFIX = "[Query Cube ";
+  private static final String DISTRIBUTED_EPOCH_FULL_PREFIX = DISTRIBUTED_EPOCH_PREFIX + "{0}] ";
 
   @Override
   public String getType() {
@@ -51,12 +53,13 @@ public class EpochViewComparator implements IComparator<String> {
   }
 
   private static long parseDistributedEpoch(String epoch) {
-    return parseNormalEpoch(epoch.substring(DISTRIBUTED_EPOCH_PREFIX.length()));
+    return parseNormalEpoch(epoch.substring(
+        epoch.indexOf(']', DISTRIBUTED_EPOCH_PREFIX.length()) + 2));
   }
 
   // todo vlg: belongs elsewhere? have a class for representing epoch views
-  public static String distributedEpochView(long epochId) {
-    return DISTRIBUTED_EPOCH_PREFIX + epochId;
+  public static String distributedEpochView(String ownerName, long epochId) {
+    return MessageFormat.format(DISTRIBUTED_EPOCH_FULL_PREFIX, ownerName) + epochId;
   }
 
   public static String normalEpochView(long epochId) {
