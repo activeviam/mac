@@ -20,7 +20,6 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.query.ICompiledGetByKey;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 
@@ -34,8 +33,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
-
-  private final ICompiledGetByKey chunkIdCQ;
 
   private ParentType directParentType;
   private String directParentId;
@@ -70,14 +67,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     this.directParentId =
         parent.owner.getName() + "/" + parent.dimension + "/" + parent.hierarchy + "/"
             + parent.level;
-
-    this.chunkIdCQ =
-        this.transaction
-            .getQueryRunner()
-            .createGetByKeyQuery(
-                DatastoreConstants.CHUNK_STORE,
-                DatastoreConstants.CHUNK_ID,
-                DatastoreConstants.CHUNK__DUMP_NAME);
   }
 
   /**

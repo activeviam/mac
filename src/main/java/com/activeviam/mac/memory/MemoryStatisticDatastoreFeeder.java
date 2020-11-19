@@ -7,10 +7,12 @@
 
 package com.activeviam.mac.memory;
 
-import com.activeviam.comparators.EpochViewComparator;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
+import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
 import com.google.common.collect.SortedSetMultimap;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.store.record.IRecordFormat;
@@ -81,7 +83,7 @@ public class MemoryStatisticDatastoreFeeder {
                       owner,
                       dumpName,
                       baseEpochId,
-                      EpochViewComparator.normalEpochView(epochId)));
+                      new RegularEpochView(epochId)));
             }
           }
 
@@ -93,7 +95,7 @@ public class MemoryStatisticDatastoreFeeder {
                   owner,
                   dumpName,
                   epochId,
-                  EpochViewComparator.normalEpochView(epochId)));
+                  new RegularEpochView(epochId)));
 
         }
       }
@@ -112,7 +114,7 @@ public class MemoryStatisticDatastoreFeeder {
                   owner,
                   dumpName,
                   ~epochId,
-                  EpochViewComparator.distributedEpochView(owner.getName(), ~epochId)));
+                  new DistributedEpochView(owner.getName(), ~epochId)));
         }
       }
     }
@@ -120,12 +122,12 @@ public class MemoryStatisticDatastoreFeeder {
 
   private static Object[] generateEpochViewTuple(
       IRecordFormat recordFormat,
-      ChunkOwner owner, String dumpName, long baseEpochId, String viewEpochId) {
+      ChunkOwner owner, String dumpName, long baseEpochId, EpochView epochView) {
     final Object[] tuple = new Object[recordFormat.getFieldCount()];
     tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__OWNER)] = owner;
     tuple[recordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
     tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID)] = baseEpochId;
-    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)] = viewEpochId;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)] = epochView;
     return tuple;
   }
 }

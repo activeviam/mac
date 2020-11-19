@@ -7,14 +7,16 @@
 
 package com.activeviam.comparators;
 
+import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
+import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.ordering.IComparator;
-import java.text.MessageFormat;
 
 @QuartetExtendedPluginValue(intf = IComparator.class, key = EpochViewComparator.PLUGIN_KEY)
-public class EpochViewComparator implements IComparator<String> {
+public class EpochViewComparator implements IComparator<EpochView> {
 
   public static final String PLUGIN_KEY = "EpochViewComparator";
+  private static final long serialVersionUID = 7843582714929470073L;
 
   private static final String DISTRIBUTED_EPOCH_PREFIX = "[Query Cube ";
   private static final String DISTRIBUTED_EPOCH_FULL_PREFIX = DISTRIBUTED_EPOCH_PREFIX + "{0}] ";
@@ -25,44 +27,35 @@ public class EpochViewComparator implements IComparator<String> {
   }
 
   @Override
-  public int compare(String epoch1, String epoch2) {
+  public int compare(EpochView epoch1, EpochView epoch2) {
+
     final boolean isEpoch1Distributed = isDistributedEpoch(epoch1);
     final boolean isEpoch2Distributed = isDistributedEpoch(epoch2);
 
     if (isEpoch1Distributed) {
       if (isEpoch2Distributed) {
-        return Long.compare(parseDistributedEpoch(epoch2), parseDistributedEpoch(epoch1));
+        final DistributedEpochView distributedEpoch1 = ((DistributedEpochView) epoch1);
+        final DistributedEpochView distributedEpoch2 = ((DistributedEpochView) epoch2);
+
+        final int cubeNameComparisonResult = distributedEpoch1.getDistributedCubeName()
+            .compareTo(distributedEpoch2.getDistributedCubeName());
+
+        if (cubeNameComparisonResult != 0) {
+          return cubeNameComparisonResult;
+        }
       } else {
         return 1;
       }
     } else {
       if (isEpoch2Distributed) {
         return -1;
-      } else {
-        return Long.compare(parseNormalEpoch(epoch2), parseNormalEpoch(epoch1));
       }
     }
+
+    return Long.compare(epoch2.getEpochId(), epoch1.getEpochId());
   }
 
-  private static boolean isDistributedEpoch(String epoch) {
-    return epoch.startsWith(DISTRIBUTED_EPOCH_PREFIX);
-  }
-
-  private static long parseNormalEpoch(String epoch) {
-    return Long.parseLong(epoch);
-  }
-
-  private static long parseDistributedEpoch(String epoch) {
-    return parseNormalEpoch(epoch.substring(
-        epoch.indexOf(']', DISTRIBUTED_EPOCH_PREFIX.length()) + 2));
-  }
-
-  // todo vlg: belongs elsewhere? have a class for representing epoch views
-  public static String distributedEpochView(String ownerName, long epochId) {
-    return MessageFormat.format(DISTRIBUTED_EPOCH_FULL_PREFIX, ownerName) + epochId;
-  }
-
-  public static String normalEpochView(long epochId) {
-    return String.valueOf(epochId);
+  private static boolean isDistributedEpoch(EpochView epoch) {
+    return epoch instanceof DistributedEpochView;
   }
 }

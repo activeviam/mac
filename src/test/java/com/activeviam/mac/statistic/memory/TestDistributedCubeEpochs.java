@@ -7,10 +7,12 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.comparators.EpochViewComparator;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
+import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
+import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
+import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.impl.MultiVersionDistributedActivePivot;
@@ -123,16 +125,16 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   @Test
   public void testExpectedViewEpochs() {
-    final Set<String> viewEpochIds = retrieveViewEpochIds();
+    final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
 
     Assertions.assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
-            EpochViewComparator.normalEpochView(1L),
-            EpochViewComparator.distributedEpochView("QueryCubeA", 5L),
-            EpochViewComparator.distributedEpochView("QueryCubeB", 1L));
+            new RegularEpochView(1L),
+            new DistributedEpochView("QueryCubeA", 5L),
+            new DistributedEpochView("QueryCubeB", 1L));
   }
 
-  protected Set<String> retrieveViewEpochIds() {
+  protected Set<EpochView> retrieveViewEpochIds() {
     final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
         .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
         .withoutCondition()
@@ -141,7 +143,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
         .run();
 
     return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> (String) c.read(0))
+        .map(c -> (EpochView) c.read(0))
         .collect(Collectors.toSet());
   }
 }
