@@ -497,7 +497,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private CopperMeasureToAggregateAbove perChunkAggregation(final CopperMeasure measure) {
-    return measure.per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
+    return measure.per(
+        Copper.level(CHUNK_ID_HIERARCHY),
         Copper.level(CHUNK_DUMP_NAME_LEVEL));
   }
 
@@ -513,18 +514,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .filter(Copper.level(COMPONENT_HIERARCHY)
             .eq(ParentType.DICTIONARY))
         .per(
-            Copper.level(CHUNK_ID_HIERARCHY),
             Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
             Copper.level(CHUNK_DUMP_NAME_LEVEL),
-            Copper.level(FIELD_HIERARCHY),
-            Copper.level(OWNER_HIERARCHY))
+            Copper.level(CHUNK_DICO_ID_LEVEL))
         .sum()
         .as(DICTIONARY_SIZE)
         .withFormatter(NUMBER_FORMATTER)
         .publish(context);
 
     final CopperMeasure directMemory =
-        perChunkAggregation(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+        Copper.agg(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, SingleValueFunction.PLUGIN_KEY)
+            .per(
+                Copper.level(CHUNK_ID_HIERARCHY),
+                Copper.level(CHUNK_DUMP_NAME_LEVEL))
             .sum()
             .as(DIRECT_MEMORY_SUM)
             .withFormatter(ByteFormatter.KEY)
