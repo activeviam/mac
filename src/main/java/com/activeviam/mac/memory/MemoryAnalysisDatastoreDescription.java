@@ -161,7 +161,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID, ILiteralType.LONG)
+        .withField(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID, ILiteralType.STRING)
         .asKeyField()
         .build();
   }

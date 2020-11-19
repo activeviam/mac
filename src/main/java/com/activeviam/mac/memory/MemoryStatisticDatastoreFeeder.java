@@ -7,11 +7,13 @@
 
 package com.activeviam.mac.memory;
 
+import com.activeviam.comparators.EpochViewComparator;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.google.common.collect.SortedSetMultimap;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import gnu.trove.set.TLongSet;
 import java.util.Collection;
@@ -58,6 +60,11 @@ public class MemoryStatisticDatastoreFeeder {
   }
 
   private void replicateChunksForMissingEpochs(final IOpenedTransaction transaction) {
+    final IRecordFormat epochViewRecordFormat =
+        transaction.getMetadata().getDatastoreSchemaFormat()
+            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getRecordFormat();
+
     datastoreEpochs.forEach(epochId -> {
       for (final ChunkOwner owner : epochsPerOwner.keySet()) {
         final SortedSet<Long> epochs = epochsPerOwner.get(owner);
@@ -65,15 +72,29 @@ public class MemoryStatisticDatastoreFeeder {
 
           final SortedSet<Long> priorEpochs = epochs.headSet(epochId);
           if (!priorEpochs.isEmpty()) {
-            final long baseEpoch = priorEpochs.last();
-            if (baseEpoch >= 0) {
+            final long baseEpochId = priorEpochs.last();
+            if (baseEpochId >= 0) {
               transaction.add(
-                  DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, baseEpoch, epochId);
+                  DatastoreConstants.EPOCH_VIEW_STORE,
+                  generateEpochViewTuple(
+                      epochViewRecordFormat,
+                      owner,
+                      dumpName,
+                      baseEpochId,
+                      String.valueOf(epochId)));
             }
           }
 
         } else {
-          transaction.add(DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, epochId, epochId);
+          transaction.add(
+              DatastoreConstants.EPOCH_VIEW_STORE,
+              generateEpochViewTuple(
+                  epochViewRecordFormat,
+                  owner,
+                  dumpName,
+                  epochId,
+                  String.valueOf(epochId)));
+
         }
       }
 
@@ -83,10 +104,28 @@ public class MemoryStatisticDatastoreFeeder {
     for (final ChunkOwner owner : epochsPerOwner.keySet()) {
       final SortedSet<Long> epochs = epochsPerOwner.get(owner);
       if (epochs.last() < 0) {
-        for (final Long epoch : epochs) {
-          transaction.add(DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, ~epoch, epoch);
+        for (final Long epochId : epochs) {
+          transaction.add(
+              DatastoreConstants.EPOCH_VIEW_STORE,
+              generateEpochViewTuple(
+                  epochViewRecordFormat,
+                  owner,
+                  dumpName,
+                  ~epochId,
+                  EpochViewComparator.distributedEpochView(~epochId)));
         }
       }
     }
+  }
+
+  private static Object[] generateEpochViewTuple(
+      IRecordFormat recordFormat,
+      ChunkOwner owner, String dumpName, long baseEpochId, String viewEpochId) {
+    final Object[] tuple = new Object[recordFormat.getFieldCount()];
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__OWNER)] = owner;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID)] = baseEpochId;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)] = viewEpochId;
+    return tuple;
   }
 }

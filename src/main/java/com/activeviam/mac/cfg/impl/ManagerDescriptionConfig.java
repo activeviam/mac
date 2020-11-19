@@ -8,6 +8,7 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.builders.StartBuilding;
+import com.activeviam.comparators.EpochViewComparator;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperMeasure;
@@ -446,19 +447,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
         .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
-        //        .slicing()
-        .withComparator(ReverseOrderComparator.type)
-//        .withFormatter(ViewEpochIdFormatter.KEY)
+        .withComparator(EpochViewComparator.PLUGIN_KEY)
         .publish(context);
-
-    //    Copper.newSingleLevelHierarchy(VERSION_DIMENSION, BRANCH_HIERARCHY, BRANCH_HIERARCHY)
-    //        .from(epochViewStore.field(
-    //            MemoryAnalysisDatastoreDescription.EPOCH_VIEW_TO_VERSION
-    //                + IQuery.PATH_SEPARATOR
-    //                + DatastoreConstants.VERSION__BRANCH_NAME))
-    //        .slicing()
-    //        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
-    //        .publish(context);
 
     // --------------------
     // Dictionary store

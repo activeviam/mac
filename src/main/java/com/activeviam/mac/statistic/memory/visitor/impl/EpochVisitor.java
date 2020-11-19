@@ -34,6 +34,8 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 	protected ChunkOwner owner = NoOwner.getInstance();
 	protected TLongSet datastoreEpochs;
 	protected TLongSet distributedCubeEpochs;
+
+	// todo vlg: get rid of negative distributed epoch encoding, replace by map Owner -> isDistributed
 	protected SortedSetMultimap<ChunkOwner, Long> epochsPerOwner;
 
 	protected OptionalLong currentlyVisitedStatEpoch;
