@@ -21,7 +21,6 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
-import com.activeviam.formatter.ViewEpochIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -252,11 +251,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             IDimension.MEASURES,
             IHierarchy.MEASURES))
         .withMemberPath(CHUNK_COUNT)
-
-        .withFormatter(
-            MdxNamingUtil.hierarchyUniqueName(
-                VERSION_DIMENSION, EPOCH_ID_HIERARCHY),
-            ViewEpochIdFormatter.KEY)
 
         .withCalculatedMembers(calculatedMembers())
         .end()
