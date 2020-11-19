@@ -66,8 +66,10 @@ public class MemoryStatisticDatastoreFeeder {
           final SortedSet<Long> priorEpochs = epochs.headSet(epochId);
           if (!priorEpochs.isEmpty()) {
             final long baseEpoch = priorEpochs.last();
-            transaction.add(
-                DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, baseEpoch, epochId);
+            if (baseEpoch >= 0) {
+              transaction.add(
+                  DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, baseEpoch, epochId);
+            }
           }
 
         } else {
@@ -77,5 +79,14 @@ public class MemoryStatisticDatastoreFeeder {
 
       return true;
     });
+
+    for (final ChunkOwner owner : epochsPerOwner.keySet()) {
+      final SortedSet<Long> epochs = epochsPerOwner.get(owner);
+      if (epochs.last() < 0) {
+        for (final Long epoch : epochs) {
+          transaction.add(DatastoreConstants.EPOCH_VIEW_STORE, owner, dumpName, ~epoch, epoch);
+        }
+      }
+    }
   }
 }

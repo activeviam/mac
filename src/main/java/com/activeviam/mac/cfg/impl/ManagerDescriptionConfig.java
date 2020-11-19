@@ -21,16 +21,15 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.formatter.ViewEpochIdFormatter;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
-import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
-import com.qfs.store.query.IQuery;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.dimension.IDimension;
 import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
@@ -254,6 +253,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             IHierarchy.MEASURES))
         .withMemberPath(CHUNK_COUNT)
 
+        .withFormatter(
+            MdxNamingUtil.hierarchyUniqueName(
+                VERSION_DIMENSION, EPOCH_ID_HIERARCHY),
+            ViewEpochIdFormatter.KEY)
+
         .withCalculatedMembers(calculatedMembers())
         .end()
         .build();
@@ -324,6 +328,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .hidden()
         .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
+
+        .withHierarchy(BRANCH_HIERARCHY)
+        .slicing()
+        .withLevel(BRANCH_HIERARCHY)
+        .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
 
         .withSingleLevelHierarchy(USED_BY_VERSION_DIMENSION)
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
@@ -443,18 +452,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
         .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
-        .slicing()
+        //        .slicing()
         .withComparator(ReverseOrderComparator.type)
+//        .withFormatter(ViewEpochIdFormatter.KEY)
         .publish(context);
 
-    Copper.newSingleLevelHierarchy(VERSION_DIMENSION, BRANCH_HIERARCHY, BRANCH_HIERARCHY)
-        .from(epochViewStore.field(
-            MemoryAnalysisDatastoreDescription.EPOCH_VIEW_TO_VERSION
-                + IQuery.PATH_SEPARATOR
-                + DatastoreConstants.VERSION__BRANCH_NAME))
-        .slicing()
-        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
-        .publish(context);
+    //    Copper.newSingleLevelHierarchy(VERSION_DIMENSION, BRANCH_HIERARCHY, BRANCH_HIERARCHY)
+    //        .from(epochViewStore.field(
+    //            MemoryAnalysisDatastoreDescription.EPOCH_VIEW_TO_VERSION
+    //                + IQuery.PATH_SEPARATOR
+    //                + DatastoreConstants.VERSION__BRANCH_NAME))
+    //        .slicing()
+    //        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
+    //        .publish(context);
 
     // --------------------
     // Dictionary store
@@ -512,11 +522,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(CHUNK_COUNT)
         .publish(context);
 
-    Copper.max(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
+    perChunkAggregation(Copper.max(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
         .filter(Copper.level(COMPONENT_HIERARCHY)
-            .eq(ParentType.DICTIONARY))
-        .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(EPOCH_ID_HIERARCHY),
-            Copper.level(CHUNK_DUMP_NAME_LEVEL))
+            .eq(ParentType.DICTIONARY)))
         .custom(SingleValueFunction.PLUGIN_KEY)
         .per(Copper.level(FIELD_HIERARCHY),
             Copper.level(OWNER_HIERARCHY))

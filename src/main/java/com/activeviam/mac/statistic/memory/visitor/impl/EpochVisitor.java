@@ -13,6 +13,7 @@ import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.google.common.collect.MultimapBuilder.SortedSetMultimapBuilder;
 import com.google.common.collect.SortedSetMultimap;
+import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -32,19 +33,29 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
 	protected ChunkOwner owner = NoOwner.getInstance();
 	protected TLongSet datastoreEpochs;
+	protected TLongSet distributedCubeEpochs;
 	protected SortedSetMultimap<ChunkOwner, Long> epochsPerOwner;
+
+	protected OptionalLong currentlyVisitedStatEpoch;
+	protected boolean isCurrentVisitedStatDistributed;
 
 	public EpochVisitor() {
 		this.datastoreEpochs = new TLongHashSet();
+		this.distributedCubeEpochs = new TLongHashSet();
 		// todo vlg: use another class for this? (unstable)
 		this.epochsPerOwner = SortedSetMultimapBuilder
 				.hashKeys()
 				.treeSetValues()
 				.build();
+		this.isCurrentVisitedStatDistributed = false;
 	}
 
 	public TLongSet getDatastoreEpochs() {
 		return datastoreEpochs;
+	}
+
+	public TLongSet getDistributedCubeEpochs() {
+		return distributedCubeEpochs;
 	}
 
 	public SortedSetMultimap<ChunkOwner, Long> getEpochsPerOwner() {
@@ -55,32 +66,57 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 	public Void visit(
 			DefaultMemoryStatistic memoryStatistic) {
 
-		final OptionalLong epoch = readEpoch(memoryStatistic);
-
 		switch (memoryStatistic.getName()) {
+			case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
+			case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+				visitChildren(memoryStatistic);
+				this.currentlyVisitedStatEpoch = OptionalLong.empty();
+				this.isCurrentVisitedStatDistributed = false;
+				break;
+
 			case MemoryStatisticConstants.STAT_NAME_STORE:
+				// todo vlg refactor
+				currentlyVisitedStatEpoch = readEpoch(memoryStatistic);
 				owner = new StoreOwner(
 						memoryStatistic.getAttribute(
 								MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
 								.asText());
-				if (epoch.isPresent()) {
-					datastoreEpochs.add(epoch.getAsLong());
+				if (currentlyVisitedStatEpoch.isPresent()) {
+					datastoreEpochs.add(currentlyVisitedStatEpoch.getAsLong());
 				}
-				visitChildren(memoryStatistic);
+				this.isCurrentVisitedStatDistributed = false;
+//				visitChildren(memoryStatistic);
 				break;
+
 			case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
+				currentlyVisitedStatEpoch = readEpoch(memoryStatistic);
 				owner = new CubeOwner(
 						memoryStatistic.getAttribute(
 								PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID)
 								.asText());
+				visitChildren(memoryStatistic);
 				break;
+
+			case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
+				this.isCurrentVisitedStatDistributed =
+						IMultiVersionDistributedActivePivot.PLUGIN_KEY
+								.equals(memoryStatistic
+										.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
+										.asText());
+//				visitChildren(memoryStatistic);
+				break;
+
 			default:
 				visitChildren(memoryStatistic);
 				break;
 		}
 
-		if (epoch.isPresent()) {
-			epochsPerOwner.put(owner, epoch.getAsLong());
+		if (currentlyVisitedStatEpoch.isPresent()) {
+			if (this.isCurrentVisitedStatDistributed) {
+				epochsPerOwner.put(owner, ~currentlyVisitedStatEpoch.getAsLong());
+			} else {
+				epochsPerOwner.put(owner, currentlyVisitedStatEpoch.getAsLong());
+			}
 		}
 
 		return null;

@@ -45,7 +45,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_APP = "chunkToApp";
 
   /** Name of the chunk -> branch reference. */
-  public static final String EPOCH_VIEW_TO_VERSION = "epochViewToVersion";
+  public static final String CHUNK_TO_VERSION = "epochViewToVersion";
 
   /** Default value for component-specific ids. */
   public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
@@ -450,12 +450,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
                 DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         StartBuilding.reference()
-            .fromStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.VERSION_STORE)
-            .withName(EPOCH_VIEW_TO_VERSION)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME,
+            .withName(CHUNK_TO_VERSION)
+            .withMapping(
+                DatastoreConstants.CHUNK__DUMP_NAME,
                 DatastoreConstants.VERSION__DUMP_NAME)
-            .withMapping(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID,
+            .withMapping(
+                DatastoreConstants.VERSION__EPOCH_ID,
                 DatastoreConstants.VERSION__EPOCH_ID)
             .build());
   }

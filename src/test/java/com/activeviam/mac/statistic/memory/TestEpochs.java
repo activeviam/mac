@@ -12,7 +12,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -127,8 +127,9 @@ public class TestEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    monitoringDatastore.edit(
-        tm -> data.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+    final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+        data, "testEpochs");
+    monitoringDatastore.edit(feeder::feedDatastore);
   }
 
   @After
