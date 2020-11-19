@@ -16,10 +16,8 @@ import com.quartetfs.fwk.ordering.IComparator;
 public class EpochViewComparator implements IComparator<EpochView> {
 
   public static final String PLUGIN_KEY = "EpochViewComparator";
-  private static final long serialVersionUID = 7843582714929470073L;
 
-  private static final String DISTRIBUTED_EPOCH_PREFIX = "[Query Cube ";
-  private static final String DISTRIBUTED_EPOCH_FULL_PREFIX = DISTRIBUTED_EPOCH_PREFIX + "{0}] ";
+  private static final long serialVersionUID = 7843582714929470073L;
 
   @Override
   public String getType() {

@@ -12,8 +12,8 @@ import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -165,11 +165,9 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
 	protected void loadStatisticsIntoDatastore(
 			final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-		analysisDatastore.edit(transactionManager ->
-				statistics.forEach(statistic ->
-						statistic.accept(
-								new FeedVisitor(analysisDatastore.getSchemaMetadata(), transactionManager,
-										"test"))));
+		final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+				statistics, "test");
+		analysisDatastore.edit(feeder::feedDatastore);
 	}
 
 	@Test

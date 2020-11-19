@@ -13,13 +13,14 @@ import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
-import com.google.common.collect.SortedSetMultimap;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import gnu.trove.set.TLongSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 
 public class MemoryStatisticDatastoreFeeder {
@@ -27,7 +28,8 @@ public class MemoryStatisticDatastoreFeeder {
   private Collection<? extends IMemoryStatistic> statistics;
   private String dumpName;
   private TLongSet datastoreEpochs;
-  private SortedSetMultimap<ChunkOwner, Long> epochsPerOwner;
+  private Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
+  private Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
 
   public MemoryStatisticDatastoreFeeder(
       final IMemoryStatistic statistic,
@@ -48,7 +50,8 @@ public class MemoryStatisticDatastoreFeeder {
     final EpochVisitor epochVisitor = new EpochVisitor();
     statistics.forEach(statistic -> statistic.accept(epochVisitor));
     this.datastoreEpochs = epochVisitor.getDatastoreEpochs();
-    this.epochsPerOwner = epochVisitor.getEpochsPerOwner();
+    this.regularEpochsPerOwner = epochVisitor.getRegularEpochsPerOwner();
+    this.distributedEpochsPerOwner = epochVisitor.getDistributedEpochsPerOwner();
   }
 
   public void feedDatastore(final IOpenedTransaction transaction) {
@@ -68,54 +71,36 @@ public class MemoryStatisticDatastoreFeeder {
             .getRecordFormat();
 
     datastoreEpochs.forEach(epochId -> {
-      for (final ChunkOwner owner : epochsPerOwner.keySet()) {
-        final SortedSet<Long> epochs = epochsPerOwner.get(owner);
+      for (final ChunkOwner owner : regularEpochsPerOwner.keySet()) {
+        final SortedSet<Long> epochs = regularEpochsPerOwner.get(owner);
         if (!epochs.contains(epochId)) {
 
           final SortedSet<Long> priorEpochs = epochs.headSet(epochId);
           if (!priorEpochs.isEmpty()) {
             final long baseEpochId = priorEpochs.last();
-            if (baseEpochId >= 0) {
-              transaction.add(
-                  DatastoreConstants.EPOCH_VIEW_STORE,
-                  generateEpochViewTuple(
-                      epochViewRecordFormat,
-                      owner,
-                      dumpName,
-                      baseEpochId,
-                      new RegularEpochView(epochId)));
-            }
+            transaction.add(
+                DatastoreConstants.EPOCH_VIEW_STORE,
+                generateEpochViewTuple(epochViewRecordFormat, owner, dumpName, baseEpochId,
+                    new RegularEpochView(epochId)));
           }
-
         } else {
           transaction.add(
               DatastoreConstants.EPOCH_VIEW_STORE,
-              generateEpochViewTuple(
-                  epochViewRecordFormat,
-                  owner,
-                  dumpName,
-                  epochId,
+              generateEpochViewTuple(epochViewRecordFormat, owner, dumpName, epochId,
                   new RegularEpochView(epochId)));
-
         }
       }
 
       return true;
     });
 
-    for (final ChunkOwner owner : epochsPerOwner.keySet()) {
-      final SortedSet<Long> epochs = epochsPerOwner.get(owner);
-      if (epochs.last() < 0) {
-        for (final Long epochId : epochs) {
-          transaction.add(
-              DatastoreConstants.EPOCH_VIEW_STORE,
-              generateEpochViewTuple(
-                  epochViewRecordFormat,
-                  owner,
-                  dumpName,
-                  ~epochId,
-                  new DistributedEpochView(owner.getName(), ~epochId)));
-        }
+    for (final ChunkOwner owner : distributedEpochsPerOwner.keySet()) {
+      final Collection<Long> epochs = distributedEpochsPerOwner.get(owner);
+      for (final Long epochId : epochs) {
+        transaction.add(
+            DatastoreConstants.EPOCH_VIEW_STORE,
+            generateEpochViewTuple(epochViewRecordFormat, owner, dumpName, epochId,
+                new DistributedEpochView(owner.getName(), epochId)));
       }
     }
   }

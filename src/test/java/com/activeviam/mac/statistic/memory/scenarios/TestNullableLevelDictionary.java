@@ -11,7 +11,7 @@ import static com.activeviam.mac.statistic.memory.ATestMemoryStatistic.performGC
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.dic.IDictionary;
@@ -175,9 +175,8 @@ public class TestNullableLevelDictionary {
 
 	protected void loadStatisticsIntoDatastore(
 			final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-		analysisDatastore.edit(transactionManager ->
-				statistics.forEach(statistic ->
-						statistic.accept(new FeedVisitor(analysisDatastore.getSchemaMetadata(),
-								transactionManager, "test"))));
+		final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+				statistics, "test");
+		analysisDatastore.edit(feeder::feedDatastore);
 	}
 }
