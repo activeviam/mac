@@ -323,6 +323,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .hidden()
         .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
+        .withComparator(ReverseOrderComparator.type)
 
         .withHierarchy(BRANCH_HIERARCHY)
         .slicing()
@@ -506,11 +507,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(CHUNK_COUNT)
         .publish(context);
 
-    perChunkAggregation(Copper.max(chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE))
+    Copper.agg(
+        chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
+        SingleValueFunction.PLUGIN_KEY)
         .filter(Copper.level(COMPONENT_HIERARCHY)
-            .eq(ParentType.DICTIONARY)))
-        .custom(SingleValueFunction.PLUGIN_KEY)
-        .per(Copper.level(FIELD_HIERARCHY),
+            .eq(ParentType.DICTIONARY))
+        .per(
+            Copper.level(CHUNK_ID_HIERARCHY),
+            Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
+            Copper.level(CHUNK_DUMP_NAME_LEVEL),
+            Copper.level(FIELD_HIERARCHY),
             Copper.level(OWNER_HIERARCHY))
         .sum()
         .as(DICTIONARY_SIZE)
