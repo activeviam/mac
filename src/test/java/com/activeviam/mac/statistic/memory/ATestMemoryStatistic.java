@@ -956,13 +956,12 @@ public abstract class ATestMemoryStatistic {
                     .fromBaseStore("A")
                     .withAllFields()
                     .build())
-            .withCube(
-                StartBuilding.cube("Cube")
-                    .withAggregatedMeasure()
-                    .sum("value")
-                    .withSingleLevelDimension("id")
-                    .asDefaultHierarchy()
-                    .build())
+            .withCube(StartBuilding.cube()
+                .withName("Data")
+                .withAggregatedMeasure()
+                .sum("value")
+                .withSingleLevelDimension("id")
+                .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeA")
                     .withContributorsCount()
@@ -976,6 +975,7 @@ public abstract class ATestMemoryStatistic {
                     .withApplication("app")
                     .withDistributingFields("value")
                     .end()
+                    .withEpochDimension()
                     .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeB")
@@ -989,6 +989,7 @@ public abstract class ATestMemoryStatistic {
                     .withApplication("app")
                     .withoutDistributingFields()
                     .end()
+                    .withEpochDimension()
                     .build())
             .build();
 
