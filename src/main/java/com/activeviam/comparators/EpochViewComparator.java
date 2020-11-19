@@ -54,8 +54,12 @@ public class EpochViewComparator implements IComparator<String> {
     return parseNormalEpoch(epoch.substring(DISTRIBUTED_EPOCH_PREFIX.length()));
   }
 
-  // todo vlg: belongs elsewhere?
+  // todo vlg: belongs elsewhere? have a class for representing epoch views
   public static String distributedEpochView(long epochId) {
     return DISTRIBUTED_EPOCH_PREFIX + epochId;
+  }
+
+  public static String normalEpochView(long epochId) {
+    return String.valueOf(epochId);
   }
 }

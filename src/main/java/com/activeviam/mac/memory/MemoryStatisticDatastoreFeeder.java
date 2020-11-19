@@ -81,7 +81,7 @@ public class MemoryStatisticDatastoreFeeder {
                       owner,
                       dumpName,
                       baseEpochId,
-                      String.valueOf(epochId)));
+                      EpochViewComparator.normalEpochView(epochId)));
             }
           }
 
@@ -93,7 +93,7 @@ public class MemoryStatisticDatastoreFeeder {
                   owner,
                   dumpName,
                   epochId,
-                  String.valueOf(epochId)));
+                  EpochViewComparator.normalEpochView(epochId)));
 
         }
       }
