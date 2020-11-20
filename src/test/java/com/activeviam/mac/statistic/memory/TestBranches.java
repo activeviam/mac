@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -102,26 +101,24 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastore monitoringDatastore = resources.create(
+        StartBuilding.datastore()
+            .setSchemaDescription(config.schemaDescription())
+            ::build);
 
-    IActivePivotManager manager =
+    final IActivePivotManager manager =
         StartBuilding.manager()
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
+    resources.register(manager::stop);
+
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
         data, "testBranches");
     monitoringDatastore.edit(feeder::feedDatastore);
-  }
-
-  @After
-  public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
   }
 
   @Test

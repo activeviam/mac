@@ -118,6 +118,7 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
         if (currentlyVisitedStatEpoch.isPresent()) {
           datastoreEpochs.add(currentlyVisitedStatEpoch.getAsLong());
+          mapRegularEpoch(currentOwner, currentlyVisitedStatEpoch.getAsLong());
         }
         break;
 
@@ -132,27 +133,18 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
         break;
 
       case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
-        if (isProviderStatFromDistributedCube(memoryStatistic)) {
-          if (currentlyVisitedStatEpoch.isPresent()) {
-            distributedEpochsPerOwner.computeIfAbsent(
-                currentOwner,
-                owner -> new HashSet<>())
-                .add(currentlyVisitedStatEpoch.getAsLong());
+        if (currentlyVisitedStatEpoch.isPresent()) {
+          if (isProviderStatFromDistributedCube(memoryStatistic)) {
+            mapDistributedEpoch(currentOwner, currentlyVisitedStatEpoch.getAsLong());
+          } else {
+            mapRegularEpoch(currentOwner, currentlyVisitedStatEpoch.getAsLong());
           }
-          return null;
         }
-        break;
+        return null;
 
       default:
         visitChildren(memoryStatistic);
         break;
-    }
-
-    if (currentlyVisitedStatEpoch.isPresent()) {
-      regularEpochsPerOwner.computeIfAbsent(
-          currentOwner,
-          owner -> new TreeSet<>())
-          .add(currentlyVisitedStatEpoch.getAsLong());
     }
 
     return null;
@@ -187,6 +179,32 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
     return IMultiVersionDistributedActivePivot.PLUGIN_KEY.equals(statistic
         .getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
         .asText());
+  }
+
+  /**
+   * Maps an epoch to the given owner, as a non-distributed epoch.
+   *
+   * @param owner the owner for the epoch
+   * @param epoch the epoch to map
+   */
+  protected void mapRegularEpoch(final ChunkOwner owner, final long epoch) {
+    regularEpochsPerOwner.computeIfAbsent(
+        owner,
+        key -> new TreeSet<>())
+        .add(epoch);
+  }
+
+  /**
+   * Maps an epoch to the given owner, as a distributed epoch.
+   *
+   * @param owner the owner for the epoch
+   * @param epoch the epoch to map
+   */
+  protected void mapDistributedEpoch(final ChunkOwner owner, final long epoch) {
+    distributedEpochsPerOwner.computeIfAbsent(
+        owner,
+        key -> new HashSet<>())
+        .add(epoch);
   }
 
   /**
