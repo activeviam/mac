@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.memory;
 
+import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
@@ -27,17 +28,34 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class is responsible for parsing memory statistics into an analysis datastore.
  */
 public class AnalysisDatastoreFeeder {
 
+  /** Logger. */
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
+
+  /** The statistics this feeder should feed a datastore with. */
   private final Collection<? extends IMemoryStatistic> statistics;
+  /** The dump name associated with this feeder. */
   private final String dumpName;
 
+  /** The set of datastore epochs. */
   private TLongSet datastoreEpochs;
+
+  /**
+   * A mapping giving for each non-distributed owner the epochs that were expressed in their
+   * statistics.
+   */
   private Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
+  /**
+   * A mapping giving for each distributed owner the epochs that were expressed in their
+   * statistics.
+   */
   private Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
 
   /**
@@ -129,8 +147,18 @@ public class AnalysisDatastoreFeeder {
    * @param transaction the transaction to add facts to
    */
   private void feedRawChunks(final IOpenedTransaction transaction) {
-    statistics.forEach(statistic -> statistic.accept(
-        new FeedVisitor(transaction.getMetadata(), transaction, dumpName)));
+    statistics.forEach(statistic -> {
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Starting feed the application with " + statistic);
+      }
+
+      statistic.accept(
+          new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
+
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Application processed " + statistic);
+      }
+    });
   }
 
   /**
@@ -180,6 +208,16 @@ public class AnalysisDatastoreFeeder {
     }
   }
 
+  /**
+   * Generates a record to put into the epoch view store.
+   *
+   * @param recordFormat the format of the epoch view store
+   * @param owner the owner field of the record
+   * @param dumpName the dump name field of the record
+   * @param baseEpochId the base epoch id field of the record
+   * @param epochView the epoch view field of the record
+   * @return the record
+   */
   private static Object[] generateEpochViewTuple(
       IRecordFormat recordFormat,
       ChunkOwner owner, String dumpName, long baseEpochId, EpochView epochView) {
