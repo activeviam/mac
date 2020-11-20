@@ -1,7 +1,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -85,8 +85,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(data, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(data, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
   }
 

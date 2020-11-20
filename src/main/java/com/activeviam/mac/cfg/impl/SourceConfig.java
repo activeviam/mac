@@ -9,7 +9,7 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.msg.csv.ICsvDataProvider;
@@ -205,8 +205,8 @@ public class SourceConfig {
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
     final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(statistics, dumpName);
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(statistics, dumpName);
 
     final Optional<IDatastoreSchemaTransactionInformation> info =
         this.datastore.edit(feeder::feedDatastore);

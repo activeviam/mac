@@ -9,10 +9,10 @@ package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
@@ -165,7 +165,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
 	protected void loadStatisticsIntoDatastore(
 			final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-		final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+		final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
 				statistics, "test");
 		analysisDatastore.edit(feeder::feedDatastore);
 	}

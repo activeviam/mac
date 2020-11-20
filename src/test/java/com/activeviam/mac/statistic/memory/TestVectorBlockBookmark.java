@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -80,8 +80,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(stats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(stats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =

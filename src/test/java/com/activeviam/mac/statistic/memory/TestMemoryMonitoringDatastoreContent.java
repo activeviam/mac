@@ -4,10 +4,10 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertArrayEquals;
 
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.qfs.assertj.QfsConditions;
@@ -107,8 +107,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
           monitoringDatastore.edit(
               tm -> {
-                final MemoryStatisticDatastoreFeeder feeder =
-                    new MemoryStatisticDatastoreFeeder(fullStats, "test");
+                final AnalysisDatastoreFeeder feeder =
+                    new AnalysisDatastoreFeeder(fullStats, "test");
                 feeder.feedDatastore(tm);
 
                 for (int i = 0; i < chunkIds.length; i++) {
@@ -158,8 +158,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -228,8 +228,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -293,8 +293,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -383,8 +383,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -458,8 +458,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(pivotStats, "Cube");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(pivotStats, "Cube");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record of level data :
@@ -503,8 +503,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(stats, "appAInit");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(stats, "appAInit");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     final List<IMemoryStatistic> dics =
@@ -616,10 +616,10 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryStatistic statsEpoch2 = loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder initFeeder =
-        new MemoryStatisticDatastoreFeeder(stats, "appAInit");
-    final MemoryStatisticDatastoreFeeder nextFeeder =
-        new MemoryStatisticDatastoreFeeder(statsEpoch2, "appAEpoch2");
+    final AnalysisDatastoreFeeder initFeeder =
+        new AnalysisDatastoreFeeder(stats, "appAInit");
+    final AnalysisDatastoreFeeder nextFeeder =
+        new AnalysisDatastoreFeeder(statsEpoch2, "appAEpoch2");
     monitoringDatastore.edit(tm -> {
       initFeeder.feedDatastore(tm);
       nextFeeder.feedDatastore(tm);
@@ -719,10 +719,10 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     final IMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder baseFeeder =
-        new MemoryStatisticDatastoreFeeder(stats, "App");
-    final MemoryStatisticDatastoreFeeder feederWithBitmap =
-        new MemoryStatisticDatastoreFeeder(statsWithBitmap, "AppWithBitmap");
+    final AnalysisDatastoreFeeder baseFeeder =
+        new AnalysisDatastoreFeeder(stats, "App");
+    final AnalysisDatastoreFeeder feederWithBitmap =
+        new AnalysisDatastoreFeeder(statsWithBitmap, "AppWithBitmap");
     monitoringDatastore.edit(tm -> {
       baseFeeder.feedDatastore(tm);
       feederWithBitmap.feedDatastore(tm);
@@ -793,8 +793,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(stats, "App");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(stats, "App");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     final IDictionaryCursor cursor =

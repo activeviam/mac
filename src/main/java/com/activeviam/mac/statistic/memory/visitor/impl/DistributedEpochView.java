@@ -10,15 +10,23 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/**
+ * Represents the epoch view of a distributed cube.
+ *
+ * <p>This class holds information about the corresponding distributed cube's id.
+ *
+ * <p>Two distributed epoch views with the same epoch id originating from different distributed
+ * cubes are not considered {@code equals}.
+ */
 @Data
 @AllArgsConstructor
 public class DistributedEpochView implements EpochView {
 
-  private String distributedCubeName;
+  private String distributedCubeId;
   private long epochId;
 
   @Override
   public String toString() {
-    return "[query cube " + distributedCubeName + "] " + epochId;
+    return "[query cube " + distributedCubeId + "] " + epochId;
   }
 }

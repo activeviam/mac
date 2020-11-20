@@ -8,9 +8,9 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -113,7 +113,7 @@ public class TestBranches extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
         data, "testBranches");
     monitoringDatastore.edit(feeder::feedDatastore);
   }

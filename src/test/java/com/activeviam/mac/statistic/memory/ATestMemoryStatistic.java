@@ -19,9 +19,9 @@ import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -1245,8 +1245,8 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(statistics, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(statistics, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);

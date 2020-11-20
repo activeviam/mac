@@ -4,7 +4,7 @@ import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;
@@ -135,8 +135,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final MemoryStatisticDatastoreFeeder feeder =
-        new MemoryStatisticDatastoreFeeder(stats, "storeA");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(stats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =

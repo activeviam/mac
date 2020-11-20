@@ -11,6 +11,7 @@ import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.entities.StoreOwner;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -33,44 +34,73 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * A memory statistic visitor that collects present epochs.
+ *
+ * @see AnalysisDatastoreFeeder
+ */
 public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
+  /** The epochs collected from store statistics. */
   protected TLongSet datastoreEpochs;
 
+  /** The epochs collected from statistics that do not come from distributed cubes. */
   protected Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
-  protected Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
-  protected Set<ChunkOwner> distributedCubes;
 
+  /** The epochs collected from statistics that come from distributed cubes. */
+  protected Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
+
+  /** The owner of the currently visited statistic. */
   protected ChunkOwner currentOwner;
+
+  /** The epoch of the currently visited statistic. */
   protected OptionalLong currentlyVisitedStatEpoch;
 
+  /**
+   * Constructor.
+   */
   public EpochVisitor() {
     this.datastoreEpochs = new TLongHashSet();
     this.regularEpochsPerOwner = new HashMap<>();
     this.distributedEpochsPerOwner = new HashMap<>();
     this.currentOwner = NoOwner.getInstance();
-    this.distributedCubes = new HashSet<>();
   }
 
+  /**
+   * Gets the collected datastore epochs.
+   *
+   * <p>Should only be called after the visit is done.
+   *
+   * @return the datastore epochs
+   */
   public TLongSet getDatastoreEpochs() {
     return datastoreEpochs;
   }
 
+  /**
+   * Gets the collected epochs collected from statistics that do not come from distributed cubes.
+   *
+   * <p>Should only be called after the visit is done.
+   *
+   * @return the regular epochs
+   */
   public Map<ChunkOwner, SortedSet<Long>> getRegularEpochsPerOwner() {
     return regularEpochsPerOwner;
   }
 
+  /**
+   * Gets the collected epochs collected from statistics that come from distributed cubes.
+   *
+   * <p>Should only be called after the visit is done.
+   *
+   * @return the distributed epochs
+   */
   public Map<ChunkOwner, Set<Long>> getDistributedEpochsPerOwner() {
     return distributedEpochsPerOwner;
   }
 
-  public Set<ChunkOwner> getDistributedCubes() {
-    return distributedCubes;
-  }
-
   @Override
   public Void visit(DefaultMemoryStatistic memoryStatistic) {
-
     switch (memoryStatistic.getName()) {
 
       case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
@@ -118,16 +148,24 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
         break;
     }
 
-		if (currentlyVisitedStatEpoch.isPresent()) {
+    if (currentlyVisitedStatEpoch.isPresent()) {
       regularEpochsPerOwner.computeIfAbsent(
           currentOwner,
           owner -> new TreeSet<>())
           .add(currentlyVisitedStatEpoch.getAsLong());
     }
 
-		return null;
-	}
+    return null;
+  }
 
+  /**
+   * Attempts to read an epoch id from the attributes of the given statistic.
+   *
+   * <p>Child statistics are not considered and should be visited if needed.
+   *
+   * @param memoryStatistic the memory statistic to read the epoch from
+   * @return optionally, the epoch of the statistic
+   */
   protected OptionalLong readEpoch(final IMemoryStatistic memoryStatistic) {
     final IStatisticAttribute epochAttr =
         memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_EPOCH);
@@ -138,12 +176,26 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
     return OptionalLong.empty();
   }
 
+  /**
+   * Returns whether or not the given aggregate provider statistic indicates that the cube it is
+   * tied to is distributed.
+   *
+   * @param statistic the aggregate provider statistic to consider
+   * @return true if it come from a distributed cube, false otherwise
+   */
   protected boolean isProviderStatFromDistributedCube(final IMemoryStatistic statistic) {
     return IMultiVersionDistributedActivePivot.PLUGIN_KEY.equals(statistic
         .getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
         .asText());
   }
 
+  /**
+   * Visits the children of the given statistic.
+   *
+   * <p>This method is not recursive and only goes down one level.
+   *
+   * @param statistic the statistic whose children need to be visited
+   */
   protected void visitChildren(final IMemoryStatistic statistic) {
     if (statistic.getChildren() != null) {
       for (final IMemoryStatistic child : statistic.getChildren()) {

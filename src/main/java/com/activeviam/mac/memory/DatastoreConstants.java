@@ -303,12 +303,16 @@ public class DatastoreConstants {
   /** The branch name field in the branch store. */
   public static final String VERSION__BRANCH_NAME = "branch";
 
+  /** The name of the epoch view store. */
   public static final String EPOCH_VIEW_STORE = "EpochView";
 
+  /** The base epoch id field in the epoch view store. */
   public static final String EPOCH_VIEW__BASE_EPOCH_ID = "baseEpochId";
 
+  /** The owner field in the epoch view store. */
   public static final String EPOCH_VIEW__OWNER = "owner";
 
+  /** The view epoch id field in the epoch view store. */
   public static final String EPOCH_VIEW__VIEW_EPOCH_ID = "viewEpochId";
 
   private DatastoreConstants() {

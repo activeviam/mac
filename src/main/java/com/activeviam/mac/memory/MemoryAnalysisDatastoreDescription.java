@@ -152,6 +152,11 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .build();
   }
 
+  /**
+   * Description of the epoch view store.
+   *
+   * @return description of {@link DatastoreConstants#EPOCH_VIEW_STORE}
+   */
   protected IStoreDescription epochViewStore() {
     return StartBuilding.store()
         .withStoreName(DatastoreConstants.EPOCH_VIEW_STORE)

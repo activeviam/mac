@@ -8,8 +8,8 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryStatisticDatastoreFeeder;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
@@ -112,7 +112,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final MemoryStatisticDatastoreFeeder feeder = new MemoryStatisticDatastoreFeeder(
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
         data, "testDistributedCubeEpochs");
     monitoringDatastore.edit(feeder::feedDatastore);
   }

@@ -10,6 +10,9 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+/**
+ * Simple implementation for regular epoch views.
+ */
 @Data
 @AllArgsConstructor
 public class RegularEpochView implements EpochView {

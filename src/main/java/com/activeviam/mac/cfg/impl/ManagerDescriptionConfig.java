@@ -67,8 +67,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Measure of the summed off-heap memory footprint. */
   public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
 
+  /**
+   * Measure for the ratio of off-heap memory relative to the application's total memory
+   * consumption.
+   */
   public static final String DIRECT_MEMORY_RATIO = "DirectMemory.Ratio";
 
+  /**
+   * Measure for counting the number of chunks.
+   *
+   * <p>Not equal to {@code contributors.COUNT} since MAC's base store granularity is finer than
+   * the granularity of the chunk.
+   */
   public static final String CHUNK_COUNT = "Chunks.COUNT";
 
   /**
@@ -110,8 +120,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String INDEX_DIMENSION = "Indices";
   /** Name of the version dimension. */
   public static final String VERSION_DIMENSION = "Versions";
+  /** Name of the aggregate provider dimension. */
   public static final String AGGREGATE_PROVIDER_DIMENSION = "Aggregate Provider";
+  /** Name of the partition dimension. */
   public static final String PARTITION_DIMENSION = "Partitions";
+  /** Name of the used by version dimension. */
   public static final String USED_BY_VERSION_DIMENSION = "Used by Version";
 
   /** Total on-heap memory footprint of the application. */
@@ -123,29 +136,48 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
 
+  /** Total on-heap memory footprint, relative to the total memory footprint of the application. */
   public static final String USED_MEMORY_RATIO = "UsedMemory.Ratio";
+  /** Total off-heap memory footprint, relative to the total memory committed by the JVM. */
   public static final String MAX_MEMORY_RATIO = "MaxMemory.Ratio";
 
+  /**
+   * The dictionary size of the dictionary associated to a chunk.
+   *
+   * <p>Summed in case of multiple dictionaries.
+   */
   public static final String DICTIONARY_SIZE = "Dictionary Size";
 
+  /** For vector block facts, the number of references to the vector block. */
   public static final String VECTOR_BLOCK_REFCOUNT = "VectorBlock.RefCount";
+  /** For vector block facts, the size the vector block. */
   public static final String VECTOR_BLOCK_SIZE = "VectorBlock.Length";
 
   /** Measure of the size of Chunks (in Bytes). */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
 
-  /** Measure of the the non written rows in Chunks. */
+  /** Measure of the the non-written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
 
+  /**
+   * Measure of the the non-written rows in Chunks, relative to the total non-written rows in the
+   * application.
+   */
   public static final String NON_WRITTEN_ROWS_RATIO = "NonWrittenRows.Ratio";
 
   /** Measure of the deleted rows in Chunks. */
   public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
 
+  /**
+   * Measure of the deleted rows in Chunks, relative to the total deleted rows in the application.
+   */
   public static final String DELETED_ROWS_RATIO = "DeletedRows.Ratio";
 
+  /** The number of committed rows within chunks. */
   public static final String COMITTED_ROWS = "CommittedRows";
+  /** The number of committed chunks. */
   public static final String COMITTED_CHUNK = "ComittedChunk";
+  /** The ratio of committed rows within chunks. */
   public static final String COMMITTED_MEMORY_RATIO = "CommittedMemory.Ratio";
 
   /** Formatter for Numbers. */
@@ -185,6 +217,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
   /** Name of the epoch id hierarchy. */
   public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+  /** Name of the date hierarchy. */
   public static final String DATE_HIERARCHY = "Date";
 
   /** The name of the folder for measures related to chunk ownership. */
