@@ -97,7 +97,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
     return analysisService.exportMostRecentVersion("testEpochs");
-    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to use this when export is fixed
+    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to use this when export is fixed PIVOT-4460
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {

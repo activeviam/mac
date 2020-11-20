@@ -932,6 +932,72 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
+  static Pair<IDatastore, IActivePivotManager>
+  createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy() {
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("B")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
   static Pair<IDatastore, IActivePivotManager> createDistributedApplicationWithKeepAllEpochPolicy() {
 
     final IDatastoreSchemaDescription schemaDescription =
