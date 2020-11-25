@@ -87,7 +87,7 @@ public class TestOverviewBookmark {
 
 		final MDXQuery excessMemoryQuery =
 				new MDXQuery("WITH MEMBER [Measures].[Owner.COUNT] AS "
-						+ ownershipCountMdxExpression("[Owners].[Owner]")
+						+ MonitoringTestUtils.ownershipCountMdxExpression("[Owners].[Owner]")
 						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
 						+ " Sum("
 						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -122,7 +122,7 @@ public class TestOverviewBookmark {
 
 		final MDXQuery excessMemoryQuery =
 				new MDXQuery("WITH MEMBER [Measures].[Component.COUNT] AS "
-						+ ownershipCountMdxExpression("[Components].[Component]")
+						+ MonitoringTestUtils.ownershipCountMdxExpression("[Components].[Component]")
 						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
 						+ " Sum("
 						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -159,7 +159,7 @@ public class TestOverviewBookmark {
 
 		final MDXQuery excessMemoryQuery =
 				new MDXQuery("WITH MEMBER [Measures].[Component.COUNT] AS "
-						+ ownershipCountMdxExpression("[Components].[Component]")
+						+ MonitoringTestUtils.ownershipCountMdxExpression("[Components].[Component]")
 						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
 						+ " Sum("
 						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -178,19 +178,4 @@ public class TestOverviewBookmark {
 						- CellSetUtils.<Double>extractValueFromSingleCellDTO(excessMemoryResult).longValue())
 				.isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
 	}
-
-  protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-    return "DistinctCount("
-        + "  Generate("
-        + "    NonEmpty("
-        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    ),"
-        + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    )"
-        + "  )"
-        + ")";
-  }
 }

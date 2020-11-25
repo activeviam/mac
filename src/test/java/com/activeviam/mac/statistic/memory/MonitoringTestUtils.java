@@ -45,7 +45,6 @@ import com.qfs.store.IDatastore;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
@@ -272,8 +271,7 @@ public class MonitoringTestUtils {
 
 	public static IDatastore assertLoadsCorrectly(
 			IMemoryStatistic statistic,
-			AResourcesExtension resourcesExtension)
-			throws AgentException, DatastoreTransactionException {
+			AResourcesExtension resourcesExtension) {
 		final IDatastore monitoringDatastore = createAnalysisDatastore(statistic, resourcesExtension);
 
 		final StatisticsSummary statisticsSummary =
@@ -299,6 +297,21 @@ public class MonitoringTestUtils {
 		return resourcesExtension.create(StartBuilding.datastore()
 				.setSchemaDescription(new MemoryAnalysisDatastoreDescription())
 				::build);
+	}
+
+	public static String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+		return "DistinctCount("
+				+ "  Generate("
+				+ "    NonEmpty("
+				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    ),"
+				+ "    NonEmpty("
+				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    )"
+				+ "  )"
+				+ ")";
 	}
 
 	/**

@@ -4,6 +4,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertArrayEquals;
 
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -37,7 +38,6 @@ import com.qfs.util.impl.QfsFileTestUtils;
 import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
 import com.qfs.vector.direct.impl.DirectLongVectorBlock;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -634,7 +634,7 @@ public class TestMemoryMonitoringDatastoreContent {
 										| DatastoreTransactionException
 										| IllegalArgumentException
 										| NullPointerException e) {
-									throw new QuartetRuntimeException(e);
+									throw new ActiveViamRuntimeException(e);
 								}
 							});
 		});

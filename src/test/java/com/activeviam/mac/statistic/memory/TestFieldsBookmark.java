@@ -19,7 +19,6 @@ import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -64,7 +63,6 @@ public class TestFieldsBookmark {
 		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
 	}
 
-	@Disabled("wrong field counts, should be updated after Field.COUNT is removed")
 	@Test
 	public void testStoreTotal() throws QueryException {
 		final IMultiVersionActivePivot pivot = tester.pivot();
@@ -82,7 +80,7 @@ public class TestFieldsBookmark {
 
 		final MDXQuery excessMemoryQuery = new MDXQuery(
 				"WITH MEMBER [Measures].[Field.COUNT] AS "
-						+ ownershipCountMdxExpression("[Fields].[Field]")
+						+ MonitoringTestUtils.ownershipCountMdxExpression("[Fields].[Field]")
 						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
 						+ " Sum("
 						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
@@ -100,36 +98,6 @@ public class TestFieldsBookmark {
 
 		Assertions.assertThat(CellSetUtils.<Long>extractValueFromSingleCellDTO(totalResult))
 				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult, 0L, Long::sum)
-						- CellSetUtils.<Long>extractValueFromSingleCellDTO(excessResult));
-	}
-
-	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-		return "DistinctCount("
-				+ "  Generate("
-				+ "    NonEmpty("
-				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    ),"
-				+ "    NonEmpty("
-				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    )"
-				+ "  )"
-				+ ")";
-	}
-
-	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-		return "DistinctCount("
-				+ "  Generate("
-				+ "    NonEmpty("
-				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    ),"
-				+ "    NonEmpty("
-				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    )"
-				+ "  )"
-				+ ")";
+						- CellSetUtils.<Double>extractValueFromSingleCellDTO(excessResult).longValue());
 	}
 }

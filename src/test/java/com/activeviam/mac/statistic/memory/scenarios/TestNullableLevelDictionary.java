@@ -7,10 +7,9 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import static com.activeviam.mac.statistic.memory.ATestMemoryStatistic.performGC;
-
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.statistic.memory.MonitoringTestUtils;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
@@ -82,7 +81,7 @@ public class TestNullableLevelDictionary {
 				.buildAndStart();
 
 		fillApplication();
-		performGC();
+		MonitoringTestUtils.performGC();
 		exportApplicationMemoryStatistics();
 	}
 
