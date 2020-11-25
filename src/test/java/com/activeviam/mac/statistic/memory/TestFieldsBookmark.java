@@ -117,4 +117,19 @@ public class TestFieldsBookmark {
 				+ "  )"
 				+ ")";
 	}
+
+	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+		return "DistinctCount("
+				+ "  Generate("
+				+ "    NonEmpty("
+				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    ),"
+				+ "    NonEmpty("
+				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    )"
+				+ "  )"
+				+ ")";
+	}
 }
