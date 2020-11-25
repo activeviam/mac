@@ -11,6 +11,7 @@ import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperHierarchy;
+import com.activeviam.copper.api.CopperLevelValues;
 import com.activeviam.copper.api.CopperStore;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
@@ -20,20 +21,18 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
-import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
@@ -98,6 +97,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String OWNER_DIMENSION = "Owners";
   /** Name of the component analysis hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the owner type analysis hierarchy. */
+  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
   /** Name of the field dimension. */
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the index dimension. */
@@ -142,12 +143,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
   /** The name of the hierarchy of provider ids. */
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
-  /** The name of the hierarchy of provider partitions. */
-  public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
   /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
-  /** The name of the hierarchy of pivots. */
-  public static final String PIVOT_HIERARCHY = "Pivot";
+  /** The name of the hierarchy of provider categories. */
+  public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
   /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
   /** The name of the hierarchy of owner components. */
@@ -155,8 +154,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the hierarchy of partitions. */
   public static final String PARTITION_HIERARCHY = "Partition";
 
-  /** The name of the folder for measures related to chunk ownership. */
-  public static final String OWNERSHIP_FOLDER = "Ownership";
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
@@ -210,9 +207,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMeasures(this::measures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
-        .withSharedMdxContext()
-        .withCalculatedMembers(calculatedMembers())
-        .end()
         .build();
   }
 
@@ -262,16 +256,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDimension("Aggregate Provider")
         .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
-        .withHierarchy(PIVOT_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
+        .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
+        .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
+        .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+        .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
@@ -300,54 +291,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(NUMBER_FORMATTER)
         .withUpdateTimestamp()
         .withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
-  }
-
-  private ICalculatedMemberDescription[] calculatedMembers() {
-    return new ICalculatedMemberDescription[] {
-        createMdxMeasureDescription("Owner.COUNT",
-            ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Component.COUNT",
-            ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-            OWNERSHIP_FOLDER),
-        createMdxMeasureDescription("Field.COUNT",
-            ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
-            OWNERSHIP_FOLDER)
-    };
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression) {
-    return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression, final String folder) {
-    final ICalculatedMemberDescription description =
-        createMdxMeasureDescription(measureName, mdxExpression);
-    description.setFolder(folder);
-    return description;
-  }
-
-  private String ownershipCountMdxExpression(
-      final String dimensionName, final String hierarchyName) {
-    return ownershipCountMdxExpression(
-        MdxNamingUtil.hierarchyUniqueName(dimensionName, hierarchyName));
-  }
-
-  private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-    return "DistinctCount("
-        + "  Generate("
-        + "    NonEmpty("
-        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    ),"
-        + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    )"
-        + "  )"
-        + ")";
   }
 
   private void copperCalculations(final ICopperContext context) {
@@ -387,7 +330,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 1- Chunk to Dicos
-    CopperStore chunkToDicoStore =
+    final CopperStore chunkToDicoStore =
         Copper.store(DatastoreConstants.DICTIONARY_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.DICTIONARY_ID, CHUNK_DICO_ID_LEVEL)
@@ -396,7 +339,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 2- Chunk to references
-    CopperStore chunkToReferenceStore =
+    final CopperStore chunkToReferenceStore =
         Copper.store(DatastoreConstants.REFERENCE_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
@@ -410,7 +353,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 3- Chunk to indexes
-    CopperStore chunkToIndexStore =
+    final CopperStore chunkToIndexStore =
         Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
@@ -427,23 +370,32 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     // --------------------
     // 4- Chunk to owners
-    CopperStore chunkToOwnerStore =
+    final CopperStore chunkToOwnerStore =
         Copper.store(DatastoreConstants.OWNER_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__CHUNK_ID, CHUNK_ID_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL);
 
-    CopperHierarchy ownerHierarchy =
+    final CopperHierarchy ownerHierarchy =
         Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__OWNER))
             .publish(context);
 
-    CopperHierarchy componentHierarchy =
-        Copper.newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
+    final CopperLevelValues ownerTypeValues = ownerHierarchy.level(OWNER_HIERARCHY)
+        .map(ChunkOwner::getType);
+
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
+        .from(ownerTypeValues)
+        .withMemberList("Cube", "Store", "None", "Shared")
+        .publish(context);
+
+    final CopperHierarchy componentHierarchy =
+        Copper
+            .newSingleLevelHierarchy(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__COMPONENT))
             .publish(context);
 
-    CopperHierarchy fieldHierarchy =
+    final CopperHierarchy fieldHierarchy =
         Copper.newSingleLevelHierarchy(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)
             .from(chunkToOwnerStore.field(DatastoreConstants.OWNER__FIELD))
             .publish(context);

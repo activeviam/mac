@@ -59,22 +59,21 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Integer partition;
   /** Dictionary being currently visited. */
   protected Long dictionaryId;
-  /** ChunkSet being visited. */
-  protected Long chunkSetId;
   /** dimension being currently visited. */
   protected String dimension;
   /** hierarchy being currently visited. */
   protected String hierarchy;
   /** level being currently visited. */
   protected String level;
-  /** Type of the aggregate Provider being currently visited. */
-  protected ProviderCpnType providerCpnType;
   /** Type of the root structure. */
   protected ParentType rootComponent;
   /** Type of the direct parent structure. */
   protected ParentType directParentType;
   /** id of the direct parent structure. */
   protected String directParentId;
+
+  /** Whether or not to ignore the field attributes of the visited statistics. */
+  protected boolean ignoreFieldSpecifications = false;
 
   /** Tree Printer. */
   protected StatisticTreePrinter printer;
@@ -151,10 +150,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         // other way
       case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
       case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
-        processProvider(stat);
-        break;
       case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
-        processFullProvider(stat);
+        processProvider(stat);
         break;
       case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER_PARTITION:
         processPartition(stat);
@@ -193,8 +190,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         this.partition,
         null,
         null,
+        this.providerId,
         this.epochId,
-        UsedByVersion.UNKNOWN)
+        UsedByVersion.UNKNOWN,
+        this.ignoreFieldSpecifications)
         .visit(stat);
   }
 
@@ -205,6 +204,12 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] ownerTuple =
         FeedVisitor
             .buildOwnerTupleFrom(ownerFormat, stat, owner, this.dumpName, this.rootComponent);
+    final IStatisticAttribute fieldAttribute =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+    if (fieldAttribute != null) {
+      FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
+          fieldAttribute.asText());
+    }
     FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
@@ -220,11 +225,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__PROVIDER_ID, this.providerId);
-    FeedVisitor.setTupleElement(
-        tuple,
-        format,
-        DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
-        this.providerCpnType.toString());
 
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
 
@@ -243,23 +243,16 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final DictionaryStatistic stat) {
     final ProviderCpnType cpnType = detectProviderComponent(stat);
+    final boolean previousIgnoreFieldSpecifications = this.ignoreFieldSpecifications;
     if (cpnType != null) {
-      assert this.providerCpnType == null;
       assert this.rootComponent == null;
-      this.providerCpnType = cpnType;
       this.rootComponent = getCorrespondingParentType(cpnType);
 
-      final IRecordFormat cpnFormat = getProviderCpnFormat();
-      final Object[] cpnTuple = buildProviderComponentTupleFrom(cpnFormat, stat);
-      FeedVisitor.setTupleElement(
-          cpnTuple, cpnFormat, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, this.providerId);
-      FeedVisitor.setTupleElement(
-          cpnTuple,
-          cpnFormat,
-          DatastoreConstants.PROVIDER_COMPONENT__TYPE,
-          this.providerCpnType.toString());
-
-      this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, cpnTuple);
+      if (cpnType == ProviderCpnType.BITMAP_MATCHER
+          || cpnType == ProviderCpnType.POINT_INDEX
+          || cpnType == ProviderCpnType.POINT_MAPPING) {
+        this.ignoreFieldSpecifications = true;
+      }
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
@@ -294,6 +287,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.dictionaryId = null;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
+    this.ignoreFieldSpecifications = previousIgnoreFieldSpecifications;
 
     return null;
   }
@@ -369,17 +363,14 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.branch = null;
   }
 
-  private void processFullProvider(final IMemoryStatistic stat) {
-    // Ignore this provider, only consider its underlying providers
-    visitChildren(stat);
-  }
-
   private void processProvider(final IMemoryStatistic stat) {
     final IRecordFormat format = getProviderFormat(this.storageMetadata);
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID,
         this.owner.getName());
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.PROVIDER__MANAGER_ID, this.manager);
 
@@ -440,7 +431,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final LevelStatisticVisitor levelVisitor =
         new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
             this.epochId);
-    levelVisitor.analyse(stat);
+    levelVisitor.analyze(stat);
 
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
@@ -462,22 +453,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   }
 
   private void processProviderComponent(final IMemoryStatistic stat, final ProviderCpnType type) {
-    this.providerCpnType = Objects.requireNonNull(type, "Null provider type");
-    final IRecordFormat format = getProviderCpnFormat();
-    final Object[] tuple = buildProviderComponentTupleFrom(format, stat);
-
-    FeedVisitor.setTupleElement(
-        tuple,
-        format,
-        DatastoreConstants.PROVIDER_COMPONENT__TYPE,
-        this.providerCpnType.toString());
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, this.providerId);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-
-    FeedVisitor.checkTuple(tuple, format);
-    this.transaction.add(DatastoreConstants.PROVIDER_COMPONENT_STORE, tuple);
-
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = getCorrespondingParentType(type);
@@ -490,7 +465,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
-    this.providerCpnType = null;
   }
 
   private void processChunkObject(final IMemoryStatistic statistic) {
@@ -593,16 +567,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
             .asText(); // JIT, BITMAP, LEAF
     tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__CATEGORY)] = getProviderCategory(stat);
-
-    return tuple;
-  }
-
-  private static Object[] buildProviderComponentTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-
-    tuple[format.getFieldIndex(DatastoreConstants.PROVIDER_COMPONENT__CLASS)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS).asText();
 
     return tuple;
   }
