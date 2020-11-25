@@ -28,6 +28,7 @@ import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -259,8 +260,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.partitionId,
         this.indexId,
         this.referenceId,
+        null,
         this.epochId,
-        this.usedByVersion)
+        this.usedByVersion,
+        false)
         .visit(stat);
   }
 
@@ -352,12 +355,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final DictionaryStatistic stat) {
-    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
 
+    final IStatisticAttribute storageSpecification =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORAGE_SPECIFICATION);
+
+    if (storageSpecification != null && !isSingleFieldStorage(storageSpecification.asText())) {
+      return null;
+    }
+
+    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor
+        .setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
@@ -380,6 +391,20 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.fields = oldFields;
 
     return null;
+  }
+
+  /**
+   * Checks whether or not the given storage specification concerns a single field.
+   *
+   * <p>Due to how {@link DictionaryManager} exports its dictionaries, dictionary entries that are
+   * not {@link com.qfs.dic.impl.FieldStorageSpecification}s should be ignored, as they are
+   * duplicates with potentially wrong field attributions.
+   *
+   * @param storageSpecification a string representing a storage specification
+   * @return whether or not it corresponds to a single field storage specification
+   */
+  protected boolean isSingleFieldStorage(final String storageSpecification) {
+    return storageSpecification.startsWith("F");
   }
 
   /**
@@ -515,6 +540,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
+    Arrays.sort(fieldNames);
     tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =
         new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
 

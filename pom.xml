@@ -32,6 +32,10 @@
 
     <!-- CLI args, meant to be overridden by each call -->
     <unsnappy.file>not-a-file.txt</unsnappy.file>
+
+    <!-- Sonar configuration -->
+    <sonar.projectKey>mac</sonar.projectKey>
+    <sonar.projectName>MAC</sonar.projectName>
   </properties>
 
   <dependencyManagement>

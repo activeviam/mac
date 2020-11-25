@@ -1,0 +1,589 @@
+{
+  "style" : { },
+  "showTitleBar" : false,
+  "body" : {
+    "pages" : [ {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Top Dictionaries across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order([Fields].[Field].[Field].Members, [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Most Consuming Dictionaries",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Fields].[Field].[Field]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ ]
+                },
+                "subplotModeEnabled" : true
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY]",
+                "updateMode" : "once",
+                "refreshInterval" : 10
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "4"
+              },
+              "1" : {
+                "ck" : "3"
+              }
+            },
+            "size" : 0.19,
+            "direction" : "column"
+          },
+          "1" : {
+            "children" : {
+              "0" : {
+                "ck" : "1"
+              },
+              "1" : {
+                "ck" : "2"
+              }
+            },
+            "direction" : "row",
+            "size" : 0.81
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Top Dictionaries",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Top Indices across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order([Indices].[Indexed Fields].[Indexed Fields].Members, [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "c-treeCells-member",
+                    "width" : 353
+                  } ],
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Most Consuming Indices",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Indices].[Indexed Fields].[Indexed Fields]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ ]
+                },
+                "subplotModeEnabled" : true
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX]",
+                "updateMode" : "once",
+                "refreshInterval" : 10
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "4"
+              },
+              "1" : {
+                "ck" : "3"
+              }
+            },
+            "size" : 0.19,
+            "direction" : "column"
+          },
+          "1" : {
+            "children" : {
+              "0" : {
+                "ck" : "1"
+              },
+              "1" : {
+                "ck" : "2"
+              }
+            },
+            "direction" : "row",
+            "size" : 0.81
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Top Indices",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Dictionary analysis",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Dictionary Size]} ON COLUMNS, NON EMPTY Order(Hierarchize(Crossjoin([Owners].[Owner].[Owner].Members, Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Index analysis",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "[Measures].[DirectMemory.SUM]",
+                    "width" : 166
+                  } ],
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "3"
+              },
+              "1" : {
+                "ck" : "4"
+              }
+            },
+            "direction" : "column",
+            "size" : 0.19
+          },
+          "1" : {
+            "children" : {
+              "0" : {
+                "ck" : "1"
+              },
+              "1" : {
+                "ck" : "2"
+              }
+            },
+            "direction" : "row",
+            "size" : 0.81
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Dictionary and Index per Store",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    } ]
+  },
+  "containerKey" : "dashboard"
+}

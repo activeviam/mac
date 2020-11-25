@@ -43,8 +43,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final Long epochId;
 
-  Integer memberCount;
-  Long dictionaryId;
+  /** The number of members of the visited level. */
+  protected Integer memberCount;
+  private Long dictionaryId;
 
   /**
    * Constructor.
@@ -86,7 +87,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
    *
    * @param root parent of the children to ve visited
    */
-  public void analyse(final IMemoryStatistic root) {
+  public void analyze(final IMemoryStatistic root) {
     visitChildren(root);
   }
 
@@ -104,6 +105,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
     final Object[] ownerTuple = FeedVisitor
         .buildOwnerTupleFrom(ownerFormat, stat, this.owner, this.dumpName, ParentType.LEVEL);
+    FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
+        this.parent.directParentId);
     FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
 
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
@@ -146,10 +149,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(DictionaryStatistic stat) {
-    if (this.dictionaryId != null) {
-      throw new RuntimeException("Already visited a dictionary: " + this.dictionaryId);
-    }
-
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
 
@@ -158,6 +157,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
+    final Long previousDictionaryId = this.dictionaryId;
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
 
@@ -168,8 +168,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     // We are processing a hierarchy/level
     visitChildren(stat);
-    // Do not nullify dictionaryId. It is done after visiting the whole level
 
+    this.dictionaryId = previousDictionaryId;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
@@ -200,6 +200,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         break;
       default:
         visitChildren(stat);
+        break;
     }
     return null;
   }

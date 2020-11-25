@@ -38,8 +38,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
   /** Name of the chunk <-> provider linking store. */
   public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
-  /** Name of the provider component <-> provider store. */
-  public static final String PROVIDER_COMPONENT_TO_PROVIDER = "providerComponentToProvider";
 
   /** Name of the chunk -> application linking store. */
   public static final String CHUNK_TO_APP = "ChunkToApp";
@@ -128,7 +126,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             DatastoreConstants.CHUNK__PROVIDER_ID,
             ILiteralType.LONG,
             DatastoreConstants.LONG_IF_NOT_EXIST)
-        .withField(DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE)
         .withField(DatastoreConstants.CHUNK__CLASS)
         .withField(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__ON_HEAP_SIZE, ILiteralType.LONG)
@@ -218,8 +215,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Attributes */
-        .withField(DatastoreConstants.INDEX_TYPE,
-            ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
+        .withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
         .build();
@@ -323,26 +319,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#PROVIDER_COMPONENT_STORE}
-   */
-  protected IStoreDescription providerComponentStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID, ILiteralType.LONG)
-        .asKeyField()
-
-        /* Attributes */
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .asKeyField()
-        .withField(DatastoreConstants.PROVIDER_COMPONENT__CLASS)
-        .build();
-  }
-
-  /**
    * Returns the description of {@link DatastoreConstants#PROVIDER_STORE}.
    *
    * @return description of {@link DatastoreConstants#PROVIDER_STORE}
@@ -415,7 +391,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         indexStore(),
         dictionaryStore(),
         levelStore(),
-        providerComponentStore(),
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
@@ -431,20 +406,16 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   private Stream<IReferenceDescription> getChunkReferences() {
-    return Stream.of(
-        StartBuilding.reference()
+    return Stream.of(StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
-            .toStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
+            .toStore(DatastoreConstants.PROVIDER_STORE)
             .withName(CHUNK_TO_PROVIDER)
+            .withMapping(
+                DatastoreConstants.CHUNK__PROVIDER_ID,
+                DatastoreConstants.PROVIDER__PROVIDER_ID)
             .withMapping(
                 DatastoreConstants.APPLICATION__DUMP_NAME,
                 DatastoreConstants.APPLICATION__DUMP_NAME)
-            .withMapping(
-                DatastoreConstants.CHUNK__PROVIDER_ID,
-                DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID)
-            .withMapping(
-                DatastoreConstants.CHUNK__PROVIDER_COMPONENT_TYPE,
-                DatastoreConstants.PROVIDER_COMPONENT__TYPE)
             .build(),
         StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
@@ -479,18 +450,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .withMapping(
                 DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY, DatastoreConstants.LEVEL__HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
-            .build(),
-        // Provider component refs
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.PROVIDER_COMPONENT_STORE)
-            .toStore(DatastoreConstants.PROVIDER_STORE)
-            .withName(PROVIDER_COMPONENT_TO_PROVIDER)
-            .withMapping(
-                DatastoreConstants.PROVIDER_COMPONENT__PROVIDER_ID,
-                DatastoreConstants.PROVIDER__PROVIDER_ID)
-            .withMapping(
-                DatastoreConstants.APPLICATION__DUMP_NAME,
-                DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         // Provider partitions refs
         StartBuilding.reference()
