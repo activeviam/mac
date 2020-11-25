@@ -208,8 +208,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withMeasures(this::measures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(15, TimeUnit.SECONDS))
-        .withSharedMdxContext()
-        .end()
         .build();
   }
 
