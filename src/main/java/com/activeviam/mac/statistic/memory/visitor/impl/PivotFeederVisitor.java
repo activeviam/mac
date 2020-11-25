@@ -74,7 +74,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
   /** Whether or not to ignore the field attributes of the visited statistics. */
   protected boolean ignoreFieldSpecifications = false;
-      // todo vlg: refactor: split ChunkSetStatisticVisitor?
 
   /** Tree Printer. */
   protected StatisticTreePrinter printer;
