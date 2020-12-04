@@ -7,8 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
 /**
  * Represents the epoch view of a distributed cube.
@@ -18,8 +17,7 @@ import lombok.Data;
  * <p>Two distributed epoch views with the same epoch id originating from different distributed
  * cubes are not considered {@code equals}.
  */
-@Data
-@AllArgsConstructor
+@Value
 public class DistributedEpochView implements EpochView {
 
   private String distributedCubeId;
