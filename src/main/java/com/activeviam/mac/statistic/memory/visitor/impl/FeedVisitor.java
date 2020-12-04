@@ -109,16 +109,19 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    * @param tuple the base tuple to write records with
    */
   static void writeChunkTupleForFields(
-      final ChunkStatistic statistic, final IOpenedTransaction transaction,
-      final Collection<String> fields, final IRecordFormat format, final Object... tuple) {
+      final ChunkStatistic statistic,
+      final IOpenedTransaction transaction,
+      final Collection<String> fields,
+      final IRecordFormat format,
+      final Object... tuple) {
     if (fields == null || fields.isEmpty()) {
       FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
     } else {
-      fields.forEach(field -> {
-        FeedVisitor
-            .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
-        FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
-      });
+      fields.forEach(
+          field -> {
+            FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
+            FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
+          });
     }
   }
 
@@ -151,15 +154,15 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   static Object[] buildVersionTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic statistic,
-      final String dumpName, final long epochId, final String branch) {
+      final IRecordFormat format,
+      final IMemoryStatistic statistic,
+      final String dumpName,
+      final long epochId,
+      final String branch) {
     final Object[] tuple = new Object[format.getFieldCount()];
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__DUMP_NAME,
-        dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID,
-        epochId);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__BRANCH_NAME,
-        branch);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__DUMP_NAME, dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__BRANCH_NAME, branch);
     return tuple;
   }
 
@@ -170,16 +173,14 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
       case MemoryStatisticConstants.STAT_NAME_STORE:
         final DatastoreFeederVisitor visitor =
-            new DatastoreFeederVisitor(
-                this.storageMetadata, this.transaction, this.dumpName);
+            new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         visitor.startFrom(stat);
         break;
       case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
       case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
       case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
         final PivotFeederVisitor feed =
-            new PivotFeederVisitor(
-                this.storageMetadata, this.transaction, this.dumpName);
+            new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         feed.startFrom(stat);
         break;
       default:

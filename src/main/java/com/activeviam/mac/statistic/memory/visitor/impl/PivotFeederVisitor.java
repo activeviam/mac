@@ -182,19 +182,19 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-        this.storageMetadata,
-        this.transaction,
-        this.dumpName,
-        this.current,
-        this.owner,
-        this.rootComponent,
-        this.directParentType,
-        this.directParentId,
-        this.partition,
-        null,
-        null,
-        this.epochId,
-        UsedByVersion.UNKNOWN)
+            this.storageMetadata,
+            this.transaction,
+            this.dumpName,
+            this.current,
+            this.owner,
+            this.rootComponent,
+            this.directParentType,
+            this.directParentId,
+            this.partition,
+            null,
+            null,
+            this.epochId,
+            UsedByVersion.UNKNOWN)
         .visit(stat);
   }
 
@@ -204,10 +204,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
 
@@ -264,9 +262,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
     this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
@@ -340,9 +336,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     if (readEpochAndBranchIfAny(stat)) {
       final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
-      final Object[] tuple = FeedVisitor
-          .buildVersionTupleFrom(versionStoreFormat, stat, this.dumpName, this.epochId,
-              this.branch);
+      final Object[] tuple =
+          FeedVisitor.buildVersionTupleFrom(
+              versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
       FeedVisitor.add(stat, this.transaction, DatastoreConstants.VERSION_STORE, tuple);
     }
 
@@ -377,8 +373,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getProviderFormat(this.storageMetadata);
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID,
-        this.owner.getName());
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID, this.owner.getName());
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.PROVIDER__MANAGER_ID, this.manager);
 
@@ -424,8 +420,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.level = lc.level;
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MANAGER_ID, this.manager);
-    FeedVisitor
-        .setTupleElement(tuple, format, DatastoreConstants.LEVEL__PIVOT_ID, this.owner.getName());
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.LEVEL__PIVOT_ID, this.owner.getName());
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DIMENSION, this.dimension);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__HIERARCHY, this.hierarchy);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__LEVEL, this.level);
@@ -437,8 +433,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.rootComponent = ParentType.LEVEL;
 
     final LevelStatisticVisitor levelVisitor =
-        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
-            this.epochId);
+        new LevelStatisticVisitor(
+            this, this.transaction, this.storageMetadata, this.dumpName, this.epochId);
     levelVisitor.analyse(stat);
 
     this.directParentType = previousParentType;
@@ -454,7 +450,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.level = null;
   }
 
-  private void processProviderComponent(final IMemoryStatistic stat, final ProviderComponentType type) {
+  private void processProviderComponent(
+      final IMemoryStatistic stat, final ProviderComponentType type) {
     this.providerComponentType = Objects.requireNonNull(type, "Null provider type");
     final IRecordFormat format = getProviderCpnFormat();
     final Object[] tuple = buildProviderComponentTupleFrom(format, stat);

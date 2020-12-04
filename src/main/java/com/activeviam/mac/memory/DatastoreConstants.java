@@ -315,6 +315,5 @@ public class DatastoreConstants {
   /** The view epoch id field in the epoch view store. */
   public static final String EPOCH_VIEW__VIEW_EPOCH_ID = "viewEpochId";
 
-  private DatastoreConstants() {
-  }
+  private DatastoreConstants() {}
 }

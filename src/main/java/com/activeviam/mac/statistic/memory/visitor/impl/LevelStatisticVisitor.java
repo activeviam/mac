@@ -65,7 +65,12 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     this.directParentType = ParentType.LEVEL;
     this.directParentId =
-        parent.owner.getName() + "/" + parent.dimension + "/" + parent.hierarchy + "/"
+        parent.owner.getName()
+            + "/"
+            + parent.dimension
+            + "/"
+            + parent.hierarchy
+            + "/"
             + parent.level;
   }
 
@@ -92,10 +97,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.OWNER__COMPONENT, ParentType.LEVEL);
 
@@ -128,8 +131,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     final Long previousDictionaryId = this.dictionaryId;
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];

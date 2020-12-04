@@ -98,15 +98,13 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
         });
   }
 
-  private Set<Long> retrieveChunksOfType(
-      final IDatastore datastore, final ParentType component) {
+  private Set<Long> retrieveChunksOfType(final IDatastore datastore, final ParentType component) {
     final IDictionaryCursor cursor =
         datastore
             .getHead()
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
+            .withCondition(BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
             .selecting(DatastoreConstants.CHUNK_ID)
             .onCurrentThread()
             .run();

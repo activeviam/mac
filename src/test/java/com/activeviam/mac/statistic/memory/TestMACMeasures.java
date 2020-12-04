@@ -135,8 +135,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(stats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =
@@ -160,9 +159,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final MDXQuery query2 =
         new MDXQuery(
-            "SELECT"
-                + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
-                + "  FROM [MemoryCube]");
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
@@ -199,9 +196,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final MDXQuery query2 =
         new MDXQuery(
-            "SELECT"
-                + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
-                + "  FROM [MemoryCube]");
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
@@ -282,9 +277,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                     final CellSetDTO result = pivot.execute(query);
                     System.out.println(measure);
                     final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                    assertions.assertThat(resultValue)
-                        .as("Value of " + measure)
-                        .isEqualTo(value);
+                    assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
         });
   }
@@ -438,19 +431,19 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
-        new MDXQuery("SELECT"
-            + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-            + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "  [Owners].[Owner].[Owner].[Store A],"
-            + "  [Fields].[Field].[Field].[id]"
-            + " )");
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "  [Owners].[Owner].[Owner].[Store A],"
+                + "  [Fields].[Field].[Field].[id]"
+                + " )");
     CellSetDTO res = pivot.execute(query);
 
-    final long expectedDictionarySize = monitoredApp.getLeft().getDictionaries()
-        .getDictionary("A", "id")
-        .size();
+    final long expectedDictionarySize =
+        monitoredApp.getLeft().getDictionaries().getDictionary("A", "id").size();
 
     Assertions.assertThat(res.getCells())
         .isNotEmpty()
@@ -512,14 +505,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testFieldCount() throws QueryException {
-    performCountTest("[Measures].[Field.COUNT]",
-        "[Fields].[Field]",
-        "[Chunks].[ChunkId].[ChunkId].Members");
+    performCountTest(
+        "[Measures].[Field.COUNT]", "[Fields].[Field]", "[Chunks].[ChunkId].[ChunkId].Members");
   }
 
   @Test
   public void testFieldCountOnStoresAndComponents() throws QueryException {
-    performCountTest("[Measures].[Field.COUNT]",
+    performCountTest(
+        "[Measures].[Field.COUNT]",
         "[Fields].[Field]",
         " Crossjoin("
             + "    Hierarchize("
@@ -563,7 +556,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "        {[Measures].[contributors.COUNT]}"
                 + "      ),"
                 + "      NonEmpty("
-                + "        " + countedHierarchy + ".[ALL].[AllMember].Children,"
+                + "        "
+                + countedHierarchy
+                + ".[ALL].[AllMember].Children,"
                 + "        {[Measures].[contributors.COUNT]}"
                 + "      )"
                 + "    )"

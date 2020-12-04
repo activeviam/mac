@@ -72,38 +72,50 @@ public class TestEpochs extends ATestMemoryStatistic {
     monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
     // epoch 1
-    monitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(0, 10)
-          .forEach(i -> transactionManager.add("A", i, 0.));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+            });
 
     // epoch 2
-    monitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(10, 20)
-          .forEach(i -> transactionManager.add("A", i, 1.));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.));
+            });
 
     // epoch 3
     // drop partition from epoch 2
-    monitoredApp.getLeft().edit(transactionManager -> {
-      transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.));
+            });
 
     // epoch 4
     // make sure to add a new chunk on the 0-valued partition
-    monitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
-          .forEach(i -> transactionManager.add("A", i, 0.));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
+                  .forEach(i -> transactionManager.add("A", i, 0.));
+            });
 
     // epoch 5
     // remaining chunks from epoch 4, but not used by version
-    monitoredApp.getLeft().edit(transactionManager -> {
-      transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20));
+            });
 
-    monitoredApp.getRight().getActivePivots().get("Cube")
-        .commit(new Epoch(10L));
+    monitoredApp.getRight().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
@@ -127,8 +139,7 @@ public class TestEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
-        data, "testEpochs");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "testEpochs");
     monitoringDatastore.edit(feeder::feedDatastore);
   }
 
@@ -147,8 +158,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   public void testExpectedEpochs() {
     final Set<Long> epochIds = retrieveEpochIds();
 
-    Assertions.assertThat(epochIds)
-        .containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 10L);
+    Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 10L);
   }
 
   @Test
@@ -184,25 +194,24 @@ public class TestEpochs extends ATestMemoryStatistic {
     Assertions.assertThat(chunksPerEpoch.get(3L))
         .containsExactlyInAnyOrderElementsOf(chunksPerEpoch.get(1L));
 
-    Assertions.assertThat(chunksPerEpoch.get(4L))
-        .containsAll(chunksPerEpoch.get(3L));
+    Assertions.assertThat(chunksPerEpoch.get(4L)).containsAll(chunksPerEpoch.get(3L));
 
-    Assertions.assertThat(chunksPerEpoch.get(5L))
-        .isEqualTo(chunksPerEpoch.get(3L));
+    Assertions.assertThat(chunksPerEpoch.get(5L)).isEqualTo(chunksPerEpoch.get(3L));
   }
 
   @Test
   public void testUsedByVersionFlag() {
     final Set<Long> recordChunks = retrieveRecordChunks();
 
-    final Multimap<Long, Long> chunksPerEpochUsedByVersion = retrieveChunksPerEpoch(recordChunks,
-        BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
+    final Multimap<Long, Long> chunksPerEpochUsedByVersion =
+        retrieveChunksPerEpoch(
+            recordChunks,
+            BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
 
-    final Multimap<Long, Long> chunksPerEpochNoFilter = retrieveChunksPerEpoch(recordChunks,
-        BaseConditions.True());
+    final Multimap<Long, Long> chunksPerEpochNoFilter =
+        retrieveChunksPerEpoch(recordChunks, BaseConditions.True());
 
-    Assertions.assertThat(chunksPerEpochNoFilter.get(4L))
-        .isEqualTo(chunksPerEpochNoFilter.get(5L));
+    Assertions.assertThat(chunksPerEpochNoFilter.get(4L)).isEqualTo(chunksPerEpochNoFilter.get(5L));
 
     Assertions.assertThat(chunksPerEpochUsedByVersion.get(4L))
         .hasSizeGreaterThan(chunksPerEpochUsedByVersion.get(5L).size())
@@ -231,13 +240,17 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Set<Long> retrieveRecordChunks() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
-        .withCondition(
-            BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
-        .selecting(DatastoreConstants.CHUNK_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
 
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(c -> c.readLong(0))
@@ -246,14 +259,18 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Multimap<Long, Long> retrieveChunksPerEpoch(
       final Collection<Long> chunkSet, final ICondition filter) {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
-        .withCondition(BaseConditions.And(
-            BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()),
-            filter))
-        .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.And(
+                    BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()), filter))
+            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
 
     final Multimap<Long, Long> chunksPerEpoch = HashMultimap.create();
     for (final IRecordReader reader : cursor) {
@@ -266,12 +283,16 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Set<Long> retrieveEpochIds() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__EPOCH_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.VERSION__EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(c -> c.readLong(0))
@@ -279,12 +300,16 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Multimap<Long, Integer> retrievePartitionsPerEpoch() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK__PARTITION_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK__PARTITION_ID)
+            .onCurrentThread()
+            .run();
 
     final Multimap<Long, Integer> partitionsPerEpoch = HashMultimap.create();
     for (final IRecordReader reader : cursor) {
@@ -299,12 +324,16 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Multimap<Long, Long> retrieveDictionariesPerEpoch() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.DICTIONARY_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.DICTIONARY_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.DICTIONARY_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.DICTIONARY_ID)
+            .onCurrentThread()
+            .run();
 
     final Multimap<Long, Long> dictionariesPerEpoch = HashMultimap.create();
     for (final IRecordReader reader : cursor) {
@@ -317,12 +346,16 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Multimap<Long, Long> retrieveIndicesPerEpoch() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.INDEX_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.INDEX_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.INDEX_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.INDEX_ID)
+            .onCurrentThread()
+            .run();
 
     final Multimap<Long, Long> indicesPerEpoch = HashMultimap.create();
     for (final IRecordReader reader : cursor) {

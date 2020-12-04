@@ -50,18 +50,20 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
   public void setup() throws DatastoreTransactionException {
     initializeApplication();
 
-    Path exportPath = generateMemoryStatistics(
-        monitoredApp.getLeft(),
-        monitoredApp.getRight(),
-        IMemoryAnalysisService::exportApplication);
+    Path exportPath =
+        generateMemoryStatistics(
+            monitoredApp.getLeft(),
+            monitoredApp.getRight(),
+            IMemoryAnalysisService::exportApplication);
     appStatistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoredApplication();
 
-    exportPath = generateMemoryStatistics(
-        distributedMonitoredApp.getLeft(),
-        distributedMonitoredApp.getRight(),
-        IMemoryAnalysisService::exportMostRecentVersion);
+    exportPath =
+        generateMemoryStatistics(
+            distributedMonitoredApp.getLeft(),
+            distributedMonitoredApp.getRight(),
+            IMemoryAnalysisService::exportMostRecentVersion);
     distributedAppStatistics = loadMemoryStatFromFolder(exportPath);
   }
 
@@ -74,22 +76,27 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
     final ChunkOwner storeB = new StoreOwner("B");
     final ChunkOwner cube = new CubeOwner("Cube");
 
-    SoftAssertions.assertSoftly(assertions -> {
-      assertions.assertThat(epochVisitor.getDatastoreEpochs().toArray())
-          .as("datastore epochs")
-          .containsExactlyInAnyOrder(0L, 1L, 2L, 3L, 4L);
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          assertions
+              .assertThat(epochVisitor.getDatastoreEpochs().toArray())
+              .as("datastore epochs")
+              .containsExactlyInAnyOrder(0L, 1L, 2L, 3L, 4L);
 
-      assertions.assertThat(epochVisitor.getDistributedEpochsPerOwner())
-          .as("distributed epochs")
-          .isEmpty();
+          assertions
+              .assertThat(epochVisitor.getDistributedEpochsPerOwner())
+              .as("distributed epochs")
+              .isEmpty();
 
-      assertions.assertThat(epochVisitor.getRegularEpochsPerOwner())
-          .as("non-distributed epochs")
-          .containsExactlyInAnyOrderEntriesOf(Map.of(
-              storeA, new TreeSet<>(Set.of(1L, 3L)),
-              storeB, new TreeSet<>(Set.of(0L, 2L, 4L)),
-              cube, new TreeSet<>(Set.of(1L, 3L))));
-    });
+          assertions
+              .assertThat(epochVisitor.getRegularEpochsPerOwner())
+              .as("non-distributed epochs")
+              .containsExactlyInAnyOrderEntriesOf(
+                  Map.of(
+                      storeA, new TreeSet<>(Set.of(1L, 3L)),
+                      storeB, new TreeSet<>(Set.of(0L, 2L, 4L)),
+                      cube, new TreeSet<>(Set.of(1L, 3L))));
+        });
   }
 
   @Test
@@ -102,23 +109,29 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
     final ChunkOwner queryCubeA = new CubeOwner("QueryCubeA");
     final ChunkOwner queryCubeB = new CubeOwner("QueryCubeB");
 
-    SoftAssertions.assertSoftly(assertions -> {
-      assertions.assertThat(epochVisitor.getDatastoreEpochs().toArray())
-          .as("datastore epochs")
-          .containsExactlyInAnyOrder(1L);
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          assertions
+              .assertThat(epochVisitor.getDatastoreEpochs().toArray())
+              .as("datastore epochs")
+              .containsExactlyInAnyOrder(1L);
 
-      assertions.assertThat(epochVisitor.getDistributedEpochsPerOwner())
-          .as("distributed epochs")
-          .containsExactlyInAnyOrderEntriesOf(Map.of(
-              queryCubeA, Collections.singleton(5L),
-              queryCubeB, Collections.singleton(1L)));
+          assertions
+              .assertThat(epochVisitor.getDistributedEpochsPerOwner())
+              .as("distributed epochs")
+              .containsExactlyInAnyOrderEntriesOf(
+                  Map.of(
+                      queryCubeA, Collections.singleton(5L),
+                      queryCubeB, Collections.singleton(1L)));
 
-      assertions.assertThat(epochVisitor.getRegularEpochsPerOwner())
-          .as("non-distributed epochs")
-          .containsExactlyInAnyOrderEntriesOf(Map.of(
-              storeA, new TreeSet<>(Collections.singleton(1L)),
-              dataCube, new TreeSet<>(Collections.singleton(1L))));
-    });
+          assertions
+              .assertThat(epochVisitor.getRegularEpochsPerOwner())
+              .as("non-distributed epochs")
+              .containsExactlyInAnyOrderEntriesOf(
+                  Map.of(
+                      storeA, new TreeSet<>(Collections.singleton(1L)),
+                      dataCube, new TreeSet<>(Collections.singleton(1L))));
+        });
   }
 
   private void initializeApplication() throws DatastoreTransactionException {
@@ -136,41 +149,38 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
       throws DatastoreTransactionException {
     // epoch 1 -> store A + cube
     transactionManager.startTransaction("A");
-    IntStream.range(0, 10)
-        .forEach(i -> transactionManager.add("A", i, 0.));
+    IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
     transactionManager.commitTransaction();
 
     // epoch 2 -> store B
     transactionManager.startTransaction("B");
-    IntStream.range(0, 10)
-        .forEach(i -> transactionManager.add("B", i, 0.));
+    IntStream.range(0, 10).forEach(i -> transactionManager.add("B", i, 0.));
     transactionManager.commitTransaction();
 
     // epoch 3 -> store A + cube
     transactionManager.startTransaction("A");
-    IntStream.range(10, 20)
-        .forEach(i -> transactionManager.add("A", i, 1.));
+    IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.));
     transactionManager.commitTransaction();
 
     // epoch 4 -> store B
     transactionManager.startTransaction("B");
-    IntStream.range(10, 20)
-        .forEach(i -> transactionManager.add("B", i, 1.));
+    IntStream.range(10, 20).forEach(i -> transactionManager.add("B", i, 1.));
     transactionManager.commitTransaction();
   }
 
   private void fillMonitoredApplication() {
     // epoch 1
-    distributedMonitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(0, 10)
-          .forEach(i -> transactionManager.add("A", i, 0.));
-    });
+    distributedMonitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+            });
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
-        ((MultiVersionDistributedActivePivot) distributedMonitoredApp.getRight().getActivePivots()
-            .get(
-                "QueryCubeA"));
+        ((MultiVersionDistributedActivePivot)
+            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
     // produces distributed epochs 1 to 5
     for (int i = 0; i < 5; ++i) {
@@ -178,9 +188,8 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
     }
 
     MultiVersionDistributedActivePivot queryCubeB =
-        ((MultiVersionDistributedActivePivot) distributedMonitoredApp.getRight().getActivePivots()
-            .get(
-                "QueryCubeB"));
+        ((MultiVersionDistributedActivePivot)
+            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
     // produces distributed epoch 1
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
@@ -193,9 +202,7 @@ public class TestEpochVisitor extends ATestMemoryStatistic {
     datastore.getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
-    final IMemoryAnalysisService analysisService =
-        createService(datastore, manager);
+    final IMemoryAnalysisService analysisService = createService(datastore, manager);
     return exportMethod.apply(analysisService, "testEpochs");
   }
-
 }

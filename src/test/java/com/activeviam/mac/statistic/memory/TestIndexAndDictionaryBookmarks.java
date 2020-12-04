@@ -38,200 +38,200 @@ import org.junit.Test;
 
 public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
-	private Pair<IDatastore, IActivePivotManager> monitoredApp;
-	private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private Pair<IDatastore, IActivePivotManager> monitoredApp;
+  private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
-	public static final int ADDED_DATA_SIZE = 20;
+  public static final int ADDED_DATA_SIZE = 20;
 
-	@BeforeClass
-	public static void setupRegistry() {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+  @BeforeClass
+  public static void setupRegistry() {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
 
-	@Before
-	public void setup() throws AgentException {
-		initializeApplication();
+  @Before
+  public void setup() throws AgentException {
+    initializeApplication();
 
-		final Path exportPath = generateMemoryStatistics();
+    final Path exportPath = generateMemoryStatistics();
 
-		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
-		initializeMonitoringApplication(stats);
+    initializeMonitoringApplication(stats);
 
-		IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-		Assertions.assertThat(pivot).isNotNull();
-	}
+    IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+    Assertions.assertThat(pivot).isNotNull();
+  }
 
-	private void initializeApplication() {
-		monitoredApp = createMicroApplicationWithIndexedFields();
+  private void initializeApplication() {
+    monitoredApp = createMicroApplicationWithIndexedFields();
 
-		monitoredApp.getLeft()
-				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-						.forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
-	}
+    monitoredApp
+        .getLeft()
+        .edit(
+            tm ->
+                IntStream.range(0, ADDED_DATA_SIZE)
+                    .forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
+  }
 
-	private Path generateMemoryStatistics() {
-		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+  private Path generateMemoryStatistics() {
+    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
-		performGC();
+    performGC();
 
-		final MemoryAnalysisService analysisService =
-				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-		return analysisService.exportMostRecentVersion("testOverview");
-	}
+    final MemoryAnalysisService analysisService =
+        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+    return analysisService.exportMostRecentVersion("testOverview");
+  }
 
-	private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-		final IDatastore monitoringDatastore =
-				StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastore monitoringDatastore =
+        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
-		IActivePivotManager manager =
-				StartBuilding.manager()
-						.setDescription(config.managerDescription())
-						.setDatastoreAndPermissions(monitoringDatastore)
-						.buildAndStart();
-		monitoringApp = new Pair<>(monitoringDatastore, manager);
+    IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
+    monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-		final AnalysisDatastoreFeeder feeder =
-				new AnalysisDatastoreFeeder(data, "storeA");
-		monitoringDatastore.edit(feeder::feedDatastore);
-	}
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
+  }
 
-	@After
-	public void tearDown() throws AgentException {
-		monitoringApp.getLeft().close();
-		monitoringApp.getRight().stop();
-	}
+  @After
+  public void tearDown() throws AgentException {
+    monitoringApp.getLeft().close();
+    monitoringApp.getRight().stop();
+  }
 
-	@Test
-	public void testIndexedFieldsForStoreA() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+  @Test
+  public void testIndexedFieldsForStoreA() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery totalQuery =
-				new MDXQuery(
-						"SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
-								+ " FROM [MemoryCube]"
-								+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = pivot.execute(totalQuery);
 
-		final List<AxisDTO> axes = result.getAxes();
-		Assertions.assertThat(axes)
-				.hasSize(1);
+    final List<AxisDTO> axes = result.getAxes();
+    Assertions.assertThat(axes).hasSize(1);
 
-		final List<AxisPositionDTO> indexedFieldsPosition = axes.get(0).getPositions();
+    final List<AxisPositionDTO> indexedFieldsPosition = axes.get(0).getPositions();
 
-		Assertions.assertThat(indexedFieldsPosition)
-				.extracting(position -> position.getMembers().get(0).getPath().getPath())
-				.containsExactlyInAnyOrder(
-						new String[] {"AllMember", "id0, id1, id2"},
-						new String[] {"AllMember", "id0"});
-	}
+    Assertions.assertThat(indexedFieldsPosition)
+        .extracting(position -> position.getMembers().get(0).getPath().getPath())
+        .containsExactlyInAnyOrder(
+            new String[] {"AllMember", "id0, id1, id2"}, new String[] {"AllMember", "id0"});
+  }
 
-	@Test
-	public void testDictionarizedFieldsForStoreB() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+  @Test
+  public void testDictionarizedFieldsForStoreB() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery totalQuery =
-				new MDXQuery(
-						"SELECT NonEmpty("
-								+ "   Except("
-								+ "     [Fields].[Field].[Field].Members,"
-								+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
-								+ "   ),"
-								+ "   [Measures].[Dictionary Size]"
-								+ " ) ON COLUMNS"
-								+ " FROM [MemoryCube]"
-								+ " WHERE ("
-								+ "   [Owners].[Owner].[ALL].[AllMember].[Store B]"
-								+ " )");
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NonEmpty("
+                + "   Except("
+                + "     [Fields].[Field].[Field].Members,"
+                + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
+                + "   ),"
+                + "   [Measures].[Dictionary Size]"
+                + " ) ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[ALL].[AllMember].[Store B]"
+                + " )");
 
-		final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = pivot.execute(totalQuery);
 
-		final List<AxisDTO> axes = result.getAxes();
-		Assertions.assertThat(axes)
-				.hasSize(1);
+    final List<AxisDTO> axes = result.getAxes();
+    Assertions.assertThat(axes).hasSize(1);
 
-		final List<AxisPositionDTO> dictionarizedFieldsPositions = axes.get(0).getPositions();
+    final List<AxisPositionDTO> dictionarizedFieldsPositions = axes.get(0).getPositions();
 
-		Assertions.assertThat(dictionarizedFieldsPositions)
-				.extracting(position -> position.getMembers().get(0).getPath().getPath())
-				.containsExactlyInAnyOrder(
-						new String[] {"AllMember", "id0"});
-	}
+    Assertions.assertThat(dictionarizedFieldsPositions)
+        .extracting(position -> position.getMembers().get(0).getPath().getPath())
+        .containsExactlyInAnyOrder(new String[] {"AllMember", "id0"});
+  }
 
-	@Test
-	public void testDictionarySizeTotal() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+  @Test
+  public void testDictionarySizeTotal() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery totalQuery = new MDXQuery(
-				"SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
-						+ " [Measures].[Dictionary Size] ON ROWS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
+                + " [Measures].[Dictionary Size] ON ROWS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery perFieldQuery = new MDXQuery(
-				"SELECT NonEmpty("
-						+ "   Except("
-						+ "     [Fields].[Field].[Field].Members,"
-						+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
-						+ "   ),"
-						+ "   [Measures].[Dictionary Size]"
-						+ " ) ON COLUMNS,"
-						+ " [Measures].[Dictionary Size] ON ROWS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery perFieldQuery =
+        new MDXQuery(
+            "SELECT NonEmpty("
+                + "   Except("
+                + "     [Fields].[Field].[Field].Members,"
+                + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
+                + "   ),"
+                + "   [Measures].[Dictionary Size]"
+                + " ) ON COLUMNS,"
+                + " [Measures].[Dictionary Size] ON ROWS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final CellSetDTO total = pivot.execute(totalQuery);
-		final CellSetDTO perField = pivot.execute(perFieldQuery);
+    final CellSetDTO total = pivot.execute(totalQuery);
+    final CellSetDTO perField = pivot.execute(perFieldQuery);
 
-		Assertions.assertThat(perField.getCells().stream()
-				.mapToLong(x -> (long) x.getValue())
-				.sum())
-				.isEqualTo((long) total.getCells().get(0).getValue());
-	}
+    Assertions.assertThat(perField.getCells().stream().mapToLong(x -> (long) x.getValue()).sum())
+        .isEqualTo((long) total.getCells().get(0).getValue());
+  }
 
-	@Test
-	public void testDictionarySizesPerField() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+  @Test
+  public void testDictionarySizesPerField() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery totalQuery =
-				new MDXQuery(
-						"SELECT NON EMPTY"
-								+ "   Except("
-								+ "     [Fields].[Field].[Field].Members,"
-								+ "     [Fields].[Field].[ALL].[AllMember].[N/A]"
-								+ "   ) ON COLUMNS,"
-								+ " [Measures].[Dictionary Size] ON ROWS"
-								+ " FROM [MemoryCube]"
-								+ " WHERE ("
-								+ "   [Owners].[Owner].[ALL].[AllMember].[Store A],"
-								+ "   [Components].[Component].[ALL].[AllMember].[DICTIONARY]"
-								+ " )");
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY"
+                + "   Except("
+                + "     [Fields].[Field].[Field].Members,"
+                + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
+                + "   ) ON COLUMNS,"
+                + " [Measures].[Dictionary Size] ON ROWS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[ALL].[AllMember].[Store A],"
+                + "   [Components].[Component].[ALL].[AllMember].[DICTIONARY]"
+                + " )");
 
-		final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = pivot.execute(totalQuery);
 
-		final IDictionaryProvider dictionaryProvider =
-				monitoredApp.getLeft().getDictionaries().getStoreDictionaries("A");
+    final IDictionaryProvider dictionaryProvider =
+        monitoredApp.getLeft().getDictionaries().getStoreDictionaries("A");
 
-		SoftAssertions.assertSoftly(assertions -> {
-			final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
-			for (final CellDTO cell : result.getCells()) {
-				final String fieldName =
-						positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
+          for (final CellDTO cell : result.getCells()) {
+            final String fieldName =
+                positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
 
-				final long expectedDictionarySize = dictionaryProvider
-						.getDictionary(monitoredApp.getLeft().getSchemaMetadata().getFieldIndex("A", fieldName))
-						.size();
+            final long expectedDictionarySize =
+                dictionaryProvider
+                    .getDictionary(
+                        monitoredApp.getLeft().getSchemaMetadata().getFieldIndex("A", fieldName))
+                    .size();
 
-				assertions.assertThat((long) cell.getValue())
-						.isEqualTo(expectedDictionarySize);
-			}
-		});
-	}
+            assertions.assertThat((long) cell.getValue()).isEqualTo(expectedDictionarySize);
+          }
+        });
+  }
 }

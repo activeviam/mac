@@ -112,13 +112,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                 feeder.feedDatastore(tm);
 
                 for (int i = 0; i < chunkIds.length; i++) {
-                  final ICursor records = tm.getQueryRunner()
-                      .forStore(DatastoreConstants.CHUNK_STORE)
-                      .withCondition(BaseConditions.Equal(
-                          DatastoreConstants.CHUNK_ID, chunkIds[i]))
-                      .selecting(DatastoreConstants.CHUNK__SIZE)
-                      .onCurrentThread()
-                      .run();
+                  final ICursor records =
+                      tm.getQueryRunner()
+                          .forStore(DatastoreConstants.CHUNK_STORE)
+                          .withCondition(
+                              BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
+                          .selecting(DatastoreConstants.CHUNK__SIZE)
+                          .onCurrentThread()
+                          .run();
 
                   monitoredChunkSizes[i] = records.iterator().next().readLong(0);
                 }
@@ -158,8 +159,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -228,8 +228,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -261,7 +260,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     // offheap
     Assertions.assertThat(list.size()).isEqualTo(2);
     Assertions.assertThat(list)
-        .containsExactlyInAnyOrder(new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
+        .containsExactlyInAnyOrder(
+            new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
   }
 
   @Test
@@ -293,8 +293,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -383,8 +382,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(storeStats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(storeStats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record chunks data :
@@ -458,8 +456,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(pivotStats, "Cube");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(pivotStats, "Cube");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     // Query record of level data :
@@ -503,8 +500,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(stats, "appAInit");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "appAInit");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     final List<IMemoryStatistic> dics =
@@ -514,8 +510,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                 stat ->
                     stat.getName().equals(MemoryStatisticConstants.STAT_NAME_STORE)
                         && stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
-                        .asText()
-                        .equals("A"),
+                            .asText()
+                            .equals("A"),
                 stat ->
                     stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_MANAGER),
                 stat -> stat.getAttribute("field").asText().equals("id")));
@@ -616,14 +612,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryStatistic statsEpoch2 = loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder initFeeder =
-        new AnalysisDatastoreFeeder(stats, "appAInit");
+    final AnalysisDatastoreFeeder initFeeder = new AnalysisDatastoreFeeder(stats, "appAInit");
     final AnalysisDatastoreFeeder nextFeeder =
         new AnalysisDatastoreFeeder(statsEpoch2, "appAEpoch2");
-    monitoringDatastore.edit(tm -> {
-      initFeeder.feedDatastore(tm);
-      nextFeeder.feedDatastore(tm);
-    });
+    monitoringDatastore.edit(
+        tm -> {
+          initFeeder.feedDatastore(tm);
+          nextFeeder.feedDatastore(tm);
+        });
 
     // Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice
     final IDictionaryCursor cursor =
@@ -719,14 +715,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     final IMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder baseFeeder =
-        new AnalysisDatastoreFeeder(stats, "App");
+    final AnalysisDatastoreFeeder baseFeeder = new AnalysisDatastoreFeeder(stats, "App");
     final AnalysisDatastoreFeeder feederWithBitmap =
         new AnalysisDatastoreFeeder(statsWithBitmap, "AppWithBitmap");
-    monitoringDatastore.edit(tm -> {
-      baseFeeder.feedDatastore(tm);
-      feederWithBitmap.feedDatastore(tm);
-    });
+    monitoringDatastore.edit(
+        tm -> {
+          baseFeeder.feedDatastore(tm);
+          feederWithBitmap.feedDatastore(tm);
+        });
 
     final IDictionaryCursor cursor =
         monitoringDatastore
@@ -771,8 +767,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testChunkToReferencesDatastoreContentWithReference()
-      throws AgentException {
+  public void testChunkToReferencesDatastoreContentWithReference() throws AgentException {
     final Pair<IDatastore, IActivePivotManager> monitoredApp =
         createMicroApplicationWithReference();
     final IMemoryAnalysisService analysisService =
@@ -793,8 +788,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore = createAnalysisDatastore();
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(stats, "App");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "App");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     final IDictionaryCursor cursor =
@@ -846,30 +840,30 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
 
           // Test that we have chunks of single values
-          final Set<String> recordTypes = retrieveClassesOfChunks(
-              monitoringDatastore,
-              retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
+          final Set<String> recordTypes =
+              retrieveClassesOfChunks(
+                  monitoringDatastore,
+                  retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
           Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
 
           // Test that we have chunks of single values
-          final Set<String> vectorTypes = retrieveClassesOfChunks(
-              monitoringDatastore,
-              retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
+          final Set<String> vectorTypes =
+              retrieveClassesOfChunks(
+                  monitoringDatastore,
+                  retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
           Assertions.assertThat(vectorTypes)
-              .contains(DirectIntegerVectorBlock.class.getName(),
-                  DirectLongVectorBlock.class.getName());
+              .contains(
+                  DirectIntegerVectorBlock.class.getName(), DirectLongVectorBlock.class.getName());
         });
   }
 
-  private Set<Long> retrieveChunksOfType(
-      final IDatastore datastore, final ParentType component) {
+  private Set<Long> retrieveChunksOfType(final IDatastore datastore, final ParentType component) {
     final IDictionaryCursor cursor =
         datastore
             .getHead()
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
+            .withCondition(BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
             .selecting(DatastoreConstants.CHUNK_ID)
             .onCurrentThread()
             .run();
@@ -886,8 +880,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .getHead()
             .getQueryRunner()
             .forStore(CHUNK_STORE)
-            .withCondition(
-                BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
+            .withCondition(BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
             .selecting(DatastoreConstants.CHUNK__CLASS)
             .onCurrentThread()
             .run();

@@ -205,8 +205,7 @@ public class SourceConfig {
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
     final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(statistics, dumpName);
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, dumpName);
 
     final Optional<IDatastoreSchemaTransactionInformation> info =
         this.datastore.edit(feeder::feedDatastore);

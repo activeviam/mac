@@ -28,101 +28,108 @@ import org.junit.Test;
 
 public class TestFieldsBookmark extends ATestMemoryStatistic {
 
-	Pair<IDatastore, IActivePivotManager> monitoredApp;
-	Pair<IDatastore, IActivePivotManager> monitoringApp;
+  Pair<IDatastore, IActivePivotManager> monitoredApp;
+  Pair<IDatastore, IActivePivotManager> monitoringApp;
 
-	StatisticsSummary summary;
+  StatisticsSummary summary;
 
-	public static final int ADDED_DATA_SIZE = 20;
+  public static final int ADDED_DATA_SIZE = 20;
 
-	@BeforeClass
-	public static void setupRegistry() {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+  @BeforeClass
+  public static void setupRegistry() {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
 
-	@Before
-	public void setup() throws AgentException {
-		monitoredApp = createMicroApplicationWithSharedVectorField();
+  @Before
+  public void setup() throws AgentException {
+    monitoredApp = createMicroApplicationWithSharedVectorField();
 
-		monitoredApp.getLeft()
-				.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-						.forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
+    monitoredApp
+        .getLeft()
+        .edit(
+            tm ->
+                IntStream.range(0, ADDED_DATA_SIZE)
+                    .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
 
-		// Force to discard all versions
-		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    // Force to discard all versions
+    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
-		// perform GCs before exporting the store data
-		performGC();
-		final MemoryAnalysisService analysisService =
-				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-		final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
+    // perform GCs before exporting the store data
+    performGC();
+    final MemoryAnalysisService analysisService =
+        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+    final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
 
-		final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-		summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		// Start a monitoring datastore with the exported data
-		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-		final IDatastore monitoringDatastore = StartBuilding.datastore()
-				.setSchemaDescription(config.schemaDescription())
-				.build();
+    // Start a monitoring datastore with the exported data
+    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastore monitoringDatastore =
+        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
-		// Start a monitoring cube
-		IActivePivotManager manager = StartBuilding.manager()
-				.setDescription(config.managerDescription())
-				.setDatastoreAndPermissions(monitoringDatastore)
-				.buildAndStart();
-		monitoringApp = new Pair<>(monitoringDatastore, manager);
+    // Start a monitoring cube
+    IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
+    monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-		// Fill the monitoring datastore
-		monitoringDatastore.edit(
-				tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+    // Fill the monitoring datastore
+    monitoringDatastore.edit(
+        tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
 
-		IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-		Assertions.assertThat(pivot).isNotNull();
-	}
+    IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+    Assertions.assertThat(pivot).isNotNull();
+  }
 
-	@After
-	public void tearDown() throws AgentException {
-		monitoringApp.getLeft().close();
-		monitoringApp.getRight().stop();
-	}
+  @After
+  public void tearDown() throws AgentException {
+    monitoringApp.getLeft().close();
+    monitoringApp.getRight().stop();
+  }
 
-	@Ignore("wrong field counts, should be updated after Field.COUNT is removed")
-	@Test
-	public void testStoreTotal() throws QueryException {
-		final IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+  @Ignore("wrong field counts, should be updated after Field.COUNT is removed")
+  @Test
+  public void testStoreTotal() throws QueryException {
+    final IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-		final MDXQuery storeTotal = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM [MemoryCube]"
-						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery storeTotal =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery perFieldQuery = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-						+ "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
-						+ "FROM [MemoryCube]"
-						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery perFieldQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery excessMemoryQuery = new MDXQuery(
-				"WITH MEMBER [Measures].[ExcessDirectMemory] AS"
-						+ " Sum("
-						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-						+ "   IIF([Measures].[Field.COUNT] > 1,"
-						+ "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
-						+ "     0)"
-						+ " )"
-						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery excessMemoryQuery =
+        new MDXQuery(
+            "WITH MEMBER [Measures].[ExcessDirectMemory] AS"
+                + " Sum("
+                + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "   IIF([Measures].[Field.COUNT] > 1,"
+                + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
+                + "     0)"
+                + " )"
+                + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final CellSetDTO totalResult = pivot.execute(storeTotal);
-		final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
-		final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
+    final CellSetDTO totalResult = pivot.execute(storeTotal);
+    final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
+    final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
 
-		Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
-				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
-						- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
-	}
+    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
+        .isEqualTo(
+            CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
+  }
 }

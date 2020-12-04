@@ -50,20 +50,16 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
   public void setup() throws AgentException {
     monitoredApp = createMicroApplicationWithReferenceAndSameFieldName();
 
-    monitoredApp.getLeft()
-        .edit(tm -> {
-          IntStream.range(0, ADDED_DATA_SIZE)
-              .forEach(i -> tm.add("A", i, i * i));
-          IntStream.range(0, 3 * ADDED_DATA_SIZE)
-              .forEach(i -> tm.add("B", i, -i * i));
-        });
+    monitoredApp
+        .getLeft()
+        .edit(
+            tm -> {
+              IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i, i * i));
+              IntStream.range(0, 3 * ADDED_DATA_SIZE).forEach(i -> tm.add("B", i, -i * i));
+            });
 
     // Force to discard all versions
-    monitoredApp.getLeft().
-
-        getEpochManager().
-
-        forceDiscardEpochs(__ -> true);
+    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     // perform GCs before exporting the store data
     performGC();
@@ -77,26 +73,24 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore = StartBuilding.datastore()
-        .setSchemaDescription(config.schemaDescription())
-        .build();
+    final IDatastore monitoringDatastore =
+        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
     // Start a monitoring cube
-    IActivePivotManager manager = StartBuilding.manager()
-        .setDescription(config.managerDescription())
-        .setDatastoreAndPermissions(monitoringDatastore)
-        .buildAndStart();
+    IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(stats, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-    Assertions.assertThat(pivot).
-        isNotNull();
+    Assertions.assertThat(pivot).isNotNull();
   }
 
   @After
@@ -110,13 +104,14 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery usageQuery = new MDXQuery(
-        "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-            + "{"
-            + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"
-            + "  ([Owners].[Owner].[Owner].[Store B], [Fields].[Field].[Field].[val])"
-            + "} ON ROWS "
-            + "FROM [MemoryCube]");
+    final MDXQuery usageQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "{"
+                + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"
+                + "  ([Owners].[Owner].[Owner].[Store B], [Fields].[Field].[Field].[val])"
+                + "} ON ROWS "
+                + "FROM [MemoryCube]");
 
     final CellSetDTO result = pivot.execute(usageQuery);
 

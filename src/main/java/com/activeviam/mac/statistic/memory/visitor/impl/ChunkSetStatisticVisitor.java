@@ -183,9 +183,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     final IStatisticAttribute usedByVersionAttribute =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion = usedByVersionAttribute.asBoolean()
-          ? UsedByVersion.TRUE
-          : UsedByVersion.FALSE;
+      this.usedByVersion =
+          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
     }
 
     FeedVisitor.visitChildren(this, statistic);
@@ -223,8 +222,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
-      FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
 

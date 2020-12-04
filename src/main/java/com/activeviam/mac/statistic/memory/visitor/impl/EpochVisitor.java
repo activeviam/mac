@@ -24,8 +24,6 @@ import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TLongHashSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,7 +40,7 @@ import java.util.TreeSet;
 public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
   /** The epochs collected from store statistics. */
-  protected TLongSet datastoreEpochs;
+  protected Set<Long> datastoreEpochs;
 
   /** The epochs collected from statistics that do not come from distributed cubes. */
   protected Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
@@ -56,11 +54,9 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
   /** The epoch of the currently visited statistic. */
   protected OptionalLong currentlyVisitedStatEpoch;
 
-  /**
-   * Constructor.
-   */
+  /** Constructor. */
   public EpochVisitor() {
-    this.datastoreEpochs = new TLongHashSet();
+    this.datastoreEpochs = new HashSet<>();
     this.regularEpochsPerOwner = new HashMap<>();
     this.distributedEpochsPerOwner = new HashMap<>();
     this.currentOwner = NoOwner.getInstance();
@@ -73,7 +69,7 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
    *
    * @return the datastore epochs
    */
-  public TLongSet getDatastoreEpochs() {
+  public Set<Long> getDatastoreEpochs() {
     return datastoreEpochs;
   }
 
@@ -102,7 +98,6 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
   @Override
   public Void visit(DefaultMemoryStatistic memoryStatistic) {
     switch (memoryStatistic.getName()) {
-
       case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
       case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
         visitChildren(memoryStatistic);
@@ -111,10 +106,11 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
       case MemoryStatisticConstants.STAT_NAME_STORE:
         currentlyVisitedStatEpoch = readEpoch(memoryStatistic);
-        currentOwner = new StoreOwner(
-            memoryStatistic.getAttribute(
-                MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
-                .asText());
+        currentOwner =
+            new StoreOwner(
+                memoryStatistic
+                    .getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
+                    .asText());
 
         if (currentlyVisitedStatEpoch.isPresent()) {
           datastoreEpochs.add(currentlyVisitedStatEpoch.getAsLong());
@@ -124,10 +120,11 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
 
       case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
         currentlyVisitedStatEpoch = readEpoch(memoryStatistic);
-        currentOwner = new CubeOwner(
-            memoryStatistic.getAttribute(
-                PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID)
-                .asText());
+        currentOwner =
+            new CubeOwner(
+                memoryStatistic
+                    .getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID)
+                    .asText());
 
         visitChildren(memoryStatistic); // to check if the cube is distributed
         break;
@@ -176,9 +173,8 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
    * @return true if it come from a distributed cube, false otherwise
    */
   protected boolean isProviderStatFromDistributedCube(final IMemoryStatistic statistic) {
-    return IMultiVersionDistributedActivePivot.PLUGIN_KEY.equals(statistic
-        .getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
-        .asText());
+    return IMultiVersionDistributedActivePivot.PLUGIN_KEY.equals(
+        statistic.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE).asText());
   }
 
   /**
@@ -188,10 +184,7 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
    * @param epoch the epoch to map
    */
   protected void mapRegularEpoch(final ChunkOwner owner, final long epoch) {
-    regularEpochsPerOwner.computeIfAbsent(
-        owner,
-        key -> new TreeSet<>())
-        .add(epoch);
+    regularEpochsPerOwner.computeIfAbsent(owner, key -> new TreeSet<>()).add(epoch);
   }
 
   /**
@@ -201,10 +194,7 @@ public class EpochVisitor implements IMemoryStatisticVisitor<Void> {
    * @param epoch the epoch to map
    */
   protected void mapDistributedEpoch(final ChunkOwner owner, final long epoch) {
-    distributedEpochsPerOwner.computeIfAbsent(
-        owner,
-        key -> new HashSet<>())
-        .add(epoch);
+    distributedEpochsPerOwner.computeIfAbsent(owner, key -> new HashSet<>()).add(epoch);
   }
 
   /**

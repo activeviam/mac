@@ -17,11 +17,12 @@ import com.quartetfs.fwk.ordering.IComparator;
  * A comparator for epoch views.
  *
  * <p>The order enforced by this comparator respects the following rules:
+ *
  * <ul>
  *   <li>{@link RegularEpochView}s are always less than {@link DistributedEpochView}s
  *   <li>more recent {@link RegularEpochView}s are lesser than older {@link RegularEpochView}
  *   <li>{@link DistributedEpochView}s are ordered lexicographically, considering their distributed
- *   cube ids first, and their epoch ids second (more recent epochs are lesser than older ones)
+ *       cube ids first, and their epoch ids second (more recent epochs are lesser than older ones)
  * </ul>
  */
 @QuartetExtendedPluginValue(intf = IComparator.class, key = ReverseEpochViewComparator.PLUGIN_KEY)
@@ -47,8 +48,10 @@ public class ReverseEpochViewComparator implements IComparator<EpochView> {
         final DistributedEpochView distributedEpoch1 = ((DistributedEpochView) lhe);
         final DistributedEpochView distributedEpoch2 = ((DistributedEpochView) rhe);
 
-        final int cubeNameComparisonResult = distributedEpoch1.getDistributedCubeId()
-            .compareTo(distributedEpoch2.getDistributedCubeId());
+        final int cubeNameComparisonResult =
+            distributedEpoch1
+                .getDistributedCubeId()
+                .compareTo(distributedEpoch2.getDistributedCubeId());
 
         if (cubeNameComparisonResult != 0) {
           return cubeNameComparisonResult;

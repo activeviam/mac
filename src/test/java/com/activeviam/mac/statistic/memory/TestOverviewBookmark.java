@@ -85,8 +85,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(data, "storeA");
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "storeA");
     monitoringDatastore.edit(feeder::feedDatastore);
   }
 

@@ -142,9 +142,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final IStatisticAttribute usedByVersionAttribute =
         chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion = usedByVersionAttribute.asBoolean()
-          ? UsedByVersion.TRUE
-          : UsedByVersion.FALSE;
+      this.usedByVersion =
+          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
     }
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
@@ -207,9 +206,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     if (readEpochAndBranchIfAny(stat)) {
       final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
-      final Object[] tuple = FeedVisitor
-          .buildVersionTupleFrom(versionStoreFormat, stat, this.dumpName, this.epochId,
-              this.branch);
+      final Object[] tuple =
+          FeedVisitor.buildVersionTupleFrom(
+              versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
       FeedVisitor.add(stat, this.transaction, DatastoreConstants.VERSION_STORE, tuple);
     }
 
@@ -248,19 +247,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-        this.storageMetadata,
-        this.transaction,
-        this.dumpName,
-        this.current,
-        this.owner,
-        this.rootComponent,
-        this.directParentType,
-        this.directParentId,
-        this.partitionId,
-        this.indexId,
-        this.referenceId,
-        this.epochId,
-        this.usedByVersion)
+            this.storageMetadata,
+            this.transaction,
+            this.dumpName,
+            this.current,
+            this.owner,
+            this.rootComponent,
+            this.directParentType,
+            this.directParentId,
+            this.partitionId,
+            this.indexId,
+            this.referenceId,
+            this.epochId,
+            this.usedByVersion)
         .visit(stat);
   }
 
@@ -315,9 +314,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
@@ -364,10 +361,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
-    FeedVisitor
-        .setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
@@ -514,8 +509,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void readFieldsIfAny(final IMemoryStatistic stat) {
-    IStatisticAttribute fieldAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+    IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
     if (fieldAttr != null) {
       this.fields = Collections.singleton(fieldAttr.asText());
     } else {

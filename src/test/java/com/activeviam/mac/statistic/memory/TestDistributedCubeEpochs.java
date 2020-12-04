@@ -67,15 +67,17 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
 
     // epoch 1
-    monitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(0, 10)
-          .forEach(i -> transactionManager.add("A", i, 0.));
-    });
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+            });
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
-        ((MultiVersionDistributedActivePivot) monitoredApp.getRight().getActivePivots().get(
-            "QueryCubeA"));
+        ((MultiVersionDistributedActivePivot)
+            monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
     // produces distributed epochs 1 to 5
     for (int i = 0; i < 5; ++i) {
@@ -83,8 +85,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     }
 
     MultiVersionDistributedActivePivot queryCubeB =
-        ((MultiVersionDistributedActivePivot) monitoredApp.getRight().getActivePivots().get(
-            "QueryCubeB"));
+        ((MultiVersionDistributedActivePivot)
+            monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
     // produces distributed epoch 1
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
@@ -97,7 +99,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
     return analysisService.exportMostRecentVersion("testEpochs");
-    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to use this when export is fixed PIVOT-4460
+    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to
+    // use this when export is fixed PIVOT-4460
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
@@ -112,8 +115,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
-        data, "testDistributedCubeEpochs");
+    final AnalysisDatastoreFeeder feeder =
+        new AnalysisDatastoreFeeder(data, "testDistributedCubeEpochs");
     monitoringDatastore.edit(feeder::feedDatastore);
   }
 
@@ -135,12 +138,16 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {
-    final ICursor cursor = monitoringApp.getLeft().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(c -> (EpochView) c.read(0))

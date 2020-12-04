@@ -58,18 +58,20 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void setup() throws DatastoreTransactionException, AgentException {
     initializeApplication();
 
-    Path exportPath = generateMemoryStatistics(
-        monitoredApp.getLeft(),
-        monitoredApp.getRight(),
-        IMemoryAnalysisService::exportApplication);
+    Path exportPath =
+        generateMemoryStatistics(
+            monitoredApp.getLeft(),
+            monitoredApp.getRight(),
+            IMemoryAnalysisService::exportApplication);
     appStatistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoredApplication();
 
-    exportPath = generateMemoryStatistics(
-        distributedMonitoredApp.getLeft(),
-        distributedMonitoredApp.getRight(),
-        IMemoryAnalysisService::exportMostRecentVersion);
+    exportPath =
+        generateMemoryStatistics(
+            distributedMonitoredApp.getLeft(),
+            distributedMonitoredApp.getRight(),
+            IMemoryAnalysisService::exportMostRecentVersion);
     distributedAppStatistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication();
@@ -79,18 +81,17 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testDifferentDumps() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
-        appStatistics, "app");
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    feeder = new AnalysisDatastoreFeeder(
-        appStatistics, "app2");
+    feeder = new AnalysisDatastoreFeeder(appStatistics, "app2");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    Assertions.assertThat(DatastoreQueryHelper.selectDistinct(
-        monitoringDatastore.getMostRecentVersion(),
-        DatastoreConstants.APPLICATION_STORE,
-        DatastoreConstants.APPLICATION__DUMP_NAME))
+    Assertions.assertThat(
+            DatastoreQueryHelper.selectDistinct(
+                monitoringDatastore.getMostRecentVersion(),
+                DatastoreConstants.APPLICATION_STORE,
+                DatastoreConstants.APPLICATION__DUMP_NAME))
         .containsExactlyInAnyOrder("app", "app2");
   }
 
@@ -98,65 +99,57 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testEpochReplicationForAlreadyExistingChunks() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
-        distributedAppStatistics, "app");
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    TLongSet epochs = collectEpochViewsForOwner(
-        monitoringDatastore.getMostRecentVersion(),
-        new CubeOwner("Data"));
+    TLongSet epochs =
+        collectEpochViewsForOwner(
+            monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
 
-    Assertions.assertThat(epochs.toArray())
-        .containsExactlyInAnyOrder(1L);
+    Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L);
 
-    feeder = new AnalysisDatastoreFeeder(
-        appStatistics, "app");
+    feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    epochs = collectEpochViewsForOwner(
-        monitoringDatastore.getMostRecentVersion(),
-        new CubeOwner("Data"));
+    epochs =
+        collectEpochViewsForOwner(
+            monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
 
     // within its statistic, the Data cube only has epoch 1
     // upon the second feedDatastore call, its chunks should be mapped to the new incoming datastore
     // epochs
-    Assertions.assertThat(epochs.toArray())
-        .containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
+    Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
   }
 
   @Test
   public void testEpochReplicationForAlreadyExistingEpochs() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(
-        appStatistics, "app");
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    feeder = new AnalysisDatastoreFeeder(
-        distributedAppStatistics, "app");
+    feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
     monitoringDatastore.edit(feeder::feedDatastore);
 
-    TLongSet epochs = collectEpochViewsForOwner(
-        monitoringDatastore.getMostRecentVersion(),
-        new CubeOwner("Data"));
+    TLongSet epochs =
+        collectEpochViewsForOwner(
+            monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
 
     // within its statistic, the Data cube only has epoch 1
     // it should be mapped to the epochs 1, 2, 3 and 4 of the first feedDatastore call
-    Assertions.assertThat(epochs.toArray())
-        .containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
+    Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
   }
 
   private TLongSet collectEpochViewsForOwner(
-      final IDatastoreVersion monitoringDatastore,
-      final ChunkOwner owner) {
-    final ICursor queryResult = monitoringDatastore.getQueryRunner()
-        .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-        .withCondition(BaseConditions.Equal(
-            DatastoreConstants.EPOCH_VIEW__OWNER,
-            owner))
-        .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-        .onCurrentThread()
-        .run();
+      final IDatastoreVersion monitoringDatastore, final ChunkOwner owner) {
+    final ICursor queryResult =
+        monitoringDatastore
+            .getQueryRunner()
+            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withCondition(BaseConditions.Equal(DatastoreConstants.EPOCH_VIEW__OWNER, owner))
+            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
     final TLongSet epochs = new TLongHashSet();
     for (final IRecordReader recordReader : queryResult) {
@@ -176,26 +169,22 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
       throws DatastoreTransactionException {
     // epoch 1 -> store A + cube
     transactionManager.startTransaction("A");
-    IntStream.range(0, 10)
-        .forEach(i -> transactionManager.add("A", i, 0.));
+    IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
     transactionManager.commitTransaction();
 
     // epoch 2 -> store B
     transactionManager.startTransaction("B");
-    IntStream.range(0, 10)
-        .forEach(i -> transactionManager.add("B", i, 0.));
+    IntStream.range(0, 10).forEach(i -> transactionManager.add("B", i, 0.));
     transactionManager.commitTransaction();
 
     // epoch 3 -> store A + cube
     transactionManager.startTransaction("A");
-    IntStream.range(10, 20)
-        .forEach(i -> transactionManager.add("A", i, 1.));
+    IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.));
     transactionManager.commitTransaction();
 
     // epoch 4 -> store B
     transactionManager.startTransaction("B");
-    IntStream.range(10, 20)
-        .forEach(i -> transactionManager.add("B", i, 1.));
+    IntStream.range(10, 20).forEach(i -> transactionManager.add("B", i, 1.));
     transactionManager.commitTransaction();
   }
 
@@ -206,16 +195,17 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   private void fillDistributedApplication() {
     // epoch 1
-    distributedMonitoredApp.getLeft().edit(transactionManager -> {
-      IntStream.range(0, 10)
-          .forEach(i -> transactionManager.add("A", i, 0.));
-    });
+    distributedMonitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+            });
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
-        ((MultiVersionDistributedActivePivot) distributedMonitoredApp.getRight().getActivePivots()
-            .get(
-                "QueryCubeA"));
+        ((MultiVersionDistributedActivePivot)
+            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
     // produces distributed epochs 1 to 5
     for (int i = 0; i < 5; ++i) {
@@ -223,9 +213,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     }
 
     MultiVersionDistributedActivePivot queryCubeB =
-        ((MultiVersionDistributedActivePivot) distributedMonitoredApp.getRight().getActivePivots()
-            .get(
-                "QueryCubeB"));
+        ((MultiVersionDistributedActivePivot)
+            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
     // produces distributed epoch 1
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
@@ -238,17 +227,15 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     datastore.getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
-    final IMemoryAnalysisService analysisService =
-        createService(datastore, manager);
+    final IMemoryAnalysisService analysisService = createService(datastore, manager);
     return exportMethod.apply(analysisService, "testEpochs");
   }
 
   private void initializeMonitoringApplication() throws AgentException {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore = resources.create(
-        StartBuilding.datastore()
-            .setSchemaDescription(config.schemaDescription())
-            ::build);
+    final IDatastore monitoringDatastore =
+        resources.create(
+            StartBuilding.datastore().setSchemaDescription(config.schemaDescription())::build);
 
     final IActivePivotManager manager =
         StartBuilding.manager()
