@@ -169,15 +169,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   private void initializeApplication() throws DatastoreTransactionException {
     monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
     final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
-    fillApplication(transactionManager);
+    fillMicroApplication(transactionManager);
   }
 
-  private void initializeMonitoredApplication() {
-    distributedMonitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
-    fillMonitoredApplication();
-  }
-
-  private void fillApplication(final ITransactionManager transactionManager)
+  private void fillMicroApplication(final ITransactionManager transactionManager)
       throws DatastoreTransactionException {
     // epoch 1 -> store A + cube
     transactionManager.startTransaction("A");
@@ -204,7 +199,12 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     transactionManager.commitTransaction();
   }
 
-  private void fillMonitoredApplication() {
+  private void initializeMonitoredApplication() {
+    distributedMonitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
+    fillDistributedApplication();
+  }
+
+  private void fillDistributedApplication() {
     // epoch 1
     distributedMonitoredApp.getLeft().edit(transactionManager -> {
       IntStream.range(0, 10)

@@ -8,7 +8,7 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.builders.StartBuilding;
-import com.activeviam.comparators.EpochViewComparator;
+import com.activeviam.comparators.ReverseEpochViewComparator;
 import com.activeviam.copper.ICopperContext;
 import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperMeasure;
@@ -451,7 +451,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private void joinViewVersion(ICopperContext context) {
-    CopperStore epochViewStore =
+    final CopperStore epochViewStore =
         Copper.store(DatastoreConstants.EPOCH_VIEW_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
@@ -460,7 +460,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
         .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
-        .withComparator(EpochViewComparator.PLUGIN_KEY)
+        .withComparator(ReverseEpochViewComparator.PLUGIN_KEY)
         .publish(context);
   }
 

@@ -24,8 +24,8 @@ import com.quartetfs.fwk.ordering.IComparator;
  *   cube ids first, and their epoch ids second (more recent epochs are lesser than older ones)
  * </ul>
  */
-@QuartetExtendedPluginValue(intf = IComparator.class, key = EpochViewComparator.PLUGIN_KEY)
-public class EpochViewComparator implements IComparator<EpochView> {
+@QuartetExtendedPluginValue(intf = IComparator.class, key = ReverseEpochViewComparator.PLUGIN_KEY)
+public class ReverseEpochViewComparator implements IComparator<EpochView> {
 
   /** The plugin key of the comparator. */
   public static final String PLUGIN_KEY = "EpochViewComparator";
@@ -38,15 +38,14 @@ public class EpochViewComparator implements IComparator<EpochView> {
   }
 
   @Override
-  public int compare(EpochView epoch1, EpochView epoch2) {
+  public int compare(final EpochView lhe, final EpochView rhe) {
+    final boolean isLhDistributed = isDistributedEpoch(lhe);
+    final boolean isRhDistributed = isDistributedEpoch(rhe);
 
-    final boolean isEpoch1Distributed = isDistributedEpoch(epoch1);
-    final boolean isEpoch2Distributed = isDistributedEpoch(epoch2);
-
-    if (isEpoch1Distributed) {
-      if (isEpoch2Distributed) {
-        final DistributedEpochView distributedEpoch1 = ((DistributedEpochView) epoch1);
-        final DistributedEpochView distributedEpoch2 = ((DistributedEpochView) epoch2);
+    if (isLhDistributed) {
+      if (isRhDistributed) {
+        final DistributedEpochView distributedEpoch1 = ((DistributedEpochView) lhe);
+        final DistributedEpochView distributedEpoch2 = ((DistributedEpochView) rhe);
 
         final int cubeNameComparisonResult = distributedEpoch1.getDistributedCubeId()
             .compareTo(distributedEpoch2.getDistributedCubeId());
@@ -55,18 +54,18 @@ public class EpochViewComparator implements IComparator<EpochView> {
           return cubeNameComparisonResult;
         }
       } else {
-        return 1;
+        return -1; // lhe always greater
       }
     } else {
-      if (isEpoch2Distributed) {
-        return -1;
+      if (isRhDistributed) {
+        return 1; // rhe always greater
       }
     }
 
-    return Long.compare(epoch2.getEpochId(), epoch1.getEpochId());
+    return Long.compare(rhe.getEpochId(), lhe.getEpochId());
   }
 
-  private static boolean isDistributedEpoch(EpochView epoch) {
+  private static boolean isDistributedEpoch(final EpochView epoch) {
     return epoch instanceof DistributedEpochView;
   }
 }
