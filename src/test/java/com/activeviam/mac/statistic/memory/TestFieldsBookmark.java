@@ -1,7 +1,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -23,7 +23,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestFieldsBookmark extends ATestMemoryStatistic {
@@ -77,8 +76,8 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    monitoringDatastore.edit(
-        tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -91,7 +90,6 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
     monitoringApp.getRight().stop();
   }
 
-  @Ignore("wrong field counts, should be updated after Field.COUNT is removed")
   @Test
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =

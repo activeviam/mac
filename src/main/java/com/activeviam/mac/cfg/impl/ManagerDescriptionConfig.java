@@ -23,6 +23,7 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -433,8 +434,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void bucketingHierarchies(final ICopperContext context) {
     Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
         .from(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
-        .withMemberList(
-            "Cube", "Store", "None", "Shared") // todo: cleaner impl, with an enum for owners
+        .withMemberList((Object[]) OwnerType.values())
         .publish(context);
   }
 

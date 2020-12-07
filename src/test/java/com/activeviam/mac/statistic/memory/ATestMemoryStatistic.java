@@ -18,6 +18,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.copper.HierarchyIdentifier;
+import com.activeviam.copper.api.Copper;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
@@ -1033,10 +1034,23 @@ public abstract class ATestMemoryStatistic {
                     .withAggregatedMeasure()
                     .sum("value")
                     .withSingleLevelDimension("id")
+                    .asDataCube()
+                    .withClusterDefinition()
+                    .withClusterId("cluster")
+                    .withMessengerDefinition()
+                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withNoProperty()
+                    .end()
+                    .withApplicationId("app")
+                    .withAllHierarchies()
+                    .withAllMeasures()
+                    .end()
                     .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeA")
                     .withContributorsCount()
+                    .withCalculations(
+                        context -> Copper.count().multiply(Copper.constant(2L)).publish(context))
                     .asQueryCube()
                     .withClusterDefinition()
                     .withClusterId("cluster")
@@ -1045,9 +1059,8 @@ public abstract class ATestMemoryStatistic {
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withDistributingFields("value")
+                    .withDistributingFields("id")
                     .end()
-                    .withEpochDimension()
                     .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeB")
@@ -1059,7 +1072,7 @@ public abstract class ATestMemoryStatistic {
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withoutDistributingFields()
+                    .withDistributingFields("id")
                     .end()
                     .withEpochDimension()
                     .build())

@@ -7,6 +7,8 @@
 
 package com.activeviam.mac.entities;
 
+import lombok.AllArgsConstructor;
+
 /** Interface representing an Owner of a chunk in the application. */
 public interface ChunkOwner extends Comparable<ChunkOwner> {
 
@@ -22,10 +24,25 @@ public interface ChunkOwner extends Comparable<ChunkOwner> {
    *
    * @return the type of the owner
    */
-  String getType();
+  OwnerType getType();
 
   @Override
   default int compareTo(ChunkOwner o) {
     return this.toString().compareTo(o.toString());
+  }
+
+  @AllArgsConstructor
+  enum OwnerType {
+    CUBE("Cube"),
+    DISTRIBUTED_CUBE("Distributed Cube"),
+    STORE("Store"),
+    NONE("None");
+
+    private final String stringRepresentation;
+
+    @Override
+    public String toString() {
+      return stringRepresentation;
+    }
   }
 }

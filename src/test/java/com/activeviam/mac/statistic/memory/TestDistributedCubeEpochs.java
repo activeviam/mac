@@ -25,6 +25,7 @@ import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
+import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   @Before
-  public void setup() throws AgentException {
+  public void setup() throws AgentException, QueryException {
     initializeApplication();
 
     final Path exportPath = generateMemoryStatistics();
@@ -63,7 +64,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     Assertions.assertThat(pivot).isNotNull();
   }
 
-  private void initializeApplication() {
+  private void initializeApplication() throws QueryException {
     monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
 
     // epoch 1
@@ -71,7 +72,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
         .getLeft()
         .edit(
             transactionManager -> {
-              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+              IntStream.range(0, 10).forEach(i ->
+                  transactionManager.add("A", i, (double) i));
             });
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
@@ -79,7 +81,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
         ((MultiVersionDistributedActivePivot)
             monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
-    // produces distributed epochs 1 to 5
+    // produces 5 distributed epochs
     for (int i = 0; i < 5; ++i) {
       queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
     }
@@ -88,7 +90,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
         ((MultiVersionDistributedActivePivot)
             monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
-    // produces distributed epoch 1
+    // produces 1 distributed epoch
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
   }
 
@@ -133,8 +135,14 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     Assertions.assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
             new RegularEpochView(1L),
-            new DistributedEpochView("QueryCubeA", 5L),
-            new DistributedEpochView("QueryCubeB", 1L));
+            new DistributedEpochView(
+                "QueryCubeA",
+                monitoredApp.getRight().getActivePivots().get("QueryCubeA").getMostRecentVersion()
+                    .getEpochId()),
+            new DistributedEpochView(
+                "QueryCubeB",
+                monitoredApp.getRight().getActivePivots().get("QueryCubeB").getMostRecentVersion()
+                    .getEpochId()));
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {

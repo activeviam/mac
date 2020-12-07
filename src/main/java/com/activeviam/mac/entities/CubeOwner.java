@@ -14,7 +14,7 @@ import lombok.Data;
 public class CubeOwner implements ChunkOwner {
 
   /** Unique id of the ActivePivot. */
-  private final String id;
+  final String id;
 
   @Override
   public String getName() {
@@ -22,12 +22,12 @@ public class CubeOwner implements ChunkOwner {
   }
 
   @Override
-  public String getType() {
-    return "Cube";
+  public OwnerType getType() {
+    return OwnerType.CUBE;
   }
 
   @Override
   public String toString() {
-    return "Cube " + this.id;
+    return getType().toString() + " " + this.id;
   }
 }

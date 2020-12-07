@@ -12,9 +12,11 @@ import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.CubeOwner;
+import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -108,8 +110,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       final IStatisticAttribute dateAtt =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
 
-      this.current =
-          Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
+      this.current = Instant.ofEpochSecond(null != dateAtt
+          ? dateAtt.asLong()
+          : System.currentTimeMillis());
 
       readEpochAndBranchIfAny(stat);
       if (this.epochId == null
@@ -298,7 +301,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(IndexStatistic stat) {
     throw new UnsupportedOperationException(
-        "An ActivePivot cannot contain references. Received: " + stat);
+        "An ActivePivot cannot contain indices. Received: " + stat);
   }
 
   private void processManager(final IMemoryStatistic stat) {
@@ -328,7 +331,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   }
 
   private void processPivot(final IMemoryStatistic stat) {
-
     readEpochAndBranchIfAny(stat);
 
     if (readEpochAndBranchIfAny(stat)) {
@@ -343,7 +345,13 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
         Objects.requireNonNull(
             stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID),
             () -> "No pivot id in " + stat);
-    this.owner = new CubeOwner(idAttr.asText());
+    final String pivotId = idAttr.asText();
+    if (isPivotDistributed(stat)) {
+      this.owner = new DistributedCubeOwner(pivotId);
+    } else {
+      this.owner = new CubeOwner(pivotId);
+    }
+
     final IStatisticAttribute managerAttr =
         stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
     if (managerAttr != null) {
@@ -359,6 +367,17 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     }
     this.epochId = null;
     this.branch = null;
+  }
+
+  private static boolean isPivotDistributed(final IMemoryStatistic pivotStat) {
+    return pivotStat.getChildren().stream()
+        .filter(stat -> stat.getName().equals(PivotMemoryStatisticConstants.STAT_NAME_PROVIDER))
+        .anyMatch(stat -> {
+          final IStatisticAttribute providerType = stat.getAttribute(
+              PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
+          return providerType != null
+              && providerType.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
+        });
   }
 
   private void processProvider(final IMemoryStatistic stat) {
@@ -377,6 +396,14 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.providerId = (Long) tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__PROVIDER_ID)];
     visitChildren(stat);
     this.providerId = null;
+  }
+
+  private boolean isProviderDistributed(final IMemoryStatistic providerStat) {
+    final IStatisticAttribute typeAttribute = providerStat.getAttribute(
+        PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
+
+    return typeAttribute != null
+        && typeAttribute.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
   }
 
   private void processPartition(final IMemoryStatistic stat) {
