@@ -113,10 +113,10 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * Returns the {@link IRecordFormat} of the Branch store.
    *
    * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#BRANCH_STORE} record format
+   * @return the {@link DatastoreConstants#VERSION_STORE} record format
    */
-  protected static IRecordFormat getBranchStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
-    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.BRANCH_STORE);
+  protected static IRecordFormat getVersionStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
+    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.VERSION_STORE);
   }
 
   /**
@@ -127,15 +127,5 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    */
   protected static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
-  }
-
-  /**
-   * Returns the {@link IRecordFormat} of the owner store.
-   *
-   * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#OWNER_STORE} record format
-   */
-  protected static IRecordFormat getOwnerFormat(IDatastoreSchemaMetadata storageMetadata) {
-    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.OWNER_STORE);
   }
 }

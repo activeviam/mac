@@ -11,9 +11,7 @@ import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -97,42 +95,32 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  static Object[] buildOwnerTupleFrom(
-      final IRecordFormat format,
-      final ChunkStatistic stat,
-      final ChunkOwner owner,
-      final String dumpName,
-      final ParentType component) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__CHUNK_ID)] = stat.getChunkId();
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__OWNER)] = owner;
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-    tuple[format.getFieldIndex(DatastoreConstants.OWNER__COMPONENT)] = component;
-    return tuple;
-  }
-
   /**
-   * Writes a record into the {@link DatastoreConstants#OWNER__FIELD} for each given field using the
+   * Writes a record into the {@link DatastoreConstants#CHUNK_STORE} for each given field using the
    * given tuple as a base.
    *
-   * <p>This method can modify the "field" element of the given tuple.
+   * <p>This method can modify the {@link DatastoreConstants#OWNER__FIELD} column of the given
+   * tuple.
    *
-   *  @param statistic the statistic associated with the chunk
+   * @param statistic the statistic associated with the chunk
    * @param transaction the ongoing transaction
    * @param fields the fields associated with the chunk statistic
    * @param format the format of the tuple
    * @param tuple the base tuple to write records with
    */
-  static void writeOwnerTupleRecordsForFields(
-      final ChunkStatistic statistic, final IOpenedTransaction transaction,
-      final Collection<String> fields, final IRecordFormat format, final Object... tuple) {
+  static void writeChunkTupleForFields(
+      final ChunkStatistic statistic,
+      final IOpenedTransaction transaction,
+      final Collection<String> fields,
+      final IRecordFormat format,
+      final Object... tuple) {
     if (fields == null || fields.isEmpty()) {
-      FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+      FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
     } else {
-      fields.forEach(field -> {
-            FeedVisitor
-                .setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
-            FeedVisitor.add(statistic, transaction, DatastoreConstants.OWNER_STORE, tuple);
+      fields.forEach(
+          field -> {
+            FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD, field);
+            FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
           });
     }
   }
@@ -165,16 +153,16 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  static Object[] buildBranchTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic statistic,
-      final String dumpName, final long epochId, final String branch) {
+  static Object[] buildVersionTupleFrom(
+      final IRecordFormat format,
+      final IMemoryStatistic statistic,
+      final String dumpName,
+      final long epochId,
+      final String branch) {
     final Object[] tuple = new Object[format.getFieldCount()];
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__DUMP_NAME,
-        dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__EPOCH_ID,
-        epochId);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.BRANCH__NAME,
-        branch);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__DUMP_NAME, dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__BRANCH_NAME, branch);
     return tuple;
   }
 

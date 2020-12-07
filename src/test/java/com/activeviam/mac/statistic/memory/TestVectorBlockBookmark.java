@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -51,9 +51,12 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   public void setup() throws AgentException {
     monitoredApp = createMicroApplicationWithSharedVectorField();
 
-    monitoredApp.getLeft()
-        .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-            .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
+    monitoredApp
+        .getLeft()
+        .edit(
+            tm ->
+                IntStream.range(0, ADDED_DATA_SIZE)
+                    .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -69,20 +72,20 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore = StartBuilding.datastore()
-        .setSchemaDescription(config.schemaDescription())
-        .build();
+    final IDatastore monitoringDatastore =
+        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
     // Start a monitoring cube
-    IActivePivotManager manager = StartBuilding.manager()
-        .setDescription(config.managerDescription())
-        .setDatastoreAndPermissions(monitoringDatastore)
-        .buildAndStart();
+    IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    monitoringDatastore.edit(
-        tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -100,19 +103,19 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery recordQuery = new MDXQuery(
-        "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
-            + " [Measures].[DirectMemory.SUM] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "   [Owners].[Owner].[Owner].[Store A],"
-            + "   [Fields].[Field].[Field].[vector1]"
-            + " )");
+    final MDXQuery recordQuery =
+        new MDXQuery(
+            "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
+                + " [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )");
 
     final CellSetDTO result = pivot.execute(recordQuery);
 
-    Assertions.assertThat((long) result.getCells().get(0).getValue())
-        .isZero();
+    Assertions.assertThat((long) result.getCells().get(0).getValue()).isZero();
   }
 
   @Test
@@ -120,17 +123,18 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery vectorBlockQuery = new MDXQuery(
-        "SELECT {"
-            + "   [Components].[Component].[ALL].[AllMember],"
-            + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
-            + " } ON ROWS,"
-            + " [Measures].[DirectMemory.SUM] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "   [Owners].[Owner].[Owner].[Store A],"
-            + "   [Fields].[Field].[Field].[vector1]"
-            + " )");
+    final MDXQuery vectorBlockQuery =
+        new MDXQuery(
+            "SELECT {"
+                + "   [Components].[Component].[ALL].[AllMember],"
+                + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
+                + " } ON ROWS,"
+                + " [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )");
 
     final CellSetDTO result = pivot.execute(vectorBlockQuery);
 
@@ -143,18 +147,19 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery lengthQuery = new MDXQuery(
-        "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "   [Owners].[Owner].[Owner].[Store A],"
-            + "   [Fields].[Field].[Field].[vector1]"
-            + " )");
+    final MDXQuery lengthQuery =
+        new MDXQuery(
+            "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )");
 
     final CellSetDTO result = pivot.execute(lengthQuery);
 
     Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(result))
-        .isEqualTo((long) MICROAPP_VECTOR_BLOCK_SIZE);
+        .isEqualTo(MICROAPP_VECTOR_BLOCK_SIZE);
   }
 
   @Test
@@ -162,13 +167,14 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery refCountQuery = new MDXQuery(
-        "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "   [Owners].[Owner].[Owner].[Store A],"
-            + "   [Fields].[Field].[Field].[vector1]"
-            + " )");
+    final MDXQuery refCountQuery =
+        new MDXQuery(
+            "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )");
 
     final CellSetDTO refCountResult = pivot.execute(refCountQuery);
 

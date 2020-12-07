@@ -8,9 +8,9 @@
 package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.LocalResourcesExtension;
@@ -46,11 +46,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATestMemoryStatistic {
 
-  @RegisterExtension
-  protected LocalResourcesExtension resources = new LocalResourcesExtension();
+  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
 
   protected static final Path TEMP_DIRECTORY =
-      QfsFileTestUtils.createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
+      QfsFileTestUtils.createTempDirectory(
+          TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
 
   protected static final int RECORD_COUNT = 100;
 
@@ -69,16 +69,18 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    datastore = StartBuilding.datastore()
-        .setSchemaDescription(datastoreSchemaDescription)
-        .addSchemaDescriptionPostProcessors(
-            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-        .build();
+    datastore =
+        StartBuilding.datastore()
+            .setSchemaDescription(datastoreSchemaDescription)
+            .addSchemaDescriptionPostProcessors(
+                ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+            .build();
 
-    manager = StartBuilding.manager()
-        .setDescription(managerDescription)
-        .setDatastoreAndPermissions(datastore)
-        .buildAndStart();
+    manager =
+        StartBuilding.manager()
+            .setDescription(managerDescription)
+            .setDatastoreAndPermissions(datastore)
+            .buildAndStart();
 
     fillApplication();
     performGC();
@@ -101,40 +103,45 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
   protected IActivePivotManagerDescription managerDescription(
       final IDatastoreSchemaDescription datastoreSchema) {
-    final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-        .withSchema()
-        .withSelection(
-            StartBuilding.selection(datastoreSchema)
-                .fromBaseStore("Store")
-                .withAllFields()
-                .build())
-        .withCube(
-            StartBuilding.cube("Cube")
-                .withContributorsCount()
-                .withAggregatedMeasure()
-                .sum("vectorMeasure")
-                .withSingleLevelDimension("id")
-                .withPropertyName("id")
-                .withAggregateProvider()
-                .bitmap()
-                .build())
-        .build();
+    final IActivePivotManagerDescription managerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(datastoreSchema)
+                    .fromBaseStore("Store")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("vectorMeasure")
+                    .withSingleLevelDimension("id")
+                    .withPropertyName("id")
+                    .withAggregateProvider()
+                    .bitmap()
+                    .build())
+            .build();
 
     return ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchema);
   }
 
   protected void fillApplication() {
-    datastore.edit(transactionManager -> {
-      for (int i = 0; i < RECORD_COUNT; ++i) {
-        transactionManager.add("Store", i, new double[] {i, -i});
-      }
-    });
+    datastore.edit(
+        transactionManager -> {
+          for (int i = 0; i < RECORD_COUNT; ++i) {
+            transactionManager.add("Store", i, new double[] {i, -i});
+          }
+        });
   }
 
   protected void exportApplicationMemoryStatistics() {
-    final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-        datastore, manager, datastore.getEpochManager(),
-        TestBitmapAggregateProviderWithVectorPrimitiveMeasure.TEMP_DIRECTORY);
+    final IMemoryAnalysisService analysisService =
+        new MemoryAnalysisService(
+            datastore,
+            manager,
+            datastore.getEpochManager(),
+            TestBitmapAggregateProviderWithVectorPrimitiveMeasure.TEMP_DIRECTORY);
     statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
@@ -144,14 +151,13 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
     datastore.stop();
   }
 
-
   @Test
   public void testLoading() throws IOException {
     final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
 
     final IDatastore analysisDatastore = createAnalysisDatastore();
-    Assertions
-        .assertDoesNotThrow(() -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
+    Assertions.assertDoesNotThrow(
+        () -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
   }
 
   protected IDatastore createAnalysisDatastore() {
@@ -161,22 +167,20 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
     return Files.list(path)
-        .map(file -> {
-          try {
-            return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-          } catch (IOException exception) {
-            throw new ActiveViamRuntimeException(exception);
-          }
-        })
+        .map(
+            file -> {
+              try {
+                return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
+              } catch (IOException exception) {
+                throw new ActiveViamRuntimeException(exception);
+              }
+            })
         .collect(Collectors.toList());
   }
 
   protected void loadStatisticsIntoDatastore(
       final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-    analysisDatastore.edit(transactionManager ->
-        statistics.forEach(statistic ->
-            statistic.accept(
-                new FeedVisitor(analysisDatastore.getSchemaMetadata(), transactionManager,
-                    "test"))));
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, "test");
+    analysisDatastore.edit(feeder::feedDatastore);
   }
 }

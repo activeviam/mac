@@ -12,7 +12,6 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLASS;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__OFF_HEAP_SIZE;
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
-import static com.activeviam.mac.memory.DatastoreConstants.OWNER_STORE;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
@@ -21,9 +20,9 @@ import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -34,6 +33,7 @@ import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.ResourceRule;
 import com.qfs.literal.ILiteralType;
+import com.qfs.messenger.impl.LocalMessenger;
 import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -838,20 +838,23 @@ public abstract class ATestMemoryStatistic {
                     .dictionarized()
                     .withChunkSize(MICROAPP_CHUNK_SIZE)
                     .build())
-            .withStore(StartBuilding.store()
-                .withStoreName("B")
-                .withField("id0", ILiteralType.INT)
-                .asKeyField()
-                .build())
-            .withReference(StartBuilding.reference()
-                .fromStore("A")
-                .toStore("B")
-                .withName("ref")
-                .withMapping("id0", "id0")
-                .build())
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("B")
+                    .withField("id0", ILiteralType.INT)
+                    .asKeyField()
+                    .build())
+            .withReference(
+                StartBuilding.reference()
+                    .fromStore("A")
+                    .toStore("B")
+                    .withName("ref")
+                    .withMapping("id0", "id0")
+                    .build())
             .build();
 
-    final IActivePivotManagerDescription userManagerDescription = new ActivePivotManagerDescription();
+    final IActivePivotManagerDescription userManagerDescription =
+        new ActivePivotManagerDescription();
 
     final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
@@ -933,6 +936,159 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
+  static Pair<IDatastore, IActivePivotManager>
+      createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy() {
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("B")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
+  static Pair<IDatastore, IActivePivotManager>
+      createDistributedApplicationWithKeepAllEpochPolicy() {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("value", ILiteralType.DOUBLE)
+                    .asKeyField()
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .withValuePartitioningOn("value")
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube()
+                    .withName("Data")
+                    .withAggregatedMeasure()
+                    .sum("value")
+                    .withSingleLevelDimension("id")
+                    .build())
+            .withDistributedCube(
+                StartBuilding.cube("QueryCubeA")
+                    .withContributorsCount()
+                    .asQueryCube()
+                    .withClusterDefinition()
+                    .withClusterId("cluster")
+                    .withMessengerDefinition()
+                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withNoProperty()
+                    .end()
+                    .withApplication("app")
+                    .withDistributingFields("value")
+                    .end()
+                    .withEpochDimension()
+                    .build())
+            .withDistributedCube(
+                StartBuilding.cube("QueryCubeB")
+                    .asQueryCube()
+                    .withClusterDefinition()
+                    .withClusterId("cluster")
+                    .withMessengerDefinition()
+                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withNoProperty()
+                    .end()
+                    .withApplication("app")
+                    .withoutDistributingFields()
+                    .end()
+                    .withEpochDimension()
+                    .build())
+            .build();
+
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        resources.create(
+            () ->
+                new UnitTestDatastoreBuilder()
+                    .setSchemaDescription(schemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
+                    .build());
+    final IActivePivotManager manager;
+    try {
+      manager =
+          StartBuilding.manager()
+              .setDescription(managerDescription)
+              .setDatastoreAndPermissions(datastore)
+              .buildAndStart();
+    } catch (AgentException e) {
+      throw new RuntimeException("Cannot start manager", e);
+    }
+    return new Pair<>(datastore, manager);
+  }
+
   static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedVectorField() {
 
     final IDatastoreSchemaDescription schemaDescription =
@@ -950,7 +1106,8 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription userManagerDescription = new ActivePivotManagerDescription();
+    final IActivePivotManagerDescription userManagerDescription =
+        new ActivePivotManagerDescription();
 
     final IActivePivotManagerDescription managerDescription =
         ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
@@ -1234,13 +1391,8 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-    monitoringDatastore.edit(
-        tm -> {
-          statistics.forEach(
-              stat -> {
-                stat.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "test"));
-              });
-        });
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
 
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
 
@@ -1253,8 +1405,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   protected static StatisticsSummary computeStatisticsSummary(
-      final Collection<? extends IMemoryStatistic> statistics,
-      final Class<?> creatorClass) {
+      final Collection<? extends IMemoryStatistic> statistics, final Class<?> creatorClass) {
     return MemoryStatisticsTestUtils.getStatisticsSummary(
         new TestMemoryStatisticBuilder()
             .withCreatorClasses(creatorClass)
@@ -1294,20 +1445,27 @@ public abstract class ATestMemoryStatistic {
     final Set<Long> chunkStoreChunks =
         retrieveAllChunkIds(monitoringDatastore, CHUNK_STORE, CHUNK_ID, BaseConditions.TRUE);
     final Set<Long> ownerStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+        retrieveAllChunkIds(
+            monitoringDatastore,
+            CHUNK_STORE,
+            CHUNK_ID,
             BaseConditions.Not(BaseConditions.Equal(OWNER__OWNER, NoOwner.getInstance())));
     final Set<Long> componentStoreChunks =
-        retrieveAllChunkIds(monitoringDatastore, OWNER_STORE, CHUNK_ID,
+        retrieveAllChunkIds(
+            monitoringDatastore,
+            CHUNK_STORE,
+            CHUNK_ID,
             BaseConditions.Not(BaseConditions.Equal(OWNER__COMPONENT, ParentType.NO_COMPONENT)));
 
-    Assertions.assertThat(ownerStoreChunks)
-        .containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
+    Assertions.assertThat(ownerStoreChunks).containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
     Assertions.assertThat(componentStoreChunks)
         .containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
   }
 
   static Set<Long> retrieveAllChunkIds(
-      final IDatastore monitoringDatastore, final String storeName, final String chunkIdFieldName,
+      final IDatastore monitoringDatastore,
+      final String storeName,
+      final String chunkIdFieldName,
       final ICondition condition) {
     final IDictionaryCursor cursor =
         monitoringDatastore
@@ -1351,9 +1509,8 @@ public abstract class ATestMemoryStatistic {
         extractLatestChunkInfos(monitoringDatastore);
 
     final long chunkCount = latestChunkInfos.size();
-    final long totalChunkOffHeapSize = latestChunkInfos.values().stream()
-        .mapToLong(chunk -> chunk.offHeapSize)
-        .sum();
+    final long totalChunkOffHeapSize =
+        latestChunkInfos.values().stream().mapToLong(chunk -> chunk.offHeapSize).sum();
     Multimap<String, Long> chunkIdsByClass = HashMultimap.create();
     latestChunkInfos.forEach((key, value) -> chunkIdsByClass.put(value.chunkClass, key));
 
@@ -1375,14 +1532,15 @@ public abstract class ATestMemoryStatistic {
   }
 
   static Map<Long, VersionedChunkInfo> extractLatestChunkInfos(final IDatastore datastore) {
-    IDictionaryCursor cursor = datastore
-        .getHead()
-        .getQueryRunner()
-        .forStore(CHUNK_STORE)
-        .withoutCondition()
-        .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
-        .onCurrentThread()
-        .run();
+    IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withoutCondition()
+            .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
+            .onCurrentThread()
+            .run();
 
     final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
     for (final IRecordReader reader : cursor) {
@@ -1393,8 +1551,7 @@ public abstract class ATestMemoryStatistic {
       if (chunkInfo == null || chunkInfo.epochId < epochId) {
         final long offHeapSize = reader.readLong(2);
         final String chunkClass = (String) reader.read(3);
-        latestChunkInfos.put(chunkId,
-            new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
+        latestChunkInfos.put(chunkId, new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
       }
     }
 
