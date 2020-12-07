@@ -22,6 +22,11 @@ public class CubeOwner implements ChunkOwner {
   }
 
   @Override
+  public String getType() {
+    return "Cube";
+  }
+
+  @Override
   public String toString() {
     return "Cube " + this.id;
   }

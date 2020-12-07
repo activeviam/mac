@@ -41,9 +41,6 @@ public class DatastoreConstants {
   /** Name of the store containing level related facts. */
   public static final String LEVEL_STORE = "Levels";
 
-  /** Name of the store containing facts related to the component of the aggregate provider. */
-  public static final String PROVIDER_COMPONENT_STORE = "ProviderComponent";
-
   /** Name of the store containing facts related to the aggregate provider. */
   public static final String PROVIDER_STORE = "Provider";
 
@@ -130,9 +127,6 @@ public class DatastoreConstants {
 
   /** Aggregate provider id field. */
   public static final String CHUNK__PROVIDER_ID = PROVIDER__PROVIDER_ID;
-
-  /** Aggregate provider component type field. */
-  public static final String CHUNK__PROVIDER_COMPONENT_TYPE = "providerCpnType";
 
   // ## CHUNK_STORE ## Field names of the chunk store
 
@@ -264,14 +258,8 @@ public class DatastoreConstants {
   /** The field name field in the store of chunk owners. */
   public static final String OWNER__FIELD = "field";
 
-  /** Id of the aggragate provider in the provider component store. */
-  public static final String PROVIDER_COMPONENT__PROVIDER_ID = PROVIDER__PROVIDER_ID;
-
   /** Class of the aggregate provider compoent. */
   public static final String PROVIDER_COMPONENT__CLASS = "class";
-
-  /** Type of aggregate provider component. */
-  public static final String PROVIDER_COMPONENT__TYPE = "providerComponentType";
 
   /** Id of the Pivot. */
   public static final String PIVOT__PIVOT_ID = "pivotId";

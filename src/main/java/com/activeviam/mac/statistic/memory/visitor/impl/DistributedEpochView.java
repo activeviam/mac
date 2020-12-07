@@ -20,8 +20,8 @@ import lombok.Value;
 @Value
 public class DistributedEpochView implements EpochView {
 
-  private String distributedCubeId;
-  private long epochId;
+  String distributedCubeId;
+  long epochId;
 
   @Override
   public String toString() {

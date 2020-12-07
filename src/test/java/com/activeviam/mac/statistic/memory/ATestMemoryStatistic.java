@@ -17,6 +17,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
 import com.activeviam.builders.FactFilterConditions;
+import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
@@ -1291,6 +1292,79 @@ public abstract class ATestMemoryStatistic {
                     .asDefaultHierarchy()
                     .withAggregateProvider()
                     .leaf()
+                    .build())
+            .build();
+    final IActivePivotManagerDescription managerDescription =
+        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
+    IDatastore datastore =
+        (Datastore)
+            resources.create(
+                () ->
+                    new UnitTestDatastoreBuilder()
+                        .setSchemaDescription(schemaDescription)
+                        .addSchemaDescriptionPostProcessors(
+                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                        .setEpochManagementPolicy(new KeepLastEpochPolicy())
+                        .build());
+    return new Pair<IDatastore, IActivePivotManager>(
+        datastore,
+        StartBuilding.manager()
+            .setDescription(managerDescription)
+            .setDatastoreAndPermissions(datastore)
+            .buildAndStart());
+  }
+
+  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithPartialProviders()
+      throws AgentException {
+
+    final IDatastoreSchemaDescription schemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("A")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("hierId", ILiteralType.INT)
+                    .withField("measure1", ILiteralType.DOUBLE)
+                    .withField("measure2", ILiteralType.DOUBLE)
+                    .withChunkSize(MICROAPP_CHUNK_SIZE)
+                    .build())
+            .build();
+    final IActivePivotManagerDescription userManagerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("measure1")
+                    .withAggregatedMeasure()
+                    .sum("measure2")
+
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .withSingleLevelDimension("hierId")
+
+                    .withAggregateProvider()
+                    .bitmap()
+                    .withPartialProvider()
+                    .bitmap()
+                    .excludingHierarchies(HierarchyIdentifier.simple("hierId"))
+                    .includingOnlyMeasures("measure1.SUM")
+
+                    .withPartialProvider()
+                    .leaf()
+                    .includingOnlyMeasures("measure2.SUM")
+
+                    .withPartialProvider()
+                    .bitmap()
+                    .includingOnlyMeasures("contributors.COUNT")
+
                     .build())
             .build();
     final IActivePivotManagerDescription managerDescription =

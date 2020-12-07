@@ -247,19 +247,21 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-            this.storageMetadata,
-            this.transaction,
-            this.dumpName,
-            this.current,
-            this.owner,
-            this.rootComponent,
-            this.directParentType,
-            this.directParentId,
-            this.partitionId,
-            this.indexId,
-            this.referenceId,
-            this.epochId,
-            this.usedByVersion)
+        this.storageMetadata,
+        this.transaction,
+        this.dumpName,
+        this.current,
+        this.owner,
+        this.rootComponent,
+        this.directParentType,
+        this.directParentId,
+        this.partitionId,
+        this.indexId,
+        this.referenceId,
+        null,
+        this.epochId,
+        this.usedByVersion,
+        false)
         .visit(stat);
   }
 

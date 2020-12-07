@@ -36,9 +36,7 @@ import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
 import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.definitions.impl.CalculatedMemberDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
@@ -114,6 +112,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String COMPONENT_DIMENSION = "Components";
   /** Name of the component dimension. */
   public static final String OWNER_DIMENSION = "Owners";
+  /** Name of the owner type analysis hierarchy. */
+  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
   /** Name of the field dimension. */
   public static final String FIELD_DIMENSION = "Fields";
   /** Name of the index dimension. */
@@ -199,12 +199,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
   /** The name of the hierarchy of provider ids. */
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
-  /** The name of the hierarchy of provider partitions. */
-  public static final String PROVIDER_PARTITION_HIERARCHY = "ProviderPartition";
   /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
-  /** The name of the hierarchy of pivots. */
-  public static final String PIVOT_HIERARCHY = "Pivot";
+  /** The name of the hierarchy of provider categories. */
+  public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
   /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
   /** The name of the hierarchy of owner components. */
@@ -220,8 +218,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Name of the date hierarchy. */
   public static final String DATE_HIERARCHY = "Date";
 
-  /** The name of the folder for measures related to chunk ownership. */
-  public static final String OWNERSHIP_FOLDER = "Ownership";
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
@@ -283,7 +279,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDefaultMember()
         .onHierarchy(MdxNamingUtil.hierarchyUniqueName(IDimension.MEASURES, IHierarchy.MEASURES))
         .withMemberPath(CHUNK_COUNT)
-        .withCalculatedMembers(calculatedMembers())
         .end()
         .build();
   }
@@ -334,16 +329,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDimension(AGGREGATE_PROVIDER_DIMENSION)
         .withHierarchy(MANAGER_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__MANAGER_ID)
-        .withHierarchy(PIVOT_HIERARCHY)
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PIVOT__PIVOT_ID)
+        .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER_COMPONENT__TYPE)
-        .withHierarchy(PROVIDER_PARTITION_HIERARCHY)
+        .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
+        .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
         .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
+        .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
@@ -376,59 +368,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(NUMBER_FORMATTER)
         .withUpdateTimestamp()
         .withFormatter(DateFormatter.TYPE + "[HH:mm:ss]");
-  }
-
-  private ICalculatedMemberDescription[] calculatedMembers() {
-    return new ICalculatedMemberDescription[] {
-      createMdxMeasureDescription(
-          "Owner.COUNT",
-          ownershipCountMdxExpression(OWNER_DIMENSION, OWNER_HIERARCHY),
-          OWNERSHIP_FOLDER),
-      createMdxMeasureDescription(
-          "Component.COUNT",
-          ownershipCountMdxExpression(COMPONENT_DIMENSION, COMPONENT_HIERARCHY),
-          OWNERSHIP_FOLDER),
-      createMdxMeasureDescription(
-          "Field.COUNT",
-          ownershipCountMdxExpression(FIELD_DIMENSION, FIELD_HIERARCHY),
-          OWNERSHIP_FOLDER)
-    };
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression) {
-    return new CalculatedMemberDescription("[Measures].[" + measureName + "]", mdxExpression);
-  }
-
-  private ICalculatedMemberDescription createMdxMeasureDescription(
-      final String measureName, final String mdxExpression, final String folder) {
-    final ICalculatedMemberDescription description =
-        createMdxMeasureDescription(measureName, mdxExpression);
-    description.setFolder(folder);
-    return description;
-  }
-
-  private String ownershipCountMdxExpression(
-      final String dimensionName, final String hierarchyName) {
-    return ownershipCountMdxExpression(
-        MdxNamingUtil.hierarchyUniqueName(dimensionName, hierarchyName));
-  }
-
-  private String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-    return "DistinctCount("
-        + "  Generate("
-        + "    NonEmpty("
-        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    ),"
-        + "    NonEmpty("
-        + "      "
-        + hierarchyUniqueName
-        + ".[ALL].[AllMember].Children,"
-        + "      {[Measures].[contributors.COUNT]}"
-        + "    )"
-        + "  )"
-        + ")";
   }
 
   private void copperCalculations(final ICopperContext context) {

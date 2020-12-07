@@ -70,16 +70,6 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat } of the Provider component store.
-   *
-   * @return the {@link DatastoreConstants#PROVIDER_COMPONENT_STORE} record format
-   */
-  protected IRecordFormat getProviderCpnFormat() {
-    return FeedVisitor.getRecordFormat(
-        this.storageMetadata, DatastoreConstants.PROVIDER_COMPONENT_STORE);
-  }
-
-  /**
    * Returns the {@link IRecordFormat} of the Provider store.
    *
    * @param storageMetadata metadata of the application datastore

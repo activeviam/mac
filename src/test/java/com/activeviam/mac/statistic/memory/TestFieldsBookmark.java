@@ -110,26 +110,41 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery excessMemoryQuery =
-        new MDXQuery(
-            "WITH MEMBER [Measures].[ExcessDirectMemory] AS"
-                + " Sum("
-                + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-                + "   IIF([Measures].[Field.COUNT] > 1,"
-                + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
-                + "     0)"
-                + " )"
-                + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
-                + " FROM [MemoryCube]"
-                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+		final MDXQuery excessMemoryQuery = new MDXQuery(
+				"WITH MEMBER [Measures].[Field.COUNT] AS "
+						+ ownershipCountMdxExpression("[Fields].[Field]")
+						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
+						+ " Sum("
+						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+						+ "   IIF([Measures].[Field.COUNT] > 1,"
+						+ "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
+						+ "     0)"
+						+ " )"
+						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+						+ " FROM [MemoryCube]"
+						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final CellSetDTO totalResult = pivot.execute(storeTotal);
     final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
     final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
 
-    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
-        .isEqualTo(
-            CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
-                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
-  }
+		Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
+				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
+						- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
+	}
+
+	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+		return "DistinctCount("
+				+ "  Generate("
+				+ "    NonEmpty("
+				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    ),"
+				+ "    NonEmpty("
+				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+				+ "      {[Measures].[contributors.COUNT]}"
+				+ "    )"
+				+ "  )"
+				+ ")";
+	}
 }

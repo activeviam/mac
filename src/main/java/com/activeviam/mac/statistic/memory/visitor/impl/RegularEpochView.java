@@ -13,7 +13,7 @@ import lombok.Value;
 @Value
 public class RegularEpochView implements EpochView {
 
-  private long epochId;
+  long epochId;
 
   @Override
   public String toString() {

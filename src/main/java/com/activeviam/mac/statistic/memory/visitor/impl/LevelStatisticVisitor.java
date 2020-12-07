@@ -39,8 +39,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final Long epochId;
 
-  Integer memberCount;
-  Long dictionaryId;
+  /** The number of members of the visited level. */
+  protected Integer memberCount;
+  private Long dictionaryId;
 
   /**
    * Constructor.
@@ -79,7 +80,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
    *
    * @param root parent of the children to ve visited
    */
-  public void analyse(final IMemoryStatistic root) {
+  public void analyze(final IMemoryStatistic root) {
     visitChildren(root);
   }
 
@@ -99,6 +100,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.OWNER__FIELD, this.parent.directParentId);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.OWNER__COMPONENT, ParentType.LEVEL);
 
@@ -176,6 +179,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         break;
       default:
         visitChildren(stat);
+        break;
     }
     return null;
   }

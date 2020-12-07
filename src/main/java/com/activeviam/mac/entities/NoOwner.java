@@ -29,6 +29,11 @@ public final class NoOwner implements ChunkOwner {
   }
 
   @Override
+  public String getType() {
+    return "None";
+  }
+
+  @Override
   public String toString() {
     return "No owner";
   }
