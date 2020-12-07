@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 /** Enum listing all components being part of an Aggregate Provider. */
-public enum ProviderCpnType {
+public enum ProviderComponentType {
   /** Provider Point Index. */
   POINT_INDEX("PointIndex"),
   /** Provider mapping from Points to Aggregated values. */
@@ -26,7 +26,7 @@ public enum ProviderCpnType {
    *
    * @param friendlyName user-friendly name of the component.
    */
-  ProviderCpnType(String friendlyName) {
+  ProviderComponentType(String friendlyName) {
     this.friendlyName = friendlyName;
   }
 

@@ -20,9 +20,7 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.query.ICompiledGetByKey;
 import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 
 /**
@@ -35,8 +33,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
-
-  private final ICompiledGetByKey chunkIdCQ;
 
   private ParentType directParentType;
   private String directParentId;
@@ -70,16 +66,13 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     this.directParentType = ParentType.LEVEL;
     this.directParentId =
-        parent.owner.getName() + "/" + parent.dimension + "/" + parent.hierarchy + "/"
+        parent.owner.getName()
+            + "/"
+            + parent.dimension
+            + "/"
+            + parent.hierarchy
+            + "/"
             + parent.level;
-
-    this.chunkIdCQ =
-        this.transaction
-            .getQueryRunner()
-            .createGetByKeyQuery(
-                DatastoreConstants.CHUNK_STORE,
-                DatastoreConstants.CHUNK_ID,
-                DatastoreConstants.CHUNK__DUMP_NAME);
   }
 
   /**
@@ -102,18 +95,15 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     recordLevelForStructure(this.directParentType, this.directParentId);
 
-    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    final Object[] ownerTuple = FeedVisitor
-        .buildOwnerTupleFrom(ownerFormat, stat, this.owner, this.dumpName, ParentType.LEVEL);
-    FeedVisitor.setTupleElement(ownerTuple, ownerFormat, DatastoreConstants.OWNER__FIELD,
-        this.parent.directParentId);
-    FeedVisitor.add(stat, transaction, DatastoreConstants.OWNER_STORE, ownerTuple);
-
     final IRecordFormat format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
     FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+        tuple, format, DatastoreConstants.OWNER__FIELD, this.parent.directParentId);
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.OWNER__COMPONENT, ParentType.LEVEL);
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
@@ -130,17 +120,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
     }
-
-    final IRecordReader r =
-        this.chunkIdCQ
-            .runInTransaction(new Object[] {stat.getChunkId(), this.dumpName, this.epochId}, false);
-    if (r != null) {
-      // There is already an entry that has likely been set by the DatastoreFeederVisitor. We do not
-      // need to keep on
-      return null; // Abort
-    }
-
-    this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
+    FeedVisitor.writeChunkTupleForFields(stat, transaction, null, format, tuple);
 
     visitChildren(stat);
 
@@ -154,8 +134,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     final Long previousDictionaryId = this.dictionaryId;
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];

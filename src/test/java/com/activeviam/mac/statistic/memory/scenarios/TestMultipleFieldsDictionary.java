@@ -142,7 +142,7 @@ public class TestMultipleFieldsDictionary {
 	protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
 			final Collection<Long> chunkIdSubset) {
 		final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
-				.forStore(DatastoreConstants.OWNER_STORE)
+				.forStore(DatastoreConstants.CHUNK_STORE)
 				.withCondition(BaseConditions.And(
 						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
 						BaseConditions.In(DatastoreConstants.OWNER__CHUNK_ID, chunkIdSubset.toArray())))

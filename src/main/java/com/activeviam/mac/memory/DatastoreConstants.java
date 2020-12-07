@@ -50,11 +50,8 @@ public class DatastoreConstants {
   /** Name of the store related to the application. */
   public static final String APPLICATION_STORE = "Application";
 
-  /** The name of the store of chunk owners. */
-  public static final String OWNER_STORE = "Owner";
-
   /** Name of the store related to the application. */
-  public static final String BRANCH_STORE = "Branch";
+  public static final String VERSION_STORE = "Version";
 
   // Field names
 
@@ -289,13 +286,22 @@ public class DatastoreConstants {
   public static final String APPLICATION__MAX_OFF_HEAP = "maxOffHeap";
 
   /** The dump name field in the branch store. */
-  public static final String BRANCH__DUMP_NAME = "dumpName";
-
-  /** The epoch id field in the branch store. */
-  public static final String BRANCH__EPOCH_ID = "epochId";
+  public static final String VERSION__DUMP_NAME = "dumpName";
 
   /** The branch name field in the branch store. */
-  public static final String BRANCH__NAME = "branch";
+  public static final String VERSION__BRANCH_NAME = "branch";
+
+  /** The name of the epoch view store. */
+  public static final String EPOCH_VIEW_STORE = "EpochView";
+
+  /** The base epoch id field in the epoch view store. */
+  public static final String EPOCH_VIEW__BASE_EPOCH_ID = "baseEpochId";
+
+  /** The owner field in the epoch view store. */
+  public static final String EPOCH_VIEW__OWNER = "owner";
+
+  /** The view epoch id field in the epoch view store. */
+  public static final String EPOCH_VIEW__VIEW_EPOCH_ID = "viewEpochId";
 
   private DatastoreConstants() {}
 }

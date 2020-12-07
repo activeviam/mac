@@ -9,7 +9,7 @@ package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.qfs.jmx.JmxOperation;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.msg.csv.ICsvDataProvider;
@@ -204,22 +204,11 @@ public class SourceConfig {
    */
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
+    final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, dumpName);
+
     final Optional<IDatastoreSchemaTransactionInformation> info =
-        this.datastore.edit(
-            tm -> {
-              memoryStatistics.forEach(
-                  stat -> {
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                      LOGGER.fine("Starting feed the application with " + stat);
-                    }
-
-                    stat.accept(new FeedVisitor(this.datastore.getSchemaMetadata(), tm, dumpName));
-
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                      LOGGER.fine("Application processed " + stat);
-                    }
-                  });
-            });
+        this.datastore.edit(feeder::feedDatastore);
 
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";

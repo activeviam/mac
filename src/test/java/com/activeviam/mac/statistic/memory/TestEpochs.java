@@ -213,7 +213,7 @@ public class TestEpochs {
 
   protected Set<Long> retrieveRecordChunks() {
     final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
-        .forStore(DatastoreConstants.OWNER_STORE)
+        .forStore(DatastoreConstants.CHUNK_STORE)
         .withCondition(
             BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
         .selecting(DatastoreConstants.CHUNK_ID)

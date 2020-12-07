@@ -142,17 +142,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final IStatisticAttribute usedByVersionAttribute =
         chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion = usedByVersionAttribute.asBoolean()
-          ? UsedByVersion.TRUE
-          : UsedByVersion.FALSE;
+      this.usedByVersion =
+          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
     }
-
-    final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-    final Object[] ownerTuple =
-        FeedVisitor.buildOwnerTupleFrom(ownerFormat, chunkStatistic, this.owner, this.dumpName,
-            this.rootComponent);
-    FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
-        ownerFormat, ownerTuple);
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
     if (isVersionColumn) {
@@ -166,6 +158,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.OWNER__OWNER, this.owner);
+    FeedVisitor.setTupleElement(
+        tuple, chunkRecordFormat, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
 
     FeedVisitor.setTupleElement(
         tuple,
@@ -194,8 +190,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(chunkStatistic);
     }
-    // Set the chunk data to be added to the Chunk store
-    FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+
+    FeedVisitor.writeChunkTupleForFields(
+        chunkStatistic, transaction, this.fields, chunkRecordFormat, tuple);
 
     visitChildren(chunkStatistic);
 
@@ -208,10 +205,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String initialBranch = this.branch;
 
     if (readEpochAndBranchIfAny(stat)) {
-      final IRecordFormat branchStoreFormat = getBranchStoreFormat(this.storageMetadata);
-      final Object[] tuple = FeedVisitor
-          .buildBranchTupleFrom(branchStoreFormat, stat, this.dumpName, this.epochId, this.branch);
-      FeedVisitor.add(stat, this.transaction, DatastoreConstants.BRANCH_STORE, tuple);
+      final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
+      final Object[] tuple =
+          FeedVisitor.buildVersionTupleFrom(
+              versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
+      FeedVisitor.add(stat, this.transaction, DatastoreConstants.VERSION_STORE, tuple);
     }
 
     switch (stat.getName()) {
@@ -318,9 +316,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
@@ -367,10 +363,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
     this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
 
-    FeedVisitor
-        .setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
 
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
 
@@ -517,8 +511,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void readFieldsIfAny(final IMemoryStatistic stat) {
-    IStatisticAttribute fieldAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
+    IStatisticAttribute fieldAttr = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
     if (fieldAttr != null) {
       this.fields = Collections.singleton(fieldAttr.asText());
     } else {

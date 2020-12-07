@@ -40,10 +40,10 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public static final String CHUNK_TO_PROVIDER = "chunkToProvider";
 
   /** Name of the chunk -> application linking store. */
-  public static final String CHUNK_TO_APP = "ChunkToApp";
+  public static final String CHUNK_TO_APP = "chunkToApp";
 
   /** Name of the chunk -> branch reference. */
-  public static final String CHUNK_TO_BRANCH = "ChunkToBranch";
+  public static final String CHUNK_TO_VERSION = "epochViewToVersion";
 
   /** Default value for component-specific ids. */
   public static final Long DEFAULT_COMPONENT_ID_VALUE = -1L;
@@ -104,6 +104,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
         .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
+        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
+        .asKeyField()
+        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .asKeyField()
+        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
+        .asKeyField()
 
         /* Foreign keys */
         .withField(DatastoreConstants.CHUNK__PARTITION_ID, ILiteralType.INT, NO_PARTITION)
@@ -132,38 +138,37 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .withField(DatastoreConstants.CHUNK__SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS, ILiteralType.LONG)
         .withField(DatastoreConstants.CHUNK__FREE_ROWS, ILiteralType.LONG)
-        .withField(DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT,
-            UsedByVersion.UNKNOWN).dictionarized()
+        .withField(
+            DatastoreConstants.CHUNK__USED_BY_VERSION, ILiteralType.OBJECT, UsedByVersion.UNKNOWN)
+        .dictionarized()
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT, ILiteralType.LONG)
         .withNullableField(DatastoreConstants.CHUNK__DEBUG_TREE, ILiteralType.STRING)
-        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.CHUNK_ID,
-            DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__EPOCH_ID)
+        .withModuloPartitioning(
+            partitioningModulo(),
+            DatastoreConstants.CHUNK_ID,
+            DatastoreConstants.CHUNK__DUMP_NAME,
+            DatastoreConstants.VERSION__EPOCH_ID)
         .withDuplicateKeyHandler(new ChunkRecordHandler())
         .build();
   }
 
   /**
-   * Description of the owner store.
+   * Description of the epoch view store.
    *
-   * @return description of {@link DatastoreConstants#OWNER_STORE}
+   * @return description of {@link DatastoreConstants#EPOCH_VIEW_STORE}
    */
-  protected IStoreDescription ownerStore() {
-    return new StoreDescriptionBuilder()
-        .withStoreName(DatastoreConstants.OWNER_STORE)
-        .withField(DatastoreConstants.OWNER__CHUNK_ID, ILiteralType.LONG)
-        .asKeyField()
-        .withField(DatastoreConstants.OWNER__OWNER, ILiteralType.OBJECT)
+  protected IStoreDescription epochViewStore() {
+    return StartBuilding.store()
+        .withStoreName(DatastoreConstants.EPOCH_VIEW_STORE)
+        .withField(DatastoreConstants.EPOCH_VIEW__OWNER, ILiteralType.OBJECT)
         .asKeyField()
         .withField(DatastoreConstants.CHUNK__DUMP_NAME)
         .asKeyField()
-        .withField(DatastoreConstants.OWNER__FIELD, ILiteralType.STRING)
+        .withField(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-
-        .withField(DatastoreConstants.OWNER__COMPONENT, ILiteralType.OBJECT)
-
-        .withModuloPartitioning(partitioningModulo(), DatastoreConstants.OWNER__CHUNK_ID,
-            DatastoreConstants.CHUNK__DUMP_NAME)
+        .withField(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID, ILiteralType.OBJECT)
+        .asKeyField()
         .build();
   }
 
@@ -215,7 +220,9 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         .asKeyField()
 
         /* Attributes */
-        .withField(DatastoreConstants.INDEX_TYPE, ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
+        .withField(
+            DatastoreConstants.INDEX_TYPE,
+            ILiteralType.OBJECT) // FIXME(ope) primary, secondary, key
         .withField(DatastoreConstants.INDEX_CLASS)
         .withField(DatastoreConstants.INDEX__FIELDS, ILiteralType.OBJECT)
         .build();
@@ -303,18 +310,18 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#BRANCH_STORE}.
+   * Returns the description of {@link DatastoreConstants#VERSION_STORE}.
    *
-   * @return description of {@link DatastoreConstants#BRANCH_STORE}
+   * @return description of {@link DatastoreConstants#VERSION_STORE}
    */
-  protected IStoreDescription branchStore() {
+  protected IStoreDescription versionStore() {
     return StartBuilding.store()
-        .withStoreName(DatastoreConstants.BRANCH_STORE)
-        .withField(DatastoreConstants.BRANCH__DUMP_NAME, ILiteralType.STRING)
+        .withStoreName(DatastoreConstants.VERSION_STORE)
+        .withField(DatastoreConstants.VERSION__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
-        .withField(DatastoreConstants.BRANCH__EPOCH_ID, ILiteralType.LONG)
+        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
         .asKeyField()
-        .withField(DatastoreConstants.BRANCH__NAME, ILiteralType.STRING)
+        .withField(DatastoreConstants.VERSION__BRANCH_NAME, ILiteralType.STRING)
         .build();
   }
 
@@ -386,7 +393,6 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
-        ownerStore(),
         referenceStore(),
         indexStore(),
         dictionaryStore(),
@@ -394,7 +400,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         providerStore(),
         pivotStore(),
         chunkTolevelStore(),
-        branchStore(),
+        epochViewStore(),
+        versionStore(),
         applicationStore());
   }
 
@@ -422,15 +429,14 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .toStore(DatastoreConstants.APPLICATION_STORE)
             .withName(CHUNK_TO_APP)
             .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                DatastoreConstants.APPLICATION__DUMP_NAME)
+                DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
         StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
-            .toStore(DatastoreConstants.BRANCH_STORE)
-            .withName(CHUNK_TO_BRANCH)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.BRANCH__DUMP_NAME)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.BRANCH__EPOCH_ID)
+            .toStore(DatastoreConstants.VERSION_STORE)
+            .withName(CHUNK_TO_VERSION)
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__DUMP_NAME)
+            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.VERSION__EPOCH_ID)
             .build());
   }
 

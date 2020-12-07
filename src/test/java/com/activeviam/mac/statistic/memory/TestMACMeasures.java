@@ -94,7 +94,7 @@ public class TestMACMeasures {
     long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
+        + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
         + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
@@ -129,7 +129,7 @@ public class TestMACMeasures {
     long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
+        + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
         + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
