@@ -22,6 +22,7 @@ import com.activeviam.desc.build.dimensions.ICanStartBuildingDimensions;
 import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -221,8 +222,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to memory metrics. */
   public static final String MEMORY_FOLDER = "Memory";
 
-  private CopperStore chunkToDicoStore;
-
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
@@ -372,6 +371,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   private void copperCalculations(final ICopperContext context) {
     joinHierarchies(context);
+    bucketingHierarchies(context);
 
     applicationMeasure(context);
     chunkMeasures(context);
@@ -413,7 +413,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private void joinIndexesToChunks(ICopperContext context) {
-    CopperStore chunkToIndexStore =
+    final CopperStore chunkToIndexStore =
         Copper.store(DatastoreConstants.INDEX_STORE)
             .joinToCube()
             .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
@@ -421,12 +421,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
     Copper.newSingleLevelHierarchy(INDEX_DIMENSION, INDEX_TYPE_HIERARCHY, INDEX_TYPE_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
+        .publish(context);
+  }
+
+  private void bucketingHierarchies(final ICopperContext context) {
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
+        .from(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
+        .withMemberList(
+            "Cube", "Store", "None", "Shared") // todo: cleaner impl, with an enum for owners
         .publish(context);
   }
 
