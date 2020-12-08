@@ -31,7 +31,6 @@ import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
-import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordReader;
@@ -91,8 +90,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testDatastoreMonitoringValues");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     IDictionary<Object> dic = monitoredApplication.getDatastore()
         .getDictionaries().getDictionary("Sales", "id");
@@ -174,8 +173,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testChunkStructureFieldsWithSingleRecord");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -237,8 +236,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testChunkStructureFieldsWithFullChunk");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -297,8 +296,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testChunkStructureFieldsWithTwoChunks");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -383,8 +382,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testChunkStructureFieldsWithFreedRows");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -450,8 +449,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testLevelStoreContent");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        fullStats, resources);
 
     // Query record of level data :
     final IDictionaryCursor cursor =
@@ -497,8 +496,8 @@ public class TestMemoryMonitoringDatastoreContent {
         "testMappingFromChunkToFields");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final Datastore monitoringDatastore =
-        (Datastore) MonitoringTestUtils.createAnalysisDatastore(stats, resources);
+    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
+        stats, resources);
 
     final List<IMemoryStatistic> dics =
         collectStatistics(
@@ -615,8 +614,8 @@ public class TestMemoryMonitoringDatastoreContent {
 
     final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(resources);
     final AnalysisDatastoreFeeder initFeeder = new AnalysisDatastoreFeeder(stats, "appAInit");
-    final AnalysisDatastoreFeeder nextFeeder =
-        new AnalysisDatastoreFeeder(statsEpoch2, "appAEpoch2");
+    final AnalysisDatastoreFeeder nextFeeder = new AnalysisDatastoreFeeder(
+        statsEpoch2, "appAEpoch2");
     monitoringDatastore.edit(
         tm -> {
           initFeeder.feedDatastore(tm);
