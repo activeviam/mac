@@ -60,17 +60,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.Data;
+import lombok.experimental.UtilityClass;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import test.util.impl.DatastoreTestUtils;
 
+@UtilityClass
 public class MonitoringTestUtils {
 
   public static final int MAX_GC_STEPS = 10;
   public static final String DEFAULT_DUMP_NAME = "testDump";
-
-  private MonitoringTestUtils() {
-  }
 
   public static Application setupApplication(
       ITestApplicationDescription applicationDescription,

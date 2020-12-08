@@ -7,7 +7,6 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.descriptions.DistributedApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
@@ -53,8 +52,6 @@ public class TestDistributedCubeEpochs {
   protected Application monitoredApplication;
   protected Application monitoringApplication;
 
-  protected CubeTester tester;
-
   @BeforeEach
   public void setup() throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
@@ -90,8 +87,6 @@ public class TestDistributedCubeEpochs {
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
-
-    tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
   }
 
   @Test

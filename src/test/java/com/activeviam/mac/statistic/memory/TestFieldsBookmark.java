@@ -7,8 +7,6 @@ import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
@@ -26,78 +24,74 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @ExtendWith(RegistrySetupExtension.class)
 public class TestFieldsBookmark {
 
-	@RegisterExtension
-	protected static ActiveViamPropertyExtension propertyExtension =
-			new ActiveViamPropertyExtensionBuilder()
-					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
-					.build();
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-	@RegisterExtension
-	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestFieldsBookmark.class);
+  protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestFieldsBookmark.class);
 
-	protected Application monitoredApplication;
-	protected Application monitoringApplication;
+  protected Application monitoredApplication;
+  protected Application monitoringApplication;
+  protected CubeTester tester;
 
-	protected StatisticsSummary statisticsSummary;
-	protected CubeTester tester;
+  @BeforeEach
+  public void setup() throws AgentException {
+    monitoredApplication = MonitoringTestUtils
+        .setupApplication(new MicroApplicationDescription(), resources,
+            MicroApplicationDescription::fillWithGenericData);
 
-	@BeforeEach
-	public void setup() throws AgentException {
-		monitoredApplication = MonitoringTestUtils
-				.setupApplication(new MicroApplicationDescription(), resources,
-						MicroApplicationDescription::fillWithGenericData);
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
-		final Path exportPath =
-				MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
-						monitoredApplication.getManager(),
-						tempDir,
-						this.getClass().getSimpleName());
+    final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
-		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-		statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
+  }
 
-		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
+  @Test
+  public void testStoreTotal() throws QueryException {
+    final IMultiVersionActivePivot pivot = tester.pivot();
 
-		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
-	}
+    final MDXQuery storeTotal = new MDXQuery(
+        "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+            + "FROM [MemoryCube]"
+            + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-	@Test
-	public void testStoreTotal() throws QueryException {
-		final IMultiVersionActivePivot pivot = tester.pivot();
+    final MDXQuery perFieldQuery = new MDXQuery(
+        "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+            + "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
+            + "FROM [MemoryCube]"
+            + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery storeTotal = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-						+ "FROM [MemoryCube]"
-						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery excessMemoryQuery = new MDXQuery(
+        "WITH MEMBER [Measures].[Field.COUNT] AS "
+            + MonitoringTestUtils.ownershipCountMdxExpression("[Fields].[Field]")
+            + " MEMBER [Measures].[ExcessDirectMemory] AS"
+            + " Sum("
+            + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+            + "   IIF([Measures].[Field.COUNT] > 1,"
+            + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
+            + "     0)"
+            + " )"
+            + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+            + " FROM [MemoryCube]"
+            + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery perFieldQuery = new MDXQuery(
-				"SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-						+ "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
-						+ "FROM [MemoryCube]"
-						+ "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final CellSetDTO totalResult = pivot.execute(storeTotal);
+    final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
+    final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
 
-		final MDXQuery excessMemoryQuery = new MDXQuery(
-				"WITH MEMBER [Measures].[Field.COUNT] AS "
-						+ MonitoringTestUtils.ownershipCountMdxExpression("[Fields].[Field]")
-						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
-						+ " Sum("
-						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-						+ "   IIF([Measures].[Field.COUNT] > 1,"
-						+ "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
-						+ "     0)"
-						+ " )"
-						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
-
-		final CellSetDTO totalResult = pivot.execute(storeTotal);
-		final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
-		final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
-
-		Assertions.assertThat(CellSetUtils.<Long>extractValueFromSingleCellDTO(totalResult))
-				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult, 0L, Long::sum)
-						- CellSetUtils.<Double>extractValueFromSingleCellDTO(excessResult).longValue());
-	}
+    Assertions.assertThat(CellSetUtils.<Long>extractValueFromSingleCellDTO(totalResult))
+        .isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult, 0L, Long::sum)
+            - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessResult).longValue());
+  }
 }

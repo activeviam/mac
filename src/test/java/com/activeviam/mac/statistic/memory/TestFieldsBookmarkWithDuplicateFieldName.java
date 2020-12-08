@@ -14,8 +14,6 @@ import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
 import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
@@ -47,7 +45,6 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
 
   protected Application monitoredApplication;
   protected Application monitoringApplication;
-  protected StatisticsSummary statisticsSummary;
   protected CubeTester tester;
 
   @BeforeEach
@@ -64,8 +61,6 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
         this.getClass().getSimpleName());
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
-
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
     tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());

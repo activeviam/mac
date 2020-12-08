@@ -11,8 +11,10 @@ import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import java.util.List;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
+import lombok.experimental.UtilityClass;
 import org.assertj.core.api.Assertions;
 
+@UtilityClass
 public class CellSetUtils {
 
   @SuppressWarnings("unchecked")

@@ -7,7 +7,6 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -23,13 +22,10 @@ import com.google.common.collect.Multimap;
 import com.qfs.condition.ICondition;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.multiversion.impl.Epoch;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.fwk.AgentException;
 import java.nio.file.Path;
@@ -61,8 +57,6 @@ public class TestEpochs {
   protected Application monitoredApplication;
   protected Application monitoringApplication;
   protected IMemoryStatistic stats;
-  protected StatisticsSummary statisticsSummary;
-  protected CubeTester tester;
 
   @BeforeEach
   public void setup() throws AgentException {
@@ -112,15 +106,11 @@ public class TestEpochs {
         this.getClass().getSimpleName());
 
     stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
-
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
-
-    tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
   }
 
   @Test
-  public void testStatisticConsistency() throws AgentException, DatastoreTransactionException {
+  public void testStatisticConsistency() {
     MonitoringTestUtils.assertLoadsCorrectly(stats, resources);
   }
 

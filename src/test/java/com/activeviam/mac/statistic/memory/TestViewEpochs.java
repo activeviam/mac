@@ -7,7 +7,6 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import com.activeviam.copper.testing.CubeTester;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
@@ -55,9 +54,6 @@ public class TestViewEpochs {
 
   protected Application monitoredApplication;
   protected Application monitoringApplication;
-
-  protected CubeTester tester;
-
   protected IMemoryStatistic statistics;
 
   @BeforeEach
@@ -97,8 +93,6 @@ public class TestViewEpochs {
 
     statistics = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(statistics, resources);
-
-    tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
   }
 
   @Test
@@ -197,24 +191,22 @@ public class TestViewEpochs {
   }
 
   protected Map<ChunkOwner, Multimap<Long, Long>> retrieveViewEpochIdsPerOwner() {
-    final ICursor cursor =
-        monitoringApplication
-            .getDatastore()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-            .withoutCondition()
-            .selecting(
-                DatastoreConstants.EPOCH_VIEW__OWNER,
-                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-                DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-            .onCurrentThread()
-            .run();
+    final ICursor cursor = monitoringApplication
+        .getDatastore()
+        .getHead()
+        .getQueryRunner()
+        .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+        .withoutCondition()
+        .selecting(
+            DatastoreConstants.EPOCH_VIEW__OWNER,
+            DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
+            DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+        .onCurrentThread()
+        .run();
 
     final Map<ChunkOwner, Multimap<Long, Long>> epochs = new HashMap<>();
     for (final IRecordReader record : cursor) {
-      epochs
-          .computeIfAbsent((ChunkOwner) record.read(0), key -> HashMultimap.create())
+      epochs.computeIfAbsent((ChunkOwner) record.read(0), key -> HashMultimap.create())
           .put(record.readLong(1), ((EpochView) record.read(2)).getEpochId());
     }
 
