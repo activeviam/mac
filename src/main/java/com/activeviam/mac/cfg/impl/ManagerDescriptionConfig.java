@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 /**
  * Manager Description Config that defines the manager description which contains the cube
  * dimensions and every CopperMeasure.

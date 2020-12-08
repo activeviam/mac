@@ -6,7 +6,117 @@
       "content" : [ {
         "key" : "0",
         "bookmark" : {
-          "name" : "Vector Field Analysis",
+          "name" : "Vector Block Consumption across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].[Owner].Members)) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  },
+                  "isConnected" : true
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Vector Block Consumption across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Fields].[Field].[Field]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ ]
+                }
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Fields].[Field].[Field].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
+                "updateMode" : "once"
+              },
+              "isConnected" : true
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "ck" : "0"
+          },
+          "1" : {
+            "ck" : "1"
+          }
+        },
+        "direction" : "row"
+      },
+      "name" : "Across Owners",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
+        "key" : "0",
+        "bookmark" : {
+          "name" : "Vector Block Consumption per Store",
           "type" : "container",
           "value" : {
             "style" : { },
@@ -68,7 +178,7 @@
       }, {
         "key" : "1",
         "bookmark" : {
-          "name" : "Owner Filter",
+          "name" : "Store Filter",
           "type" : "container",
           "value" : {
             "style" : { },
@@ -117,6 +227,36 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Vector Block Consumption per Store",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Fields].[Field].[Field]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+                },
+                "subplotModeEnabled" : true
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY Order(Crossjoin(TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]), TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM])), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
+                "updateMode" : "once"
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -133,13 +273,21 @@
             "size" : 0.19
           },
           "1" : {
-            "ck" : "0",
-            "size" : 0.81
+            "children" : {
+              "0" : {
+                "ck" : "0"
+              },
+              "1" : {
+                "ck" : "3"
+              }
+            },
+            "size" : 0.81,
+            "direction" : "row"
           }
         },
         "direction" : "column"
       },
-      "name" : "Vector field analysis",
+      "name" : "Per Owner",
       "filters" : {
         "MemoryCube" : [ ]
       }
