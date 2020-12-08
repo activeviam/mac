@@ -16,15 +16,12 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import java.time.LocalDate;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class MinimalApplicationDescription implements ITestApplicationDescription {
 
 	public static final int STORE_PEOPLE_COUNT = 10;
 	public static final int STORE_PRODUCT_COUNT = 20;
-
-	protected final AtomicInteger operationsBatch = new AtomicInteger();
 
 	@Override
 	public IDatastoreSchemaDescription datastoreDescription() {
@@ -85,16 +82,13 @@ public class MinimalApplicationDescription implements ITestApplicationDescriptio
 	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
 		datastore.edit(
 				tm -> {
-					final int peopleCount = STORE_PEOPLE_COUNT;
-					final int productCount = STORE_PRODUCT_COUNT;
-
 					final Random r = new Random(47605);
 					IntStream.range(0, 1000).forEach(
 							i -> {
-								final int seller = r.nextInt(peopleCount);
+								final int seller = r.nextInt(STORE_PEOPLE_COUNT);
 								int buyer;
 								do {
-									buyer = r.nextInt(peopleCount);
+									buyer = r.nextInt(STORE_PEOPLE_COUNT);
 								} while (buyer == seller);
 								tm.add(
 										"Sales",
@@ -102,7 +96,7 @@ public class MinimalApplicationDescription implements ITestApplicationDescriptio
 										String.valueOf(seller),
 										String.valueOf(buyer),
 										LocalDate.now().plusDays(-r.nextInt(7)),
-										(long) r.nextInt(productCount));
+										(long) r.nextInt(STORE_PRODUCT_COUNT));
 							});
 				});
 	}
