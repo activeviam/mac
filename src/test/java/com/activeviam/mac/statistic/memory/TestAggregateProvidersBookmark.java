@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
@@ -73,8 +73,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 		monitoringApp = new Pair<>(monitoringDatastore, manager);
 
 		// Fill the monitoring datastore
-		monitoringDatastore.edit(
-				tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+		final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
+		monitoringDatastore.edit(feeder::feedDatastore);
 
 		IMultiVersionActivePivot pivot =
 				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);

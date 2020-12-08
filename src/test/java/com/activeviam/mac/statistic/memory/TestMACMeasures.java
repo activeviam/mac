@@ -4,7 +4,7 @@ import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
+import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;
@@ -109,7 +109,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
-    final int storeAIdx = monitoredApp.getLeft().getSchemaMetadata().getStoreId("A");
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
@@ -136,10 +135,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    monitoringDatastore.edit(
-        tm -> {
-          stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA"));
-        });
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
+    monitoringDatastore.edit(feeder::feedDatastore);
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -162,9 +159,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final MDXQuery query2 =
         new MDXQuery(
-            "SELECT"
-                + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
-                + "  FROM [MemoryCube]");
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
@@ -201,9 +196,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final MDXQuery query2 =
         new MDXQuery(
-            "SELECT"
-                + "  NON EMPTY [Measures].[contributors.COUNT] ON COLUMNS"
-                + "  FROM [MemoryCube]");
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
@@ -282,6 +275,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                 + "] ON COLUMNS"
                                 + "  FROM [MemoryCube]");
                     final CellSetDTO result = pivot.execute(query);
+                    System.out.println(measure);
                     final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                     assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                   }));
@@ -437,19 +431,19 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
-        new MDXQuery("SELECT"
-            + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-            + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE ("
-            + "  [Owners].[Owner].[Owner].[Store A],"
-            + "  [Fields].[Field].[Field].[id]"
-            + " )");
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "  [Owners].[Owner].[Owner].[Store A],"
+                + "  [Fields].[Field].[Field].[id]"
+                + " )");
     CellSetDTO res = pivot.execute(query);
 
-    final long expectedDictionarySize = monitoredApp.getLeft().getDictionaries()
-        .getDictionary("A", "id")
-        .size();
+    final long expectedDictionarySize =
+        monitoredApp.getLeft().getDictionaries().getDictionary("A", "id").size();
 
     Assertions.assertThat(res.getCells())
         .isNotEmpty()

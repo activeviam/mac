@@ -198,9 +198,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     final IStatisticAttribute usedByVersionAttribute =
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_USED_BY_VERSION);
     if (usedByVersionAttribute != null) {
-      this.usedByVersion = usedByVersionAttribute.asBoolean()
-          ? UsedByVersion.TRUE
-          : UsedByVersion.FALSE;
+      this.usedByVersion =
+          usedByVersionAttribute.asBoolean() ? UsedByVersion.TRUE : UsedByVersion.FALSE;
     }
 
     FeedVisitor.visitChildren(this, statistic);
@@ -231,12 +230,6 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      final IRecordFormat ownerFormat = AFeedVisitor.getOwnerFormat(this.storageMetadata);
-      final Object[] ownerTuple = FeedVisitor.buildOwnerTupleFrom(
-          ownerFormat, chunkStatistic, this.owner, this.dumpName, this.rootComponent);
-      FeedVisitor.writeOwnerTupleRecordsForFields(chunkStatistic, transaction, this.fields,
-          ownerFormat, ownerTuple);
-
       final IRecordFormat format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
@@ -244,6 +237,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           tuple, format, DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, this.directParentType);
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
+      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__OWNER, this.owner);
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
 
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
@@ -289,7 +285,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }
       // Set the chunk data to be added to the Chunk store
-      FeedVisitor.add(chunkStatistic, this.transaction, DatastoreConstants.CHUNK_STORE, tuple);
+      FeedVisitor.writeChunkTupleForFields(chunkStatistic, transaction, fields, format, tuple);
 
       visitChildren(chunkStatistic);
 

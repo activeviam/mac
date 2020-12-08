@@ -47,7 +47,12 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
  *
  * @author ActiveViam
  */
-@Import(value = {ActiveUISecurityConfigurer.class, JwtSecurityConfigurer.class, VersionSecurityConfigurer.class})
+@Import(
+    value = {
+      ActiveUISecurityConfigurer.class,
+      JwtSecurityConfigurer.class,
+      VersionSecurityConfigurer.class
+    })
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends ASecurityConfig {

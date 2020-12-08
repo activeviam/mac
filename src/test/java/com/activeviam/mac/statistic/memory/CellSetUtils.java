@@ -7,7 +7,7 @@ import org.assertj.core.api.Assertions;
 
 public class CellSetUtils {
   public static Long extractValueFromSingleCellDTO(CellSetDTO data) {
-    Assertions.assertThat(data.getCells().size()).isEqualTo(1);
+    Assertions.assertThat(data.getCells()).hasSize(1);
 
     String sum_s = data.getCells().iterator().next().toString();
     String[] cell = sum_s.split(",");
@@ -21,7 +21,7 @@ public class CellSetUtils {
   }
 
   public static Double extractDoubleValueFromSingleCellDTO(CellSetDTO data) {
-    Assertions.assertThat(data.getCells().size()).isEqualTo(1);
+    Assertions.assertThat(data.getCells()).hasSize(1);
 
     String sum_s = data.getCells().iterator().next().toString();
     String[] cell = sum_s.split(",");

@@ -73,9 +73,11 @@ public class Tools {
     final String extension = MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
     boolean isCompressedFile = pathAsString.endsWith("." + extension);
     if (!isCompressedFile) {
-      System.out.println("File " + pathAsString
-          + " was skipped as it did not match the list of compressed extensions: "
-          + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
+      System.out.println(
+          "File "
+              + pathAsString
+              + " was skipped as it did not match the list of compressed extensions: "
+              + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
       return;
     }
 

@@ -16,7 +16,6 @@ import com.qfs.servlet.handlers.impl.NoRedirectLogoutSuccessHandler;
 import com.quartetfs.biz.pivot.security.IAuthorityComparator;
 import com.quartetfs.biz.pivot.security.impl.AuthorityComparatorAdapter;
 import com.quartetfs.fwk.ordering.impl.CustomComparator;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.servlet.Filter;
@@ -157,8 +156,8 @@ public abstract class ASecurityConfig implements ICorsConfig {
   @Bean
   public IAuthorityComparator authorityComparator() {
     final CustomComparator<String> comp = new CustomComparator<>();
-    comp.setFirstObjects(Arrays.asList(ROLE_USER));
-    comp.setLastObjects(Arrays.asList(ROLE_ADMIN));
+    comp.setFirstObjects(Collections.singletonList(ROLE_USER));
+    comp.setLastObjects(Collections.singletonList(ROLE_ADMIN));
     return new AuthorityComparatorAdapter(comp);
   }
 
