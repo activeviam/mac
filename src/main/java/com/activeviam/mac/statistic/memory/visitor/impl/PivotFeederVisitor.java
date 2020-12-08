@@ -398,14 +398,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.providerId = null;
   }
 
-  private boolean isProviderDistributed(final IMemoryStatistic providerStat) {
-    final IStatisticAttribute typeAttribute = providerStat.getAttribute(
-        PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
-
-    return typeAttribute != null
-        && typeAttribute.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
-  }
-
   private void processPartition(final IMemoryStatistic stat) {
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
