@@ -41,6 +41,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   /** The number of members of the visited level. */
   protected Integer memberCount;
+
   private Long dictionaryId;
 
   /**

@@ -13,21 +13,21 @@ import lombok.Value;
 @Value
 public class DistributedCubeOwner implements ChunkOwner {
 
-	/** Unique id of the ActivePivot. */
-	String id;
+  /** Unique id of the ActivePivot. */
+  String id;
 
-	@Override
-	public String getName() {
-		return this.id;
-	}
+  @Override
+  public String getName() {
+    return this.id;
+  }
 
-	@Override
-	public OwnerType getType() {
-		return OwnerType.DISTRIBUTED_CUBE;
-	}
+  @Override
+  public OwnerType getType() {
+    return OwnerType.DISTRIBUTED_CUBE;
+  }
 
-	@Override
-	public String toString() {
-		return getType() + " " + this.id;
-	}
+  @Override
+  public String toString() {
+    return getType() + " " + this.id;
+  }
 }

@@ -72,8 +72,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
         .getLeft()
         .edit(
             transactionManager -> {
-              IntStream.range(0, 10).forEach(i ->
-                  transactionManager.add("A", i, (double) i));
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i));
             });
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
@@ -135,16 +134,15 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     Assertions.assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
             new RegularEpochView(1L),
-            new DistributedEpochView(
-                "QueryCubeA",
-                getHeadEpochId("QueryCubeA")),
-            new DistributedEpochView(
-                "QueryCubeB",
-                getHeadEpochId("QueryCubeB")));
+            new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
+            new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
   }
 
   private long getHeadEpochId(String queryCubeA) {
-    return monitoredApp.getRight().getActivePivots().get(queryCubeA)
+    return monitoredApp
+        .getRight()
+        .getActivePivots()
+        .get(queryCubeA)
         .getMostRecentVersion()
         .getEpochId();
   }

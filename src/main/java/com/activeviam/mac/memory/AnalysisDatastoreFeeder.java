@@ -119,14 +119,13 @@ public class AnalysisDatastoreFeeder {
    * @param transaction the transaction to collect the epochs from
    */
   private void collectEpochsFromOpenedTransaction(final IOpenedTransaction transaction) {
-    final ICursor result = transaction
-        .getQueryRunner()
-        .forStore(DatastoreConstants.CHUNK_STORE)
-        .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, dumpName))
-        .selecting(
-            DatastoreConstants.OWNER__OWNER,
-            DatastoreConstants.VERSION__EPOCH_ID)
-        .run();
+    final ICursor result =
+        transaction
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, dumpName))
+            .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
+            .run();
 
     for (final IRecordReader reader : result) {
       final ChunkOwner owner = (ChunkOwner) reader.read(0);

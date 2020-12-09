@@ -31,9 +31,7 @@ public interface ChunkOwner extends Comparable<ChunkOwner> {
     return this.toString().compareTo(o.toString());
   }
 
-  /**
-   * The different possible Owner Types.
-   */
+  /** The different possible Owner Types. */
   @AllArgsConstructor
   enum OwnerType {
     CUBE("Cube"),

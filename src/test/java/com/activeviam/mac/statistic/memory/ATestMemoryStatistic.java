@@ -1358,26 +1358,21 @@ public abstract class ATestMemoryStatistic {
                     .sum("measure1")
                     .withAggregatedMeasure()
                     .sum("measure2")
-
                     .withSingleLevelDimension("id")
                     .asDefaultHierarchy()
                     .withSingleLevelDimension("hierId")
-
                     .withAggregateProvider()
                     .bitmap()
                     .withPartialProvider()
                     .bitmap()
                     .excludingHierarchies(HierarchyIdentifier.simple("hierId"))
                     .includingOnlyMeasures("measure1.SUM")
-
                     .withPartialProvider()
                     .leaf()
                     .includingOnlyMeasures("measure2.SUM")
-
                     .withPartialProvider()
                     .bitmap()
                     .includingOnlyMeasures("contributors.COUNT")
-
                     .build())
             .build();
     final IActivePivotManagerDescription managerDescription =

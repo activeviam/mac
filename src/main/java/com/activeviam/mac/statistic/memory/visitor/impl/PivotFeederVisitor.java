@@ -110,9 +110,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       final IStatisticAttribute dateAtt =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
 
-      this.current = Instant.ofEpochSecond(null != dateAtt
-          ? dateAtt.asLong()
-          : System.currentTimeMillis());
+      this.current =
+          Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
 
       readEpochAndBranchIfAny(stat);
       if (this.epochId == null
@@ -184,21 +183,21 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-        this.storageMetadata,
-        this.transaction,
-        this.dumpName,
-        this.current,
-        this.owner,
-        this.rootComponent,
-        this.directParentType,
-        this.directParentId,
-        this.partition,
-        null,
-        null,
-        this.providerId,
-        this.epochId,
-        UsedByVersion.UNKNOWN,
-        this.ignoreFieldSpecifications)
+            this.storageMetadata,
+            this.transaction,
+            this.dumpName,
+            this.current,
+            this.owner,
+            this.rootComponent,
+            this.directParentType,
+            this.directParentId,
+            this.partition,
+            null,
+            null,
+            this.providerId,
+            this.epochId,
+            UsedByVersion.UNKNOWN,
+            this.ignoreFieldSpecifications)
         .visit(stat);
   }
 
@@ -216,8 +215,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     final IStatisticAttribute fieldAttribute =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
     if (fieldAttribute != null) {
-      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.OWNER__FIELD,
-          fieldAttribute.asText());
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.OWNER__FIELD, fieldAttribute.asText());
     }
 
     FeedVisitor.setTupleElement(
@@ -372,20 +371,21 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   private static boolean isPivotDistributed(final IMemoryStatistic pivotStat) {
     return pivotStat.getChildren().stream()
         .filter(stat -> stat.getName().equals(PivotMemoryStatisticConstants.STAT_NAME_PROVIDER))
-        .anyMatch(stat -> {
-          final IStatisticAttribute providerType = stat.getAttribute(
-              PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
-          return providerType != null
-              && providerType.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
-        });
+        .anyMatch(
+            stat -> {
+              final IStatisticAttribute providerType =
+                  stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
+              return providerType != null
+                  && providerType.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
+            });
   }
 
   private void processProvider(final IMemoryStatistic stat) {
     final IRecordFormat format = getProviderFormat(this.storageMetadata);
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID,
-        this.owner.getName());
+    FeedVisitor.setTupleElement(
+        tuple, format, DatastoreConstants.PROVIDER__PIVOT_ID, this.owner.getName());
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
@@ -446,8 +446,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.rootComponent = ParentType.LEVEL;
 
     final LevelStatisticVisitor levelVisitor =
-        new LevelStatisticVisitor(this, this.transaction, this.storageMetadata, this.dumpName,
-            this.epochId);
+        new LevelStatisticVisitor(
+            this, this.transaction, this.storageMetadata, this.dumpName, this.epochId);
     levelVisitor.analyze(stat);
 
     this.directParentType = previousParentType;
@@ -463,7 +463,8 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
     this.level = null;
   }
 
-  private void processProviderComponent(final IMemoryStatistic stat, final ProviderComponentType type) {
+  private void processProviderComponent(
+      final IMemoryStatistic stat, final ProviderComponentType type) {
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = getCorrespondingParentType(type);
