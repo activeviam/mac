@@ -19,7 +19,6 @@ import com.qfs.msg.impl.WatcherService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
 import com.qfs.store.impl.Datastore;
-import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -31,7 +30,6 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -204,12 +202,8 @@ public class SourceConfig {
    */
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
-    final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, dumpName);
-
-    final Optional<IDatastoreSchemaTransactionInformation> info =
-        this.datastore.edit(feeder::feedDatastore);
-
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(dumpName);
+    final var info = new AnalysisDatastoreFeeder(dumpName).loadInto(datastore, memoryStatistics);
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
     } else {

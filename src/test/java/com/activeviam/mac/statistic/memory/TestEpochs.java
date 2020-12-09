@@ -32,6 +32,7 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -139,8 +140,7 @@ public class TestEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "testEpochs");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "testEpochs");
   }
 
   @After

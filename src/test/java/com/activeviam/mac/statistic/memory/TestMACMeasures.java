@@ -32,6 +32,7 @@ import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
@@ -135,8 +136,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);

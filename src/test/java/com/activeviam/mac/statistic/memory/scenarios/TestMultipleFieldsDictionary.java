@@ -175,8 +175,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   protected void loadStatisticsIntoDatastore(
       final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, "test");
-    analysisDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(analysisDatastore, statistics, "test");
   }
 
   @Test

@@ -1399,8 +1399,7 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    feedMonitoringApplication(monitoringDatastore, statistics, "storeA");
 
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
 
@@ -1615,5 +1614,12 @@ public abstract class ATestMemoryStatistic {
         .withCreatorClasses(TestMemoryStatisticLoading.class)
         .withChildren(childStats)
         .build();
+  }
+
+  public static void feedMonitoringApplication(
+      final IDatastore monitoringDatastore,
+      final Collection<? extends IMemoryStatistic> stats,
+      final String dumpName) {
+  	new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
   }
 }

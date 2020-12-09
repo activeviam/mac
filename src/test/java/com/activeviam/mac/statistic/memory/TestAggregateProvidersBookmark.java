@@ -23,6 +23,7 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -71,8 +72,7 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(stats, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
