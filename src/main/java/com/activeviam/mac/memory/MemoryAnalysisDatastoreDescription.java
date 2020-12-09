@@ -413,13 +413,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   }
 
   private Stream<IReferenceDescription> getChunkReferences() {
-    return Stream.of(StartBuilding.reference()
+    return Stream.of(
+        StartBuilding.reference()
             .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.PROVIDER_STORE)
             .withName(CHUNK_TO_PROVIDER)
             .withMapping(
-                DatastoreConstants.CHUNK__PROVIDER_ID,
-                DatastoreConstants.PROVIDER__PROVIDER_ID)
+                DatastoreConstants.CHUNK__PROVIDER_ID, DatastoreConstants.PROVIDER__PROVIDER_ID)
             .withMapping(
                 DatastoreConstants.APPLICATION__DUMP_NAME,
                 DatastoreConstants.APPLICATION__DUMP_NAME)

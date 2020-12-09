@@ -23,6 +23,7 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -46,7 +47,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 /**
  * Manager Description Config that defines the manager description which contains the cube
@@ -422,7 +422,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -434,8 +434,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void bucketingHierarchies(final ICopperContext context) {
     Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
         .from(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
-        .withMemberList(
-            "Cube", "Store", "None", "Shared") // todo: cleaner impl, with an enum for owners
+        .withMemberList((Object[]) OwnerType.values())
         .publish(context);
   }
 

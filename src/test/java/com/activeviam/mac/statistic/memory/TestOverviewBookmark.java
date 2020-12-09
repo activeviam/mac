@@ -101,8 +101,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
-        new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
     final CellSetDTO totalResult = pivot.execute(totalQuery);
 
@@ -116,8 +115,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
-        new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
     final MDXQuery perOwnerQuery =
         new MDXQuery(
@@ -142,8 +140,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-        CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
-            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+            CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
   }
 
@@ -224,8 +222,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-        CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
-            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+            CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
   }
 
@@ -237,7 +235,9 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         + "      {[Measures].[contributors.COUNT]}"
         + "    ),"
         + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+        + "      "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children,"
         + "      {[Measures].[contributors.COUNT]}"
         + "    )"
         + "  )"

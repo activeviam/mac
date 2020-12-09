@@ -9,9 +9,9 @@ package com.activeviam.mac.memory;
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
-import com.activeviam.mac.statistic.memory.visitor.impl.EpochVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
 import com.qfs.condition.impl.BaseConditions;
@@ -22,6 +22,7 @@ import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -42,17 +43,17 @@ public class AnalysisDatastoreFeeder {
   private final String dumpName;
 
   /** The set of datastore epochs. */
-  private Set<Long> datastoreEpochs;
+  private final Set<Long> datastoreEpochs;
 
   /**
    * A mapping giving for each non-distributed owner the epochs that were expressed in their
    * statistics.
    */
-  private Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
+  private final Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
   /**
    * A mapping giving for each distributed owner the epochs that were expressed in their statistics.
    */
-  private Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
+  private final Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
 
   /**
    * Constructor.
@@ -75,22 +76,9 @@ public class AnalysisDatastoreFeeder {
     this.statistics = statistics;
     this.dumpName = dumpName;
 
-    collectEpochs(statistics);
-  }
-
-  /**
-   * Pre-computation pass on the given statistics to determine which epochs are expressed within the
-   * statistics.
-   *
-   * @param statistics the statistics to explore
-   */
-  private void collectEpochs(final Collection<? extends IMemoryStatistic> statistics) {
-    final EpochVisitor epochVisitor = new EpochVisitor();
-    statistics.forEach(statistic -> statistic.accept(epochVisitor));
-
-    this.datastoreEpochs = epochVisitor.getDatastoreEpochs();
-    this.regularEpochsPerOwner = epochVisitor.getRegularEpochsPerOwner();
-    this.distributedEpochsPerOwner = epochVisitor.getDistributedEpochsPerOwner();
+    this.datastoreEpochs = new HashSet<>();
+    this.regularEpochsPerOwner = new HashMap<>();
+    this.distributedEpochsPerOwner = new HashMap<>();
   }
 
   /**
@@ -114,7 +102,7 @@ public class AnalysisDatastoreFeeder {
     statistics.forEach(
         statistic -> {
           if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Starting feed the application with " + statistic);
+            LOGGER.fine("Start feeding the application with " + statistic);
           }
 
           statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
@@ -134,18 +122,15 @@ public class AnalysisDatastoreFeeder {
     final ICursor result =
         transaction
             .getQueryRunner()
-            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .forStore(DatastoreConstants.CHUNK_STORE)
             .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, dumpName))
-            .selecting(
-                DatastoreConstants.EPOCH_VIEW__OWNER,
-                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-                DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
             .run();
 
     for (final IRecordReader reader : result) {
       final ChunkOwner owner = (ChunkOwner) reader.read(0);
       final long epoch = reader.readLong(1);
-      if (reader.read(2) instanceof DistributedEpochView) {
+      if (owner instanceof DistributedCubeOwner) {
         distributedEpochsPerOwner.computeIfAbsent(owner, key -> new HashSet<>()).add(epoch);
       } else {
         datastoreEpochs.add(epoch);
