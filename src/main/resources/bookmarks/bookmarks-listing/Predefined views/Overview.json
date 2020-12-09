@@ -4,9 +4,159 @@
   "body" : {
     "pages" : [ {
       "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Owner Memory Usage",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-line-chart",
+                "mapping" : {
+                  "xAxis" : [ "[Owners].[Owner].[Owner]" ],
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ ]
+                },
+                "switchedTo" : "plotly-pie-chart"
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Owners].[Owner].[Owner].Members ON ROWS FROM [MemoryCube]",
+                "updateMode" : "once"
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Component Memory Usage for Top Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-pie-chart",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "sliceBy" : [ "[Components].[Component].[Component]" ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+                },
+                "subplotModeEnabled" : true,
+                "style" : {
+                  "isTextVisible" : false
+                }
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY Crossjoin(Order(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Measures].[DirectMemory.SUM], DESC), [Components].[Component].[Component].Members) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
+                "updateMode" : "once"
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "ck" : "1"
+          },
+          "1" : {
+            "ck" : "2"
+          }
+        },
+        "direction" : "row"
+      },
+      "name" : "Charts",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Top Owner Memory Usage",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "defaultOptions" : { },
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "ck" : "1"
+      },
+      "name" : "Owners",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
         "key" : "0",
         "bookmark" : {
-          "name" : "Direct memory usage overview",
+          "name" : "Component Memory Usage",
           "type" : "container",
           "value" : {
             "style" : { },
@@ -158,7 +308,7 @@
         },
         "direction" : "column"
       },
-      "name" : "Overview",
+      "name" : "Components",
       "filters" : {
         "MemoryCube" : [ ]
       }
@@ -173,7 +323,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[contributors.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[contributors.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -246,8 +396,8 @@
               "filterKey" : "explicit",
               "levelDetails" : {
                 "cube" : "MemoryCube",
-                "dimension" : "Chunk Owners",
-                "hierarchy" : "Owner",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
                 "level" : "Partition",
                 "caption" : "Partition"
               }
@@ -300,26 +450,8 @@
             "direction" : "column"
           },
           "1" : {
-            "children" : {
-              "0" : {
-                "ck" : "1",
-                "size" : 0.67
-              },
-              "1" : {
-                "children" : {
-                  "0" : {
-                    "ck" : "6"
-                  },
-                  "1" : {
-                    "ck" : "7"
-                  }
-                },
-                "direction" : "column",
-                "size" : 0.33
-              }
-            },
-            "size" : 0.79,
-            "direction" : "row"
+            "ck" : "1",
+            "size" : 0.79
           }
         },
         "direction" : "column"
