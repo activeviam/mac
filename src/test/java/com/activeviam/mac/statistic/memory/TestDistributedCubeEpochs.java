@@ -137,12 +137,16 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
             new RegularEpochView(1L),
             new DistributedEpochView(
                 "QueryCubeA",
-                monitoredApp.getRight().getActivePivots().get("QueryCubeA").getMostRecentVersion()
-                    .getEpochId()),
+                getHeadEpochId("QueryCubeA")),
             new DistributedEpochView(
                 "QueryCubeB",
-                monitoredApp.getRight().getActivePivots().get("QueryCubeB").getMostRecentVersion()
-                    .getEpochId()));
+                getHeadEpochId("QueryCubeB")));
+  }
+
+  private long getHeadEpochId(String queryCubeA) {
+    return monitoredApp.getRight().getActivePivots().get(queryCubeA)
+        .getMostRecentVersion()
+        .getEpochId();
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {

@@ -7,20 +7,27 @@
 
 package com.activeviam.mac.entities;
 
-/** Sub-class of owners for ActivePivot distributed cubes. */
-public class DistributedCubeOwner extends CubeOwner {
+import lombok.Value;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param id the unique id of the ActivePivot
-	 */
-	public DistributedCubeOwner(String id) {
-		super(id);
+/** Sub-class of owners for ActivePivot distributed cubes. */
+@Value
+public class DistributedCubeOwner implements ChunkOwner {
+
+	/** Unique id of the ActivePivot. */
+	String id;
+
+	@Override
+	public String getName() {
+		return this.id;
 	}
 
 	@Override
 	public OwnerType getType() {
 		return OwnerType.DISTRIBUTED_CUBE;
+	}
+
+	@Override
+	public String toString() {
+		return getType() + " " + this.id;
 	}
 }

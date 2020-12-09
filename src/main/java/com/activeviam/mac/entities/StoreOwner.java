@@ -7,16 +7,16 @@
 
 package com.activeviam.mac.entities;
 
-import lombok.Data;
 import lombok.Getter;
+import lombok.Value;
 
 /** Sub-class of owners for Datastore store. */
-@Data
+@Value
 public class StoreOwner implements ChunkOwner {
 
   /** Unique name of the store. */
   @Getter(onMethod = @__({@Override}))
-  private final String name;
+  String name;
 
   @Override
   public OwnerType getType() {
