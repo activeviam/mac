@@ -72,13 +72,3 @@ workflows:
               ignore:
                 - /5.\d+/
           context: rnd-server
-
-  code-analysis:
-    jobs:
-      - sonar_analysis:
-          filters:
-            branches:
-              only:
-                - develop
-          context: rnd-server
-
