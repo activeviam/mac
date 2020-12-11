@@ -202,7 +202,6 @@ public class SourceConfig {
    */
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(dumpName);
     final var info = new AnalysisDatastoreFeeder(dumpName).loadInto(datastore, memoryStatistics);
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
