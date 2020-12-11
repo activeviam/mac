@@ -7,11 +7,9 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import static com.activeviam.mac.statistic.memory.ATestMemoryStatistic.feedMonitoringApplication;
 import static com.activeviam.mac.statistic.memory.ATestMemoryStatistic.performGC;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.pivot.builders.StartBuilding;

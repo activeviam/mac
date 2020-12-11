@@ -34,214 +34,201 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-/**
- * This class is responsible for parsing memory statistics into an analysis datastore.
- */
+/** This class is responsible for parsing memory statistics into an analysis datastore. */
 public class AnalysisDatastoreFeeder {
 
-	/**
-	 * Logger.
-	 */
-	private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
+  /** Logger. */
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
-	/**
-	 * The dump name associated with this feeder.
-	 */
-	private final String dumpName;
+  /** The dump name associated with this feeder. */
+  private final String dumpName;
 
-	/**
-	 * The set of datastore epochs.
-	 */
-	private final Set<Long> datastoreEpochs;
+  /** The set of datastore epochs. */
+  private final Set<Long> datastoreEpochs;
 
-	/**
-	 * A mapping giving for each non-distributed owner the epochs that were expressed in their
-	 * statistics.
-	 */
-	private final Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
-	/**
-	 * A mapping giving for each distributed owner the epochs that were expressed in their statistics.
-	 */
-	private final Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
+  /**
+   * A mapping giving for each non-distributed owner the epochs that were expressed in their
+   * statistics.
+   */
+  private final Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
+  /**
+   * A mapping giving for each distributed owner the epochs that were expressed in their statistics.
+   */
+  private final Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param dumpName the dump name to assign to the statistic
-	 */
-	public AnalysisDatastoreFeeder(final String dumpName) {
-		this.dumpName = dumpName;
+  /**
+   * Constructor.
+   *
+   * @param dumpName the dump name to assign to the statistic
+   */
+  public AnalysisDatastoreFeeder(final String dumpName) {
+    this.dumpName = dumpName;
 
-		this.datastoreEpochs = new HashSet<>();
-		this.regularEpochsPerOwner = new HashMap<>();
-		this.distributedEpochsPerOwner = new HashMap<>();
-	}
+    this.datastoreEpochs = new HashSet<>();
+    this.regularEpochsPerOwner = new HashMap<>();
+    this.distributedEpochsPerOwner = new HashMap<>();
+  }
 
-	/**
-	 * Loads the provided statistics into the datastore in a single transaction.
-	 * @return the result of the transaction
-	 */
-	public Optional<IDatastoreSchemaTransactionInformation> loadInto(
-			final IDatastore datastore,
-			final Stream<? extends IMemoryStatistic> stats) {
-		return datastore.edit(transaction -> loadWithTransaction(transaction, stats));
-	}
+  /**
+   * Loads the provided statistics into the datastore in a single transaction.
+   *
+   * @return the result of the transaction
+   */
+  public Optional<IDatastoreSchemaTransactionInformation> loadInto(
+      final IDatastore datastore, final Stream<? extends IMemoryStatistic> stats) {
+    return datastore.edit(transaction -> loadWithTransaction(transaction, stats));
+  }
 
-	/**
-	 * Loads the provided statistics within an open transaction.
-	 */
-	public void loadWithTransaction(
-			final IOpenedTransaction transaction,
-			final Stream<? extends IMemoryStatistic> stats) {
-		stats.forEach(stat -> feedChunk(transaction, stat));
-		completeTransaction(transaction);
-	}
+  /** Loads the provided statistics within an open transaction. */
+  public void loadWithTransaction(
+      final IOpenedTransaction transaction, final Stream<? extends IMemoryStatistic> stats) {
+    stats.forEach(stat -> feedChunk(transaction, stat));
+    completeTransaction(transaction);
+  }
 
-	/**
-	 * Adds the chunks of this feeder's statistics to the transaction.
-	 *
-	 * @param transaction the transaction to add facts to
-	 */
-	private void feedChunk(final IOpenedTransaction transaction, final IMemoryStatistic statistic) {
-		if (LOGGER.isLoggable(Level.FINE)) {
-			LOGGER.fine("Start feeding the application with " + statistic);
-		}
+  /**
+   * Adds the chunks of this feeder's statistics to the transaction.
+   *
+   * @param transaction the transaction to add facts to
+   */
+  private void feedChunk(final IOpenedTransaction transaction, final IMemoryStatistic statistic) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Start feeding the application with " + statistic);
+    }
 
-		statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
+    statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
 
-		if (LOGGER.isLoggable(Level.FINE)) {
-			LOGGER.fine("Application processed " + statistic);
-		}
-	}
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Application processed " + statistic);
+    }
+  }
 
-	/**
-	 * Completes the loading, computing the viewed epochs.
-	 */
-	private void completeTransaction(final IOpenedTransaction transaction) {
-		collectEpochsFromOpenedTransaction(transaction);
-		replicateChunksForMissingEpochs(transaction);
-	}
+  /** Completes the loading, computing the viewed epochs. */
+  private void completeTransaction(final IOpenedTransaction transaction) {
+    collectEpochsFromOpenedTransaction(transaction);
+    replicateChunksForMissingEpochs(transaction);
+  }
 
-	/**
-	 * Collects the epochs per owner in the given already open transaction.
-	 *
-	 * @param transaction the transaction to collect the epochs from
-	 */
-	private void collectEpochsFromOpenedTransaction(final IOpenedTransaction transaction) {
-		final ICursor result =
-				transaction
-						.getQueryRunner()
-						.forStore(DatastoreConstants.CHUNK_STORE)
-						.withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, dumpName))
-						.selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
-						.run();
+  /**
+   * Collects the epochs per owner in the given already open transaction.
+   *
+   * @param transaction the transaction to collect the epochs from
+   */
+  private void collectEpochsFromOpenedTransaction(final IOpenedTransaction transaction) {
+    final ICursor result =
+        transaction
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, dumpName))
+            .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
+            .run();
 
-		for (final IRecordReader reader : result) {
-			final ChunkOwner owner = (ChunkOwner) reader.read(0);
-			final long epoch = reader.readLong(1);
-			if (owner instanceof DistributedCubeOwner) {
-				distributedEpochsPerOwner.computeIfAbsent(owner, key -> new HashSet<>()).add(epoch);
-			} else {
-				datastoreEpochs.add(epoch);
-				regularEpochsPerOwner.computeIfAbsent(owner, key -> new TreeSet<>()).add(epoch);
-			}
-		}
-	}
+    for (final IRecordReader reader : result) {
+      final ChunkOwner owner = (ChunkOwner) reader.read(0);
+      final long epoch = reader.readLong(1);
+      if (owner instanceof DistributedCubeOwner) {
+        distributedEpochsPerOwner.computeIfAbsent(owner, key -> new HashSet<>()).add(epoch);
+      } else {
+        datastoreEpochs.add(epoch);
+        regularEpochsPerOwner.computeIfAbsent(owner, key -> new TreeSet<>()).add(epoch);
+      }
+    }
+  }
 
-	/**
-	 * Fills the epoch view store in the given transaction according to the collected epochs from the
-	 * statistic.
-	 *
-	 * @param transaction the transaction to add records to
-	 */
-	private void replicateChunksForMissingEpochs(final IOpenedTransaction transaction) {
-		replicateDatastoreEpochs(transaction);
-		replicateDistributedEpochs(transaction);
-	}
+  /**
+   * Fills the epoch view store in the given transaction according to the collected epochs from the
+   * statistic.
+   *
+   * @param transaction the transaction to add records to
+   */
+  private void replicateChunksForMissingEpochs(final IOpenedTransaction transaction) {
+    replicateDatastoreEpochs(transaction);
+    replicateDistributedEpochs(transaction);
+  }
 
-	private void replicateDatastoreEpochs(final IOpenedTransaction transaction) {
-		final IRecordFormat epochViewRecordFormat =
-				transaction
-						.getMetadata()
-						.getDatastoreSchemaFormat()
-						.getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
-						.getRecordFormat();
+  private void replicateDatastoreEpochs(final IOpenedTransaction transaction) {
+    final IRecordFormat epochViewRecordFormat =
+        transaction
+            .getMetadata()
+            .getDatastoreSchemaFormat()
+            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getRecordFormat();
 
-		for (final var datastoreEpochId : this.datastoreEpochs) {
-			for (final ChunkOwner owner : regularEpochsPerOwner.keySet()) {
-				final SortedSet<Long> epochs = regularEpochsPerOwner.get(owner);
-				if (!epochs.contains(datastoreEpochId)) {
+    for (final var datastoreEpochId : this.datastoreEpochs) {
+      for (final ChunkOwner owner : regularEpochsPerOwner.keySet()) {
+        final SortedSet<Long> epochs = regularEpochsPerOwner.get(owner);
+        if (!epochs.contains(datastoreEpochId)) {
 
-					final SortedSet<Long> priorEpochs = epochs.headSet(datastoreEpochId);
-					if (!priorEpochs.isEmpty()) {
-						final long baseEpochId = priorEpochs.last();
-						transaction.add(
-								DatastoreConstants.EPOCH_VIEW_STORE,
-								generateEpochViewTuple(
-										epochViewRecordFormat,
-										owner,
-										dumpName,
-										baseEpochId,
-										new RegularEpochView(datastoreEpochId)));
-					}
-				} else {
-					transaction.add(
-							DatastoreConstants.EPOCH_VIEW_STORE,
-							generateEpochViewTuple(
-									epochViewRecordFormat,
-									owner,
-									dumpName,
-									datastoreEpochId,
-									new RegularEpochView(datastoreEpochId)));
-				}
-			}
-		}
-	}
+          final SortedSet<Long> priorEpochs = epochs.headSet(datastoreEpochId);
+          if (!priorEpochs.isEmpty()) {
+            final long baseEpochId = priorEpochs.last();
+            transaction.add(
+                DatastoreConstants.EPOCH_VIEW_STORE,
+                generateEpochViewTuple(
+                    epochViewRecordFormat,
+                    owner,
+                    dumpName,
+                    baseEpochId,
+                    new RegularEpochView(datastoreEpochId)));
+          }
+        } else {
+          transaction.add(
+              DatastoreConstants.EPOCH_VIEW_STORE,
+              generateEpochViewTuple(
+                  epochViewRecordFormat,
+                  owner,
+                  dumpName,
+                  datastoreEpochId,
+                  new RegularEpochView(datastoreEpochId)));
+        }
+      }
+    }
+  }
 
-	private void replicateDistributedEpochs(final IOpenedTransaction transaction) {
-		final IRecordFormat epochViewRecordFormat =
-				transaction
-						.getMetadata()
-						.getDatastoreSchemaFormat()
-						.getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
-						.getRecordFormat();
+  private void replicateDistributedEpochs(final IOpenedTransaction transaction) {
+    final IRecordFormat epochViewRecordFormat =
+        transaction
+            .getMetadata()
+            .getDatastoreSchemaFormat()
+            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getRecordFormat();
 
-		for (final ChunkOwner owner : distributedEpochsPerOwner.keySet()) {
-			final Collection<Long> epochs = distributedEpochsPerOwner.get(owner);
-			for (final Long epochId : epochs) {
-				transaction.add(
-						DatastoreConstants.EPOCH_VIEW_STORE,
-						generateEpochViewTuple(
-								epochViewRecordFormat,
-								owner,
-								dumpName,
-								epochId,
-								new DistributedEpochView(owner.getName(), epochId)));
-			}
-		}
-	}
+    for (final ChunkOwner owner : distributedEpochsPerOwner.keySet()) {
+      final Collection<Long> epochs = distributedEpochsPerOwner.get(owner);
+      for (final Long epochId : epochs) {
+        transaction.add(
+            DatastoreConstants.EPOCH_VIEW_STORE,
+            generateEpochViewTuple(
+                epochViewRecordFormat,
+                owner,
+                dumpName,
+                epochId,
+                new DistributedEpochView(owner.getName(), epochId)));
+      }
+    }
+  }
 
-	/**
-	 * Generates a record to put into the epoch view store.
-	 *
-	 * @param recordFormat the format of the epoch view store
-	 * @param owner the owner field of the record
-	 * @param dumpName the dump name field of the record
-	 * @param baseEpochId the base epoch id field of the record
-	 * @param epochView the epoch view field of the record
-	 * @return the record
-	 */
-	private static Object[] generateEpochViewTuple(
-			final IRecordFormat recordFormat,
-			final ChunkOwner owner,
-			final String dumpName,
-			final long baseEpochId,
-			final EpochView epochView) {
-		final Object[] tuple = new Object[recordFormat.getFieldCount()];
-		tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__OWNER)] = owner;
-		tuple[recordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
-		tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID)] = baseEpochId;
-		tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)] = epochView;
-		return tuple;
-	}
+  /**
+   * Generates a record to put into the epoch view store.
+   *
+   * @param recordFormat the format of the epoch view store
+   * @param owner the owner field of the record
+   * @param dumpName the dump name field of the record
+   * @param baseEpochId the base epoch id field of the record
+   * @param epochView the epoch view field of the record
+   * @return the record
+   */
+  private static Object[] generateEpochViewTuple(
+      final IRecordFormat recordFormat,
+      final ChunkOwner owner,
+      final String dumpName,
+      final long baseEpochId,
+      final EpochView epochView) {
+    final Object[] tuple = new Object[recordFormat.getFieldCount()];
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__OWNER)] = owner;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID)] = baseEpochId;
+    tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)] = epochView;
+    return tuple;
+  }
 }

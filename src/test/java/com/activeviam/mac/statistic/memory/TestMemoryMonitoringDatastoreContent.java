@@ -106,19 +106,21 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                             });
                   });
 
-          ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(fullStats), "test");
-                for (int i = 0; i < chunkIds.length; i++) {
-                  final ICursor records =
-                      monitoringDatastore.getHead().getQueryRunner()
-                          .forStore(DatastoreConstants.CHUNK_STORE)
-                          .withCondition(
-                              BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
-                          .selecting(DatastoreConstants.CHUNK__SIZE)
-                          .onCurrentThread()
-                          .run();
+          ATestMemoryStatistic.feedMonitoringApplication(
+              monitoringDatastore, List.of(fullStats), "test");
+          for (int i = 0; i < chunkIds.length; i++) {
+            final ICursor records =
+                monitoringDatastore
+                    .getHead()
+                    .getQueryRunner()
+                    .forStore(DatastoreConstants.CHUNK_STORE)
+                    .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
+                    .selecting(DatastoreConstants.CHUNK__SIZE)
+                    .onCurrentThread()
+                    .run();
 
-                  monitoredChunkSizes[i] = records.iterator().next().readLong(0);
-                }
+            monitoredChunkSizes[i] = records.iterator().next().readLong(0);
+          }
           // Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
           // Cube are identical
           assertArrayEquals(chunkSizes, monitoredChunkSizes);
@@ -704,7 +706,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     monitoringDatastore.edit(
         tm -> {
           new AnalysisDatastoreFeeder("App").loadWithTransaction(tm, Stream.of(stats));
-          new AnalysisDatastoreFeeder("AppWithBitmap").loadWithTransaction(tm, Stream.of(statsWithBitmap));
+          new AnalysisDatastoreFeeder("AppWithBitmap")
+              .loadWithTransaction(tm, Stream.of(statsWithBitmap));
         });
 
     final IDictionaryCursor cursor =

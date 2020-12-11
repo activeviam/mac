@@ -1620,6 +1620,6 @@ public abstract class ATestMemoryStatistic {
       final IDatastore monitoringDatastore,
       final Collection<? extends IMemoryStatistic> stats,
       final String dumpName) {
-  	new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
+    new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
   }
 }

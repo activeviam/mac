@@ -10,7 +10,6 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -82,8 +81,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testDifferentDumps() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(appStatistics), "app");
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(appStatistics), "app2");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app2");
 
     Assertions.assertThat(
             DatastoreQueryHelper.selectDistinct(
@@ -97,7 +98,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testEpochReplicationForAlreadyExistingChunks() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(distributedAppStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(
@@ -105,7 +107,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L);
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(appStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
 
     epochs =
         collectEpochViewsForOwner(
@@ -121,8 +124,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testEpochReplicationForAlreadyExistingEpochs() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(appStatistics), "app");
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(distributedAppStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(

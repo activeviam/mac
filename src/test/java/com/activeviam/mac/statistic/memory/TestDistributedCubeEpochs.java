@@ -40,125 +40,126 @@ import org.junit.Test;
 
 public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
-	private Pair<IDatastore, IActivePivotManager> monitoredApp;
-	private Pair<IDatastore, IActivePivotManager> monitoringApp;
-	private IMemoryStatistic statistics;
+  private Pair<IDatastore, IActivePivotManager> monitoredApp;
+  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private IMemoryStatistic statistics;
 
-	@BeforeClass
-	public static void setupRegistry() {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+  @BeforeClass
+  public static void setupRegistry() {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
 
-	@Before
-	public void setup() throws AgentException, QueryException {
-		initializeApplication();
+  @Before
+  public void setup() throws AgentException, QueryException {
+    initializeApplication();
 
-		final Path exportPath = generateMemoryStatistics();
+    final Path exportPath = generateMemoryStatistics();
 
-		statistics = loadMemoryStatFromFolder(exportPath);
+    statistics = loadMemoryStatFromFolder(exportPath);
 
-		initializeMonitoringApplication(statistics);
+    initializeMonitoringApplication(statistics);
 
-		IMultiVersionActivePivot pivot =
-				monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
-		Assertions.assertThat(pivot).isNotNull();
-	}
+    IMultiVersionActivePivot pivot =
+        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+    Assertions.assertThat(pivot).isNotNull();
+  }
 
-	private void initializeApplication() throws QueryException {
-		monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
+  private void initializeApplication() throws QueryException {
+    monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
 
-		// epoch 1
-		monitoredApp
-				.getLeft()
-				.edit(
-						transactionManager -> {
-							IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i));
-						});
+    // epoch 1
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager -> {
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i));
+            });
 
-		// emulate commits on the query cubes at a greater epoch that does not exist in the datastore
-		MultiVersionDistributedActivePivot queryCubeA =
-				((MultiVersionDistributedActivePivot)
-						monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
+    // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
+    MultiVersionDistributedActivePivot queryCubeA =
+        ((MultiVersionDistributedActivePivot)
+            monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
-		// produces 5 distributed epochs
-		for (int i = 0; i < 5; ++i) {
-			queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
-		}
+    // produces 5 distributed epochs
+    for (int i = 0; i < 5; ++i) {
+      queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
+    }
 
-		MultiVersionDistributedActivePivot queryCubeB =
-				((MultiVersionDistributedActivePivot)
-						monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
+    MultiVersionDistributedActivePivot queryCubeB =
+        ((MultiVersionDistributedActivePivot)
+            monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
-		// produces 1 distributed epoch
-		queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
-	}
+    // produces 1 distributed epoch
+    queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
+  }
 
-	private Path generateMemoryStatistics() {
-		monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
-		performGC();
+  private Path generateMemoryStatistics() {
+    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    performGC();
 
-		final MemoryAnalysisService analysisService =
-				(MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-		return analysisService.exportMostRecentVersion("testEpochs");
-		//    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to
-		// use this when export is fixed PIVOT-4460
-	}
+    final MemoryAnalysisService analysisService =
+        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+    return analysisService.exportMostRecentVersion("testEpochs");
+    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to
+    // use this when export is fixed PIVOT-4460
+  }
 
-	private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-		final IDatastore monitoringDatastore =
-				StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastore monitoringDatastore =
+        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
-		IActivePivotManager manager =
-				StartBuilding.manager()
-						.setDescription(config.managerDescription())
-						.setDatastoreAndPermissions(monitoringDatastore)
-						.buildAndStart();
-		monitoringApp = new Pair<>(monitoringDatastore, manager);
+    IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
+    monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-		ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "testDistributedCubeEpochs");
-	}
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testDistributedCubeEpochs");
+  }
 
-	@After
-	public void tearDown() throws AgentException {
-		monitoringApp.getLeft().close();
-		monitoringApp.getRight().stop();
-	}
+  @After
+  public void tearDown() throws AgentException {
+    monitoringApp.getLeft().close();
+    monitoringApp.getRight().stop();
+  }
 
-	@Test
-	public void testExpectedViewEpochs() {
-		final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
+  @Test
+  public void testExpectedViewEpochs() {
+    final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
 
-		Assertions.assertThat(viewEpochIds)
-				.containsExactlyInAnyOrder(
-						new RegularEpochView(1L),
-						new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
-						new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
-	}
+    Assertions.assertThat(viewEpochIds)
+        .containsExactlyInAnyOrder(
+            new RegularEpochView(1L),
+            new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
+            new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
+  }
 
-	private long getHeadEpochId(String queryCubeA) {
-		return monitoredApp
-				.getRight()
-				.getActivePivots()
-				.get(queryCubeA)
-				.getMostRecentVersion()
-				.getEpochId();
-	}
+  private long getHeadEpochId(String queryCubeA) {
+    return monitoredApp
+        .getRight()
+        .getActivePivots()
+        .get(queryCubeA)
+        .getMostRecentVersion()
+        .getEpochId();
+  }
 
-	protected Set<EpochView> retrieveViewEpochIds() {
-		final ICursor cursor =
-				monitoringApp
-						.getLeft()
-						.getHead()
-						.getQueryRunner()
-						.forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-						.withoutCondition()
-						.selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-						.onCurrentThread()
-						.run();
+  protected Set<EpochView> retrieveViewEpochIds() {
+    final ICursor cursor =
+        monitoringApp
+            .getLeft()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
-		return StreamSupport.stream(cursor.spliterator(), false)
-				.map(c -> (EpochView) c.read(0))
-				.collect(Collectors.toSet());
-	}
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(c -> (EpochView) c.read(0))
+        .collect(Collectors.toSet());
+  }
 }

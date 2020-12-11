@@ -8,7 +8,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -140,7 +139,8 @@ public class TestEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "testEpochs");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testEpochs");
   }
 
   @After

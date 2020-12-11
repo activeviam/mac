@@ -9,7 +9,6 @@ package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;

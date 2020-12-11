@@ -4,7 +4,6 @@ import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyRule;

@@ -11,7 +11,6 @@ import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -116,7 +115,8 @@ public class TestViewEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "testViewEpochs");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testViewEpochs");
   }
 
   @After

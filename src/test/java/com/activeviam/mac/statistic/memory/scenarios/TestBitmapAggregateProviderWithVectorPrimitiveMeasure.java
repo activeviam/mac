@@ -8,7 +8,6 @@
 package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -157,7 +156,9 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
     final IDatastore analysisDatastore = createAnalysisDatastore();
     Assertions.assertDoesNotThrow(
-        () -> ATestMemoryStatistic.feedMonitoringApplication(analysisDatastore, memoryStatistics, "test"));
+        () ->
+            ATestMemoryStatistic.feedMonitoringApplication(
+                analysisDatastore, memoryStatistics, "test"));
   }
 
   protected IDatastore createAnalysisDatastore() {
@@ -177,5 +178,4 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
             })
         .collect(Collectors.toList());
   }
-
 }
