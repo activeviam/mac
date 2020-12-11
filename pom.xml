@@ -27,9 +27,6 @@
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
 
-    <checkstyle.maxAllowedViolations>0</checkstyle.maxAllowedViolations>
-    <checkstyle.console>false</checkstyle.console>
-
     <!-- CLI args, meant to be overridden by each call -->
     <unsnappy.file>not-a-file.txt</unsnappy.file>
 
@@ -242,56 +239,6 @@
         <configuration>
           <skip>true</skip>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>verify-doc</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <includeTestSourceDirectory>false</includeTestSourceDirectory>
-              <violationSeverity>warning</violationSeverity>
-              <checkstyleRules>
-                <module name="Checker">
-                  <property name="severity" value="warning"/>
-                  <module name="TreeWalker">
-                    <property name="fileExtensions" value="java"/>
-                    <!-- Config to disable checks -->
-                    <module name="SuppressionCommentFilter">
-                      <property name="offCommentFormat" value="CHECKSTYLE.OFF\: ([\w\|]+)"/>
-                      <property name="onCommentFormat" value="CHECKSTYLE.ON\: ([\w\|]+)"/>
-                      <property name="checkFormat" value="$1"/>
-                      <property name="checkCPP" value="true"/>
-                      <property name="checkC" value="true"/>
-                    </module>
-                    <!-- Required for disabling comments, later in the rules -->
-                    <module name="JavadocType">
-                      <property name="scope" value="package"/>
-                    </module>
-                    <module name="JavadocMethod">
-                      <property name="scope" value="protected"/>
-                      <property name="validateThrows" value="true"/>
-                      <property name="allowedAnnotations"
-                        value="Override, Test, Before, BeforeClass, After, AfterClass"/>
-                      <property name="allowThrowsTagsForSubclasses" value="true"/>
-                    </module>
-                    <module name="JavadocVariable">
-                      <property name="scope" value="protected"/>
-                      <property name="ignoreNamePattern" value="log|logger"/>
-                    </module>
-                  </module>
-                </module>
-              </checkstyleRules>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
