@@ -20,13 +20,13 @@ import org.springframework.context.annotation.Configuration;
  * @author ActiveViam
  */
 @Configuration
-public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
+public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
 
   /** The namespace of the ActiveUI web application. */
   public static final String NAMESPACE = "ui";
 
   /** Constructor. */
-  public ActiveUIResourceServerConfig() {
+  public ActiveUiResourceServerConfig() {
     super("/" + NAMESPACE);
   }
 
