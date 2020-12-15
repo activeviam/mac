@@ -101,7 +101,7 @@ public class SourceConfig {
    * @param name the path name
    * @return the corresponding path object
    */
-  protected Path resolveDirectory(String name) {
+  protected Path resolveDirectory(final String name) {
     Path directory = Paths.get(name);
     if (!Files.isDirectory(directory)) {
 
@@ -110,7 +110,7 @@ public class SourceConfig {
       URL url = null;
       try {
         url = cl.getResource(name);
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // PIVOT-3965 Some class loaders (e.g. spring-boot LaunchedURLClassLoader) may throw this
         // exception when encountering absolute paths on Windows, instead of returning null.
         if (LOGGER.isLoggable(Level.FINEST)) {
@@ -154,6 +154,8 @@ public class SourceConfig {
       // Load stat
       loadFromProviders(event);
     } else {
+      // In the case where a new direction is added, we use the differential reload to acces its
+      // content and load it.
       final var diffEvent = statisticTopic().differentialReload();
       if (diffEvent != null) {
         loadFromProviders(diffEvent);
@@ -209,13 +211,13 @@ public class SourceConfig {
                 entry.stream().parallel().map(this::readStatisticFile);
             final String message = feedDatastore(inputs, dumpName);
             LOGGER.info(message);
-          } catch (Exception e) {
+          } catch (final Exception e) {
             throw new ActiveViamRuntimeException(e);
           }
         });
   }
 
-  private IMemoryStatistic readStatisticFile(Path file) {
+  private IMemoryStatistic readStatisticFile(final Path file) {
     try {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Reading statistics from " + file.toAbsolutePath());
@@ -285,7 +287,7 @@ public class SourceConfig {
       name = "Load statistic file",
       desc = "Load statistic from a single file.",
       params = {"path"})
-  public String loadFile(String path) {
+  public String loadFile(final String path) {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Loading user data from " + path);
     }
