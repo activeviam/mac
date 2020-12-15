@@ -159,6 +159,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   private void initializeApplication() throws DatastoreTransactionException {
     monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
+
+    resources.register(monitoredApp.getRight()::stop);
+    resources.register(monitoredApp.getLeft()::stop);
+
     final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
     fillMicroApplication(transactionManager);
   }
@@ -187,7 +191,9 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoredApplication() {
-    distributedMonitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
+    distributedMonitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("analysis-feeder");
+    resources.register(distributedMonitoredApp.getLeft()::stop);
+    resources.register(distributedMonitoredApp.getRight()::stop);
     fillDistributedApplication();
   }
 
