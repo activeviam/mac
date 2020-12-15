@@ -55,7 +55,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 	}
 
 	@Before
-	public void setup() throws AgentException, TimeoutException, InterruptedException {
+	public void setup() throws AgentException {
 		initializeApplication();
 
 		final Path exportPath = generateMemoryStatistics();
@@ -69,8 +69,9 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 		assertThat(pivot).isNotNull();
 	}
 
-	private void initializeApplication() throws TimeoutException, InterruptedException {
-		monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy();
+	private void initializeApplication() {
+		// In JUnit5, we can also use TestInfo to complete the cluster name with the test name
+		monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
 
 		final var queryCubeA = ((MultiVersionDistributedActivePivot)
 				monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
