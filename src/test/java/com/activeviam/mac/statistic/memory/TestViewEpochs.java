@@ -11,7 +11,6 @@ import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -32,6 +31,7 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -115,8 +115,8 @@ public class TestViewEpochs extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "testViewEpochs");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testViewEpochs");
   }
 
   @After

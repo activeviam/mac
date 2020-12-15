@@ -49,7 +49,7 @@ import org.springframework.security.web.authentication.switchuser.SwitchUserFilt
  */
 @Import(
     value = {
-      ActiveUISecurityConfigurer.class,
+      ActiveUiSecurityConfigurer.class,
       JwtSecurityConfigurer.class,
       VersionSecurityConfigurer.class
     })

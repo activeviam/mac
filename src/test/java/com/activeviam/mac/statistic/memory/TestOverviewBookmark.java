@@ -1,7 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -18,6 +17,7 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -85,8 +85,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
   }
 
   @After

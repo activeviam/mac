@@ -16,20 +16,23 @@ import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
+import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /** This class is responsible for parsing memory statistics into an analysis datastore. */
 public class AnalysisDatastoreFeeder {
@@ -37,8 +40,6 @@ public class AnalysisDatastoreFeeder {
   /** Logger. */
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
-  /** The statistics this feeder should feed a datastore with. */
-  private final Collection<? extends IMemoryStatistic> statistics;
   /** The dump name associated with this feeder. */
   private final String dumpName;
 
@@ -58,22 +59,9 @@ public class AnalysisDatastoreFeeder {
   /**
    * Constructor.
    *
-   * @param statistic the memory statistic to parse
    * @param dumpName the dump name to assign to the statistic
    */
-  public AnalysisDatastoreFeeder(final IMemoryStatistic statistic, final String dumpName) {
-    this(Collections.singleton(statistic), dumpName);
-  }
-
-  /**
-   * Constructor.
-   *
-   * @param statistics the memory statistics to parse
-   * @param dumpName the dump name to assign to the statistics
-   */
-  public AnalysisDatastoreFeeder(
-      final Collection<? extends IMemoryStatistic> statistics, final String dumpName) {
-    this.statistics = statistics;
+  public AnalysisDatastoreFeeder(final String dumpName) {
     this.dumpName = dumpName;
 
     this.datastoreEpochs = new HashSet<>();
@@ -82,15 +70,20 @@ public class AnalysisDatastoreFeeder {
   }
 
   /**
-   * Feeds the given datastore with facts corresponding to the statistics of this feeder.
+   * Loads the provided statistics into the datastore in a single transaction.
    *
-   * @param transaction the transaction object to add the facts to
+   * @return the result of the transaction
    */
-  public void feedDatastore(final IOpenedTransaction transaction) {
-    feedRawChunks(transaction);
+  public Optional<IDatastoreSchemaTransactionInformation> loadInto(
+      final IDatastore datastore, final Stream<? extends IMemoryStatistic> stats) {
+    return datastore.edit(transaction -> loadWithTransaction(transaction, stats));
+  }
 
-    collectEpochsFromOpenedTransaction(transaction);
-    replicateChunksForMissingEpochs(transaction);
+  /** Loads the provided statistics within an open transaction. */
+  public void loadWithTransaction(
+      final IOpenedTransaction transaction, final Stream<? extends IMemoryStatistic> stats) {
+    stats.forEach(stat -> feedChunk(transaction, stat));
+    completeTransaction(transaction);
   }
 
   /**
@@ -98,19 +91,22 @@ public class AnalysisDatastoreFeeder {
    *
    * @param transaction the transaction to add facts to
    */
-  private void feedRawChunks(final IOpenedTransaction transaction) {
-    statistics.forEach(
-        statistic -> {
-          if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Start feeding the application with " + statistic);
-          }
+  private void feedChunk(final IOpenedTransaction transaction, final IMemoryStatistic statistic) {
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Start feeding the application with " + statistic);
+    }
 
-          statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
+    statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
 
-          if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine("Application processed " + statistic);
-          }
-        });
+    if (LOGGER.isLoggable(Level.FINE)) {
+      LOGGER.fine("Application processed " + statistic);
+    }
+  }
+
+  /** Completes the loading, computing the viewed epochs. */
+  private void completeTransaction(final IOpenedTransaction transaction) {
+    collectEpochsFromOpenedTransaction(transaction);
+    replicateChunksForMissingEpochs(transaction);
   }
 
   /**

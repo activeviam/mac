@@ -7,7 +7,7 @@
 
 package com.activeviam.tools.bookmark.impl;
 
-import com.activeviam.tools.bookmark.constant.impl.CSConstants;
+import com.activeviam.tools.bookmark.constant.impl.CsConstants;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,9 +42,9 @@ public class BookmarkTool {
       String folderName,
       Map<String, List<String>> defaultPermissions) {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    JsonUIToContentServer.setBookmarkTreeResolver(resolver);
-    JsonUIToContentServer.setStandaloneResolver(resolver);
-    JsonUIToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
+    JsonUiToContentServer.setBookmarkTreeResolver(resolver);
+    JsonUiToContentServer.setStandaloneResolver(resolver);
+    JsonUiToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
   }
 
   /**
@@ -61,9 +61,9 @@ public class BookmarkTool {
       String folderName,
       Map<String, List<String>> defaultPermissions) {
     ObjectMapper mapper = new ObjectMapper();
-    ContentServerToJsonUI.setMapper(mapper);
-    ContentServerToJsonUI.setWriter(mapper.writer(new DefaultPrettyPrinter()));
-    ContentServerToJsonUI.export(snapshotter, folderName, defaultPermissions);
+    ContentServerToJsonUi.setMapper(mapper);
+    ContentServerToJsonUi.setWriter(mapper.writer(new DefaultPrettyPrinter()));
+    ContentServerToJsonUi.export(snapshotter, folderName, defaultPermissions);
   }
 
   /**
@@ -75,8 +75,8 @@ public class BookmarkTool {
    *     character.
    */
   public static void configureExportFileNames(String encodingChar, List<String> charsToEncode) {
-    ContentServerToJsonUI.setEncodingChar(encodingChar);
-    ContentServerToJsonUI.setCustomCharsToEncode(charsToEncode);
+    ContentServerToJsonUi.setEncodingChar(encodingChar);
+    ContentServerToJsonUi.setCustomCharsToEncode(charsToEncode);
   }
 
   /**
@@ -87,8 +87,8 @@ public class BookmarkTool {
    */
   public static IPair<JsonNode, JsonNode> transformPermissionsMapToPair(
       Map<String, List<String>> permissions) {
-    List<String> ownersList = permissions.get(CSConstants.Role.OWNERS);
-    List<String> readersList = permissions.get(CSConstants.Role.READERS);
+    List<String> ownersList = permissions.get(CsConstants.Role.OWNERS);
+    List<String> readersList = permissions.get(CsConstants.Role.READERS);
     IPair<JsonNode, JsonNode> permissionsPair =
         new Pair<>(jsonNodeFromStringList(ownersList), jsonNodeFromStringList(readersList));
     return permissionsPair;
@@ -133,8 +133,8 @@ public class BookmarkTool {
   public static Map<String, List<String>> transformPermissionsStringsToMap(
       String owners, String readers) {
     Map<String, List<String>> permissionsMap = new HashMap<>();
-    permissionsMap.put(CSConstants.Role.OWNERS, Arrays.asList(owners.split(",")));
-    permissionsMap.put(CSConstants.Role.READERS, Arrays.asList(readers.split(",")));
+    permissionsMap.put(CsConstants.Role.OWNERS, Arrays.asList(owners.split(",")));
+    permissionsMap.put(CsConstants.Role.READERS, Arrays.asList(readers.split(",")));
     return permissionsMap;
   }
 
@@ -151,8 +151,8 @@ public class BookmarkTool {
     List<String> readers = new ArrayList<>();
     permissions.getLeft().forEach(user -> owners.add(user.asText()));
     permissions.getRight().forEach(user -> readers.add(user.asText()));
-    permissionsMap.put(CSConstants.Role.OWNERS, owners);
-    permissionsMap.put(CSConstants.Role.READERS, readers);
+    permissionsMap.put(CsConstants.Role.OWNERS, owners);
+    permissionsMap.put(CsConstants.Role.READERS, readers);
     return permissionsMap;
   }
 }
