@@ -178,6 +178,18 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- Useful dependencies to run some tests in a given order to reproduce errors -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

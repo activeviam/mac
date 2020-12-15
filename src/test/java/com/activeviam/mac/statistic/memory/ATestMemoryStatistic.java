@@ -1003,8 +1003,14 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
-  static Pair<IDatastore, IActivePivotManager>
-      createDistributedApplicationWithKeepAllEpochPolicy() {
+  /**
+   * Creates an application with one data cube connected to two query cubes.
+   *
+   * <p>To avoid mixing tests together, this requires a cluster name that should better be specific
+   * to each test.
+   */
+  static Pair<IDatastore, IActivePivotManager> createDistributedApplicationWithKeepAllEpochPolicy(
+      final String clusterName) {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1036,7 +1042,7 @@ public abstract class ATestMemoryStatistic {
                     .withSingleLevelDimension("id")
                     .asDataCube()
                     .withClusterDefinition()
-                    .withClusterId("cluster")
+                    .withClusterId(clusterName)
                     .withMessengerDefinition()
                     .withKey(LocalMessenger.PLUGIN_KEY)
                     .withNoProperty()
@@ -1053,7 +1059,7 @@ public abstract class ATestMemoryStatistic {
                         context -> Copper.count().multiply(Copper.constant(2L)).publish(context))
                     .asQueryCube()
                     .withClusterDefinition()
-                    .withClusterId("cluster")
+                    .withClusterId(clusterName)
                     .withMessengerDefinition()
                     .withKey(LocalMessenger.PLUGIN_KEY)
                     .withNoProperty()
@@ -1066,7 +1072,7 @@ public abstract class ATestMemoryStatistic {
                 StartBuilding.cube("QueryCubeB")
                     .asQueryCube()
                     .withClusterDefinition()
-                    .withClusterId("cluster")
+                    .withClusterId(clusterName)
                     .withMessengerDefinition()
                     .withKey(LocalMessenger.PLUGIN_KEY)
                     .withNoProperty()
