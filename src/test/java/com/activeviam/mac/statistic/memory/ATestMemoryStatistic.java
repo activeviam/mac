@@ -1006,11 +1006,11 @@ public abstract class ATestMemoryStatistic {
   /**
    * Creates an application with one data cube connected to two query cubes.
    *
-   * To avoid mixing tests together, this requires a cluster name that should better be specific
+   * <p>To avoid mixing tests together, this requires a cluster name that should better be specific
    * to each test.
    */
-  static Pair<IDatastore, IActivePivotManager>
-      createDistributedApplicationWithKeepAllEpochPolicy(final String clusterName) {
+  static Pair<IDatastore, IActivePivotManager> createDistributedApplicationWithKeepAllEpochPolicy(
+      final String clusterName) {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
