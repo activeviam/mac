@@ -72,6 +72,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 	private void initializeApplication() {
 		// In JUnit5, we can also use TestInfo to complete the cluster name with the test name
 		monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
+		resources.register(monitoredApp.getRight()::stop);
+		resources.register(monitoredApp.getLeft()::stop);
 
 		final var queryCubeA = ((MultiVersionDistributedActivePivot)
 				monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
@@ -122,26 +124,21 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
 	private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
 		ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-		final IDatastore monitoringDatastore =
-				StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+		final IDatastore monitoringDatastore = resources.create(() ->
+				StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
 
 		IActivePivotManager manager =
 				StartBuilding.manager()
 						.setDescription(config.managerDescription())
 						.setDatastoreAndPermissions(monitoringDatastore)
 						.buildAndStart();
+		resources.register(manager::stop);
 		monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     final AnalysisDatastoreFeeder feeder =
         new AnalysisDatastoreFeeder(data, "testDistributedCubeEpochs");
     monitoringDatastore.edit(feeder::feedDatastore);
   }
-
-	@After
-	public void tearDown() throws AgentException {
-		monitoringApp.getLeft().close();
-		monitoringApp.getRight().stop();
-	}
 
 	@Test
 	public void testExpectedViewEpochs() {
