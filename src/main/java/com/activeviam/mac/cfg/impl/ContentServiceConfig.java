@@ -8,7 +8,7 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
-import com.activeviam.tools.bookmark.constant.impl.CSConstants.Role;
+import com.activeviam.tools.bookmark.constant.impl.CsConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;

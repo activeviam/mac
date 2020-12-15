@@ -372,7 +372,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
-    Collection<String> oldFields = this.fields;
+    final Collection<String> oldFields = this.fields;
 
     readFieldsIfAny(stat);
 

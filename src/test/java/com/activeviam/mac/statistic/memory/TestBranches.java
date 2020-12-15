@@ -8,7 +8,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -31,6 +30,7 @@ import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -111,8 +111,8 @@ public class TestBranches extends ATestMemoryStatistic {
 
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "testBranches");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testBranches");
   }
 
   @Test

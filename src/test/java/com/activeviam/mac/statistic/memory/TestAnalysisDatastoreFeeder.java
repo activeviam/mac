@@ -10,7 +10,6 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.pivot.builders.StartBuilding;
@@ -34,6 +33,7 @@ import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
@@ -81,11 +81,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testDifferentDumps() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
-
-    feeder = new AnalysisDatastoreFeeder(appStatistics, "app2");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app2");
 
     Assertions.assertThat(
             DatastoreQueryHelper.selectDistinct(
@@ -99,8 +98,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testEpochReplicationForAlreadyExistingChunks() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(
@@ -108,8 +107,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L);
 
-    feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
 
     epochs =
         collectEpochViewsForOwner(
@@ -125,11 +124,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   public void testEpochReplicationForAlreadyExistingEpochs() {
     final IDatastore monitoringDatastore = monitoringApp.getLeft();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
-
-    feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(appStatistics), "app");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(

@@ -11,7 +11,6 @@ import static com.quartetfs.fwk.util.TestUtils.waitAndAssert;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
@@ -144,9 +143,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     resources.register(manager::stop);
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder =
-        new AnalysisDatastoreFeeder(data, "testDistributedCubeEpochs");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(data), "testDistributedCubeEpochs");
   }
 
   @Test

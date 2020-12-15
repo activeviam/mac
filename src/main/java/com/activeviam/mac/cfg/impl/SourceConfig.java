@@ -7,6 +7,9 @@
 
 package com.activeviam.mac.cfg.impl;
 
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toUnmodifiableList;
+
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
@@ -19,7 +22,6 @@ import com.qfs.msg.impl.WatcherService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
 import com.qfs.store.impl.Datastore;
-import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -33,7 +35,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -183,17 +184,17 @@ public class SourceConfig {
       final Collection<? extends ICsvDataProvider<Path>> providers) {
     final Path path = getStatisticFolder();
     return providers.stream()
-              .collect(
-                  Collectors.groupingBy(
-                      e -> {
+        .collect(
+            Collectors.groupingBy(
+                e -> {
                   final Path pathEvent = e.getFileInfo().getIdentifier();
-                        // we assume this is a file
+                  // we assume this is a file
                   final String currentRelFolder = path.relativize(pathEvent.getParent()).toString();
-                        return currentRelFolder.equalsIgnoreCase("")
-                            ? "autoload-" + LocalTime.now().toString().replaceAll("\\.[^.]*$", "")
-                            : currentRelFolder;
+                  return currentRelFolder.equalsIgnoreCase("")
+                      ? "autoload-" + LocalTime.now().toString().replaceAll("\\.[^.]*$", "")
+                      : currentRelFolder;
                 },
-                mapping(e -> e.getFileInfo().getIdentifier(), Collectors.toUnmodifiableList())));
+                mapping(e -> e.getFileInfo().getIdentifier(), toUnmodifiableList())));
   }
 
   private Path getStatisticFolder() {
@@ -202,9 +203,9 @@ public class SourceConfig {
 
   private void loadDumps(final Map<String, List<Path>> dumpFiles) {
     dumpFiles.forEach(
-          (dumpName, entry) -> {
-            try {
-              final Stream<IMemoryStatistic> inputs =
+        (dumpName, entry) -> {
+          try {
+            final Stream<IMemoryStatistic> inputs =
                 entry.stream().parallel().map(this::readStatisticFile);
             final String message = feedDatastore(inputs, dumpName);
             LOGGER.info(message);
@@ -215,18 +216,18 @@ public class SourceConfig {
   }
 
   private IMemoryStatistic readStatisticFile(Path file) {
-                            try {
-                              if (LOGGER.isLoggable(Level.FINE)) {
+    try {
+      if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Reading statistics from " + file.toAbsolutePath());
-                              }
+      }
       final IMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-                              if (LOGGER.isLoggable(Level.FINE)) {
+      if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Statistics read from " + file.toAbsolutePath());
-                              }
-                              return read;
-                            } catch (final IOException ioe) {
-                              throw new RuntimeException("Cannot read statistics from " + file);
-                            }
+      }
+      return read;
+    } catch (final IOException ioe) {
+      throw new RuntimeException("Cannot read statistics from " + file);
+    }
   }
 
   /**
@@ -238,12 +239,7 @@ public class SourceConfig {
    */
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
-    final Collection<IMemoryStatistic> statistics = memoryStatistics.collect(Collectors.toList());
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, dumpName);
-
-    final Optional<IDatastoreSchemaTransactionInformation> info =
-        this.datastore.edit(feeder::feedDatastore);
-
+    final var info = new AnalysisDatastoreFeeder(dumpName).loadInto(datastore, memoryStatistics);
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
     } else {
