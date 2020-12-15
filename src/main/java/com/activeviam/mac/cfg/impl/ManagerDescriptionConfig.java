@@ -30,6 +30,7 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
+import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
@@ -42,6 +43,7 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
+import com.quartetfs.fwk.ordering.impl.NaturalOrderComparator;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -319,7 +321,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .slicing()
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-        .withComparator(ReverseOrderComparator.type)
+        .withComparator(NaturalOrderComparator.type)
         .withHierarchy(DATE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.APPLICATION__DATE)
@@ -349,6 +351,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .slicing()
         .withLevel(BRANCH_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
+        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
         .withSingleLevelHierarchy(USED_BY_VERSION_DIMENSION)
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
         .withDimension(OWNER_DIMENSION)
