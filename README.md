@@ -102,6 +102,5 @@ Known limitations
 Planned Improvements
 --------------------
 
- [ ] Create a new store for Vectors, to have statistics on their size, ref count, ...
- [ ] Display and use the consumed On-heap memory reported by the Memory Analysis.
- 
+- [ ] Create a new store for Vectors, to have statistics on their size, ref count, ...
+- [ ] Display and use the consumed On-heap memory reported by the Memory Analysis.
