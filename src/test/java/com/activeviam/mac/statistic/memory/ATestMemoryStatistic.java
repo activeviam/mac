@@ -18,6 +18,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
 import com.activeviam.builders.FactFilterConditions;
 import com.activeviam.copper.HierarchyIdentifier;
+import com.activeviam.copper.api.Copper;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
@@ -1002,8 +1003,14 @@ public abstract class ATestMemoryStatistic {
     return new Pair<>(datastore, manager);
   }
 
-  static Pair<IDatastore, IActivePivotManager>
-      createDistributedApplicationWithKeepAllEpochPolicy() {
+  /**
+   * Creates an application with one data cube connected to two query cubes.
+   *
+   * <p>To avoid mixing tests together, this requires a cluster name that should better be specific
+   * to each test.
+   */
+  static Pair<IDatastore, IActivePivotManager> createDistributedApplicationWithKeepAllEpochPolicy(
+      final String clusterName) {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1033,33 +1040,45 @@ public abstract class ATestMemoryStatistic {
                     .withAggregatedMeasure()
                     .sum("value")
                     .withSingleLevelDimension("id")
+                    .asDataCube()
+                    .withClusterDefinition()
+                    .withClusterId(clusterName)
+                    .withMessengerDefinition()
+                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withNoProperty()
+                    .end()
+                    .withApplicationId("app")
+                    .withAllHierarchies()
+                    .withAllMeasures()
+                    .end()
                     .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeA")
                     .withContributorsCount()
+                    .withCalculations(
+                        context -> Copper.count().multiply(Copper.constant(2L)).publish(context))
                     .asQueryCube()
                     .withClusterDefinition()
-                    .withClusterId("cluster")
+                    .withClusterId(clusterName)
                     .withMessengerDefinition()
                     .withKey(LocalMessenger.PLUGIN_KEY)
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withDistributingFields("value")
+                    .withDistributingFields("id")
                     .end()
-                    .withEpochDimension()
                     .build())
             .withDistributedCube(
                 StartBuilding.cube("QueryCubeB")
                     .asQueryCube()
                     .withClusterDefinition()
-                    .withClusterId("cluster")
+                    .withClusterId(clusterName)
                     .withMessengerDefinition()
                     .withKey(LocalMessenger.PLUGIN_KEY)
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withoutDistributingFields()
+                    .withDistributingFields("id")
                     .end()
                     .withEpochDimension()
                     .build())
@@ -1345,26 +1364,21 @@ public abstract class ATestMemoryStatistic {
                     .sum("measure1")
                     .withAggregatedMeasure()
                     .sum("measure2")
-
                     .withSingleLevelDimension("id")
                     .asDefaultHierarchy()
                     .withSingleLevelDimension("hierId")
-
                     .withAggregateProvider()
                     .bitmap()
                     .withPartialProvider()
                     .bitmap()
                     .excludingHierarchies(HierarchyIdentifier.simple("hierId"))
                     .includingOnlyMeasures("measure1.SUM")
-
                     .withPartialProvider()
                     .leaf()
                     .includingOnlyMeasures("measure2.SUM")
-
                     .withPartialProvider()
                     .bitmap()
                     .includingOnlyMeasures("contributors.COUNT")
-
                     .build())
             .build();
     final IActivePivotManagerDescription managerDescription =
@@ -1391,8 +1405,7 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    feedMonitoringApplication(monitoringDatastore, statistics, "storeA");
 
     final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
 
@@ -1607,5 +1620,12 @@ public abstract class ATestMemoryStatistic {
         .withCreatorClasses(TestMemoryStatisticLoading.class)
         .withChildren(childStats)
         .build();
+  }
+
+  public static void feedMonitoringApplication(
+      final IDatastore monitoringDatastore,
+      final Collection<? extends IMemoryStatistic> stats,
+      final String dumpName) {
+    new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
   }
 }

@@ -93,7 +93,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    * @param epochId the epoch id of the chunkset
    * @param usedByVersion the used by version flag for the Chunkset
    * @param ignoreFieldSpecifications whether or not to attribute the visited chunkset's chunks to
-   * the encountered fields
+   *     the encountered fields
    */
   public ChunkSetStatisticVisitor(
       final IDatastoreSchemaMetadata storageMetadata,

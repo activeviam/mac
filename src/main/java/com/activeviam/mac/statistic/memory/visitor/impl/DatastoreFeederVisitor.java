@@ -247,21 +247,21 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
-        this.storageMetadata,
-        this.transaction,
-        this.dumpName,
-        this.current,
-        this.owner,
-        this.rootComponent,
-        this.directParentType,
-        this.directParentId,
-        this.partitionId,
-        this.indexId,
-        this.referenceId,
-        null,
-        this.epochId,
-        this.usedByVersion,
-        false)
+            this.storageMetadata,
+            this.transaction,
+            this.dumpName,
+            this.current,
+            this.owner,
+            this.rootComponent,
+            this.directParentType,
+            this.directParentId,
+            this.partitionId,
+            this.indexId,
+            this.referenceId,
+            null,
+            this.epochId,
+            this.usedByVersion,
+            false)
         .visit(stat);
   }
 
@@ -372,7 +372,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
     this.directParentId = String.valueOf(this.dictionaryId);
-    Collection<String> oldFields = this.fields;
+    final Collection<String> oldFields = this.fields;
 
     readFieldsIfAny(stat);
 

@@ -24,7 +24,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
@@ -312,33 +311,6 @@ public abstract class ASecurityConfig implements ICorsConfig {
           .authorizeRequests()
           .antMatchers("/**")
           .permitAll();
-    }
-  }
-
-  /**
-   * Configuration for ActiveUI.
-   *
-   * @author ActiveViam
-   * @see HttpStatusEntryPoint
-   */
-  public abstract static class AActiveUISecurityConfigurer extends AWebSecurityConfigurer {
-
-    @Override
-    protected void doConfigure(HttpSecurity http) throws Exception {
-      // Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
-      final String pattern = "^(.{0}|\\/|\\/" + "ui" + "(\\/.*)?)$";
-      http
-          // Only theses URLs must be handled by this HttpSecurity
-          .regexMatcher(pattern)
-          .authorizeRequests()
-          // The order of the matchers matters
-          .regexMatchers(HttpMethod.OPTIONS, pattern)
-          .permitAll()
-          .regexMatchers(HttpMethod.GET, pattern)
-          .permitAll();
-
-      // Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
-      http.headers().frameOptions().disable();
     }
   }
 }

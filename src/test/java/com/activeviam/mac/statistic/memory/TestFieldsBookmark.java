@@ -1,7 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -18,12 +17,12 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestFieldsBookmark extends ATestMemoryStatistic {
@@ -77,8 +76,7 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    monitoringDatastore.edit(
-        tm -> stats.accept(new FeedVisitor(monitoringDatastore.getSchemaMetadata(), tm, "storeA")));
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
@@ -91,7 +89,6 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
     monitoringApp.getRight().stop();
   }
 
-  @Ignore("wrong field counts, should be updated after Field.COUNT is removed")
   @Test
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
@@ -110,41 +107,45 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-		final MDXQuery excessMemoryQuery = new MDXQuery(
-				"WITH MEMBER [Measures].[Field.COUNT] AS "
-						+ ownershipCountMdxExpression("[Fields].[Field]")
-						+ " MEMBER [Measures].[ExcessDirectMemory] AS"
-						+ " Sum("
-						+ "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-						+ "   IIF([Measures].[Field.COUNT] > 1,"
-						+ "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
-						+ "     0)"
-						+ " )"
-						+ " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery excessMemoryQuery =
+        new MDXQuery(
+            "WITH MEMBER [Measures].[Field.COUNT] AS "
+                + ownershipCountMdxExpression("[Fields].[Field]")
+                + " MEMBER [Measures].[ExcessDirectMemory] AS"
+                + " Sum("
+                + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "   IIF([Measures].[Field.COUNT] > 1,"
+                + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
+                + "     0)"
+                + " )"
+                + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final CellSetDTO totalResult = pivot.execute(storeTotal);
     final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
     final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
 
-		Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
-				.isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
-						- CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
-	}
+    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
+        .isEqualTo(
+            CellSetUtils.sumValuesFromCellSetDTO(fieldResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessResult).longValue());
+  }
 
-	protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
-		return "DistinctCount("
-				+ "  Generate("
-				+ "    NonEmpty("
-				+ "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    ),"
-				+ "    NonEmpty("
-				+ "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
-				+ "      {[Measures].[contributors.COUNT]}"
-				+ "    )"
-				+ "  )"
-				+ ")";
-	}
+  protected String ownershipCountMdxExpression(final String hierarchyUniqueName) {
+    return "DistinctCount("
+        + "  Generate("
+        + "    NonEmpty("
+        + "      [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+        + "      {[Measures].[contributors.COUNT]}"
+        + "    ),"
+        + "    NonEmpty("
+        + "      "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children,"
+        + "      {[Measures].[contributors.COUNT]}"
+        + "    )"
+        + "  )"
+        + ")";
+  }
 }

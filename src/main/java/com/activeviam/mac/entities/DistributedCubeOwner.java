@@ -1,7 +1,7 @@
 /*
  * (C) ActiveViam 2020
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
- * property of ActiveViam. Any unauthorized use
+ * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
  */
 
@@ -9,9 +9,9 @@ package com.activeviam.mac.entities;
 
 import lombok.Value;
 
-/** Sub-class of owners for ActivePivot cubes. */
+/** Sub-class of owners for ActivePivot distributed cubes. */
 @Value
-public class CubeOwner implements ChunkOwner {
+public class DistributedCubeOwner implements ChunkOwner {
 
   /** Unique id of the ActivePivot. */
   String id;
@@ -23,7 +23,7 @@ public class CubeOwner implements ChunkOwner {
 
   @Override
   public OwnerType getType() {
-    return OwnerType.CUBE;
+    return OwnerType.DISTRIBUTED_CUBE;
   }
 
   @Override

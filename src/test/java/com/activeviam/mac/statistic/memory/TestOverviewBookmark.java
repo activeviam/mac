@@ -1,7 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
@@ -18,6 +17,7 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -85,8 +85,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
             .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(data, "storeA");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
   }
 
   @After
@@ -101,8 +100,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
-        new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
     final CellSetDTO totalResult = pivot.execute(totalQuery);
 
@@ -116,8 +114,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
-        new MDXQuery(
-            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
     final MDXQuery perOwnerQuery =
         new MDXQuery(
@@ -142,8 +139,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-        CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
-            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+            CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(totalResult));
   }
 
@@ -224,8 +221,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(
-        CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
-            - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
+            CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)
+                - CellSetUtils.extractDoubleValueFromSingleCellDTO(excessMemoryResult).longValue())
         .isEqualTo(CellSetUtils.extractValueFromSingleCellDTO(cubeTotalResult));
   }
 
@@ -237,7 +234,9 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
         + "      {[Measures].[contributors.COUNT]}"
         + "    ),"
         + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+        + "      "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children,"
         + "      {[Measures].[contributors.COUNT]}"
         + "    )"
         + "  )"

@@ -23,12 +23,14 @@ import com.activeviam.formatter.ByteFormatter;
 import com.activeviam.formatter.ClassFormatter;
 import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
+import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
@@ -41,12 +43,12 @@ import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
+import com.quartetfs.fwk.ordering.impl.NaturalOrderComparator;
 import com.quartetfs.fwk.ordering.impl.ReverseOrderComparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 /**
  * Manager Description Config that defines the manager description which contains the cube
@@ -319,7 +321,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .slicing()
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-        .withComparator(ReverseOrderComparator.type)
+        .withComparator(NaturalOrderComparator.type)
         .withHierarchy(DATE_HIERARCHY)
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.APPLICATION__DATE)
@@ -349,6 +351,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .slicing()
         .withLevel(BRANCH_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
+        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
         .withSingleLevelHierarchy(USED_BY_VERSION_DIMENSION)
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
         .withDimension(OWNER_DIMENSION)
@@ -422,7 +425,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -434,8 +437,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void bucketingHierarchies(final ICopperContext context) {
     Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
         .from(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
-        .withMemberList(
-            "Cube", "Store", "None", "Shared") // todo: cleaner impl, with an enum for owners
+        .withMemberList((Object[]) OwnerType.values())
         .publish(context);
   }
 
