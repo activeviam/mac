@@ -3,7 +3,7 @@ consumes the most direct memory.
 
 It aims to serve as an entry point for analysis.
 
-Its view give insights on the direct memory consumption of the application on
+Its view gives insight on the direct memory consumption of the application on
 two axes: owners and components (as defined in the [data model
 page](../data_model.md)).
 

@@ -1,7 +1,8 @@
-As with any ActivePivot application, some settings can be configured in the
-`application.yml` file, in the MAC's *resources* folder.
+Some settings can be configured in the `application.yml` file in MAC's
+*resources* folder.
 
-Some MAC specific settings can also be set:
+The usual ActivePivot spring application properties can be set in this file. A
+small number of MAC specific settings can also be set:
 
 * `statistic.folder`: the path to the statistics folder, from which MAC extracts
   the memory reports to analyze (default: *./statistics*)
@@ -16,4 +17,6 @@ Some MAC specific settings can also be set:
   When *true*, the bookmarks are loaded on every startup, regardless of the
   bookmarks that may be present on the content server. Note that this causes all
   existing bookmarks to be **overriden**, including custom bookmarks that are
-  not included in the predefined ones. Enable with care.
+  not included in the predefined ones.
+
+  Enable with care.
