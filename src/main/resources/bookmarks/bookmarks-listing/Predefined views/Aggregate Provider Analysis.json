@@ -128,6 +128,23 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the pivots of the application, starting with a general overview\nof memory consumption per cube in this page.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -142,8 +159,18 @@
                 "size" : 0.35
               },
               "1" : {
-                "ck" : "3",
-                "size" : 0.65
+                "children" : {
+                  "0" : {
+                    "ck" : "4",
+                    "size" : 0.1
+                  },
+                  "1" : {
+                    "ck" : "3",
+                    "size" : 0.9
+                  }
+                },
+                "size" : 0.65,
+                "direction" : "column"
               }
             },
             "size" : 0.91,
@@ -637,6 +664,23 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "A view that exposes memory consumption of cubes associated with the dictionaries\nused to store level information."
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -651,8 +695,18 @@
                 "size" : 0.47
               },
               "1" : {
-                "ck" : "2",
-                "size" : 0.53
+                "children" : {
+                  "0" : {
+                    "ck" : "3",
+                    "size" : 0.06
+                  },
+                  "1" : {
+                    "ck" : "2",
+                    "size" : 0.94
+                  }
+                },
+                "size" : 0.53,
+                "direction" : "column"
               }
             },
             "size" : 0.9,

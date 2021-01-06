@@ -149,6 +149,23 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the various dictionaries and indices of the application.\n\nThis view presents the most memory-consuming dictionaries, categorized per field\nname, across all owners.\n\nSome dictionaries may be shared across multiple fields of different stores.\n\nThis page intended to potentially draw attention to where the largest\ndictionaries may be, enabling a more detailed analysis using the other\npage of this bookmark.\n\n> In case of a field name conflict between two stores, their dictionaries will\n> both be taken into account even if there is not a reference linking these two\n> fields.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -167,10 +184,22 @@
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "1"
+                "ck" : "1",
+                "size" : 0.39
               },
               "1" : {
-                "ck" : "2"
+                "children" : {
+                  "0" : {
+                    "ck" : "5",
+                    "size" : 0.32
+                  },
+                  "1" : {
+                    "ck" : "2",
+                    "size" : 0.68
+                  }
+                },
+                "direction" : "column",
+                "size" : 0.61
               }
             },
             "direction" : "row",
@@ -334,6 +363,23 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This view presents the most memory-consuming indices, categorized per field\nname, across all owners.\n\nThis page intended to potentially draw attention to where the largest indices\nmay be, enabling a more detailed analysis using the last page of this bookmark.\n\n> In case of a field name conflict between two stores, their indices will\n> both be taken into account even if there is not reference between these two\n> fields.\n> \n> An index that indexes several fields will contribute its memory consumption to\n> all fields."
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -352,10 +398,22 @@
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "1"
+                "ck" : "1",
+                "size" : 0.42
               },
               "1" : {
-                "ck" : "2"
+                "children" : {
+                  "0" : {
+                    "ck" : "5",
+                    "size" : 0.3
+                  },
+                  "1" : {
+                    "ck" : "2",
+                    "size" : 0.7
+                  }
+                },
+                "direction" : "column",
+                "size" : 0.58
               }
             },
             "direction" : "row",

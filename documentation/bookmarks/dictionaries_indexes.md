@@ -10,8 +10,9 @@ name, across all owners.
 
 Some dictionaries may be shared across multiple fields of different stores.
 
-Its level of detail is too coarse for in-depth analysis, and is only provided to
-potentially draw attention to where the largest dictionaries may be.
+This page intended to potentially draw attention to where the largest
+dictionaries may be, enabling a more detailed analysis using the last
+page of this bookmark.
 
 > In case of a field name conflict between two stores, their dictionaries will
 > both be taken into account even if there is not reference between these two
@@ -22,8 +23,8 @@ potentially draw attention to where the largest dictionaries may be.
 This view presents the most memory-consuming indices, categorized per field
 name, across all owners.
 
-Its level of detail is too coarse for in-depth analysis, and is only provided to
-potentially draw attention to where the largest indices may be.
+This page intended to potentially draw attention to where the largest indices
+may be, enabling a more detailed analysis using the last page of this bookmark.
 
 > In case of a field name conflict between two stores, their indices will
 > both be taken into account even if there is not reference between these two
