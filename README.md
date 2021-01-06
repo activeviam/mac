@@ -24,10 +24,10 @@ using MAC.
 
 The process is explained below:
 
-* [exporting your application](documentation/setting_up/exporting.md)
-* [importing data in MAC](documentation/setting_up/importing.md)
+* [exporting your application](docs/setting_up/exporting.md)
+* [importing data in MAC](docs/setting_up/importing.md)
 * [structure of memory statistics and decompressing generated
-  files](documentation/setting_up/statistics.md)
+  files](docs/setting_up/statistics.md)
 
 ## MAC Data Model
 
@@ -39,12 +39,12 @@ important to get familiar with its [data model](data_model.md).
 MAC comes with a number of predefined bookmarks that each offer some insights to
 various aspects of the monitored application.
 
-* [Overview](documentation/bookmarks/overview.md)
-* [Per-field Analysis](documentation/bookmarks/fields.md)
-* [Vector Block Analysis](documentation/bookmarks/vectors.md)
+* [Overview](docs/bookmarks/overview.md)
+* [Per-field Analysis](docs/bookmarks/fields.md)
+* [Vector Block Analysis](docs/bookmarks/vectors.md)
 * [Dictionary and Index
-  Analysis](documentation/bookmarks/dictionaries_indexes.md)
-* [Aggregate Provider Analysis](documentation/bookmarks/aggregate_providers.md)
+  Analysis](docs/bookmarks/dictionaries_indexes.md)
+* [Aggregate Provider Analysis](docs/bookmarks/aggregate_providers.md)
 
 ## Known limitations
 
