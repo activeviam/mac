@@ -1,3 +1,4 @@
 {
-  "key" : "Filters"
+  "key" : "filter",
+  "description": "Predefined filters on common hierarchies"
 }

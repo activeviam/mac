@@ -88,7 +88,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY]",
+                "mdx" : "SELECT NON EMPTY TopPercent([Fields].[Field].[Field].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[DICTIONARY]",
                 "updateMode" : "once",
                 "refreshInterval" : 10
               }
@@ -273,7 +273,7 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Indices].[Indexed Fields].[Indexed Fields].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX]",
                 "updateMode" : "once",
                 "refreshInterval" : 10
               }
