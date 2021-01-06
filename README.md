@@ -32,7 +32,7 @@ The process is explained below:
 ## MAC Data Model
 
 To fully make use of MAC's capabilities for analyzing your project, it is
-important to get familiar with its [data model](data_model.md).
+important to get familiar with its [data model](docs/data_model.md).
 
 ## Bookmarks
 
