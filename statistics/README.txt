@@ -1,1 +1,1 @@
-Drag & drop statistic file (.json) in this folder
+Drag & drop statistic file (.json or .json.sz) in this folder

@@ -1,3 +1,5 @@
+# Aggregate providers bookmark
+
 This bookmark provides specialized views for analyzing the direct memory
 consumption of the pivots of the application.
 

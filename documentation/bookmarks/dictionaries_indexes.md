@@ -1,3 +1,5 @@
+# Dictionaries and indexes bookmark
+
 This bookmark provides specialized views for analyzing the direct memory
 consumption of the various dictionaries and indices of the application.
 

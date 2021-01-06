@@ -1,3 +1,5 @@
+# Fields bookmark
+
 This bookmark provides specialized views for analyzing the direct memory
 consumption of the various stores of the application, with a focus on the fields
 the chunks can be attributed to.
@@ -7,7 +9,7 @@ the chunks can be attributed to.
 This view lists the most memory-consuming fields across all stores.
 
 This page only aims to be an entry-point for further analysis, after drawing
-attention to anormally high memory consumptions.
+attention to abnormally high memory consumptions.
 
 In the case of a name conflict between fields of different stores, the memory
 consumption is displayed per owner under each field.

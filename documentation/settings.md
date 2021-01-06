@@ -1,3 +1,5 @@
+# Settings
+
 Some settings can be configured in the `application.yml` file in MAC's
 *resources* folder.
 

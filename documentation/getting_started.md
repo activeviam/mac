@@ -4,6 +4,9 @@ The Memory Analysis Cube (MAC) is an ActivePivot project that aims to provide
 the necessary tools to explore and analyze the data consumption from any other
 ActivePivot application, starting from ActivePivot 5.8 onward.
 
+The project is built as a standalone Spring Boot jar file with an embedded
+ActiveUI application available on `localhost:9092` by default.
+
 ## Main Features
 
 * Off Heap memory usage monitoring 
@@ -23,7 +26,8 @@ The process is explained below:
 
 * [exporting your application](setting_up/exporting.md)
 * [importing data in MAC](setting_up/importing.md)
-* [structure of memory statistics](setting_up/statistics.md)
+* [structure of memory statistics and decompressing generated
+  files](setting_up/statistics.md)
 
 ## MAC Data Model
 
@@ -41,11 +45,6 @@ various aspects of the monitored application.
 * [Dictionary and Index Analysis](bookmarks/dictionaries_indexes.md)
 * [Aggregate Provider Analysis](bookmarks/aggregate_providers.md)
 
-## Widgets
-
-A few predefined widgets are available to help the creation of custom
-dashboards, with more details on the [widgets page](widgets.md).
-
 ## Known limitations
 
 * This tool does not support projects with multiple datastores. It is possible
@@ -54,3 +53,8 @@ dashboards, with more details on the [widgets page](widgets.md).
 * On-heap memory analysis is currently not fully implemented. The application
   only sums the memory used by Chunks. Please directly refer to the JMX beans of
   your application or other analysis tools for a deeper investigation.
+
+## Planned Improvements
+
+- [ ] Display and use the consumed On-heap memory reported by the Memory
+  Analysis.
