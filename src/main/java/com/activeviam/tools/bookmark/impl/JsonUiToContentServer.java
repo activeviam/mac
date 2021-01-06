@@ -39,6 +39,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  * returns a SnapshotContentTree representing this subtree where the root is "/ui".
  */
 class JsonUiToContentServer {
+
   static final Map<String, List<String>> ROOT_ONLY_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> ROOT_OWNER_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> DEFAULT_PERMISSIONS = new HashMap<>();
@@ -98,7 +99,7 @@ class JsonUiToContentServer {
    *
    * @param bookmarkFolder The bookmark folder.
    * @param defaultPermissions The default permissions to be used when no child or parent
-   *     permissions are defined.
+   * permissions are defined.
    * @return The SnapshotContentTree.
    */
   static SnapshotContentTree loadBookmarks(
@@ -119,7 +120,7 @@ class JsonUiToContentServer {
     /* get filepath for root meta file */
     /* Generate the Structure and Content Trees */
     /* File path to the bookmarks */
-    File bookDir = null;
+    final File bookDir;
     try {
       /* get URL of the directory to import */
       bookDir =
@@ -181,7 +182,7 @@ class JsonUiToContentServer {
    * @param dir A flag which sets isDirectory to true/false.
    * @param parentPermissions The permissions of the parent folder.
    * @return SnapshotContentTree representing the given json file and the associated meta file, and
-   *     its key, if contained in the metadata file.
+   * its key, if contained in the metadata file.
    */
   private static IPair<SnapshotContentTree, String> createFileNode(
       File file, Boolean dir, Map<String, List<String>> parentPermissions) {
@@ -388,8 +389,7 @@ class JsonUiToContentServer {
       File file, Map<String, List<String>> parentPermissions) {
     BookmarkMetadata metadata = new BookmarkMetadata();
     metadata.permissions = parentPermissions;
-    Map<String, List<String>> permissionsToAdd = parentPermissions;
-    File[] foundMetadataFiles =
+    final File[] foundMetadataFiles =
         file.getParentFile()
             .listFiles(
                 child ->
@@ -402,9 +402,8 @@ class JsonUiToContentServer {
     if (foundMetadataFiles != null && foundMetadataFiles.length > 0) {
       JsonNode metadataJsonNode = loadFileIntoNode(foundMetadataFiles[0]);
       Optional<IPair<JsonNode, JsonNode>> pair = retrievePermissions(metadataJsonNode);
-      if (pair.isPresent()) {
-        metadata.setPermissions(getPermissions(pair.get()));
-      }
+      pair.ifPresent(
+          jsonNodeJsonNodeIPair -> metadata.setPermissions(getPermissions(jsonNodeJsonNodeIPair)));
       metadata.setDescription(metadataJsonNode.path(CsConstants.Tree.DESCRIPTION).asText());
       metadata.setKey(metadataJsonNode.path(CsConstants.Tree.KEY).asText());
     }
@@ -415,23 +414,12 @@ class JsonUiToContentServer {
   /** Metadata for a bookmark. */
   @Data
   protected static class BookmarkMetadata {
-    /**
-     * Description of the bookmark.
-     *
-     * @return the description
-     */
+
+    /** Description of the bookmark. */
     private String description;
-    /**
-     * List of permissions for the bookmark.
-     *
-     * @return the permissions
-     */
+    /** List of permissions for the bookmark. */
     private Map<String, List<String>> permissions;
-    /**
-     * Key of the bookmark.
-     *
-     * @return the key
-     */
+    /** Key of the bookmark. */
     private String key;
   }
 

@@ -89,9 +89,7 @@ public class BookmarkTool {
       Map<String, List<String>> permissions) {
     List<String> ownersList = permissions.get(CsConstants.Role.OWNERS);
     List<String> readersList = permissions.get(CsConstants.Role.READERS);
-    IPair<JsonNode, JsonNode> permissionsPair =
-        new Pair<>(jsonNodeFromStringList(ownersList), jsonNodeFromStringList(readersList));
-    return permissionsPair;
+    return new Pair<>(jsonNodeFromStringList(ownersList), jsonNodeFromStringList(readersList));
   }
 
   /**
@@ -105,9 +103,7 @@ public class BookmarkTool {
       String owners, String readers) {
     List<String> ownersList = Arrays.asList(owners.split(","));
     List<String> readersList = Arrays.asList(readers.split(","));
-    IPair<JsonNode, JsonNode> permissionsPair =
-        new Pair<>(jsonNodeFromStringList(ownersList), jsonNodeFromStringList(readersList));
-    return permissionsPair;
+    return new Pair<>(jsonNodeFromStringList(ownersList), jsonNodeFromStringList(readersList));
   }
 
   /**

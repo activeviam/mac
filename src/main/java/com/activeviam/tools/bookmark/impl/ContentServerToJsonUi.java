@@ -150,8 +150,11 @@ class ContentServerToJsonUi {
       SnapshotNode nodeInternalTree,
       Map<String, BasicJsonContentEntry> folderEntries) {
     nodeInternalTree.setEntry(nodeContentTree.getEntry());
+
+    @SuppressWarnings("unchecked")
     Map<String, SnapshotContentTree> children =
         (Map<String, SnapshotContentTree>) nodeContentTree.getChildren();
+
     for (Map.Entry<String, SnapshotContentTree> child : children.entrySet()) {
       SnapshotNode childNode = new SnapshotNode(child.getKey());
       childNode.setPath(
@@ -258,7 +261,6 @@ class ContentServerToJsonUi {
        */
       String name =
           encodeForFilesystems(retrievePropertyFromContent(content, key, CsConstants.Tree.NAME));
-      JsonNode descriptionJsonNode = null;
 
       Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
       final Path folderName =
@@ -281,7 +283,7 @@ class ContentServerToJsonUi {
       }
 
       JsonNode entryNode = mapper.readTree(content.getChildren().get(key).getEntry().getContent());
-      descriptionJsonNode = entryNode.path(CsConstants.Tree.DESCRIPTION);
+      JsonNode descriptionJsonNode = entryNode.path(CsConstants.Tree.DESCRIPTION);
       if (!folderEntries.containsKey(key)
           && !entryNode
               .path(CsConstants.Tree.TYPE)

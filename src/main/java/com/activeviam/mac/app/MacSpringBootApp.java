@@ -36,7 +36,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @Import({MacServerConfig.class})
 public class MacSpringBootApp {
 
-  /* Before anything else we statically initialize the Quartet FS Registry. */ {
+  /* Before anything else we statically initialize the Quartet FS Registry. */
+  static {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 

@@ -1,5 +1,5 @@
 /*
- * (C) ActiveViam 2018
+ * (C) ActiveViam 2018-2021
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
@@ -60,17 +60,102 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
-  /**
-   * The main monitoring cube.
-   *
-   * <p>This Cube is based from Chunk facts
-   */
+  /** The main monitoring cube name. */
   public static final String MONITORING_CUBE = "MemoryCube";
 
+  /** The main monitoring schema name. */
   public static final String MONITORING_SCHEMA = "MemorySchema";
 
+  /** The {@link QueriesTimeLimit} timeout duration. */
   public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(15);
 
+  // region formatters
+  /** Formatter for Numbers. */
+  public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
+  /** Formatter for Percentages. */
+  public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
+  // endregion
+
+  // region dimensions
+  /** Name of the Chunk Hierarchy. */
+  public static final String CHUNK_DIMENSION = "Chunks";
+
+  /** Name of the component dimension. */
+  public static final String COMPONENT_DIMENSION = "Components";
+  /** Name of the component dimension. */
+  public static final String OWNER_DIMENSION = "Owners";
+  /** Name of the owner type analysis hierarchy. */
+  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
+  /** Name of the field dimension. */
+  public static final String FIELD_DIMENSION = "Fields";
+  /** Name of the index dimension. */
+  public static final String INDEX_DIMENSION = "Indices";
+  /** Name of the version dimension. */
+  public static final String VERSION_DIMENSION = "Versions";
+  /** Name of the aggregate provider dimension. */
+  public static final String AGGREGATE_PROVIDER_DIMENSION = "Aggregate Provider";
+  /** Name of the partition dimension. */
+  public static final String PARTITION_DIMENSION = "Partitions";
+  /** Name of the used by version dimension. */
+  public static final String USED_BY_VERSION_DIMENSION = "Used by Version";
+  // endregion
+
+  // region hierarchies
+  /** The name of the hierarchy of indexed fields. */
+  public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+  /** The name of the hierarchy of indexed fields. */
+  public static final String INDEX_TYPE_HIERARCHY = "Index Type";
+  /** Name of the owner hierarchy. */
+  public static final String OWNER_HIERARCHY = "Owner";
+  /** Name of the component hierarchy. */
+  public static final String COMPONENT_HIERARCHY = "Component";
+  /** Name of the field hierarchy. */
+  public static final String FIELD_HIERARCHY = "Field";
+  /** The name of the hierarchy of reference names. */
+  public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
+  /** The name of the hierarchy of provider ids. */
+  public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
+  /** The name of the hierarchy of provider types. */
+  public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+  /** The name of the hierarchy of provider categories. */
+  public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
+  /** The name of the hierarchy of managers. */
+  public static final String MANAGER_HIERARCHY = "Manager";
+  /** The name of the hierarchy of owner components. */
+  public static final String CHUNK_ID_HIERARCHY = "ChunkId";
+  /** The name of the hierarchy of partitions. */
+  public static final String PARTITION_HIERARCHY = "Partition";
+  /** Name of the branch hierarchy. */
+  public static final String BRANCH_HIERARCHY = "Branch";
+  /** Name of the internal epoch id hierarchy. */
+  public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
+  /** Name of the epoch id hierarchy. */
+  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+  /** Name of the date hierarchy. */
+  public static final String DATE_HIERARCHY = "Date";
+  // endregion
+
+  // region levels
+  /** Java class of the chunk. */
+  public static final String CHUNK_CLASS_LEVEL = "Class";
+  /** Type of the structure owning the chunk. */
+  public static final String CHUNK_TYPE_LEVEL = "Type";
+
+  /** Name of the chunk dump level. */
+  public static final String CHUNK_DUMP_NAME_LEVEL = "Import info";
+
+  /** Type of the structure owning the chunk. */
+  public static final String CHUNK_PARENT_ID_LEVEL = "ParentID";
+
+  /** Level for the Ids of the dictionary. */
+  public static final String CHUNK_DICO_ID_LEVEL = "DicoID";
+  /** Level for the Ids of the references. */
+  public static final String CHUNK_REF_ID_LEVEL = "ReferenceID";
+  /** Level for the Ids of the indexes. */
+  public static final String CHUNK_INDEX_ID_LEVEL = "IndexID";
+  // endregion
+
+  // region measures
   /** Measure of the summed off-heap memory footprint. */
   public static final String DIRECT_MEMORY_SUM = "DirectMemory.SUM";
 
@@ -95,47 +180,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
    * entire on-heap footprint of the entire ActivePivot Application
    */
   public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
-
-  /** Java class of the chunk. */
-  public static final String CHUNK_CLASS_LEVEL = "Class";
-  /** Type of the structure owning the chunk. */
-  public static final String CHUNK_TYPE_LEVEL = "Type";
-
-  /** Name of the chunk dump level. */
-  public static final String CHUNK_DUMP_NAME_LEVEL = "Import info";
-
-  /** Type of the structure owning the chunk. */
-  public static final String CHUNK_PARENT_ID_LEVEL = "ParentID";
-
-  /** Level for the Ids of the dictionary. */
-  public static final String CHUNK_DICO_ID_LEVEL = "DicoID";
-  /** Level for the Ids of the references. */
-  public static final String CHUNK_REF_ID_LEVEL = "ReferenceID";
-  /** Level for the Ids of the indexes. */
-  public static final String CHUNK_INDEX_ID_LEVEL = "IndexID";
-
-  /** Name of the Chunk Hierarchy. */
-  public static final String CHUNK_DIMENSION = "Chunks";
-
-  /** Name of the component dimension. */
-  public static final String COMPONENT_DIMENSION = "Components";
-  /** Name of the component dimension. */
-  public static final String OWNER_DIMENSION = "Owners";
-  /** Name of the owner type analysis hierarchy. */
-  public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
-  /** Name of the field dimension. */
-  public static final String FIELD_DIMENSION = "Fields";
-  /** Name of the index dimension. */
-  public static final String INDEX_DIMENSION = "Indices";
-  /** Name of the version dimension. */
-  public static final String VERSION_DIMENSION = "Versions";
-  /** Name of the aggregate provider dimension. */
-  public static final String AGGREGATE_PROVIDER_DIMENSION = "Aggregate Provider";
-  /** Name of the partition dimension. */
-  public static final String PARTITION_DIMENSION = "Partitions";
-  /** Name of the used by version dimension. */
-  public static final String USED_BY_VERSION_DIMENSION = "Used by Version";
-
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
   /** Total on-heap memory committed by the JVM. */
@@ -188,51 +232,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String COMMITTED_CHUNK = "CommittedChunk";
   /** The ratio of committed rows within chunks. */
   public static final String COMMITTED_MEMORY_RATIO = "CommittedMemory.Ratio";
+  // endregion
 
-  /** Formatter for Numbers. */
-  public static final String NUMBER_FORMATTER = NumberFormatter.TYPE + "[#,###]";
-  /** Formatter for Percentages. */
-  public static final String PERCENT_FORMATTER = NumberFormatter.TYPE + "[#.##%]";
-
-  /** The name of the hierarchy of indexed fields. */
-  public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
-  /** The name of the hierarchy of indexed fields. */
-  public static final String INDEX_TYPE_HIERARCHY = "Index Type";
-  /** Name of the owner hierarchy. */
-  public static final String OWNER_HIERARCHY = "Owner";
-  /** Name of the component hierarchy. */
-  public static final String COMPONENT_HIERARCHY = "Component";
-  /** Name of the field hierarchy. */
-  public static final String FIELD_HIERARCHY = "Field";
-  /** The name of the hierarchy of reference names. */
-  public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
-  /** The name of the hierarchy of provider ids. */
-  public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
-  /** The name of the hierarchy of provider types. */
-  public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
-  /** The name of the hierarchy of provider categories. */
-  public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
-  /** The name of the hierarchy of managers. */
-  public static final String MANAGER_HIERARCHY = "Manager";
-  /** The name of the hierarchy of owner components. */
-  public static final String CHUNK_ID_HIERARCHY = "ChunkId";
-  /** The name of the hierarchy of partitions. */
-  public static final String PARTITION_HIERARCHY = "Partition";
-  /** Name of the branch hierarchy. */
-  public static final String BRANCH_HIERARCHY = "Branch";
-  /** Name of the internal epoch id hierarchy. */
-  public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
-  /** Name of the epoch id hierarchy. */
-  public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
-  /** Name of the date hierarchy. */
-  public static final String DATE_HIERARCHY = "Date";
-
+  // region folders
   /** The name of the folder for measures related to application memory metrics. */
   public static final String APPLICATION_FOLDER = "Application Memory";
   public static final String DICTIONARY_FOLDER = "Dictionary";
   public static final String CHUNK_FOLDER = "Chunk";
   public static final String VECTOR_FOLDER = "Vector";
   public static final String INTERNAL_FOLDER = "Internal";
+  // endregion
 
   @Bean
   @Override
@@ -249,17 +258,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   @Override
   public IDatastoreSchemaDescription userSchemaDescription() {
     return new MemoryAnalysisDatastoreDescription();
-  }
-
-  /**
-   * Prefixes a field by another string.
-   *
-   * @param prefix string to prepend
-   * @param field field to be prefixed
-   * @return the prefixed string
-   */
-  protected static String prefixField(String prefix, String field) {
-    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
   }
 
   private ISelectionDescription memorySelection() {
@@ -280,10 +278,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .build();
   }
 
+  /**
+   * Prefixes a field by another string.
+   *
+   * @param prefix string to prepend
+   * @param field field to be prefixed
+   * @return the prefixed string
+   */
+  private static String prefixField(String prefix, String field) {
+    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
+  }
+
   private IActivePivotInstanceDescription memoryCube() {
     return StartBuilding.cube(MONITORING_CUBE)
         .withCalculations(this::copperCalculations)
-        .withMeasures(this::measures)
+        .withMeasures(this::nativeMeasures)
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(QueriesTimeLimit.of(
             TIMEOUT_DURATION.getSeconds(), TimeUnit.SECONDS))
@@ -427,7 +436,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withProperty("description", "The field(s) associated with the chunk, if any");
   }
 
-  private IHasAtLeastOneMeasure measures(ICanStartBuildingMeasures builder) {
+  private IHasAtLeastOneMeasure nativeMeasures(ICanStartBuildingMeasures builder) {
     return builder
         .withContributorsCount()
         .withFormatter(NUMBER_FORMATTER)
@@ -468,12 +477,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private void joinReferencesToChunks(ICopperContext context) {
-    final CopperStore chunkToReferenceStore =
-        Copper.store(DatastoreConstants.REFERENCE_STORE)
-            .joinToCube()
-            .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
+    final CopperStore chunkToReferenceStore = Copper.store(DatastoreConstants.REFERENCE_STORE)
+        .joinToCube()
+        .withMapping(DatastoreConstants.REFERENCE_ID, CHUNK_REF_ID_LEVEL)
+        .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+        .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
         .from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
@@ -481,15 +489,14 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   private void joinIndexesToChunks(ICopperContext context) {
-    final CopperStore chunkToIndexStore =
-        Copper.store(DatastoreConstants.INDEX_STORE)
-            .joinToCube()
-            .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
-            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
+    final CopperStore chunkToIndexStore = Copper.store(DatastoreConstants.INDEX_STORE)
+        .joinToCube()
+        .withMapping(DatastoreConstants.INDEX_ID, CHUNK_INDEX_ID_LEVEL)
+        .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
+        .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -583,21 +590,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     nonWrittenRowsCount
         .withType(ILiteralType.DOUBLE)
-        .as("0") // FIXME: workaround PIVOT-4458
+        .as("0") // FIXME: workaround
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
         .publish(context);
 
-    final CopperMeasure committedRows =
-        chunkSize
-            .minus(nonWrittenRowsCount)
-            .withFormatter(NUMBER_FORMATTER)
-            .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
-            .as(COMMITTED_ROWS)
-            .withinFolder(CHUNK_FOLDER)
-            .publish(context);
+    final CopperMeasure committedRows = chunkSize
+        .minus(nonWrittenRowsCount)
+        .withFormatter(NUMBER_FORMATTER)
+        .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
+        .as(COMMITTED_ROWS)
+        .withinFolder(CHUNK_FOLDER)
+        .publish(context);
 
     committedRows
         .divide(chunkSize)

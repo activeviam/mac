@@ -42,8 +42,8 @@ Inline-style:
 The service exposes again the path to its export directory, in case you are unaware of the application configuration.
 
 Within the operation screen, you have the ability to export a report for the entire application - see the following 
-screenshot - or for a selected range of epochs. Exporting a range allows to export only the memory required for a given 
-epoch or series of epochs. Exporting the whole application helps detecting how much memory is truly retained, often
+screenshot - or for a selected range of epochs. Exporting a range allows exporting only the memory required for a given 
+epoch or series of epochs. Exporting the whole application helps detect how much memory is truly retained, often
 by objects leaking memory.
 
 When exporting the whole application, you are asked to provide a name for the export. This name is used to create a
@@ -100,12 +100,12 @@ As an example, in the case of the sandbox application, we have the following exp
  - store_Trade.json.sz
 
 **Each file contains all the information for a complete loading in the MAC application.** Therefore, it is possible
-to only import the reports for one ActivePivot or a selection of stores.
+to only import the reports for one ActivePivot, or a selection of stores.
 
 Importing data into MAC
 --------------
 
-By default in the configuration, the MAC application will look for a directory named _statistics_ in the current
+By default, in the configuration, the MAC application will look for a directory named _statistics_ in the current
 working directory. Every file containing `.json` will be considered as containing memory statistics and will be loaded.
 The pattern matches both a decompressed file, such as _store_Trade.json_ as well as a compressed entry, such as
 _store_Risk.json.sz_.
@@ -124,7 +124,7 @@ statistics
     '- store_Risk.json.sz
 ```
 
-MAC will load two batch of data tagged with _export-1_ and _export-2_. The two batches can now be compared in the UI
+MAC will load two batches of data tagged with _export-1_ and _export-2_. The two batches can now be compared in the UI
 using the hierarchy _Imported Data_.
 
 ![loading-comparison](./assets/loading-comparison.png "Comparing the base measures for two loaded reports")
@@ -132,5 +132,5 @@ using the hierarchy _Imported Data_.
 ### Automatic loading
 
 MAC is monitoring the directory _statistics_ for any changes. If you add a new directory or new files in the directory,
-they will be automatically loaded. This allows to load reports in several operations, dynamically add a new report
+they will be automatically loaded. This allows loading reports in several operations, dynamically add a new report
 without restarting the application or update already imported reports.

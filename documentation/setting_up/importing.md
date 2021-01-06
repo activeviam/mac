@@ -42,5 +42,5 @@ measures for two loaded reports")
 MAC is monitoring the statistics directory for any changes. If you add a new
 directory or new files in the directory, they will be automatically loaded.
 
-This allows to load reports in several operations, dynamically add a new report
+This allows loading reports in several operations, dynamically add a new report
 without restarting the application or update already imported reports.

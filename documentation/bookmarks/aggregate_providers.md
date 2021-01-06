@@ -24,4 +24,4 @@ the measure in the aggregate store it corresponds to.
 ## Levels
 
 A view that exposes memory consumption of cubes associated with the dictionaries
-the cubes use to store level information.
+used to store level information.

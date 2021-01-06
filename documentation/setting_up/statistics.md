@@ -33,7 +33,7 @@ files:
 > Each file contains all the information for a complete loading in the MAC
 > application.
 > 
-> Therefore, it is possible to only import the reports for one ActivePivot or a
+> Therefore, it is possible to only import the reports for one ActivePivot, or a
 > selection of stores.
 
 ## Decompressing Statistics Files

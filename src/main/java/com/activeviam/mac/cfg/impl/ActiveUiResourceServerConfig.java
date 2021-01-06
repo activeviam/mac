@@ -10,8 +10,6 @@ package com.activeviam.mac.cfg.impl;
 import com.qfs.server.cfg.impl.ASpringResourceServerConfig;
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -61,7 +59,7 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
    */
   @Override
   public Set<String> getServedExtensions() {
-    return Stream.of(
+    return Set.of(
             // Default HTML files
             "html",
             "js",
@@ -78,8 +76,7 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
             "svg",
             "ttf",
             "woff",
-            "woff2")
-        .collect(Collectors.toSet());
+            "woff2");
   }
 
   @Override
@@ -93,10 +90,9 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
     // You can read more about this feature here
     // https://support.activeviam.com/documentation/activeui/4.2.0/dev/setup/maven-integration.html
 
-    return Stream.of(
+    return Set.of(
             "/activeui/", // index.html, favicon.ico, etc.
-            "classpath:META-INF/resources/webjars/activeui/") // ActiveUI SDK UMD scripts
+            "classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts
         // and supporting assets
-        .collect(Collectors.toSet());
   }
 }

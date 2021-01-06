@@ -44,7 +44,6 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   private Pair<IDatastore, IActivePivotManager> monitoredApp;
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
-  private IMemoryStatistic statistics;
 
   @BeforeClass
   public static void setupRegistry() {
@@ -57,7 +56,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    statistics = loadMemoryStatFromFolder(exportPath);
+    IMemoryStatistic statistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication(statistics);
 

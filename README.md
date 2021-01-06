@@ -4,7 +4,7 @@ Memory Analysis Cube
 The Memory Analysis Cube (MAC) is a project that allows the exploration and analysis of
 the data consumption from any ActivePivot application. This project builds as a
 stand-alone SpringBoot jar file that with an embedded ActiveUI app available on
-`localhost:9092`
+`localhost:9092`.
 
 Features
 --------
@@ -15,17 +15,15 @@ Features
 - Overview of structure-related memory footprint
 - Loading and comparing several ActivePivot applications' exported memory dumpFiles
 
-###  Cube structure
+### Memory Cube
 
-#### Memory Cube
-
-This is the main cube, and is the entry point for data investigation. This cube is based
+MAC is an ActiePivot application composed of a single cube. This cube is based
 on Chunk facts, which atomically contain all the off-heap data used by ActivePivot. Some
 important measures are provided :
 - Off Heap memory footprint
 - On heap memory footprint _(Warning, this measure only aggregates data on chunks, but not
-  all on-heap objects held by ActivePivot on heap are using chunks, do not use this
-  measure to assume total on-heap memory usage by Active Pivot)_
+  all on-heap objects held by ActivePivot are using chunks, do not use this
+  measure to assume total on-heap memory usage by ActivePivot)_
 - Amount/Ratio of free rows in chunks
 - Amount/Ratio of deleted rows in chunks
 - Total direct memory footprint of an application
@@ -35,7 +33,7 @@ Multi-dimensional analysis can be done on the loaded data through the following
 hierarchies:
 - Owner: Chunks are raw data, but they are always held by a high-level structure. This can
   be a Store of the Datastore or an ActivePivot. Some structures are shared by multiple
-  Stores or a Store and a Pivot. In this case, the chunk is marked as **shared**.
+  Stores, or a Store and a Pivot. In this case, the chunk is marked as **shared**.
 - Component: Stores and ActivePivots are made of several components - Indexes, References,
   PointIndex, etc. This hierarchy describes these components. As for the owner, a chunk
   belonging to several components is marked as **shared**.

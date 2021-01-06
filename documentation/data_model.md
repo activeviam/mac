@@ -24,7 +24,7 @@ by MAC's hierarchies and dimensions and can be queried upon.
     > based on this measure.
     >
     > These estimates rely on manual calculations from within the application
-    > that can not precisely capture on-heap memory consumption, and much less
+    > that cannot precisely capture on-heap memory consumption, and much less
     > its attribution to higher level structures.
     >
     > Please use another tool dedicated to analysis of on-heap memory for Java
@@ -126,7 +126,7 @@ The internal ID that identifies the chunk.
 
 The java class used by the chunk.
 
-This can be useful to check whether or not chunk compression is used by looking
+This can be useful to check whether chunk compression is used by looking
 for classes using some sort of compression on their data.
 
 ### DicoID
@@ -251,8 +251,8 @@ A single-level hierarchy whose members are the epoch ids of the exported chunks.
 
 ### Used By Version
 
-This single-level hierarchy describes, for each chunk and epoch id whether or
-not the chunk is "used" by the corresponding version i.e. if it has not been
+This single-level hierarchy describes, for each chunk and epoch id whether
+the chunk is "used" by the corresponding version i.e. if it has not been
 flagged as deleted in a previous version.
 
 * `TRUE`: the chunk is still used by the expressed epoch

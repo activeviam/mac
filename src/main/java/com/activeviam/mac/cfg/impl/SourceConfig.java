@@ -57,27 +57,32 @@ public class SourceConfig {
   /** Logger. */
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
+  /** The name of the property that holds the path to the statistics folder. */
+  public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
+
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired protected IDatastore datastore;
+  @Autowired
+  protected IDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  @Autowired protected Environment env;
+  @Autowired
+  protected Environment env;
 
   /**
    * Provides a {@link DirectoryCSVTopic topic}.
    *
    * <p>The provided topic is based on the content of the folder defined by the {@code
    * statistic.folder} environment property. By default, the property is defined in the {@code
-   * ./src/main/resources/application.yml } ressource file.
+   * ./src/main/resources/application.yml} resource file.
    *
    * @return a topic based on the content of the directory.
    * @throws IllegalStateException if the required {@code statistic.folder} property is not defined
-   *     in the environment
+   * in the environment
    */
   @Bean
   @Lazy
   public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
-    final String statisticFolder = env.getRequiredProperty("statistic.folder");
+    final String statisticFolder = env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
     if (LOGGER.isLoggable(Level.INFO)) {
       final Path folderPath = Paths.get(statisticFolder);
       LOGGER.info(
@@ -144,7 +149,8 @@ public class SourceConfig {
   /**
    * Processes file events.
    *
-   * <p>Only file creations/additions to the directory watched are processed. File modifications and
+   * <p>Only file creations/additions to the directory watched are processed. File modifications
+   * and
    * deletions are not supported.
    *
    * @param event event to be processed
@@ -154,7 +160,7 @@ public class SourceConfig {
       // Load stat
       loadFromProviders(event);
     } else {
-      // In the case where a new direction is added, we use the differential reload to acces its
+      // In the case where a new direction is added, we use the differential reload to access its
       // content and load it.
       final var diffEvent = statisticTopic().differentialReload();
       if (diffEvent != null) {
@@ -260,6 +266,7 @@ public class SourceConfig {
       name = "Load statistic directory",
       desc = "Load statistics from a full directory",
       params = {"path"})
+  @SuppressWarnings("unused")
   public String loadDirectory(final String path) throws IOException {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Loading user data from " + path);
@@ -287,6 +294,7 @@ public class SourceConfig {
       name = "Load statistic file",
       desc = "Load statistic from a single file.",
       params = {"path"})
+  @SuppressWarnings("unused")
   public String loadFile(final String path) {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Loading user data from " + path);

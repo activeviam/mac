@@ -60,8 +60,15 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    */
   public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
 
+  /**
+   * The name of the property that controls whether or not to force the reloading of the predefined
+   * bookmarks even if they were already loaded previously.
+   */
+  public static final String FORCE_BOOKMARK_RELOAD_PROPERTY = "bookmarks.reloadOnStartup";
+
   /** Instance of the Spring context environment. */
-  @Autowired public Environment env;
+  @Autowired
+  public Environment env;
 
   /**
    * [Bean] Configuration for the Content Service database.
@@ -138,6 +145,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       name = "exportBookMarks",
       desc = "Export the current bookmark structure",
       params = {})
+  @SuppressWarnings("unused")
   public void exportBookMarks() {
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
@@ -156,7 +164,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   /** Returns true if the bookmarks must be reloaded even if already present. */
   private boolean shouldReloadBookmarks() {
-    return this.env.getProperty("bookmarks.reloadOnStartup", Boolean.class, Boolean.FALSE);
+    return this.env.getProperty(FORCE_BOOKMARK_RELOAD_PROPERTY, Boolean.class, false);
   }
 
   /**
@@ -164,7 +172,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    * you don't want to use the same as we do, you don't need it.
    *
    * @param hibernateProperties the hibernate properties loaded from <i>hibernate.properties</i>
-   *     file.
+   * file.
    * @return the {@link DataSource} for {@link HibernateContentService}.
    */
   private static DataSource createTomcatJdbcDataSource(Properties hibernateProperties) {
@@ -173,8 +181,8 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       Class<?> dataSourceKlass = Class.forName("org.apache.tomcat.jdbc.pool.DataSourceFactory");
       Method createDataSourceMethod =
           dataSourceKlass.getMethod("createDataSource", Properties.class);
-      return (DataSource)
-          createDataSourceMethod.invoke(dataSourceKlass.newInstance(), hibernateProperties);
+      return (DataSource) createDataSourceMethod.invoke(
+          dataSourceKlass.getDeclaredConstructor().newInstance(), hibernateProperties);
     } catch (Exception e) {
       throw new BeanInitializationException("Initialization of " + DataSource.class + " failed", e);
     }

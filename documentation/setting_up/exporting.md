@@ -33,7 +33,7 @@ memory reports:
 * `exportVersions(String, long[])`: exports the application for all specified
   epoch ids
 
-The first string argument of these method is the name of the sub-directory the
+The first string argument of these methods is the name of the sub-directory the
 report should be stored in. Each method returns the `Path` in which the report
 can be found.
 
@@ -83,8 +83,8 @@ case you are unaware of the application configuration.
 
 Within the operation screen, you have the ability to export a report for the
 entire application - see the following screenshot - or for a selected range of
-epochs. Exporting a range allows to export only the memory required for a given
-epoch or series of epochs. Exporting the whole application helps detecting how
+epochs. Exporting a range allows exporting only the memory required for a given
+epoch or series of epochs. Exporting the whole application helps detect how
 much memory is truly retained, often by objects leaking memory.
 
 #### Full Export

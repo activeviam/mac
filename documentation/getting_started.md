@@ -2,7 +2,7 @@
 
 The Memory Analysis Cube (MAC) is an ActivePivot project that aims to provide
 the necessary tools to explore and analyze the data consumption from any other
-ActivePivot application, starting from ActivePivot 5.8 onwards.
+ActivePivot application, starting from ActivePivot 5.8 onward.
 
 ## Main Features
 
