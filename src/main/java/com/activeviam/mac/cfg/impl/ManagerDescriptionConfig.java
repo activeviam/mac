@@ -239,6 +239,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String APPLICATION_FOLDER = "Application Memory";
   public static final String DICTIONARY_FOLDER = "Dictionary";
   public static final String CHUNK_FOLDER = "Chunk";
+  public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
   public static final String VECTOR_FOLDER = "Vector";
   public static final String INTERNAL_FOLDER = "Internal";
   // endregion
@@ -542,20 +543,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withinFolder(CHUNK_FOLDER)
         .publish(context);
 
-    final CopperMeasure directMemory =
-        Copper.agg(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, SingleValueFunction.PLUGIN_KEY)
-            .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(CHUNK_DUMP_NAME_LEVEL))
-            .sum()
-            .as(DIRECT_MEMORY_SUM)
-            .withFormatter(ByteFormatter.KEY)
-            .withinFolder(CHUNK_FOLDER)
-            .publish(context);
-
     perChunkAggregation(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
         .sum()
         .as(HEAP_MEMORY_SUM)
         .withFormatter(ByteFormatter.KEY)
-        .withinFolder(CHUNK_FOLDER)
+        .withinFolder(CHUNK_MEMORY_FOLDER)
         .publish(context);
 
     final CopperMeasure chunkSize =
@@ -578,6 +570,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .sum()
         .withFormatter(NUMBER_FORMATTER)
         .as(DELETED_ROWS_COUNT)
+        .withinFolder(CHUNK_FOLDER)
         .publish(context)
 
         .withType(ILiteralType.DOUBLE)
@@ -607,18 +600,27 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     committedRows
         .divide(chunkSize)
+        .withFormatter(PERCENT_FORMATTER)
+        .as(COMMITTED_MEMORY_RATIO)
+        .withinFolder(CHUNK_FOLDER)
+        .publish(context);
+
+    final CopperMeasure directMemory =
+        Copper.agg(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, SingleValueFunction.PLUGIN_KEY)
+            .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(CHUNK_DUMP_NAME_LEVEL))
+            .sum()
+            .as(DIRECT_MEMORY_SUM)
+            .withFormatter(ByteFormatter.KEY)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .publish(context);
+
+    committedRows
+        .divide(chunkSize)
         .multiply(directMemory)
         .withType(ILiteralType.LONG)
         .withFormatter(ByteFormatter.KEY)
         .as(COMMITTED_CHUNK)
-        .withinFolder(CHUNK_FOLDER)
-        .publish(context);
-
-    committedRows
-        .divide(chunkSize)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(COMMITTED_MEMORY_RATIO)
-        .withinFolder(CHUNK_FOLDER)
+        .withinFolder(CHUNK_MEMORY_FOLDER)
         .publish(context);
 
     directMemory
@@ -627,7 +629,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .divide(directMemory.grandTotal())
         .withFormatter(PERCENT_FORMATTER)
         .as(DIRECT_MEMORY_RATIO)
-        .withinFolder(CHUNK_FOLDER)
+        .withinFolder(CHUNK_MEMORY_FOLDER)
         .publish(context);
 
     directMemory
@@ -636,7 +638,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .divide(Copper.measure(USED_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as(USED_MEMORY_RATIO)
-        .withinFolder(CHUNK_FOLDER)
+        .withinFolder(CHUNK_MEMORY_FOLDER)
         .publish(context);
 
     directMemory
@@ -645,7 +647,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .divide(Copper.measure(MAX_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as(MAX_MEMORY_RATIO)
-        .withinFolder(CHUNK_FOLDER)
+        .withinFolder(CHUNK_MEMORY_FOLDER)
         .publish(context);
   }
 

@@ -49,9 +49,6 @@ qfs:
 statistic:
   folder: ./statistics
 
-bookmarks:
-  reloadOnStartup: true
-
 content-service:
   db:
     hibernate:
