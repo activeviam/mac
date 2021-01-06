@@ -60,23 +60,23 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
   @Override
   public Set<String> getServedExtensions() {
     return Set.of(
-            // Default HTML files
-            "html",
-            "js",
-            "css",
-            "map",
-            "json",
-            // Image extensions
-            "png",
-            "jpg",
-            "gif",
-            "ico",
-            // Font extensions
-            "eot",
-            "svg",
-            "ttf",
-            "woff",
-            "woff2");
+        // Default HTML files
+        "html",
+        "js",
+        "css",
+        "map",
+        "json",
+        // Image extensions
+        "png",
+        "jpg",
+        "gif",
+        "ico",
+        // Font extensions
+        "eot",
+        "svg",
+        "ttf",
+        "woff",
+        "woff2");
   }
 
   @Override
@@ -91,8 +91,8 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
     // https://support.activeviam.com/documentation/activeui/4.2.0/dev/setup/maven-integration.html
 
     return Set.of(
-            "/activeui/", // index.html, favicon.ico, etc.
-            "classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts
-        // and supporting assets
+        "/activeui/", // index.html, favicon.ico, etc.
+        "classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts
+    // and supporting assets
   }
 }

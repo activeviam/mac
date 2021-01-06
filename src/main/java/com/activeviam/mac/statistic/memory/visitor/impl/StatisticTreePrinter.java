@@ -195,9 +195,7 @@ public class StatisticTreePrinter {
 
     @Override
     public String toString() {
-      return "Node{" + "childrenCount=" + children.size()
-          + ", item=" + item
-          + '}';
+      return "Node{" + "childrenCount=" + children.size() + ", item=" + item + '}';
     }
   }
 }

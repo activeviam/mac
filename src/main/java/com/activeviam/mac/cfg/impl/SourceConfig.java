@@ -61,12 +61,10 @@ public class SourceConfig {
   public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
 
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired
-  protected IDatastore datastore;
+  @Autowired protected IDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  @Autowired
-  protected Environment env;
+  @Autowired protected Environment env;
 
   /**
    * Provides a {@link DirectoryCSVTopic topic}.
@@ -77,7 +75,7 @@ public class SourceConfig {
    *
    * @return a topic based on the content of the directory.
    * @throws IllegalStateException if the required {@code statistic.folder} property is not defined
-   * in the environment
+   *     in the environment
    */
   @Bean
   @Lazy
@@ -149,8 +147,7 @@ public class SourceConfig {
   /**
    * Processes file events.
    *
-   * <p>Only file creations/additions to the directory watched are processed. File modifications
-   * and
+   * <p>Only file creations/additions to the directory watched are processed. File modifications and
    * deletions are not supported.
    *
    * @param event event to be processed

@@ -99,7 +99,7 @@ class JsonUiToContentServer {
    *
    * @param bookmarkFolder The bookmark folder.
    * @param defaultPermissions The default permissions to be used when no child or parent
-   * permissions are defined.
+   *     permissions are defined.
    * @return The SnapshotContentTree.
    */
   static SnapshotContentTree loadBookmarks(
@@ -182,7 +182,7 @@ class JsonUiToContentServer {
    * @param dir A flag which sets isDirectory to true/false.
    * @param parentPermissions The permissions of the parent folder.
    * @return SnapshotContentTree representing the given json file and the associated meta file, and
-   * its key, if contained in the metadata file.
+   *     its key, if contained in the metadata file.
    */
   private static IPair<SnapshotContentTree, String> createFileNode(
       File file, Boolean dir, Map<String, List<String>> parentPermissions) {
