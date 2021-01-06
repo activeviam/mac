@@ -1,111 +1,61 @@
-Memory Analysis Cube
-==============
+# Memory Analysis Cube
 
-The Memory Analysis Cube (MAC) is a project that allows the exploration and analysis of
-the data consumption from any ActivePivot application. This project builds as a
-stand-alone SpringBoot jar file that with an embedded ActiveUI app available on
-`localhost:9092`.
+The Memory Analysis Cube (MAC) is an ActivePivot project that aims to provide
+the necessary tools to explore and analyze the data consumption from any other
+ActivePivot application, starting from ActivePivot 5.8 onward.
 
-Features
---------
+The project is built as a standalone Spring Boot jar file with an embedded
+ActiveUI application available on `localhost:9092` by default.
 
-- Off Heap memory usage monitoring 
-- Store/Field-related memory footprint
-- Cube-related memory footprint
-- Overview of structure-related memory footprint
-- Loading and comparing several ActivePivot applications' exported memory dumpFiles
+## Main Features
 
-### Memory Cube
+* Off Heap memory usage monitoring 
+* Store/Field-related memory footprint
+* Cube-related memory footprint
+* Overview of structure-related memory footprint
+* Loading and comparing several ActivePivot applications' exported memory
+  dumpFiles
 
-MAC is an ActiePivot application composed of a single cube. This cube is based
-on Chunk facts, which atomically contain all the off-heap data used by ActivePivot. Some
-important measures are provided :
-- Off Heap memory footprint
-- On heap memory footprint _(Warning, this measure only aggregates data on chunks, but not
-  all on-heap objects held by ActivePivot are using chunks, do not use this
-  measure to assume total on-heap memory usage by ActivePivot)_
-- Amount/Ratio of free rows in chunks
-- Amount/Ratio of deleted rows in chunks
-- Total direct memory footprint of an application
-- Total on-heap memory footprint of an application 
+## Prepare your Application for Analysis
 
-Multi-dimensional analysis can be done on the loaded data through the following
-hierarchies:
-- Owner: Chunks are raw data, but they are always held by a high-level structure. This can
-  be a Store of the Datastore or an ActivePivot. Some structures are shared by multiple
-  Stores, or a Store and a Pivot. In this case, the chunk is marked as **shared**.
-- Component: Stores and ActivePivots are made of several components - Indexes, References,
-  PointIndex, etc. This hierarchy describes these components. As for the owner, a chunk
-  belonging to several components is marked as **shared**.
-- Class: the actual class of the chunk.
+ActivePivot 5.8+ applications come with a number of ways to export their memory
+usage in the form of memory report files, that can then be imported and analyzed
+using MAC.
 
-### Data Import
+The process is explained below:
 
-The import path of the application can be configured through the _application.yml_
-configuration file . The `statistic.folder` property defines the folder being watched by
-the application, the path can either be relative of absolute.
+* [exporting your application](documentation/setting_up/exporting.md)
+* [importing data in MAC](documentation/setting_up/importing.md)
+* [structure of memory statistics and decompressing generated
+  files](documentation/setting_up/statistics.md)
 
-`.json` files present in the specified folder and all its child directories will be read
-by the application. Imported data will be added separately in the `Imported Data`
-hierarchy between each folder. Note that files located at the root of the
-`statistic.folder` path will be given the name `autoload+ LocalTime.now().toString()`.
+## MAC Data Model
 
-It is not required to manually decompress the export files before using them in the
-application.
+To fully make use of MAC's capabilities for analyzing your project, it is
+important to get familiar with its [data model](data_model.md).
 
-### Data export
+## Bookmarks
 
-From ActivePivot 5.8.0, the `MemoryAnalysisService` class allows users to export the
-memory statistics of their application as a compressed `.json` file.
+MAC comes with a number of predefined bookmarks that each offer some insights to
+various aspects of the monitored application.
 
-It is possible to configure your application to expose the export methods of the
-`MemoryAnalysisService` through a MBean: 
+* [Overview](documentation/bookmarks/overview.md)
+* [Per-field Analysis](documentation/bookmarks/fields.md)
+* [Vector Block Analysis](documentation/bookmarks/vectors.md)
+* [Dictionary and Index
+  Analysis](documentation/bookmarks/dictionaries_indexes.md)
+* [Aggregate Provider Analysis](documentation/bookmarks/aggregate_providers.md)
 
-```java
-@Bean
-public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
-return new JMXEnabler(new MemoryAnalysisService(
-    this.datastoreConfig.datastore(),
-    this.apConfig.activePivotManager(),
-    this.datastoreConfig.datastore().getEpochManager(),
-    Paths.get(System.getProperty("java.io.tmpdir"))));
-}
-```
+## Known limitations
 
-This additional bean will create a new JMX endpoint named _MemoryAnalysisService_. It
-offers several operations to export your application memory reports.  
-Basically, you can export the whole application or a series of specific epochs. All
-methods require a folder name, in which the statistics will be written. This folder name
-will be created under the export directory - the OS temp directory, in the case of the
-above code.
+* This tool does not support projects with multiple datastores. It is possible
+  to import data from multiple datastores, but there are no ways to assign a
+  store to a given datastore nor prevent conflicts between store names.
+* On-heap memory analysis is currently not fully implemented. The application
+  only sums the memory used by Chunks. Please directly refer to the JMX beans of
+  your application or other analysis tools for a deeper investigation.
 
-Once exported, you can drop the resulting folder into your defined _statistic.folder_ and
-MAC will automatically load your data in the application.
+## Planned Improvements
 
-You will find our more detailed guide about exporting and importing memory reports in [our
-guide directory](./guides/export-data.md).
-
-Additional tools
-----------------
-
-### Decompress generated files
-
-ActivePivot memory tools will generate reports compressed with
-[Snappy](https://google.github.io/snappy/). As there are no standalone tool to easily
-decompress such files, this project provides a command to do so.  
-Run `mvn exec:java@unsnappy -Dunsnappy.file=<path/to/your/file>` to extract the content.
-
-Known limitations
------------------
-
- * This tool does not support projects with multiple datastores. It is possible to import
-   data from multiple datastores, but there are no ways to assign a store to a given
-   datastore nor prevent conflicts between store names.
- * On-heap memory analysis is currently not fully implemented. The application only sums
-   the memory used by Chunks. Please directly refer to the JMX beans of your application
-   or other analysis tools for a deeper investigation.
-
-Planned Improvements
---------------------
-
-- [ ] Display and use the consumed On-heap memory reported by the Memory Analysis.
+- [ ] Display and use the consumed On-heap memory reported by the Memory
+  Analysis.
