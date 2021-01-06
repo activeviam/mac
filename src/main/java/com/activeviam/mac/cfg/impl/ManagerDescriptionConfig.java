@@ -237,10 +237,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   // region folders
   /** The name of the folder for measures related to application memory metrics. */
   public static final String APPLICATION_FOLDER = "Application Memory";
+  /** The name of the folder for measures related to dictionaries. */
   public static final String DICTIONARY_FOLDER = "Dictionary";
+  /** The name of the folder for measures related to chunks. */
   public static final String CHUNK_FOLDER = "Chunk";
+  /** The name of the folder for measures related to chunk memory usage. */
   public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
+  /** The name of the folder for measures related to vectors. */
   public static final String VECTOR_FOLDER = "Vector";
+  /** The name of the folder for internal measures not intended for regular uses. */
   public static final String INTERNAL_FOLDER = "Internal";
   // endregion
 
