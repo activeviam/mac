@@ -596,8 +596,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withinFolder(CHUNK_FOLDER)
             .publish(context);
 
-    committedRows
-        .divide(chunkSize)
+    Copper.measure(COMMITTED_ROWS)
+        .divide(Copper.measure(CHUNK_SIZE_SUM))
         .withFormatter(PERCENT_FORMATTER)
         .as(COMMITTED_MEMORY_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -612,9 +612,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withinFolder(CHUNK_MEMORY_FOLDER)
             .publish(context);
 
-    committedRows
-        .divide(chunkSize)
-        .multiply(directMemory)
+    Copper.measure(COMMITTED_ROWS)
+        .divide(Copper.measure(CHUNK_SIZE_SUM))
+        .multiply(Copper.measure(DIRECT_MEMORY_SUM))
         .withType(ILiteralType.LONG)
         .withFormatter(ByteFormatter.KEY)
         .as(COMMITTED_CHUNK)
