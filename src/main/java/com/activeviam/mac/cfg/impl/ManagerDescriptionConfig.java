@@ -167,8 +167,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /**
    * Measure for counting the number of chunks.
    *
-   * <p>Not equal to {@code contributors.COUNT} since MAC's base store granularity is finer than the
-   * granularity of the chunk.
+   * <p>Not equal to {@code contributors.COUNT} since MAC's base store granularity is finer than
+   * the granularity of the chunk.
    */
   public static final String CHUNK_COUNT = "Chunks.COUNT";
 
@@ -213,9 +213,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
    */
   public static final String DELETED_ROWS_RATIO = "DeletedRows.Ratio";
   /** The number of committed rows within chunks. */
-  public static final String COMMITTED_ROWS = "CommittedRows.COUNT";
+  public static final String COMMITTED_ROWS_COUNT = "CommittedRows.COUNT";
   /** The size in bytes of chunk memory used to store effective data. */
-  public static final String COMMITTED_CHUNK = "CommittedChunkMemory.SUM";
+  public static final String COMMITTED_CHUNK_MEMORY = "CommittedChunkMemory.SUM";
   /** The ratio of committed rows within chunks. */
   public static final String COMMITTED_ROWS_RATIO = "CommittedRows.Ratio";
   // endregion
@@ -451,7 +451,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
+            .withMapping(
+                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
+                INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
         .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
@@ -481,7 +483,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -502,21 +504,25 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(USED_HEAP)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(APPLICATION_FOLDER)
+        .withDescription("the amount of heap memory used by the application")
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(COMMITTED_HEAP)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(APPLICATION_FOLDER)
+        .withDescription("the total size of the JVM heap")
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(USED_DIRECT)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(APPLICATION_FOLDER)
+        .withDescription("the amount of off-heap memory used by the application")
         .publish(context);
     Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
         .as(MAX_DIRECT)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(APPLICATION_FOLDER)
+        .withDescription("the amount of off-heap memory reserved by the application")
         .publish(context);
   }
 
@@ -525,6 +531,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .sum()
         .as(CHUNK_COUNT)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the number of contributing chunks")
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
@@ -532,6 +539,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(HEAP_MEMORY_SUM)
         .withFormatter(ByteFormatter.KEY)
         .withinFolder(CHUNK_MEMORY_FOLDER)
+        .withDescription("an estimate of the on-heap size of the chunks")
         .publish(context);
 
     final CopperMeasure chunkSize =
@@ -540,6 +548,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .as(CHUNK_SIZE_SUM)
             .withFormatter(ByteFormatter.KEY)
             .withinFolder(CHUNK_FOLDER)
+            .withDescription("a sum aggregation of the chunk sizes")
             .publish(context);
 
     final CopperMeasure nonWrittenRowsCount =
@@ -548,6 +557,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .as(NON_WRITTEN_ROWS_COUNT)
             .withFormatter(NUMBER_FORMATTER)
             .withinFolder(CHUNK_FOLDER)
+            .withDescription("the number of unused rows within the chunks")
             .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__FREE_ROWS)
@@ -555,13 +565,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(NUMBER_FORMATTER)
         .as(DELETED_ROWS_COUNT)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the number of freed rows within the chunks")
         .publish(context)
+
         .withType(ILiteralType.DOUBLE)
         .as("-") // FIXME: workaround PIVOT-4458
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
         .as(DELETED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the ratio of freed rows within the chunks")
         .publish(context);
 
     nonWrittenRowsCount
@@ -571,21 +584,24 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the ratio of unused rows within the chunks")
         .publish(context);
 
     chunkSize
         .minus(nonWrittenRowsCount)
         .withFormatter(NUMBER_FORMATTER)
         .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
-        .as(COMMITTED_ROWS)
+        .as(COMMITTED_ROWS_COUNT)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the number of committed (i.e. used) rows inside the chunks")
         .publish(context);
 
-    Copper.measure(COMMITTED_ROWS)
+    Copper.measure(COMMITTED_ROWS_COUNT)
         .divide(Copper.measure(CHUNK_SIZE_SUM))
         .withFormatter(PERCENT_FORMATTER)
         .as(COMMITTED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
+        .withDescription("the ratio of committed (i.e. used) rows inside the chunks")
         .publish(context);
 
     final CopperMeasure directMemory =
@@ -595,15 +611,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .as(DIRECT_MEMORY_SUM)
             .withFormatter(ByteFormatter.KEY)
             .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription("the off-heap size of the chunks")
             .publish(context);
 
-    Copper.measure(COMMITTED_ROWS)
+    Copper.measure(COMMITTED_ROWS_COUNT)
         .divide(Copper.measure(CHUNK_SIZE_SUM))
         .multiply(Copper.measure(DIRECT_MEMORY_SUM))
         .withType(ILiteralType.LONG)
         .withFormatter(ByteFormatter.KEY)
-        .as(COMMITTED_CHUNK)
+        .as(COMMITTED_CHUNK_MEMORY)
         .withinFolder(CHUNK_MEMORY_FOLDER)
+        .withDescription("the amount of memory in bytes used to store committed rows in chunks")
         .publish(context);
 
     directMemory
@@ -613,6 +631,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(PERCENT_FORMATTER)
         .as(DIRECT_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
+        .withDescription(
+            "the total ratio of off-heap memory consumed by the chunks relative to the total used "
+                + "chunk memory")
         .publish(context);
 
     directMemory
@@ -622,6 +643,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(PERCENT_FORMATTER)
         .as(USED_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
+        .withDescription(
+            "the total ratio of off-heap memory consumed by the chunks relative to the total used "
+                + "application committed memory")
         .publish(context);
 
     directMemory
@@ -631,6 +655,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withFormatter(PERCENT_FORMATTER)
         .as(MAX_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
+        .withDescription(
+            "the total ratio of off-heap memory consumed by the chunks relative to the total "
+                + "application committed memory")
         .publish(context);
   }
 
@@ -643,8 +670,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.agg(
-            chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
-            SingleValueFunction.PLUGIN_KEY)
+        chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
+        SingleValueFunction.PLUGIN_KEY)
         .filter(Copper.level(COMPONENT_HIERARCHY).eq(ParentType.DICTIONARY))
         .per(
             Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
@@ -654,6 +681,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .as(DICTIONARY_SIZE)
         .withFormatter(NUMBER_FORMATTER)
         .withinFolder(DICTIONARY_FOLDER)
+        .withDescription("the number of entries in the corresponding dictionary, when relevant")
         .publish(context);
   }
 
@@ -664,6 +692,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .doNotAggregateAbove()
         .as(VECTOR_BLOCK_REFCOUNT)
         .withinFolder(VECTOR_FOLDER)
+        .withDescription("the length of the vector block, when relevant")
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
@@ -672,6 +701,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .doNotAggregateAbove()
         .as(VECTOR_BLOCK_SIZE)
         .withinFolder(VECTOR_FOLDER)
+        .withDescription("the number of references to the vector block, when relevant")
         .publish(context);
   }
 

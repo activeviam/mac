@@ -6,50 +6,58 @@ by MAC's hierarchies and dimensions and can be queried upon.
 
 ## Measures
 
-* Application memory footprint: statistics that were exported using the memory
-  MBean of the application. Since they are application-wide, they have the same
-  value for all locations.
-  * UsedHeapMemory: the amount of heap memory used by the application
-  * CommittedHeapMemory: the total size of the JVM heap
-  * UsedDirectMemory: the amount of off-heap memory used by the application
-  * MaxDirectMemory: the amount of off-heap memory reserved by the application
-* Chunk memory footprint:
-  * DirectMemory.SUM: the off-heap size of the chunks
-  * DirectMemory.Ratio: the total ratio of off-heap memory consumed by the
-    chunks relative to the total used memory
-  * MaxMemory.Ratio: the total ratio of off-heap memory consumed by the chunks
-    relative to the total committed memory
-  * HeapMemory.SUM: an estimate of the on-heap size of the chunks
-    > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
-    > based on this measure.
-    >
-    > These estimates rely on manual calculations from within the application
-    > that cannot precisely capture on-heap memory consumption, and much less
-    > its attribution to higher level structures.
-    >
-    > Please use another tool dedicated to analysis of on-heap memory for Java
-    > applications instead.
-  * HeapMemory.Ratio: the total ratio of on-heap memory consumed by the chunks,
-    **relies on `HeapMemory.SUM`**
-* Chunk characteristics:
-  * Chunks.COUNT: the number of contributing chunks
-  * ChunkSize.SUM: a sum aggregation of the chunk sizes
-  * CommittedChunkMemory.SUM: the amount of memory in bytes used to store committed rows
-    in chunks
-  * CommittedRows.COUNT: the number of committed (non-deleted) rows inside the chunks
-  * CommittedRows.Ratio: the ratio of committed (non-deleted) rows inside the
-    chunks
-  * NonWrittenRows.COUNT: the number of deleted rows within the chunks
-  * NonWrittenRows.Ratio: the ratio of deleted rows within the chunks
-  * DeletedRows.COUNT: the number of freed rows within the chunks
-  * DeletedRows.Ratio: the ratio of freed rows within the chunks
-* DictionarySize.SUM: the number of entries in the corresponding dictionary, when
-  relevant
-* VectorBlock.Length: the length of the vector block, when relevant
-* VectorBlock.RefCount: the number of references to the vector block, when
-  relevant
+### Application memory footprint
+These measures come from statistics that were exported using the memory MBean of
+the application.
 
-> contributors.COUNT does not correspond to Chunks.COUNT
+Since they are application-wide, they have the same value for all locations.
+
+* `UsedHeapMemory`: the amount of heap memory used by the application
+* `CommittedHeapMemory`: the total size of the JVM heap
+* `UsedDirectMemory`: the amount of off-heap memory used by the application
+* `MaxDirectMemory`: the amount of off-heap memory reserved by the application
+
+### Chunk memory footprint:
+* `DirectMemory.SUM`: the off-heap size of the chunks
+* `DirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
+  relative to the total used chunk memory
+* `UsedMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
+  relative to the total used application committed memory
+* `MaxMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
+  relative to the total application committed memory
+* `HeapMemory.SUM`: an estimate of the on-heap size of the chunks
+  > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
+  > based on this measure.
+  >
+  > These estimates rely on manual calculations from within the application that
+  > can not precisely capture on-heap memory consumption, and much less its
+  > attribution to higher level structures.
+  >
+  > Please use another tool dedicated to analysis of on-heap memory for Java
+  > applications instead.
+* `HeapMemory.Ratio`: the total ratio of on-heap memory consumed by the chunks,
+  relies on **`HeapMemory.SUM`**
+* `CommittedChunkMemory.SUM`: the amount of memory in bytes used to store committed rows in
+      chunks
+
+### Chunk characteristics:
+* `Chunks.COUNT`: the number of contributing chunks
+  > `contributors.COUNT` does not correspond to `Chunks.COUNT`, so prefer using `Chunks.COUNT`.
+* `ChunkSize.SUM`: a sum aggregation of the chunk sizes
+* `CommittedRows.COUNT`: the number of committed (i.e. used) rows inside the chunks
+* `CommittedRows.Ratio`: the ratio of committed (i.e. used) rows inside the
+      chunks
+* `NonWrittenRows.COUNT`: the number of unused rows within the chunks
+* `NonWrittenRows.Ratio`: the ratio of unused rows within the chunks
+* `DeletedRows.COUNT`: the number of freed rows within the chunks
+* `DeletedRows.Ratio`: the ratio of freed rows within the chunks
+
+### Miscellaneous
+* `DictionarySize.SUM`: the number of entries in the corresponding dictionary, when
+  relevant
+* `VectorBlock.Length`: the length of the vector block, when relevant
+* `VectorBlock.RefCount`: the number of references to the vector block, when
+  relevant
 
 ## Owners
 
