@@ -1,3 +1,5 @@
 {
-  "key" : "aggregate_providers"
+  "key" : "aggregate_providers",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

@@ -1,3 +1,5 @@
 {
-  "key" : "overview"
+  "key" : "overview",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

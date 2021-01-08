@@ -1,3 +1,5 @@
 {
-  "key" : "dictionaries_indexes"
+  "key" : "dictionaries_indexes",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

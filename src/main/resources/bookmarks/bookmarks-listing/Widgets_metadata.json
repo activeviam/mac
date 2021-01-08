@@ -1,4 +1,6 @@
 {
   "key" : "widgets",
-  "description": "Predefined widgets for custom dashboards"
+  "description": "Predefined widgets for custom dashboards",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

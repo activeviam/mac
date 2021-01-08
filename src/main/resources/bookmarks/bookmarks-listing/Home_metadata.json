@@ -1,4 +1,6 @@
 {
   "key" : "home",
-  "description": ""
+  "description": "",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

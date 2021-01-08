@@ -1,3 +1,5 @@
 {
-  "key" : "fields"
+  "key" : "fields",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

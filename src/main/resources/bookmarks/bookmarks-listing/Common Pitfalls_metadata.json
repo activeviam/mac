@@ -1,0 +1,4 @@
+{
+  "key" : "common_pitfalls",
+  "description": "A page with common pitfalls regarding memory consumption, with hints and pointers to how to spot them and what can be done."
+}
