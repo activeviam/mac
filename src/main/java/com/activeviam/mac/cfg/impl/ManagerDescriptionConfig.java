@@ -79,7 +79,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   // region dimensions
   /** Name of the Chunk Hierarchy. */
   public static final String CHUNK_DIMENSION = "Chunks";
-
   /** Name of the component dimension. */
   public static final String COMPONENT_DIMENSION = "Components";
   /** Name of the component dimension. */
@@ -188,50 +187,37 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String USED_DIRECT = "UsedDirectMemory";
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
-
   /** Total on-heap memory footprint, relative to the total memory footprint of the application. */
   public static final String USED_MEMORY_RATIO = "UsedMemory.Ratio";
   /** Total off-heap memory footprint, relative to the total memory committed by the JVM. */
   public static final String MAX_MEMORY_RATIO = "MaxMemory.Ratio";
-
-  /**
-   * The dictionary size of the dictionary associated to a chunk.
-   *
-   * <p>Summed in case of multiple dictionaries.
-   */
-  public static final String DICTIONARY_SIZE = "Dictionary Size";
-
+  /** The dictionary size of the dictionary associated to a chunk. */
+  public static final String DICTIONARY_SIZE = "DictionarySize.SUM";
   /** For vector block facts, the number of references to the vector block. */
   public static final String VECTOR_BLOCK_REFCOUNT = "VectorBlock.RefCount";
   /** For vector block facts, the size the vector block. */
   public static final String VECTOR_BLOCK_SIZE = "VectorBlock.Length";
-
   /** Measure of the size of Chunks (in Bytes). */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
-
   /** Measure of the the non-written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
-
   /**
    * Measure of the the non-written rows in Chunks, relative to the total non-written rows in the
    * application.
    */
   public static final String NON_WRITTEN_ROWS_RATIO = "NonWrittenRows.Ratio";
-
   /** Measure of the deleted rows in Chunks. */
   public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
-
   /**
    * Measure of the deleted rows in Chunks, relative to the total deleted rows in the application.
    */
   public static final String DELETED_ROWS_RATIO = "DeletedRows.Ratio";
-
   /** The number of committed rows within chunks. */
-  public static final String COMMITTED_ROWS = "CommittedRows";
-  /** The number of committed chunks. */
-  public static final String COMMITTED_CHUNK = "CommittedChunk";
+  public static final String COMMITTED_ROWS = "CommittedRows.COUNT";
+  /** The size in bytes of chunk memory used to store effective data. */
+  public static final String COMMITTED_CHUNK = "CommittedChunkMemory.SUM";
   /** The ratio of committed rows within chunks. */
-  public static final String COMMITTED_MEMORY_RATIO = "CommittedMemory.Ratio";
+  public static final String COMMITTED_ROWS_RATIO = "CommittedRows.Ratio";
   // endregion
 
   // region folders
@@ -587,19 +573,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withinFolder(CHUNK_FOLDER)
         .publish(context);
 
-    final CopperMeasure committedRows =
-        chunkSize
-            .minus(nonWrittenRowsCount)
-            .withFormatter(NUMBER_FORMATTER)
-            .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
-            .as(COMMITTED_ROWS)
-            .withinFolder(CHUNK_FOLDER)
-            .publish(context);
+    chunkSize
+        .minus(nonWrittenRowsCount)
+        .withFormatter(NUMBER_FORMATTER)
+        .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
+        .as(COMMITTED_ROWS)
+        .withinFolder(CHUNK_FOLDER)
+        .publish(context);
 
     Copper.measure(COMMITTED_ROWS)
         .divide(Copper.measure(CHUNK_SIZE_SUM))
         .withFormatter(PERCENT_FORMATTER)
-        .as(COMMITTED_MEMORY_RATIO)
+        .as(COMMITTED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
         .publish(context);
 

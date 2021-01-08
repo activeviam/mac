@@ -140,7 +140,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + "     [Fields].[Field].[Field].Members,"
                 + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
                 + "   ),"
-                + "   [Measures].[Dictionary Size]"
+                + "   [Measures].[DictionarySize.SUM]"
                 + " ) ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("
@@ -167,7 +167,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
-                + " [Measures].[Dictionary Size] ON ROWS"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
@@ -178,9 +178,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + "     [Fields].[Field].[Field].Members,"
                 + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
                 + "   ),"
-                + "   [Measures].[Dictionary Size]"
+                + "   [Measures].[DictionarySize.SUM]"
                 + " ) ON COLUMNS,"
-                + " [Measures].[Dictionary Size] ON ROWS"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
@@ -203,7 +203,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + "     [Fields].[Field].[Field].Members,"
                 + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
                 + "   ) ON COLUMNS,"
-                + " [Measures].[Dictionary Size] ON ROWS"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("
                 + "   [Owners].[Owner].[ALL].[AllMember].[Store A],"

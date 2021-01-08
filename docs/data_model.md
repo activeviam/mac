@@ -34,16 +34,16 @@ by MAC's hierarchies and dimensions and can be queried upon.
 * Chunk characteristics:
   * Chunks.COUNT: the number of contributing chunks
   * ChunkSize.SUM: a sum aggregation of the chunk sizes
-  * CommittedChunk: the amount of memory in bytes used to store committed rows
+  * CommittedChunkMemory.SUM: the amount of memory in bytes used to store committed rows
     in chunks
-  * CommittedRows: the number of committed (non-deleted) rows inside the chunks
-  * CommittedMemory.Ratio: the ratio of committed (non-deleted) rows inside the
+  * CommittedRows.COUNT: the number of committed (non-deleted) rows inside the chunks
+  * CommittedRows.Ratio: the ratio of committed (non-deleted) rows inside the
     chunks
   * NonWrittenRows.COUNT: the number of deleted rows within the chunks
   * NonWrittenRows.Ratio: the ratio of deleted rows within the chunks
   * DeletedRows.COUNT: the number of freed rows within the chunks
   * DeletedRows.Ratio: the ratio of freed rows within the chunks
-* Dictionary Size: the number of entries in the corresponding dictionary, when
+* DictionarySize.SUM: the number of entries in the corresponding dictionary, when
   relevant
 * VectorBlock.Length: the length of the vector block, when relevant
 * VectorBlock.RefCount: the number of references to the vector block, when
