@@ -299,121 +299,199 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
       final ICanStartBuildingDimensions builder) {
     return builder
+        // todo: external class to make the file shorter? constants for descriptions, move this file's constants elsewhere
         .withDimension(CHUNK_DIMENSION)
+        .withProperty("description", "Holds low-level hierarchies for classifying chunks")
+
         .withHierarchy(CHUNK_ID_HIERARCHY)
+        .withProperty("description", "The ID of the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK_ID)
         .withProperty("description", "The ID of the chunk")
+
         .withHierarchy(CHUNK_TYPE_LEVEL)
+        .withProperty(
+            "description",
+            "The kind of data the chunk holds"
+                + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
         .withProperty(
             "description",
             "The kind of data the chunk holds"
                 + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
+
         .withHierarchy(CHUNK_PARENT_ID_LEVEL)
+        .withProperty(
+            "description",
+            "The internal ID associated with the parent"
+                + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
         .withProperty(
             "description",
             "The internal ID associated with the parent"
                 + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
+
         .withHierarchy(CHUNK_DICO_ID_LEVEL)
+        .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
         .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
+
         .withHierarchy(CHUNK_INDEX_ID_LEVEL)
+        .withProperty("description", "The ID of the index the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
         .withProperty("description", "The ID of the index the chunk is attributed to, if any")
+
         .withHierarchy(CHUNK_REF_ID_LEVEL)
+        .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
         .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
+
         .withHierarchy(CHUNK_CLASS_LEVEL)
+        .withProperty("description", "The java class of the chunk")
         .withLevelOfSameName()
         .withPropertyName(
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "The java class of the chunk")
+
         .withDimension(PARTITION_DIMENSION)
+        .withProperty("description", "The ID of the store or cube partition that holds the chunk")
         .withHierarchy(PARTITION_HIERARCHY)
         .withLevelOfSameName()
+        .withProperty("description", "The ID of the store or cube partition that holds the chunk")
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
         .withProperty("description", "The ID of the store or cube partition that holds the chunk")
+
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
+        .withProperty(
+            "description",
+            "Holds hierarchies with metadata on the statistics from which the chunks were "
+                + "retrieved")
+
         .withHierarchyOfSameName()
         .slicing()
+        .withProperty(
+            "description", "The source folder name from which the statistics were retrieved")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
         .withComparator(NaturalOrderComparator.type)
         .withProperty(
             "description", "The source folder name from which the statistics were retrieved")
+
         .withHierarchy(DATE_HIERARCHY)
+        .withProperty("description", "Date at which statistics were retrieved")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.APPLICATION__DATE)
         .withType(ILevelInfo.LevelType.TIME)
         .withComparator(ReverseOrderComparator.type)
         .withProperty("description", "Date at which statistics were retrieved")
+
         .withDimension(AGGREGATE_PROVIDER_DIMENSION)
+        .withProperty("description", "Holds hierarchies relative to pivot aggregate providers")
+
         .withHierarchy(MANAGER_HIERARCHY)
+        .withProperty("description", "The id of the manager associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
-        .withProperty("description", "The java class of the chunk")
+        .withProperty("description", "The id of the manager associated with the chunk, if any")
+
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
+        .withProperty(
+            "description",
+            "The type of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
         .withProperty(
             "description",
-            "The type of the aggregate provider associated with the chunk," + " if any")
+            "The type of the aggregate provider associated with the chunk, if any")
+
         .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
+        .withProperty(
+            "description",
+            "The category of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
         .withProperty(
             "description",
-            "The category of the aggregate provider associated with the " + "chunk, if any")
+            "The category of the aggregate provider associated with the chunk, if any")
+
         .withHierarchy(PROVIDER_ID_HIERARCHY)
+        .withProperty(
+            "description",
+            "The ID of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
         .withProperty(
             "description",
-            "The ID of the aggregate provider associated with the " + "chunk, if any")
+            "The ID of the aggregate provider associated with the chunk, if any")
+
         .withDimension(VERSION_DIMENSION)
+        .withProperty(
+            "description",
+            "Holds hierarchies relative to the versioning of the chunks")
+
         .withHierarchy(INTERNAL_EPOCH_ID_HIERARCHY)
         .hidden()
+        .withProperty(
+            "description",
+            "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
         .withProperty(
             "description",
-            "The internal epoch ID of the chunk (may be less than the " + "epoch to view)")
+            "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withComparator(ReverseOrderComparator.type)
+
         .withHierarchy(BRANCH_HIERARCHY)
         .slicing()
-        .withLevel(BRANCH_HIERARCHY)
+        .withProperty("description", "The branch of the chunk")
+        .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
         .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
-        .withProperty("description", "The branch of the chunk version")
+        .withProperty("description", "The branch of the chunk")
+
         .withHierarchy(USED_BY_VERSION_DIMENSION)
+        .withProperty(
+            "description",
+            "Whether or not the chunk is known to be used by the currently" + " viewed version")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
         .withProperty(
             "description",
             "Whether or not the chunk is known to be used by the currently" + " viewed version")
+
         .withDimension(OWNER_DIMENSION)
+        .withProperty("description", "The cube(s) or store(s) owning the chunk")
         .withHierarchy(OWNER_HIERARCHY)
+        .withProperty("description", "The cube(s) or store(s) owning the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__OWNER)
         .withProperty("description", "The cube(s) or store(s) owning the chunk")
+
         .withDimension(COMPONENT_DIMENSION)
+        .withProperty(
+            "description",
+            "The owning structure associated with the chunk (dictionary," + " index, ...)")
         .withHierarchy(COMPONENT_HIERARCHY)
+        .withProperty(
+            "description",
+            "The owning structure associated with the chunk (dictionary," + " index, ...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__COMPONENT)
         .withProperty(
             "description",
             "The owning structure associated with the chunk (dictionary," + " index, ...)")
+
         .withDimension(FIELD_DIMENSION)
+        .withProperty("description", "The field(s) associated with the chunk, if any")
         .withHierarchy(FIELD_HIERARCHY)
+        .withProperty("description", "The field(s) associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__FIELD)
         .withProperty("description", "The field(s) associated with the chunk, if any");
