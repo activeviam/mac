@@ -34,8 +34,7 @@ memory reports:
   epoch ids
 
 The first string argument of these methods is the name of the sub-directory the
-report should be stored in. Each method returns the `Path` in which the report
-can be found.
+report should be stored in. Each method returns the `Path` of the exported report.
 
 ## Export Memory Reports through an MBean
 
@@ -59,7 +58,7 @@ public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
 
 In the above code, we created a new service using the application Datastore and
 ActivePivot Manager. We also specified the directory of the export folder as the
-OS temp directory. All generated reports will be created inside that directory
+OS `temp` directory. All generated reports will be created inside that directory
 as sub-folders.
 
 The implementation `MemoryAnalysisService` is MBean friendly and will
@@ -78,14 +77,14 @@ In the MBean folder *com.quartetfs*, you will see the MBean
 ![mac-bean screen](../assets/mac-bean.png "MBean attributes of the
 MemoryAnalysisService")
 
-`JmxDumpFolder` corresponds to the path to the service's export directory, in
+The attribute `JmxDumpFolder` corresponds to the path to the service's export directory, in
 case you are unaware of the application configuration.
 
 Within the operation screen, you have the ability to export a report for the
 entire application - see the following screenshot - or for a selected range of
 epochs. Exporting a range allows exporting only the memory required for a given
 epoch or series of epochs. Exporting the whole application helps detect how
-much memory is truly retained, often by objects leaking memory.
+much memory is truly retained (very handy for spotting objects leaking memory).
 
 #### Full Export
 
@@ -123,6 +122,6 @@ In our example, we export Epochs 1, 2 and 3 into *export-2*.
 epochs")
 
 To get a list of the available epochs, various MBeans exist. For example, you
-can go to the Epoch Manager and look at the epoch statistics.
+can go to the Epoch Manager and look at the epoch usage.
 
 ![listing-epochs](../assets/list-epochs.png "Listing epochs of our application")

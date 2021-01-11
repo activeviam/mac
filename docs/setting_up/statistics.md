@@ -9,7 +9,7 @@ after the corresponding stores. ActivePivot statistics are exported in files
 prefixed by `pivot_` or `MultiVersionPivot_` and are named after the
 corresponding ActivePivot ids.
 
-Each statistic file is a .json file regrouping the different structures that
+Each statistic file is a *.json* file regrouping the different structures that
 consume memory, that can then be parsed by MAC when doing an analysis.
 
 Exported files are compressed using
@@ -30,7 +30,7 @@ files:
 * store_Risk.json.sz
 * store_Trade.json.sz
 
-> Each file contains all the information for a complete loading in the MAC
+> Each file is self-contained and includes all the information for a complete loading in the MAC
 > application.
 > 
 > Therefore, it is possible to only import the reports for one ActivePivot, or a

@@ -233,24 +233,24 @@ class ContentServerToJsonUi {
       IPair<JsonNode, JsonNode> parentPermissions,
       Map<String, List<String>> defaultPermissions,
       Boolean isTopLevel) {
-    String key = node.getKey();
-    SnapshotContentTree folderContentTree = (SnapshotContentTree) content.getChildren().get(key);
-    boolean invalidFolder = folderContentTree == null || folderContentTree.getEntry() == null;
+    final String key = node.getKey();
+    final SnapshotContentTree folderContentTree = (SnapshotContentTree) content.getChildren().get(key);
+    final boolean invalidFolder = folderContentTree == null || folderContentTree.getEntry() == null;
     if (invalidFolder) {
       return;
     }
 
-    Map<String, List<String>> permissionsMap = new HashMap<>();
+    final Map<String, List<String>> permissionsMap = new HashMap<>();
     permissionsMap.put(CsConstants.Role.OWNERS, folderContentTree.getEntry().getOwners());
     permissionsMap.put(CsConstants.Role.READERS, folderContentTree.getEntry().getReaders());
     currentPermissions.setLeft(
         BookmarkTool.transformPermissionsMapToPair(permissionsMap).getLeft());
     currentPermissions.setRight(
         BookmarkTool.transformPermissionsMapToPair(permissionsMap).getRight());
-    IPair<JsonNode, JsonNode> defaultPermissionsPair =
+    final IPair<JsonNode, JsonNode> defaultPermissionsPair =
         BookmarkTool.transformPermissionsMapToPair(defaultPermissions);
 
-    boolean omitPermissions =
+    final boolean omitPermissions =
         currentPermissions.equals(parentPermissions)
             || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
 
@@ -259,10 +259,10 @@ class ContentServerToJsonUi {
        * Generates a json file containing the content alongside a meta file containg
        * the owner and reader values for the given node
        */
-      String name =
+      final String name =
           encodeForFilesystems(retrievePropertyFromContent(content, key, CsConstants.Tree.NAME));
 
-      Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
+      final Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
       final Path folderName =
           Stream.of(node.getPath().split(CsConstants.Paths.SEPARATOR))
               .filter(part -> !part.isEmpty())
@@ -273,7 +273,7 @@ class ContentServerToJsonUi {
                     throw new UnsupportedOperationException();
                   });
 
-      File bookmarkFolder = folderName.toFile();
+      final File bookmarkFolder = folderName.toFile();
       if (!bookmarkFolder.exists()) {
         boolean createdDirectories = bookmarkFolder.mkdirs();
         if (!createdDirectories) {
@@ -282,8 +282,9 @@ class ContentServerToJsonUi {
         }
       }
 
-      JsonNode entryNode = mapper.readTree(content.getChildren().get(key).getEntry().getContent());
-      JsonNode descriptionJsonNode = entryNode.path(CsConstants.Tree.DESCRIPTION);
+      final JsonNode entryNode = mapper.readTree(
+          content.getChildren().get(key).getEntry().getContent());
+      final JsonNode descriptionJsonNode = entryNode.path(CsConstants.Tree.DESCRIPTION);
       if (!folderEntries.containsKey(key)
           && !entryNode
               .path(CsConstants.Tree.TYPE)
@@ -293,7 +294,7 @@ class ContentServerToJsonUi {
         writer.writeValue(fileName.toFile(), entryNode.path(CsConstants.Tree.VALUE));
       }
 
-      ObjectNode meta;
+      final ObjectNode meta;
       meta = mapper.createObjectNode();
       meta.put(CsConstants.Tree.KEY, key);
       if (descriptionJsonNode != null && !descriptionJsonNode.toString().isEmpty()) {

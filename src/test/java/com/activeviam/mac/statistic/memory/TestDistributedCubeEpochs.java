@@ -55,12 +55,11 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     initializeApplication();
 
     final Path exportPath = generateMemoryStatistics();
-
-    IMemoryStatistic statistics = loadMemoryStatFromFolder(exportPath);
+    final IMemoryStatistic statistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication(statistics);
 
-    IMultiVersionActivePivot pivot =
+    final IMultiVersionActivePivot pivot =
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
     assertThat(pivot).isNotNull();
   }
@@ -128,13 +127,13 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastore monitoringDatastore =
         resources.create(
             () ->
                 StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
 
-    IActivePivotManager manager =
+    final IActivePivotManager manager =
         StartBuilding.manager()
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)

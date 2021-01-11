@@ -13,7 +13,7 @@ in the application.
 `.json` files present in the configured folder and all its child directories
 will be read by the application.
 
-Imported data will be tagged with the name of the subdirectory it is in through
+Imported data will be tagged with the name of the enclosing subdirectory through
 the `[Import info].[Import info]` hierarchy. Files located at the root of
 statistics folder will be tagged with a generated name following the format
 `autoload-<datetime>`.

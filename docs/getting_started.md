@@ -14,7 +14,7 @@ ActiveUI application available on `localhost:9092` by default.
 * Cube-related memory footprint
 * Overview of structure-related memory footprint
 * Loading and comparing several ActivePivot applications' exported memory
-  dumpFiles
+  dump files
 
 ## Prepare your Application for Analysis
 
@@ -24,10 +24,9 @@ using MAC.
 
 The process is explained below:
 
-* [exporting your application](setting_up/exporting.md)
-* [importing data in MAC](setting_up/importing.md)
-* [structure of memory statistics and decompressing generated
-  files](setting_up/statistics.md)
+* [Exporting your application](setting_up/exporting.md)
+* [Structure of memory statistics and decompressing generated files](setting_up/statistics.md)
+* [Importing data in MAC](setting_up/importing.md)
 
 ## MAC Data Model
 
