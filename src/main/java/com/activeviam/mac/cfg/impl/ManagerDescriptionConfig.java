@@ -197,7 +197,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String VECTOR_BLOCK_REFCOUNT = "VectorBlock.RefCount";
   /** For vector block facts, the size the vector block. */
   public static final String VECTOR_BLOCK_SIZE = "VectorBlock.Length";
-  /** Measure of the size of Chunks (in Bytes). */
+  /** Measure of the chunk size. */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
   /** Measure of the the non-written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
@@ -624,7 +624,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
             .sum()
             .as(CHUNK_SIZE_SUM)
-            .withFormatter(ByteFormatter.KEY)
+            .withFormatter(NUMBER_FORMATTER)
             .withinFolder(CHUNK_FOLDER)
             .withDescription("a sum aggregation of the chunk sizes")
             .publish(context);

@@ -20,11 +20,35 @@ Since they are application-wide, they have the same value for all locations.
 ### Chunk memory footprint:
 * `DirectMemory.SUM`: the off-heap size of the chunks
 * `DirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
-  relative to the total used chunk memory
+  relative to the total off-heap memory used by all chunks
+  <!--
+  $$
+  \relax{DirectMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{grandTotal(DirectMemory.SUM)}
+  $$
+  -->
+  ```
+  DirectMemory.Ratio := DirectMemory.SUM / grandTotal(DirectMemory.SUM)
+  ```
 * `UsedMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
-  relative to the total used application committed memory
+  relative to the total used application committed direct memory
+  <!--
+  $$
+  \relax{UsedMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{UsedDirectMemory}
+  $$
+  -->
+  ```
+  UsedMemory.Ratio := DirectMemory.SUM / UsedDirectMemory
+  ```
 * `MaxMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
-  relative to the total application committed memory
+  relative to the total application committed direct memory
+  <!--
+  $$
+  \relax{MaxMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{MaxDirectMemory}
+  $$
+  -->
+  ```
+  MaxMemory.Ratio := DirectMemory.SUM / MaxDirectMemory
+  ```
 * `HeapMemory.SUM`: an estimate of the on-heap size of the chunks
   > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
   > based on this measure.
@@ -35,26 +59,70 @@ Since they are application-wide, they have the same value for all locations.
   >
   > Please use another tool dedicated to analysis of on-heap memory for Java
   > applications instead.
-* `HeapMemory.Ratio`: the total ratio of on-heap memory consumed by the chunks,
-  relies on **`HeapMemory.SUM`**
-* `CommittedChunkMemory.SUM`: the amount of memory in bytes used to store committed rows in
-      chunks
+* `CommittedChunkMemory.SUM`: the portion of memory in bytes used to store
+  committed rows in chunks
+  <!--
+  $$
+  \relax{CommittedChunkMemory.SUM}\coloneqq\frac\relax{CommittedRows.COUNT}\relax{ChunkSize.SUM}\times\relax{DirectMemory.SUM}
+  $$
+  -->
+  ```
+  CommittedChunkMemory.SUM := (CommittedRows.COUNT / ChunkSize.SUM) * DirectMemory.SUM
+  ```
 
 ### Chunk characteristics:
 * `Chunks.COUNT`: the number of contributing chunks
-  > `contributors.COUNT` does not correspond to `Chunks.COUNT`, so prefer using `Chunks.COUNT`.
+  > `contributors.COUNT` does not correspond to `Chunks.COUNT`, so prefer using
+  > `Chunks.COUNT`.
 * `ChunkSize.SUM`: a sum aggregation of the chunk sizes
 * `CommittedRows.COUNT`: the number of committed (i.e. used) rows inside the chunks
 * `CommittedRows.Ratio`: the ratio of committed (i.e. used) rows inside the
-      chunks
+  chunks
+  <!--
+  $$
+  \relax{CommittedRows.Ratio}\coloneqq\frac\relax{CommittedRows.COUNT}\relax{ChunkSize.SUM}
+  $$
+  -->
+  ```
+  CommittedRows.Ratio := CommittedRows.COUNT / ChunkSize.SUM
+  ```
 * `NonWrittenRows.COUNT`: the number of unused rows within the chunks
 * `NonWrittenRows.Ratio`: the ratio of unused rows within the chunks
+  <!--
+  $$
+  \relax{NonWrittenRows.Ratio}\coloneqq\frac\relax{NonWrittenRows.COUNT}\relax{ChunkSize.SUM}
+  $$
+  -->
+  ```
+  NonWrittenRows.Ratio := NonWrittenRows.COUNT / ChunkSize.SUM
+  ```
 * `DeletedRows.COUNT`: the number of freed rows within the chunks
 * `DeletedRows.Ratio`: the ratio of freed rows within the chunks
+  <!--
+  $$
+  \relax{DeletedRows.Ratio}\coloneqq\frac\relax{DeletedRows.COUNT}\relax{ChunkSize.SUM}
+  $$
+  -->
+  ```
+  DeletedRows.Ratio := DeletedRows.COUNT / ChunkSize.SUM
+  ```
+
+> The following holds true:
+> <!--
+> $$
+> \relax{CommittedRows.COUNT}
+> + \relax{NonWrittenRows.COUNT}
+> + \relax{DeletedRows.COUNT}
+> = \relax{ChunkSize.SUM}
+> $$
+> -->
+> ```
+> CommittedRows.COUNT + NonWrittenRows.COUNT + DeletedRows.COUNT = ChunkSize.SUM
+> ```
 
 ### Miscellaneous
-* `DictionarySize.SUM`: the number of entries in the corresponding dictionary, when
-  relevant
+* `DictionarySize.SUM`: the number of entries in the corresponding dictionary,
+  when relevant
 * `VectorBlock.Length`: the length of the vector block, when relevant
 * `VectorBlock.RefCount`: the number of references to the vector block, when
   relevant
@@ -95,19 +163,19 @@ Chunks are used by a variety of higher-level structures, such as indexes,
 references, dictionaries, etc. This hierarchy associates each chunk with one or
 more of these *components*:
 
-* DICTIONARY
-* RECORDS
-* INDEX
-* REFERENCE
-* VECTOR BLOCK
-* LEVEL
-* POINT_MAPPING
-* POINT_INDEX
-* BITMAP_MATCHER
-* AGGREGATE_STORE *(for bitmap and leaf providers)*
+* `DICTIONARY`
+* `RECORDS`
+* `INDEX`
+* `REFERENCE`
+* `VECTOR_BLOCK`
+* `LEVEL`
+* `POINT_MAPPING`
+* `POINT_INDEX`
+* `BITMAP_MATCHER`
+* `AGGREGATE_STORE` *(for bitmap and leaf providers)*
 
 A chunk may be attributed to several components. If a dictionary is used by an
-index, its chunks will be attributed to both the *DICTIONARY* and *INDEX*
+index, its chunks will be attributed to both the `DICTIONARY` and `INDEX`
 components for example.
 
 ## Fields
@@ -157,19 +225,19 @@ be a dictionary, an index or a reference).
 ### Type
 
 The type of the structure owning the chunk. Can be one of:
-* DICTIONARY
-* RECORDS
-* INDEX
-* VECTOR_BLOCK
-* REFERENCE
-* AGGREGATE_STORE
-* POINT_INDEX
-* POINT_MAPPING
+* `DICTIONARY`
+* `RECORDS`
+* `INDEX`
+* `VECTOR_BLOCK`
+* `REFERENCE`
+* `AGGREGATE_STORE`
+* `POINT_INDEX`
+* `POINT_MAPPING`
 
 This hierarchy categorizes chunks in a way similar to the *Component* hierarchy,
 but its members designate lower-level structures than the *Component* hierarchy.
-For example, an *INDEX* **component** may have chunks of **type** *INDEX* and
-*DICTIONARY*.
+For example, an `INDEX` **component** may have chunks of **type** `INDEX` and
+`DICTIONARY`.
 
 ## Indices
 
@@ -179,9 +247,9 @@ defined for chunks that can be attributed to an index.
 ### Index Type
 
 This single-level hierarchy contains three members for each possible index type:
-* Key: index on a store key field
-* Primary: primary index of a store
-* Secondary: secondary index of a store
+* `Key`: index on a store key field
+* `Primary`: primary index of a store
+* `Secondary`: secondary index of a store
 
 ### Indexed Fields
 
@@ -213,17 +281,17 @@ to a cube owner.
 ### Provider Category
 
 Distinguishes between full and partial providers. Possible members are:
-* Full
-* Partial
-* Unique *(the cube uses a single provider)*
+* `Full`
+* `Partial`
+* `Unique` *(the cube uses a single provider)*
 
 ### Provider Type
 
 Distinguishes between the underlying aggregate provider type. Possible members
 are:
-* JIT
-* Leaf
-* Bitmap
+* `JIT`
+* `Leaf`
+* `Bitmap`
 
 ### Manager
 
@@ -279,8 +347,7 @@ The date at which the statistics have been imported.
 
 ### Import Info
 
-The Import Info hierarchy contains the name of the folder that contained the
-statistics. If the statistics had no parent folder, the name `"autoload-" +
-LocalTime.now().toString()` will be attributed for the Import Info of the
+The *Import Info* hierarchy contains the name of the folder that contained the
+statistics. If the statistics had no parent folder, the name
+`autoload-<timestamp>` will be attributed for the *Import Info* of the
 statistic.
-
