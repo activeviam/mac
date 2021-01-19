@@ -7,7 +7,7 @@
 
 package com.activeviam.tools.bookmark.impl;
 
-import com.activeviam.tools.bookmark.constant.impl.CsConstants;
+import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.node.impl.SnapshotNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * directory structure.
  */
 class ContentServerToJsonUi {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ContentServerToJsonUi.class);
 
   private static final String WINDOWS_OS = "Windows";
@@ -70,16 +71,24 @@ class ContentServerToJsonUi {
       Map<String, List<String>> defaultPermissions) {
     SnapshotContentTree bookmarks =
         snapshotter
-            .export(CsConstants.Paths.UI + CsConstants.Paths.SEPARATOR + CsConstants.Tree.BOOKMARKS)
+            .export(
+                ContentServerConstants.Paths.UI
+                    + ContentServerConstants.Paths.SEPARATOR
+                    + ContentServerConstants.Tree.BOOKMARKS)
             .get();
     exportToDirectory(bookmarks, exportDirectory, defaultPermissions);
     snapshotter.export(
-        CsConstants.Paths.SETTINGS,
+        ContentServerConstants.Paths.SETTINGS,
         Paths.get(
-            System.getProperty("user.dir"), exportDirectory, CsConstants.Paths.SETTINGS_JSON));
+            System.getProperty("user.dir"),
+            exportDirectory,
+            ContentServerConstants.Paths.SETTINGS_JSON));
     snapshotter.export(
-        CsConstants.Paths.I18N,
-        Paths.get(System.getProperty("user.dir"), exportDirectory, CsConstants.Paths.I18N_JSON));
+        ContentServerConstants.Paths.I18N,
+        Paths.get(
+            System.getProperty("user.dir"),
+            exportDirectory,
+            ContentServerConstants.Paths.I18N_JSON));
   }
 
   /**
@@ -94,9 +103,9 @@ class ContentServerToJsonUi {
       String folderName,
       Map<String, List<String>> defaultPermissions) {
     SnapshotContentTree structure =
-        (SnapshotContentTree) bookmarks.getChildren().get(CsConstants.Tree.STRUCTURE);
+        (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.STRUCTURE);
     SnapshotContentTree content =
-        (SnapshotContentTree) bookmarks.getChildren().get(CsConstants.Tree.CONTENT);
+        (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.CONTENT);
 
     generateTree(folderName, structure, content, defaultPermissions);
   }
@@ -114,15 +123,15 @@ class ContentServerToJsonUi {
       SnapshotContentTree structureTree,
       SnapshotContentTree contentTree,
       Map<String, List<String>> defaultPermissions) {
-    SnapshotNode structure = new SnapshotNode(CsConstants.Paths.BOOKMARK_LISTING);
+    SnapshotNode structure = new SnapshotNode(ContentServerConstants.Paths.BOOKMARK_LISTING);
 
     Map<String, BasicJsonContentEntry> folderEntries = new HashMap<>();
     structure = parseTree(structureTree, structure, folderEntries);
     folderEntries.put(structure.getKey(), structure.getEntry());
 
     Map<String, List<String>> permissions = new HashMap<>();
-    permissions.put(CsConstants.Role.OWNERS, structure.getEntry().getOwners());
-    permissions.put(CsConstants.Role.READERS, structure.getEntry().getReaders());
+    permissions.put(ContentServerConstants.Role.OWNERS, structure.getEntry().getOwners());
+    permissions.put(ContentServerConstants.Role.READERS, structure.getEntry().getReaders());
     IPair<JsonNode, JsonNode> rootPermissions =
         BookmarkTool.transformPermissionsMapToPair(permissions);
 
@@ -158,7 +167,9 @@ class ContentServerToJsonUi {
     for (Map.Entry<String, SnapshotContentTree> child : children.entrySet()) {
       SnapshotNode childNode = new SnapshotNode(child.getKey());
       childNode.setPath(
-          nodeInternalTree.getPath() + CsConstants.Paths.SEPARATOR + nodeInternalTree.getKey());
+          nodeInternalTree.getPath()
+              + ContentServerConstants.Paths.SEPARATOR
+              + nodeInternalTree.getKey());
       nodeInternalTree.addChild(childNode);
       if (!child.getValue().getChildren().isEmpty()) {
         folderEntries.put(child.getKey(), child.getValue().getEntry());
@@ -199,7 +210,7 @@ class ContentServerToJsonUi {
         defaultPermissions,
         isTopLevel);
     for (SnapshotNode node : structure.getChildren()) {
-      boolean topLevel = structure.getKey().equals(CsConstants.Paths.BOOKMARK_LISTING);
+      boolean topLevel = structure.getKey().equals(ContentServerConstants.Paths.BOOKMARK_LISTING);
       generateJsonFiles(
           node,
           content,
@@ -234,15 +245,18 @@ class ContentServerToJsonUi {
       Map<String, List<String>> defaultPermissions,
       Boolean isTopLevel) {
     final String key = node.getKey();
-    final SnapshotContentTree folderContentTree = (SnapshotContentTree) content.getChildren().get(key);
+    final SnapshotContentTree folderContentTree =
+        (SnapshotContentTree) content.getChildren().get(key);
     final boolean invalidFolder = folderContentTree == null || folderContentTree.getEntry() == null;
     if (invalidFolder) {
       return;
     }
 
     final Map<String, List<String>> permissionsMap = new HashMap<>();
-    permissionsMap.put(CsConstants.Role.OWNERS, folderContentTree.getEntry().getOwners());
-    permissionsMap.put(CsConstants.Role.READERS, folderContentTree.getEntry().getReaders());
+    permissionsMap.put(
+        ContentServerConstants.Role.OWNERS, folderContentTree.getEntry().getOwners());
+    permissionsMap.put(
+        ContentServerConstants.Role.READERS, folderContentTree.getEntry().getReaders());
     currentPermissions.setLeft(
         BookmarkTool.transformPermissionsMapToPair(permissionsMap).getLeft());
     currentPermissions.setRight(
@@ -250,9 +264,8 @@ class ContentServerToJsonUi {
     final IPair<JsonNode, JsonNode> defaultPermissionsPair =
         BookmarkTool.transformPermissionsMapToPair(defaultPermissions);
 
-    final boolean omitPermissions =
-        currentPermissions.equals(parentPermissions)
-            || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
+    final boolean omitPermissions = currentPermissions.equals(parentPermissions)
+        || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
 
     try {
       /*
@@ -260,11 +273,12 @@ class ContentServerToJsonUi {
        * the owner and reader values for the given node
        */
       final String name =
-          encodeForFilesystems(retrievePropertyFromContent(content, key, CsConstants.Tree.NAME));
+          encodeForFilesystems(
+              retrievePropertyFromContent(content, key, ContentServerConstants.Tree.NAME));
 
       final Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
       final Path folderName =
-          Stream.of(node.getPath().split(CsConstants.Paths.SEPARATOR))
+          Stream.of(node.getPath().split(ContentServerConstants.Paths.SEPARATOR))
               .filter(part -> !part.isEmpty())
               .reduce(
                   exportFolder,
@@ -282,30 +296,31 @@ class ContentServerToJsonUi {
         }
       }
 
-      final JsonNode entryNode = mapper.readTree(
-          content.getChildren().get(key).getEntry().getContent());
-      final JsonNode descriptionJsonNode = entryNode.path(CsConstants.Tree.DESCRIPTION);
+      final JsonNode entryNode =
+          mapper.readTree(content.getChildren().get(key).getEntry().getContent());
+      final JsonNode descriptionJsonNode = entryNode.path(ContentServerConstants.Tree.DESCRIPTION);
       if (!folderEntries.containsKey(key)
           && !entryNode
-              .path(CsConstants.Tree.TYPE)
+              .path(ContentServerConstants.Tree.TYPE)
               .toString()
-              .contains(CsConstants.Content.FOLDER)) {
-        final Path fileName = folderName.resolve(name + CsConstants.Paths.JSON);
-        writer.writeValue(fileName.toFile(), entryNode.path(CsConstants.Tree.VALUE));
+              .contains(ContentServerConstants.Content.FOLDER)) {
+        final Path fileName = folderName.resolve(name + ContentServerConstants.Paths.JSON);
+        writer.writeValue(fileName.toFile(), entryNode.path(ContentServerConstants.Tree.VALUE));
       }
 
       final ObjectNode meta;
       meta = mapper.createObjectNode();
-      meta.put(CsConstants.Tree.KEY, key);
+      meta.put(ContentServerConstants.Tree.KEY, key);
       if (descriptionJsonNode != null && !descriptionJsonNode.toString().isEmpty()) {
-        meta.set(CsConstants.Tree.DESCRIPTION, descriptionJsonNode);
+        meta.set(ContentServerConstants.Tree.DESCRIPTION, descriptionJsonNode);
       }
       if (!omitPermissions) {
-        meta.set(CsConstants.Role.OWNERS, currentPermissions.getLeft());
-        meta.set(CsConstants.Role.READERS, currentPermissions.getRight());
+        meta.set(ContentServerConstants.Role.OWNERS, currentPermissions.getLeft());
+        meta.set(ContentServerConstants.Role.READERS, currentPermissions.getRight());
       }
       if (meta.size() > 0) {
-        final Path metaFileName = folderName.resolve(name + CsConstants.Paths.METADATA_FILE);
+        final Path metaFileName =
+            folderName.resolve(name + ContentServerConstants.Paths.METADATA_FILE);
         writer.writeValue(metaFileName.toFile(), meta);
       }
     } catch (IOException e) {

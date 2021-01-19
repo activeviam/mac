@@ -167,8 +167,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /**
    * Measure for counting the number of chunks.
    *
-   * <p>Not equal to {@code contributors.COUNT} since MAC's base store granularity is finer than
-   * the granularity of the chunk.
+   * <p>Not equal to {@code contributors.COUNT} since MAC's base store granularity is finer than the
+   * granularity of the chunk.
    */
   public static final String CHUNK_COUNT = "Chunks.COUNT";
 
@@ -299,16 +299,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
       final ICanStartBuildingDimensions builder) {
     return builder
-        // todo: external class to make the file shorter? constants for descriptions, move this file's constants elsewhere
+        // todo: external class to make the file shorter? constants for descriptions, move this
+        //  file's constants elsewhere
         .withDimension(CHUNK_DIMENSION)
         .withProperty("description", "Holds low-level hierarchies for classifying chunks")
-
         .withHierarchy(CHUNK_ID_HIERARCHY)
         .withProperty("description", "The ID of the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK_ID)
         .withProperty("description", "The ID of the chunk")
-
         .withHierarchy(CHUNK_TYPE_LEVEL)
         .withProperty(
             "description",
@@ -320,7 +319,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             "description",
             "The kind of data the chunk holds"
                 + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
-
         .withHierarchy(CHUNK_PARENT_ID_LEVEL)
         .withProperty(
             "description",
@@ -332,25 +330,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             "description",
             "The internal ID associated with the parent"
                 + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
-
         .withHierarchy(CHUNK_DICO_ID_LEVEL)
         .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
         .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
-
         .withHierarchy(CHUNK_INDEX_ID_LEVEL)
         .withProperty("description", "The ID of the index the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
         .withProperty("description", "The ID of the index the chunk is attributed to, if any")
-
         .withHierarchy(CHUNK_REF_ID_LEVEL)
         .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
         .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
-
         .withHierarchy(CHUNK_CLASS_LEVEL)
         .withProperty("description", "The java class of the chunk")
         .withLevelOfSameName()
@@ -358,7 +352,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
         .withProperty("description", "The java class of the chunk")
-
         .withDimension(PARTITION_DIMENSION)
         .withProperty("description", "The ID of the store or cube partition that holds the chunk")
         .withHierarchy(PARTITION_HIERARCHY)
@@ -367,13 +360,11 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
         .withProperty("description", "The ID of the store or cube partition that holds the chunk")
-
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
         .withProperty(
             "description",
             "Holds hierarchies with metadata on the statistics from which the chunks were "
                 + "retrieved")
-
         .withHierarchyOfSameName()
         .slicing()
         .withProperty(
@@ -383,7 +374,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withComparator(NaturalOrderComparator.type)
         .withProperty(
             "description", "The source folder name from which the statistics were retrieved")
-
         .withHierarchy(DATE_HIERARCHY)
         .withProperty("description", "Date at which statistics were retrieved")
         .withLevelOfSameName()
@@ -391,26 +381,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withType(ILevelInfo.LevelType.TIME)
         .withComparator(ReverseOrderComparator.type)
         .withProperty("description", "Date at which statistics were retrieved")
-
         .withDimension(AGGREGATE_PROVIDER_DIMENSION)
         .withProperty("description", "Holds hierarchies relative to pivot aggregate providers")
-
         .withHierarchy(MANAGER_HIERARCHY)
         .withProperty("description", "The id of the manager associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
         .withProperty("description", "The id of the manager associated with the chunk, if any")
-
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
         .withProperty(
-            "description",
-            "The type of the aggregate provider associated with the chunk, if any")
+            "description", "The type of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
         .withProperty(
-            "description",
-            "The type of the aggregate provider associated with the chunk, if any")
-
+            "description", "The type of the aggregate provider associated with the chunk, if any")
         .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
         .withProperty(
             "description",
@@ -420,22 +404,15 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withProperty(
             "description",
             "The category of the aggregate provider associated with the chunk, if any")
-
         .withHierarchy(PROVIDER_ID_HIERARCHY)
         .withProperty(
-            "description",
-            "The ID of the aggregate provider associated with the chunk, if any")
+            "description", "The ID of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
         .withProperty(
-            "description",
-            "The ID of the aggregate provider associated with the chunk, if any")
-
+            "description", "The ID of the aggregate provider associated with the chunk, if any")
         .withDimension(VERSION_DIMENSION)
-        .withProperty(
-            "description",
-            "Holds hierarchies relative to the versioning of the chunks")
-
+        .withProperty("description", "Holds hierarchies relative to the versioning of the chunks")
         .withHierarchy(INTERNAL_EPOCH_ID_HIERARCHY)
         .hidden()
         .withProperty(
@@ -447,7 +424,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             "description",
             "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withComparator(ReverseOrderComparator.type)
-
         .withHierarchy(BRANCH_HIERARCHY)
         .slicing()
         .withProperty("description", "The branch of the chunk")
@@ -455,7 +431,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
         .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
         .withProperty("description", "The branch of the chunk")
-
         .withHierarchy(USED_BY_VERSION_DIMENSION)
         .withProperty(
             "description",
@@ -465,7 +440,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withProperty(
             "description",
             "Whether or not the chunk is known to be used by the currently" + " viewed version")
-
         .withDimension(OWNER_DIMENSION)
         .withProperty("description", "The cube(s) or store(s) owning the chunk")
         .withHierarchy(OWNER_HIERARCHY)
@@ -473,7 +447,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__OWNER)
         .withProperty("description", "The cube(s) or store(s) owning the chunk")
-
         .withDimension(COMPONENT_DIMENSION)
         .withProperty(
             "description",
@@ -487,7 +460,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withProperty(
             "description",
             "The owning structure associated with the chunk (dictionary," + " index, ...)")
-
         .withDimension(FIELD_DIMENSION)
         .withProperty("description", "The field(s) associated with the chunk, if any")
         .withHierarchy(FIELD_HIERARCHY)
@@ -529,9 +501,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(DatastoreConstants.OWNER__OWNER, OWNER_HIERARCHY)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
-            .withMapping(
-                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-                INTERNAL_EPOCH_ID_HIERARCHY);
+            .withMapping(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
         .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
@@ -561,7 +531,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.newSingleLevelHierarchy(
-        INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
         .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
@@ -645,7 +615,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withinFolder(CHUNK_FOLDER)
         .withDescription("the number of freed rows within the chunks")
         .publish(context)
-
         .withType(ILiteralType.DOUBLE)
         .as("-") // FIXME: workaround PIVOT-4458
         .divide(chunkSize)
@@ -748,8 +717,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
     Copper.agg(
-        chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
-        SingleValueFunction.PLUGIN_KEY)
+            chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
+            SingleValueFunction.PLUGIN_KEY)
         .filter(Copper.level(COMPONENT_HIERARCHY).eq(ParentType.DICTIONARY))
         .per(
             Copper.level(INTERNAL_EPOCH_ID_HIERARCHY),
