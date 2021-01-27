@@ -35,9 +35,9 @@
             "style" : { },
             "showTitleBar" : false,
             "body" : {
-              "editingMode" : "edit",
+              "editingMode" : "view",
               "renderer" : "markdown",
-              "content" : "# Indexes are too large\n\n"
+              "content" : "# Indexes are too large\nIndexes often constitute the largest direct memory consumer for stores, so reducing their size if possible could reduce the memory footprint of your application.\n\nThe following table shows the most-consuming indexes for the largest stores:"
             },
             "containerKey" : "rich-text-editor"
           },
@@ -53,7 +53,7 @@
             "showTitleBar" : false,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Crossjoin(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), Hierarchize(DrilldownLevel([Indices].[Index Type].[ALL].[AllMember])), DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember])), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[INDEX] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Crossjoin(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), Hierarchize(DrilldownLevel([Indices].[Index Type].[ALL].[AllMember])), DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember])), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
               "contextValues" : { },
               "updateMode" : "once",
               "ranges" : {
@@ -112,15 +112,15 @@
       }, {
         "key" : "3",
         "bookmark" : {
-          "name" : "Untitled Text Editor",
+          "name" : "Recommendations",
           "type" : "container",
           "value" : {
             "style" : { },
-            "showTitleBar" : false,
+            "showTitleBar" : true,
             "body" : {
-              "editingMode" : "edit",
+              "editingMode" : "view",
               "renderer" : "markdown",
-              "content" : "\n"
+              "content" : "The size of an index depends on the cardinality of the data it indexes. Reducing the number of fields taken into account by an index can reduce its size as a result.\n\nOmitting a field from an index can drastically impact the performance on queries that rely on them, so whether or not this is possible depends on your use case. It may be that some indexes need to be as large as they are to ensure query performance.\n\nLastly, changing the data model can change which indexes need to be created. Improving the data model could result in smaller store sizes overall.\n\n>*Further analysis regarding indexes can be done with the [indexes bookmark](#/dashboard/dictionaries_indexes).*"
             },
             "containerKey" : "rich-text-editor"
           },
@@ -148,7 +148,8 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Crossjoin([Owners].[Owner].[Owner].Members, [Indices].[Indexed Fields].[Indexed Fields].Members) ON ROWS FROM [MemoryCube]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Indices].[Indexed Fields].[Indexed Fields].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
+                "contextValues" : { },
                 "updateMode" : "once"
               }
             },
@@ -156,12 +157,48 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
-            "ck" : "1",
-            "size" : 0.23
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.76
+              },
+              "1" : {
+                "ck" : "5",
+                "size" : 0.24
+              }
+            },
+            "size" : 0.18,
+            "direction" : "row"
           },
           "1" : {
             "children" : {
@@ -177,22 +214,22 @@
                   }
                 },
                 "direction" : "row",
-                "size" : 0.7
+                "size" : 0.74
               },
               "1" : {
                 "ck" : "3",
-                "size" : 0.3
+                "size" : 0.26
               }
             },
             "direction" : "column",
-            "size" : 0.77
+            "size" : 0.82
           }
         },
         "direction" : "column"
       },
       "name" : "Large indexes",
       "filters" : {
-        "MemoryCube" : [ ]
+        "MemoryCube" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ]
       }
     }, {
       "content" : [ {
@@ -222,7 +259,7 @@
             "showTitleBar" : false,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT\n  NON EMPTY Order(\n    Crossjoin(\n      DrilldownLevel(\n        [Owners].[Owner].[ALL].[AllMember]\n      ),\n      Hierarchize(\n        DrilldownLevel(\n          [Aggregate Provider].[ProviderType].[ALL].[AllMember]\n        )\n      ),\n      Hierarchize(\n        DrilldownLevel(\n          [Aggregate Provider].[ProviderId].[ALL].[AllMember]\n        )\n      ),\n      Hierarchize(\n        DrilldownLevel(\n          [Fields].[Field].[ALL].[AllMember]\n        )\n      )\n    ),\n    [Measures].[DirectMemory.SUM],\n    DESC\n  ) ON ROWS,\n  NON EMPTY {\n    [Measures].[DirectMemory.SUM],\n    [Measures].[DirectMemory.Ratio]\n  } ON COLUMNS\n  FROM (\n    SELECT\n    Crossjoin(\n      {\n        [Owners].[Owner Type].[ALL].[AllMember].[Cube],\n        [Owners].[Owner Type].[ALL].[AllMember].[Distributed Cube]\n      },\n      {\n        Except(\n          [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children,\n          [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]\n        )\n      },\n      [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE]\n    ) ON COLUMNS\n    FROM [MemoryCube]\n  )\n  CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Order(Crossjoin(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderId].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "ranges" : {
@@ -267,7 +304,7 @@
                   "expansion" : {
                     "automaticExpansion" : true
                   },
-                  "isConnected" : false
+                  "isConnected" : true
                 }
               }
             },
@@ -278,15 +315,15 @@
       }, {
         "key" : "3",
         "bookmark" : {
-          "name" : "Untitled Text Editor",
+          "name" : "Recommendations",
           "type" : "container",
           "value" : {
             "style" : { },
-            "showTitleBar" : false,
+            "showTitleBar" : true,
             "body" : {
               "editingMode" : "view",
               "renderer" : "markdown",
-              "content" : "Consider, for each cube, the hierarchies and measures its most memory-consuming providers handle.\n\nDepending on the queries done on each measure, consider whether or not some hierarchies can be cut from the aggregate provider's handled measures.\n\nFurther analysis regarding aggregate providers can be done with the [aggregate provider bookmark](#/dashboard/aggregate_providers)."
+              "content" : "Consider, for each cube, the hierarchies and measures its most memory-consuming providers handle.\n\nDepending on the queries done on each measure, consider whether or not some hierarchies can be cut from the aggregate provider's handled measures.\n\n>*Further analysis regarding aggregate providers can be done with the [aggregate provider bookmark](#/dashboard/aggregate_providers).*"
             },
             "containerKey" : "rich-text-editor"
           },
@@ -314,12 +351,39 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Aggregate Provider].[ProviderId].[ProviderId].Members, [Fields].[Field].[Field].Members) ON ROWS FROM (SELECT Crossjoin({Except([Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])}, [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE], [Aggregate Provider].[ProviderType].[ProviderType].Members, [Aggregate Provider].[ProviderId].[ProviderId].Members, [Fields].[Field].[Field].Members) ON COLUMNS FROM [MemoryCube])",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Aggregate Provider].[ProviderId].[ProviderId].Members, [Fields].[Field].[Field].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
+                "contextValues" : { },
                 "updateMode" : "once"
               },
-              "isConnected" : false
+              "isConnected" : true
             },
             "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
           },
           "writable" : true
         }
@@ -327,8 +391,18 @@
       "layout" : {
         "children" : {
           "0" : {
-            "ck" : "1",
-            "size" : 0.21
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.76
+              },
+              "1" : {
+                "ck" : "5",
+                "size" : 0.24
+              }
+            },
+            "size" : 0.22,
+            "direction" : "row"
           },
           "1" : {
             "children" : {
@@ -343,23 +417,23 @@
                     "size" : 0.63
                   }
                 },
-                "size" : 0.81,
+                "size" : 0.78,
                 "direction" : "row"
               },
               "1" : {
                 "ck" : "3",
-                "size" : 0.19
+                "size" : 0.22
               }
             },
             "direction" : "column",
-            "size" : 0.79
+            "size" : 0.78
           }
         },
         "direction" : "column"
       },
       "name" : "Too many members in bitmaps",
       "filters" : {
-        "MemoryCube" : [ ]
+        "MemoryCube" : [ "Crossjoin({[Owners].[Owner Type].[ALL].[AllMember].[Cube], [Owners].[Owner Type].[ALL].[AllMember].[Distributed Cube]}, {Except([Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])}, [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])" ]
       }
     }, {
       "content" : [ {
@@ -373,7 +447,7 @@
             "body" : {
               "editingMode" : "view",
               "renderer" : "markdown",
-              "content" : "# Store chunks are oversized\n\nStore chunk size can be configured on a per-store bases using `.withChunkSize(int)` when building each store's description.\n\nIf not specified, the default chunk size is either retrieved from program arguments (`-DdefaultChunkSize`), or deduced from the amount of available memory (on-and-off-heap). The default value might not be the most suitable depending on the cardinality of the store.\n\nIn the case where a store has its chunk size configured to be much higher than its cardinality, it is very likely that its chunks will end up being mostly empty, wasting memory unneededly."
+              "content" : "# Store chunks are oversized\n\nStore chunk size can be configured on a per-store bases using `.withChunkSize(int)` when building each store's description.\n\nIf not specified, the default chunk size is either retrieved from program arguments (`-DdefaultChunkSize`), or deduced from the amount of available memory otherwise (on-and-off-heap). The default value might not be the most suitable depending on the cardinality of the store. In the case where a store has its chunk size configured to be much higher than its cardinality, it is very likely that its chunks will end up being mostly empty, wasting memory unneededly.\n\nBelow are listed for each store the ratio of *non-written rows* in chunks, grouped by field.\n\nPay attention to the value of the measure `NonWrittenRows.Ratio`. It designates the ratio of wasted space due to chunk allocation size being larger than the data they store."
             },
             "containerKey" : "rich-text-editor"
           },
@@ -389,7 +463,7 @@
             "showTitleBar" : false,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[ChunkSize.SUM], [Measures].[NonWrittenRows.Ratio]} ON COLUMNS, NON EMPTY Crossjoin(Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC), Order(Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])), [Measures].[NonWrittenRows.Ratio], ASC)) ON ROWS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[ChunkSize.SUM], [Measures].[NonWrittenRows.Ratio]} ON COLUMNS, NON EMPTY Crossjoin(Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC), Order(Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])), [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -435,6 +509,15 @@
                   "columns" : [ {
                     "key" : "c-treeCells-member",
                     "width" : 232
+                  }, {
+                    "key" : "[Measures].[DirectMemory.SUM]",
+                    "width" : 139
+                  }, {
+                    "key" : "[Measures].[NonWrittenRows.Ratio]",
+                    "width" : 152
+                  }, {
+                    "key" : "[Measures].[ChunkSize.SUM]",
+                    "width" : 110
                   } ],
                   "expansion" : {
                     "automaticExpansion" : true
@@ -449,15 +532,15 @@
       }, {
         "key" : "3",
         "bookmark" : {
-          "name" : "Untitled Text Editor",
+          "name" : "Recommendations",
           "type" : "container",
           "value" : {
             "style" : { },
-            "showTitleBar" : false,
+            "showTitleBar" : true,
             "body" : {
               "editingMode" : "view",
               "renderer" : "markdown",
-              "content" : "Pay attention to the value of the measure `NonWrittenRows.Ratio`. It designates the ratio of wasted space due to oversizing of the chunks.\n\nIf the most compact column of a store proves to have a lot of unused allocated space, this can mean that either:\n* the store chunk size is oversized compared to the data holds, and it can be safely reduced with minor drawback\n* the store partitioning scheme is suboptimal and some partitions (and their chunks as a consequence) have much less data in them\n\nReducing store chunk size too much is also detrimental since this will cause the number of chunks to increase, increasing overhead when doing operations on the store.\n\nFurther analysis regarding store memory consumption can be done with the [field analysis bookmark](#/dashboard/fields), adding the `NonWrittenRows.Ratio` measure to the relevant pages, or on the [overview bookmark](#/dashboard/overview)."
+              "content" : "If the most compact column of a store proves to have a lot of unused allocated space, this can mean that either:\n* the store chunk size is oversized compared to the data holds, and it can be safely reduced with minor drawback\n* the store partitioning scheme is suboptimal and some partitions (and their chunks as a consequence) have much less data in them\n\nReducing store chunk size more than is needed is also detrimental since this will cause the number of chunks to increase,\nincreasing overhead when doing operations on the store.\n\n>*Further analysis regarding store memory consumption can be done with the [field analysis bookmark](#/dashboard/fields), adding the `NonWrittenRows.Ratio` measure to the relevant pages, or on the [overview bookmark](#/dashboard/overview).*"
             },
             "containerKey" : "rich-text-editor"
           },
@@ -473,22 +556,56 @@
             "showTitleBar" : false,
             "body" : {
               "configuration" : {
-                "type" : "plotly-line-chart",
+                "type" : "plotly-scatter-plot",
                 "mapping" : {
-                  "xAxis" : [ ],
-                  "values" : [ ],
-                  "splitBy" : [ ],
+                  "xValues" : [ "[Measures].[NonWrittenRows.Ratio]" ],
+                  "yValues" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "size" : [ ],
+                  "color" : [ "[Owners].[Owner].[Owner]" ],
+                  "splitBy" : [ "[Fields].[Field].[Field]" ],
                   "horizontalSubplots" : [ ],
                   "verticalSubplots" : [ ]
+                },
+                "subplotModeEnabled" : true,
+                "style" : {
+                  "isTextVisible" : false
                 }
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT FROM [MemoryCube]",
+                "mdx" : "SELECT NON EMPTY Crossjoin(Order([Owners].[Owner].[Owner].Members, [Measures].[DirectMemory.SUM], DESC), Order([Fields].[Field].[Field].Members, [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS, NON EMPTY {[Measures].[NonWrittenRows.Ratio], [Measures].[DirectMemory.SUM]} ON COLUMNS FROM [MemoryCube]",
+                "contextValues" : { },
                 "updateMode" : "once"
-              }
+              },
+              "isConnected" : true
             },
             "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
           },
           "writable" : true
         }
@@ -496,8 +613,18 @@
       "layout" : {
         "children" : {
           "0" : {
-            "ck" : "1",
-            "size" : 0.24
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.76
+              },
+              "1" : {
+                "ck" : "5",
+                "size" : 0.24
+              }
+            },
+            "size" : 0.21,
+            "direction" : "row"
           },
           "1" : {
             "children" : {
@@ -505,30 +632,30 @@
                 "children" : {
                   "0" : {
                     "ck" : "2",
-                    "size" : 0.47
+                    "size" : 0.43
                   },
                   "1" : {
                     "ck" : "4",
-                    "size" : 0.53
+                    "size" : 0.57
                   }
                 },
                 "direction" : "row",
-                "size" : 0.66
+                "size" : 0.71
               },
               "1" : {
                 "ck" : "3",
-                "size" : 0.34
+                "size" : 0.29
               }
             },
             "direction" : "column",
-            "size" : 0.76
+            "size" : 0.79
           }
         },
         "direction" : "column"
       },
       "name" : "Oversized store chunks",
       "filters" : {
-        "MemoryCube" : [ ]
+        "MemoryCube" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Store]", "Except([Fields].[Field].[Field].Members, {[Fields].[Field].[ALL].[AllMember].[N/A]})" ]
       }
     } ]
   },
