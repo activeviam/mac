@@ -280,10 +280,10 @@ to a cube owner.
 
 ### Provider Category
 
-Distinguishes between full and partial providers. Possible members are:
-* `Full`
+Distinguishes between global and partial providers. Possible members are:
+* `Full` *(the global provider when the cube uses partial providers)*
 * `Partial`
-* `Unique` *(the cube uses a single provider)*
+* `Unique` *(when the cube uses a single global provider)*
 
 ### Provider Type
 
