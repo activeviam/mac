@@ -264,8 +264,9 @@ class ContentServerToJsonUi {
     final IPair<JsonNode, JsonNode> defaultPermissionsPair =
         BookmarkTool.transformPermissionsMapToPair(defaultPermissions);
 
-    final boolean omitPermissions = currentPermissions.equals(parentPermissions)
-        || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
+    final boolean omitPermissions =
+        currentPermissions.equals(parentPermissions)
+            || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
 
     try {
       /*
