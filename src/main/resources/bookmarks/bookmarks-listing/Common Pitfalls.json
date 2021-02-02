@@ -168,7 +168,7 @@
             "body" : {
               "configuration" : {
                 "displayedAsSelect" : true,
-                "multipleSelection" : false
+                "multipleSelection" : true
               },
               "filterKey" : "explicit",
               "levelDetails" : {
@@ -372,7 +372,7 @@
             "body" : {
               "configuration" : {
                 "displayedAsSelect" : true,
-                "multipleSelection" : false
+                "multipleSelection" : true
               },
               "filterKey" : "explicit",
               "levelDetails" : {
@@ -594,7 +594,7 @@
             "body" : {
               "configuration" : {
                 "displayedAsSelect" : true,
-                "multipleSelection" : false
+                "multipleSelection" : true
               },
               "filterKey" : "explicit",
               "levelDetails" : {
