@@ -299,8 +299,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
       final ICanStartBuildingDimensions builder) {
     return builder
-        // todo: external class to make the file shorter? constants for descriptions, move this
-        //  file's constants elsewhere
         .withDimension(CHUNK_DIMENSION)
         .withProperty("description", "Holds low-level hierarchies for classifying chunks")
         .withHierarchy(CHUNK_ID_HIERARCHY)
