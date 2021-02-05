@@ -274,7 +274,8 @@ class JsonUiToContentServer {
       return null;
     }
     final JsonNode templateNode = loadStreamIntoNode(folderTemplateInputStream);
-    final ObjectNode contentNode = (ObjectNode) templateNode.path(ContentServerConstants.Tree.CONTENT);
+    final ObjectNode contentNode =
+        (ObjectNode) templateNode.path(ContentServerConstants.Tree.CONTENT);
 
     final BookmarkMetadata metadata = getMetadata(folder, parentPermissions);
     final String description = metadata.getDescription();
@@ -293,7 +294,8 @@ class JsonUiToContentServer {
      * Set isDirectory to true if flag is true, load content if the content flag is
      * true
      */
-    final String content = contentNode.put(ContentServerConstants.Tree.NAME, folder.getName()).toString();
+    final String content =
+        contentNode.put(ContentServerConstants.Tree.NAME, folder.getName()).toString();
     final SnapshotContentTree structure =
         new SnapshotContentTree(
             directoryFlag && !contentFlag ? null : content,
