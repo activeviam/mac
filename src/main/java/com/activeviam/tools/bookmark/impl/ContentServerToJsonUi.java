@@ -69,7 +69,7 @@ class ContentServerToJsonUi {
       ContentServiceSnapshotter snapshotter,
       String exportDirectory,
       Map<String, List<String>> defaultPermissions) {
-    SnapshotContentTree bookmarks =
+    final SnapshotContentTree bookmarks =
         snapshotter
             .export(
                 ContentServerConstants.Paths.UI
@@ -102,9 +102,9 @@ class ContentServerToJsonUi {
       SnapshotContentTree bookmarks,
       String folderName,
       Map<String, List<String>> defaultPermissions) {
-    SnapshotContentTree structure =
+    final SnapshotContentTree structure =
         (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.STRUCTURE);
-    SnapshotContentTree content =
+    final SnapshotContentTree content =
         (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.CONTENT);
 
     generateTree(folderName, structure, content, defaultPermissions);
@@ -125,14 +125,14 @@ class ContentServerToJsonUi {
       Map<String, List<String>> defaultPermissions) {
     SnapshotNode structure = new SnapshotNode(ContentServerConstants.Paths.BOOKMARK_LISTING);
 
-    Map<String, BasicJsonContentEntry> folderEntries = new HashMap<>();
+    final Map<String, BasicJsonContentEntry> folderEntries = new HashMap<>();
     structure = parseTree(structureTree, structure, folderEntries);
     folderEntries.put(structure.getKey(), structure.getEntry());
 
-    Map<String, List<String>> permissions = new HashMap<>();
+    final Map<String, List<String>> permissions = new HashMap<>();
     permissions.put(ContentServerConstants.Role.OWNERS, structure.getEntry().getOwners());
     permissions.put(ContentServerConstants.Role.READERS, structure.getEntry().getReaders());
-    IPair<JsonNode, JsonNode> rootPermissions =
+    final IPair<JsonNode, JsonNode> rootPermissions =
         BookmarkTool.transformPermissionsMapToPair(permissions);
 
     generateJsonFiles(
@@ -161,11 +161,11 @@ class ContentServerToJsonUi {
     nodeInternalTree.setEntry(nodeContentTree.getEntry());
 
     @SuppressWarnings("unchecked")
-    Map<String, SnapshotContentTree> children =
+    final Map<String, SnapshotContentTree> children =
         (Map<String, SnapshotContentTree>) nodeContentTree.getChildren();
 
     for (Map.Entry<String, SnapshotContentTree> child : children.entrySet()) {
-      SnapshotNode childNode = new SnapshotNode(child.getKey());
+      final SnapshotNode childNode = new SnapshotNode(child.getKey());
       childNode.setPath(
           nodeInternalTree.getPath()
               + ContentServerConstants.Paths.SEPARATOR
@@ -199,7 +199,7 @@ class ContentServerToJsonUi {
       IPair<JsonNode, JsonNode> parentPermissions,
       Map<String, List<String>> defaultPermissions,
       boolean isTopLevel) {
-    IPair<JsonNode, JsonNode> currentOwnerAndReader = new Pair<>();
+    final IPair<JsonNode, JsonNode> currentOwnerAndReader = new Pair<>();
     createJson(
         structure,
         content,
@@ -309,8 +309,7 @@ class ContentServerToJsonUi {
         writer.writeValue(fileName.toFile(), entryNode.path(ContentServerConstants.Tree.VALUE));
       }
 
-      final ObjectNode meta;
-      meta = mapper.createObjectNode();
+      final ObjectNode meta = mapper.createObjectNode();
       meta.put(ContentServerConstants.Tree.KEY, key);
       if (descriptionJsonNode != null && !descriptionJsonNode.toString().isEmpty()) {
         meta.set(ContentServerConstants.Tree.DESCRIPTION, descriptionJsonNode);
