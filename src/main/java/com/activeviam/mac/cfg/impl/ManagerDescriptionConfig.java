@@ -650,8 +650,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     final CopperMeasure directMemory =
-        Copper.agg(DatastoreConstants.CHUNK__OFF_HEAP_SIZE, SingleValueFunction.PLUGIN_KEY)
-            .per(Copper.level(CHUNK_ID_HIERARCHY), Copper.level(CHUNK_DUMP_NAME_LEVEL))
+        perChunkAggregation(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
             .sum()
             .as(DIRECT_MEMORY_SUM)
             .withFormatter(ByteFormatter.KEY)
