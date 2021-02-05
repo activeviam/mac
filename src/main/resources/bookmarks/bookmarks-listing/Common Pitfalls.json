@@ -558,15 +558,15 @@
               "configuration" : {
                 "type" : "plotly-scatter-plot",
                 "mapping" : {
-                  "xValues" : [ "[Measures].[NonWrittenRows.Ratio]" ],
-                  "yValues" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "xValues" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "yValues" : [ "[Measures].[NonWrittenRows.Ratio]" ],
                   "size" : [ ],
                   "color" : [ "[Owners].[Owner].[Owner]" ],
                   "splitBy" : [ "[Fields].[Field].[Field]" ],
                   "horizontalSubplots" : [ ],
                   "verticalSubplots" : [ ]
                 },
-                "subplotModeEnabled" : true,
+                "subplotModeEnabled" : false,
                 "style" : {
                   "isTextVisible" : false
                 }
