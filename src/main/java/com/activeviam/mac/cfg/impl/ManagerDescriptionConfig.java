@@ -188,9 +188,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
   /** Total on-heap memory footprint, relative to the total memory footprint of the application. */
-  public static final String USED_MEMORY_RATIO = "UsedMemory.Ratio";
+  public static final String USED_MEMORY_RATIO = "UsedDirectMemory.Ratio";
   /** Total off-heap memory footprint, relative to the total memory committed by the JVM. */
-  public static final String MAX_MEMORY_RATIO = "MaxMemory.Ratio";
+  public static final String MAX_MEMORY_RATIO = "MaxDirectMemory.Ratio";
   /** The dictionary size of the dictionary associated to a chunk. */
   public static final String DICTIONARY_SIZE = "DictionarySize.SUM";
   /** For vector block facts, the number of references to the vector block. */

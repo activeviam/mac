@@ -29,29 +29,29 @@ Since they are application-wide, they have the same value for all locations.
   ```
   DirectMemory.Ratio := DirectMemory.SUM / grandTotal(DirectMemory.SUM)
   ```
-* `UsedMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
+* `UsedDirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
   relative to the total used application committed direct memory
   <!--
   $$
-  \relax{UsedMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{UsedDirectMemory}
+  \relax{UsedDirectMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{UsedDirectMemory}
   $$
   -->
   ```
-  UsedMemory.Ratio := DirectMemory.SUM / UsedDirectMemory
+  UsedDirectMemory.Ratio := DirectMemory.SUM / UsedDirectMemory
   ```
   > This differs slightly from `DirectMemory.Ratio`, as this includes, along with
   > the direct memory consumed by the chunks:
   > * ActivePivot's SLAB memory allocator cache
   > * direct memory used by libraries other than ActivePivot
-* `MaxMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
+* `MaxDirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
   relative to the total application committed direct memory
   <!--
   $$
-  \relax{MaxMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{MaxDirectMemory}
+  \relax{MaxDirectMemory.Ratio}\coloneqq\frac\relax{DirectMemory.SUM}\relax{MaxDirectMemory}
   $$
   -->
   ```
-  MaxMemory.Ratio := DirectMemory.SUM / MaxDirectMemory
+  MaxDirectMemory.Ratio := DirectMemory.SUM / MaxDirectMemory
   ```
 * `HeapMemory.SUM`: an estimate of the on-heap size of the chunks
   > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
