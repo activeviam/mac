@@ -39,6 +39,10 @@ Since they are application-wide, they have the same value for all locations.
   ```
   UsedMemory.Ratio := DirectMemory.SUM / UsedDirectMemory
   ```
+  > This differs slightly from `DirectMemory.Ratio`, as this includes, along with
+  > the direct memory consumed by the chunks:
+  > * ActivePivot's SLAB memory allocator cache
+  > * direct memory used by libraries other than ActivePivot
 * `MaxMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
   relative to the total application committed direct memory
   <!--
