@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.descriptions;
 
+import com.activeviam.copper.api.Copper;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.literal.ILiteralType;
@@ -18,10 +19,18 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 public class DistributedApplicationDescription implements ITestApplicationDescription {
 
   public static final int CHUNK_SIZE = 256;
+  public static final String DISTRIBUTED_APP_NAME = "app";
+
+  protected final String clusterName;
+
+  public DistributedApplicationDescription(String clusterName) {
+    this.clusterName = clusterName;
+  }
+
 
   @Override
   public IDatastoreSchemaDescription datastoreDescription() {
-    return  StartBuilding.datastoreSchema()
+    return StartBuilding.datastoreSchema()
         .withStore(
             StartBuilding.store()
                 .withStoreName("A")
@@ -51,19 +60,32 @@ public class DistributedApplicationDescription implements ITestApplicationDescri
                 .withAggregatedMeasure()
                 .sum("value")
                 .withSingleLevelDimension("id")
-                .build())
-        .withDistributedCube(
-            StartBuilding.cube("QueryCubeA")
-                .withContributorsCount()
-                .asQueryCube()
+                .asDataCube()
                 .withClusterDefinition()
-                .withClusterId("cluster")
+                .withClusterId(clusterName)
                 .withMessengerDefinition()
                 .withKey(LocalMessenger.PLUGIN_KEY)
                 .withNoProperty()
                 .end()
-                .withApplication("app")
-                .withDistributingFields("value")
+                .withApplicationId(DISTRIBUTED_APP_NAME)
+                .withAllHierarchies()
+                .withAllMeasures()
+                .end()
+                .build())
+        .withDistributedCube(
+            StartBuilding.cube("QueryCubeA")
+                .withContributorsCount()
+                .withCalculations(
+                    context -> Copper.count().multiply(Copper.constant(2L)).publish(context))
+                .asQueryCube()
+                .withClusterDefinition()
+                .withClusterId(clusterName)
+                .withMessengerDefinition()
+                .withKey(LocalMessenger.PLUGIN_KEY)
+                .withNoProperty()
+                .end()
+                .withApplication(DISTRIBUTED_APP_NAME)
+                .withDistributingFields("id")
                 .end()
                 .withEpochDimension()
                 .build())
@@ -71,13 +93,13 @@ public class DistributedApplicationDescription implements ITestApplicationDescri
             StartBuilding.cube("QueryCubeB")
                 .asQueryCube()
                 .withClusterDefinition()
-                .withClusterId("cluster")
+                .withClusterId(clusterName)
                 .withMessengerDefinition()
                 .withKey(LocalMessenger.PLUGIN_KEY)
                 .withNoProperty()
                 .end()
-                .withApplication("app")
-                .withoutDistributingFields()
+                .withApplication(DISTRIBUTED_APP_NAME)
+                .withDistributingFields("id")
                 .end()
                 .withEpochDimension()
                 .build())

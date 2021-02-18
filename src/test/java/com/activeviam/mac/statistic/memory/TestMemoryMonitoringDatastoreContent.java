@@ -50,6 +50,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -126,9 +127,8 @@ public class TestMemoryMonitoringDatastoreContent {
 
     monitoringDatastore.edit(
         tm -> {
-          final AnalysisDatastoreFeeder feeder =
-              new AnalysisDatastoreFeeder(fullStats, "test");
-          feeder.feedDatastore(tm);
+          final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder("test");
+          feeder.loadWithTransaction(tm, Stream.of(fullStats));
 
           for (int i = 0; i < chunkIds.length; i++) {
             final ICursor records =
@@ -613,13 +613,10 @@ public class TestMemoryMonitoringDatastoreContent {
     final IMemoryStatistic statsEpoch2 = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(resources);
-    final AnalysisDatastoreFeeder initFeeder = new AnalysisDatastoreFeeder(stats, "appAInit");
-    final AnalysisDatastoreFeeder nextFeeder = new AnalysisDatastoreFeeder(
-        statsEpoch2, "appAEpoch2");
     monitoringDatastore.edit(
         tm -> {
-          initFeeder.feedDatastore(tm);
-          nextFeeder.feedDatastore(tm);
+          new AnalysisDatastoreFeeder("appAInit").loadWithTransaction(tm, Stream.of(stats));
+          new AnalysisDatastoreFeeder("appAEpoch2").loadWithTransaction(tm, Stream.of(statsEpoch2));
         });
     // Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice
     final IDictionaryCursor cursor =
@@ -725,13 +722,11 @@ public class TestMemoryMonitoringDatastoreContent {
         MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(resources);
-    final AnalysisDatastoreFeeder baseFeeder = new AnalysisDatastoreFeeder(stats, "App");
-    final AnalysisDatastoreFeeder feederWithBitmap =
-        new AnalysisDatastoreFeeder(statsWithBitmap, "AppWithBitmap");
     monitoringDatastore.edit(
         tm -> {
-          baseFeeder.feedDatastore(tm);
-          feederWithBitmap.feedDatastore(tm);
+          new AnalysisDatastoreFeeder("App").loadWithTransaction(tm, Stream.of(stats));
+          new AnalysisDatastoreFeeder("AppWithBitmap")
+              .loadWithTransaction(tm, Stream.of(statsWithBitmap));
         });
 
     final IDictionaryCursor cursor =
@@ -778,7 +773,6 @@ public class TestMemoryMonitoringDatastoreContent {
 
   @Test
   public void testChunkToReferencesDatastoreContentWithReference() throws AgentException {
-
     final Application monitoredApplication = MonitoringTestUtils.setupApplication(
         new MicroApplicationDescriptionWithReference(),
         resources,

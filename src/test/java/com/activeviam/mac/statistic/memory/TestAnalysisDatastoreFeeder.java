@@ -29,7 +29,6 @@ import com.qfs.store.query.impl.DatastoreQueryHelper;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.ITransactionManager;
-import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import gnu.trove.set.TLongSet;
@@ -37,11 +36,14 @@ import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 @ExtendWith(RegistrySetupExtension.class)
 public class TestAnalysisDatastoreFeeder {
@@ -55,8 +57,8 @@ public class TestAnalysisDatastoreFeeder {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir =
-      QfsFileTestUtils.createTempDirectory(TestAggregateProvidersBookmark.class);
+  @TempDir
+  protected static Path tempDir;
 
   protected Application monitoredApplication;
   protected Application distributedMonitoredApplication;
@@ -66,30 +68,27 @@ public class TestAnalysisDatastoreFeeder {
   protected IMemoryStatistic distributedAppStatistics;
 
   @BeforeEach
-  public void setup() throws AgentException {
+  public void setup(TestInfo testInfo) throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
         new MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy(),
         resources,
         TestAnalysisDatastoreFeeder::fillMicroApplication);
-
-    Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
+    Path exportPath = MonitoringTestUtils.exportApplication(
         monitoredApplication.getDatastore(),
         monitoredApplication.getManager(),
         tempDir,
         this.getClass().getSimpleName());
-
-    distributedMonitoredApplication = MonitoringTestUtils.setupApplication(
-        new DistributedApplicationDescription(),
-        resources,
-        TestAnalysisDatastoreFeeder::fillDistributedApplication);
     appStatistics = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
+    distributedMonitoredApplication = MonitoringTestUtils.setupApplication(
+        new DistributedApplicationDescription(testInfo.getDisplayName()),
+        resources,
+        TestAnalysisDatastoreFeeder::fillDistributedApplication);
     exportPath = MonitoringTestUtils.exportMostRecentVersion(
         distributedMonitoredApplication.getDatastore(),
         distributedMonitoredApplication.getManager(),
         tempDir,
         this.getClass().getSimpleName());
-
     distributedAppStatistics = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(resources);
@@ -98,10 +97,8 @@ public class TestAnalysisDatastoreFeeder {
   private static void fillDistributedApplication(
       IDatastore datastore, IActivePivotManager manager) {
     // epoch 1
-    datastore.edit(
-        transactionManager -> {
-          IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i));
-        });
+    datastore.edit(transactionManager -> IntStream.range(0, 10)
+        .forEach(i -> transactionManager.add("A", i, (double) i)));
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
@@ -123,11 +120,11 @@ public class TestAnalysisDatastoreFeeder {
   public void testDifferentDumps() {
     final IDatastore monitoringDatastore = monitoringApplication.getDatastore();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder("app");
+    feeder.loadInto(monitoringDatastore, Stream.of(appStatistics));
 
-    feeder = new AnalysisDatastoreFeeder(appStatistics, "app2");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    feeder = new AnalysisDatastoreFeeder("app2");
+    feeder.loadInto(monitoringDatastore, Stream.of(appStatistics));
 
     Assertions.assertThat(
         DatastoreQueryHelper.selectDistinct(
@@ -141,8 +138,8 @@ public class TestAnalysisDatastoreFeeder {
   public void testEpochReplicationForAlreadyExistingChunks() {
     final IDatastore monitoringDatastore = monitoringApplication.getDatastore();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder("app");
+    feeder.loadInto(monitoringDatastore, Stream.of(distributedAppStatistics));
 
     TLongSet epochs = collectEpochViewsForOwner(
         monitoringDatastore.getMostRecentVersion(),
@@ -150,8 +147,8 @@ public class TestAnalysisDatastoreFeeder {
 
     Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L);
 
-    feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    feeder = new AnalysisDatastoreFeeder("app");
+    feeder.loadInto(monitoringDatastore, Stream.of(appStatistics));
 
     epochs = collectEpochViewsForOwner(
         monitoringDatastore.getMostRecentVersion(),
@@ -167,15 +164,13 @@ public class TestAnalysisDatastoreFeeder {
   public void testEpochReplicationForAlreadyExistingEpochs() {
     final IDatastore monitoringDatastore = monitoringApplication.getDatastore();
 
-    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(appStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
+    AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder("app");
+    feeder.loadInto(monitoringDatastore, Stream.of(appStatistics));
+    feeder = new AnalysisDatastoreFeeder("app");
+    feeder.loadInto(monitoringDatastore, Stream.of(distributedAppStatistics));
 
-    feeder = new AnalysisDatastoreFeeder(distributedAppStatistics, "app");
-    monitoringDatastore.edit(feeder::feedDatastore);
-
-    TLongSet epochs =
-        collectEpochViewsForOwner(
-            monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
+    TLongSet epochs = collectEpochViewsForOwner(
+        monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
 
     // within its statistic, the Data cube only has epoch 1
     // it should be mapped to the epochs 1, 2, 3 and 4 of the first feedDatastore call

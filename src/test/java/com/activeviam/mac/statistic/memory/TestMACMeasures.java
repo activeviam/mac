@@ -326,7 +326,7 @@ public class TestMACMeasures {
 
     final MDXQuery query = new MDXQuery("SELECT"
         + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + " NON EMPTY [Measures].[Dictionary Size] ON COLUMNS"
+        + " NON EMPTY [Measures].[DictionarySize.SUM] ON COLUMNS"
         + " FROM [MemoryCube]"
         + " WHERE ("
         + "  [Owners].[Owner].[Owner].[Store A],"

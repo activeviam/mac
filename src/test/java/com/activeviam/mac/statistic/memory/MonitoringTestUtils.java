@@ -142,8 +142,8 @@ public class MonitoringTestUtils {
 
   protected static void feedStatisticsIntoDatastore(
       IMemoryStatistic statistics, IDatastore datastore, String dumpName) {
-    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(statistics, dumpName);
-    datastore.edit(feeder::feedDatastore);
+    final AnalysisDatastoreFeeder feeder = new AnalysisDatastoreFeeder(dumpName);
+    feeder.loadInto(datastore, Stream.of(statistics));
   }
 
   public static Path exportApplication(
@@ -238,23 +238,19 @@ public class MonitoringTestUtils {
 
   public static IMemoryStatistic loadMemoryStatFromFolder(
       final Path folderPath, final Predicate<Path> filter) {
-    final Stream<Path> fileList;
-    try {
-      fileList = Files.list(folderPath);
+    final List<IMemoryStatistic> childStats;
+    try (final var fileList = Files.list(folderPath)) {
+      childStats = fileList.filter(filter)
+          .map(file -> {
+            try {
+              return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
+            } catch (IOException e) {
+              throw new RuntimeException("Cannot read " + file, e);
+            }
+          }).collect(Collectors.toList());
     } catch (IOException e) {
       throw new IllegalArgumentException("Cannot list files under " + folderPath, e);
     }
-    final List<IMemoryStatistic> childStats =
-        fileList.filter(filter)
-            .map(
-                file -> {
-                  try {
-                    return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-                  } catch (IOException e) {
-                    throw new RuntimeException("Cannot read " + file, e);
-                  }
-                })
-            .collect(Collectors.toList());
 
     return new MemoryStatisticBuilder()
         .withCreatorClasses(MonitoringTestUtils.class)

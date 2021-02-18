@@ -18,6 +18,7 @@ import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.store.record.impl.Records.IDictionaryProvider;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
+import com.quartetfs.biz.pivot.dto.AxisDTO;
 import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
 import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
@@ -83,13 +84,15 @@ public class TestIndexAndDictionaryBookmarks {
 
     final CellSetDTO result = pivot.execute(totalQuery);
 
-    final List<AxisPositionDTO> indexedFieldsPosition = result.getAxes().get(0).getPositions();
+    final List<AxisDTO> axes = result.getAxes();
+    Assertions.assertThat(axes).hasSize(1);
+
+    final List<AxisPositionDTO> indexedFieldsPosition = axes.get(0).getPositions();
 
     Assertions.assertThat(indexedFieldsPosition)
         .extracting(position -> position.getMembers().get(0).getPath().getPath())
         .containsExactlyInAnyOrder(
-            new String[] {"AllMember", "id0, id1, id2"},
-            new String[] {"AllMember", "id0"});
+            new String[] {"AllMember", "id0, id1, id2"}, new String[] {"AllMember", "id0"});
   }
 
   @Test
@@ -103,7 +106,7 @@ public class TestIndexAndDictionaryBookmarks {
                 + "     [Fields].[Field].[Field].Members,"
                 + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
                 + "   ),"
-                + "   [Measures].[Dictionary Size]"
+                + "   [Measures].[DictionarySize.SUM]"
                 + " ) ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("
@@ -117,31 +120,32 @@ public class TestIndexAndDictionaryBookmarks {
 
     Assertions.assertThat(dictionarizedFieldsPositions)
         .extracting(position -> position.getMembers().get(0).getPath().getPath())
-        .containsExactlyInAnyOrder(
-            new String[] {"AllMember", "id0"});
+        .containsExactlyInAnyOrder(new String[] {"AllMember", "id0"});
   }
 
   @Test
   public void testDictionarySizeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery totalQuery = new MDXQuery(
-        "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
-            + " [Measures].[Dictionary Size] ON ROWS"
-            + " FROM [MemoryCube]"
-            + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery totalQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery perFieldQuery = new MDXQuery(
-        "SELECT NonEmpty("
-            + "   Except("
-            + "     [Fields].[Field].[Field].Members,"
-            + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
-            + "   ),"
-            + "   [Measures].[Dictionary Size]"
-            + " ) ON COLUMNS,"
-            + " [Measures].[Dictionary Size] ON ROWS"
-            + " FROM [MemoryCube]"
-            + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery perFieldQuery =
+        new MDXQuery(
+            "SELECT NonEmpty("
+                + "   Except("
+                + "     [Fields].[Field].[Field].Members,"
+                + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
+                + "   ),"
+                + "   [Measures].[DictionarySize.SUM]"
+                + " ) ON COLUMNS,"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final CellSetDTO total = pivot.execute(totalQuery);
     final CellSetDTO perField = pivot.execute(perFieldQuery);
@@ -163,7 +167,7 @@ public class TestIndexAndDictionaryBookmarks {
                 + "     [Fields].[Field].[Field].Members,"
                 + "     [Fields].[Field].[ALL].[AllMember].[N/A]"
                 + "   ) ON COLUMNS,"
-                + " [Measures].[Dictionary Size] ON ROWS"
+                + " [Measures].[DictionarySize.SUM] ON ROWS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("
                 + "   [Owners].[Owner].[ALL].[AllMember].[Store A],"

@@ -7,6 +7,8 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import static com.quartetfs.fwk.util.TestUtils.waitAndAssert;
+
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.statistic.memory.descriptions.DistributedApplicationDescription;
 import com.activeviam.mac.statistic.memory.junit.RegistrySetupExtension;
@@ -24,13 +26,17 @@ import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.fwk.AgentException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -53,28 +59,30 @@ public class TestDistributedCubeEpochs {
   protected Application monitoringApplication;
 
   @BeforeEach
-  public void setup() throws AgentException {
+  public void setup(TestInfo testInfo) throws AgentException {
     monitoredApplication = MonitoringTestUtils.setupApplication(
-        new DistributedApplicationDescription(),
+        new DistributedApplicationDescription(testInfo.getDisplayName()),
         resources,
         (datastore, manager) -> {
-          datastore.edit(transactionManager ->
-              IntStream.range(0, 10).forEach(i ->
-                  transactionManager.add("A", i, 0.)));
-
-          // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
-          MultiVersionDistributedActivePivot queryCubeA =
+          final var queryCubeA =
               ((MultiVersionDistributedActivePivot) manager.getActivePivots().get("QueryCubeA"));
+          final var queryCubeB =
+              ((MultiVersionDistributedActivePivot) manager.getActivePivots().get("QueryCubeB"));
+          awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 2);
 
-          // produces distributed epochs 1 to 5
+          // epoch 1
+          datastore.edit(transactionManager -> IntStream.range(0, 10)
+              .forEach(i -> transactionManager.add("A", i, (double) i)));
+          awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
+
+          // emulate commits on the query cubes at a greater epoch that does not exist in the
+          // datastore
+          // produces 5 distributed epochs
           for (int i = 0; i < 5; ++i) {
             queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
           }
 
-          MultiVersionDistributedActivePivot queryCubeB =
-              ((MultiVersionDistributedActivePivot) manager.getActivePivots().get("QueryCubeB"));
-
-          // produces distributed epoch 1
+          // produces 1 distributed epoch
           queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
         });
 
@@ -89,15 +97,38 @@ public class TestDistributedCubeEpochs {
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
   }
 
+  private void awaitEpochOnCubes(
+      final List<MultiVersionDistributedActivePivot> cubes, long epochId) {
+    waitAndAssert(
+        1,
+        TimeUnit.MINUTES,
+        () -> SoftAssertions.assertSoftly(
+            assertions -> {
+              for (final var cube : cubes) {
+                assertions.assertThat(cube.getHead().getEpochId())
+                    .as(cube.getId())
+                    .isEqualTo(epochId);
+              }
+            }));
+  }
+
   @Test
   public void testExpectedViewEpochs() {
     final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
-
     Assertions.assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
             new RegularEpochView(1L),
-            new DistributedEpochView("QueryCubeA", 5L),
-            new DistributedEpochView("QueryCubeB", 1L));
+            new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
+            new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
+  }
+
+  private long getHeadEpochId(String cubeName) {
+    return monitoredApplication
+        .getManager()
+        .getActivePivots()
+        .get(cubeName)
+        .getMostRecentVersion()
+        .getEpochId();
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {
