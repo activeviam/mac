@@ -13,20 +13,20 @@ import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 
 public class CubelessApplicationDescription implements ITestApplicationDescription {
 
-	protected final ITestApplicationDescription underlyingApplication;
+  protected final ITestApplicationDescription underlyingApplication;
 
-	public CubelessApplicationDescription(ITestApplicationDescription underlyingApplication) {
-		this.underlyingApplication = underlyingApplication;
-	}
+  public CubelessApplicationDescription(ITestApplicationDescription underlyingApplication) {
+    this.underlyingApplication = underlyingApplication;
+  }
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return underlyingApplication.datastoreDescription();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return underlyingApplication.datastoreDescription();
+  }
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		return new ActivePivotManagerDescription();
-	}
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    return new ActivePivotManagerDescription();
+  }
 }

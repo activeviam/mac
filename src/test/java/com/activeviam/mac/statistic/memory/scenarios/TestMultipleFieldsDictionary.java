@@ -51,170 +51,194 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @ExtendWith(RegistrySetupExtension.class)
 public class TestMultipleFieldsDictionary {
 
-	@RegisterExtension
-	protected static ActiveViamPropertyExtension propertyExtension =
-			new ActiveViamPropertyExtensionBuilder()
-					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
-					.build();
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-	@RegisterExtension
-	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir =
-			QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
 
-	protected Application monitoredApplication;
-	protected Application monitoringApplication;
+  protected Application monitoredApplication;
+  protected Application monitoringApplication;
 
-	@BeforeEach
-	public void setup() throws AgentException {
-		monitoredApplication = MonitoringTestUtils.setupApplication(
-				new ScenarioApplication(),
-				resources,
-				ScenarioApplication::fill);
+  @BeforeEach
+  public void setup() throws AgentException {
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new ScenarioApplication(), resources, ScenarioApplication::fill);
 
-		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-				monitoredApplication.getDatastore(),
-				monitoredApplication.getManager(),
-				tempDir,
-				this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
-		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
-	}
+    final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
+  }
 
-	@Test
-	public void testDictionaryIsShared() {
-		final ISchemaDictionaryProvider dictionaries =
-				monitoredApplication.getDatastore().getDictionaries();
-		Assertions.assertThat(dictionaries.getDictionary("Forex", "currency"))
-				.isSameAs(dictionaries.getDictionary("Forex", "targetCurrency"));
-	}
+  @Test
+  public void testDictionaryIsShared() {
+    final ISchemaDictionaryProvider dictionaries =
+        monitoredApplication.getDatastore().getDictionaries();
+    Assertions.assertThat(dictionaries.getDictionary("Forex", "currency"))
+        .isSameAs(dictionaries.getDictionary("Forex", "targetCurrency"));
+  }
 
-	@Test
-	public void testDictionaryHasAtLeastOneChunk() {
-		final long dictionaryId = monitoredApplication.getDatastore().getDictionaries()
-				.getDictionary("Forex", "currency")
-				.getDictionaryId();
+  @Test
+  public void testDictionaryHasAtLeastOneChunk() {
+    final long dictionaryId =
+        monitoredApplication
+            .getDatastore()
+            .getDictionaries()
+            .getDictionary("Forex", "currency")
+            .getDictionaryId();
 
-		final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
-		Assertions.assertThat(chunkIdsForDictionary).isNotEmpty();
-	}
+    final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
+    Assertions.assertThat(chunkIdsForDictionary).isNotEmpty();
+  }
 
-	@Test
-	public void testDictionaryChunkFields() {
-		final long dictionaryId = monitoredApplication.getDatastore().getDictionaries()
-				.getDictionary("Forex", "currency")
-				.getDictionaryId();
+  @Test
+  public void testDictionaryChunkFields() {
+    final long dictionaryId =
+        monitoredApplication
+            .getDatastore()
+            .getDictionaries()
+            .getDictionary("Forex", "currency")
+            .getDictionaryId();
 
-		final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
-		final Map<Long, Multimap<String, String>> ownersAndFieldsPerChunk =
-				extractOwnersAndFieldsPerChunkId(chunkIdsForDictionary);
+    final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
+    final Map<Long, Multimap<String, String>> ownersAndFieldsPerChunk =
+        extractOwnersAndFieldsPerChunkId(chunkIdsForDictionary);
 
-		SoftAssertions.assertSoftly(assertions -> {
-			for (final Multimap<String, String> ownersAndFieldsForChunk : ownersAndFieldsPerChunk
-					.values()) {
-				assertions.assertThat(ownersAndFieldsForChunk.keySet())
-						.containsOnly("Currency", "Forex");
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          for (final Multimap<String, String> ownersAndFieldsForChunk :
+              ownersAndFieldsPerChunk.values()) {
+            assertions
+                .assertThat(ownersAndFieldsForChunk.keySet())
+                .containsOnly("Currency", "Forex");
 
-				assertions.assertThat(ownersAndFieldsForChunk.get("Currency"))
-						.containsExactlyInAnyOrder("currency");
-				assertions.assertThat(ownersAndFieldsForChunk.get("Forex"))
-						.containsExactlyInAnyOrder("currency", "targetCurrency");
-			}
-		});
-	}
+            assertions
+                .assertThat(ownersAndFieldsForChunk.get("Currency"))
+                .containsExactlyInAnyOrder("currency");
+            assertions
+                .assertThat(ownersAndFieldsForChunk.get("Forex"))
+                .containsExactlyInAnyOrder("currency", "targetCurrency");
+          }
+        });
+  }
 
-	protected Set<Long> extractChunkIdsForDictionary(final long dictionaryId) {
-		final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
-				.forStore(DatastoreConstants.CHUNK_STORE)
-				.withCondition(
-						BaseConditions.Equal(DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId))
-				.selecting(DatastoreConstants.CHUNK_ID)
-				.onCurrentThread()
-				.run();
+  protected Set<Long> extractChunkIdsForDictionary(final long dictionaryId) {
+    final ICursor cursor =
+        monitoringApplication
+            .getDatastore()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
 
-		return StreamSupport.stream(cursor.spliterator(), false)
-				.map(reader -> reader.readLong(0))
-				.collect(Collectors.toSet());
-	}
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
+  }
 
-	protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
-			final Collection<Long> chunkIdSubset) {
-		final ICursor cursor = monitoringApplication.getDatastore().getHead().getQueryRunner()
-				.forStore(DatastoreConstants.CHUNK_STORE)
-				.withCondition(BaseConditions.And(
-						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
-						BaseConditions.In(DatastoreConstants.OWNER__CHUNK_ID, chunkIdSubset.toArray())))
-				.selecting(DatastoreConstants.OWNER__CHUNK_ID, DatastoreConstants.OWNER__OWNER,
-						DatastoreConstants.OWNER__FIELD)
-				.onCurrentThread()
-				.run();
+  protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
+      final Collection<Long> chunkIdSubset) {
+    final ICursor cursor =
+        monitoringApplication
+            .getDatastore()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.And(
+                    BaseConditions.Equal(
+                        DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
+                    BaseConditions.In(DatastoreConstants.OWNER__CHUNK_ID, chunkIdSubset.toArray())))
+            .selecting(
+                DatastoreConstants.OWNER__CHUNK_ID,
+                DatastoreConstants.OWNER__OWNER,
+                DatastoreConstants.OWNER__FIELD)
+            .onCurrentThread()
+            .run();
 
-		final Map<Long, Multimap<String, String>> fieldsPerChunk = new HashMap<>();
-		for (final IRecordReader reader : cursor) {
-			final long chunkId = reader.readLong(0);
-			fieldsPerChunk.putIfAbsent(chunkId, HashMultimap.create());
-			fieldsPerChunk.get(chunkId).put(
-					((ChunkOwner) reader.read(1)).getName(),
-					(String) reader.read(2));
-		}
+    final Map<Long, Multimap<String, String>> fieldsPerChunk = new HashMap<>();
+    for (final IRecordReader reader : cursor) {
+      final long chunkId = reader.readLong(0);
+      fieldsPerChunk.putIfAbsent(chunkId, HashMultimap.create());
+      fieldsPerChunk
+          .get(chunkId)
+          .put(((ChunkOwner) reader.read(1)).getName(), (String) reader.read(2));
+    }
 
-		return fieldsPerChunk;
-	}
+    return fieldsPerChunk;
+  }
 
-	private static final class ScenarioApplication
-			implements ITestApplicationDescription {
+  private static final class ScenarioApplication implements ITestApplicationDescription {
 
-		@Override
-		public IDatastoreSchemaDescription datastoreDescription() {
-			return StartBuilding.datastoreSchema()
-					.withStore(
-							StartBuilding.store()
-									.withStoreName("Forex")
-									.withField("currency", ILiteralType.STRING)
-									.asKeyField()
-									.withField("targetCurrency", ILiteralType.STRING)
-									.asKeyField()
-									.build())
-					.withStore(
-							StartBuilding.store()
-									.withStoreName("Currency")
-									.withField("currency", ILiteralType.STRING)
-									.asKeyField()
-									.build())
-					.withReference(StartBuilding.reference()
-							.fromStore("Forex")
-							.toStore("Currency")
-							.withName("currencyReference")
-							.withMapping("currency", "currency")
-							.build())
-					.withReference(StartBuilding.reference()
-							.fromStore("Forex")
-							.toStore("Currency")
-							.withName("targetCurrencyReference")
-							.withMapping("targetCurrency", "currency")
-							.build())
-					.build();
-		}
+    @Override
+    public IDatastoreSchemaDescription datastoreDescription() {
+      return StartBuilding.datastoreSchema()
+          .withStore(
+              StartBuilding.store()
+                  .withStoreName("Forex")
+                  .withField("currency", ILiteralType.STRING)
+                  .asKeyField()
+                  .withField("targetCurrency", ILiteralType.STRING)
+                  .asKeyField()
+                  .build())
+          .withStore(
+              StartBuilding.store()
+                  .withStoreName("Currency")
+                  .withField("currency", ILiteralType.STRING)
+                  .asKeyField()
+                  .build())
+          .withReference(
+              StartBuilding.reference()
+                  .fromStore("Forex")
+                  .toStore("Currency")
+                  .withName("currencyReference")
+                  .withMapping("currency", "currency")
+                  .build())
+          .withReference(
+              StartBuilding.reference()
+                  .fromStore("Forex")
+                  .toStore("Currency")
+                  .withName("targetCurrencyReference")
+                  .withMapping("targetCurrency", "currency")
+                  .build())
+          .build();
+    }
 
-		@Override
-		public IActivePivotManagerDescription managerDescription(
-				IDatastoreSchemaDescription schemaDescription) {
-			return new ActivePivotManagerDescription();
-		}
+    @Override
+    public IActivePivotManagerDescription managerDescription(
+        IDatastoreSchemaDescription schemaDescription) {
+      return new ActivePivotManagerDescription();
+    }
 
-		public static void fill(IDatastore datastore, IActivePivotManager manager) {
-			final String[] currencies = new String[] {"EUR", "GBP", "USD"};
+    public static void fill(IDatastore datastore, IActivePivotManager manager) {
+      final String[] currencies = new String[] {"EUR", "GBP", "USD"};
 
-			datastore.edit(transactionManager -> {
-				for (final String currency : currencies) {
-					transactionManager.add("Currency", currency);
-					for (final String targetCurrency : currencies) {
-						transactionManager.add("Forex", currency, targetCurrency);
-					}
-				}
-			});
-		}
-	}
+      datastore.edit(
+          transactionManager -> {
+            for (final String currency : currencies) {
+              transactionManager.add("Currency", currency);
+              for (final String targetCurrency : currencies) {
+                transactionManager.add("Forex", currency, targetCurrency);
+              }
+            }
+          });
+    }
+  }
 }

@@ -84,17 +84,20 @@ public class MonitoringTestUtils {
     final IEpochManagementPolicy epochManagementPolicy =
         applicationDescription.epochManagementPolicy();
 
-    final IDatastore datastore = resourcesExtension.create(StartBuilding.datastore()
-        .setSchemaDescription(datastoreSchemaDescription)
-        .addSchemaDescriptionPostProcessors(
-            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-        .setEpochManagementPolicy(epochManagementPolicy)
-        ::build);
+    final IDatastore datastore =
+        resourcesExtension.create(
+            StartBuilding.datastore()
+                    .setSchemaDescription(datastoreSchemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                    .setEpochManagementPolicy(epochManagementPolicy)
+                ::build);
 
-    final IActivePivotManager manager = StartBuilding.manager()
-        .setDescription(managerDescription)
-        .setDatastoreAndPermissions(datastore)
-        .buildAndStart();
+    final IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(managerDescription)
+            .setDatastoreAndPermissions(datastore)
+            .buildAndStart();
     resourcesExtension.register(manager::stop);
 
     operations.accept(datastore, manager);
@@ -103,33 +106,33 @@ public class MonitoringTestUtils {
   }
 
   public static Application setupMonitoringApplication(
-      IMemoryStatistic statistics,
-      AResourcesExtension resourcesExtension)
-      throws AgentException {
+      IMemoryStatistic statistics, AResourcesExtension resourcesExtension) throws AgentException {
 
     final Application monitoringApplication = setupMonitoringApplication(resourcesExtension);
     feedStatisticsIntoDatastore(statistics, monitoringApplication.getDatastore());
     return monitoringApplication;
   }
 
-  public static Application setupMonitoringApplication(
-      AResourcesExtension resourcesExtension)
+  public static Application setupMonitoringApplication(AResourcesExtension resourcesExtension)
       throws AgentException {
 
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastoreSchemaDescription datastoreSchemaDescription = config.schemaDescription();
     final IActivePivotManagerDescription managerDescription = config.managerDescription();
 
-    final IDatastore datastore = resourcesExtension.create(StartBuilding.datastore()
-        .setSchemaDescription(datastoreSchemaDescription)
-        .addSchemaDescriptionPostProcessors(
-            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-        ::build);
+    final IDatastore datastore =
+        resourcesExtension.create(
+            StartBuilding.datastore()
+                    .setSchemaDescription(datastoreSchemaDescription)
+                    .addSchemaDescriptionPostProcessors(
+                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+                ::build);
 
-    final IActivePivotManager manager = StartBuilding.manager()
-        .setDescription(managerDescription)
-        .setDatastoreAndPermissions(datastore)
-        .buildAndStart();
+    final IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(managerDescription)
+            .setDatastoreAndPermissions(datastore)
+            .buildAndStart();
     resourcesExtension.register(manager::stop);
 
     return new Application(datastore, manager);
@@ -151,8 +154,7 @@ public class MonitoringTestUtils {
       final IActivePivotManager manager,
       final Path directory,
       final String folderSuffix) {
-    return setupForExport(datastore, manager, directory)
-        .exportApplication(folderSuffix);
+    return setupForExport(datastore, manager, directory).exportApplication(folderSuffix);
   }
 
   public static Path exportMostRecentVersion(
@@ -160,8 +162,7 @@ public class MonitoringTestUtils {
       final IActivePivotManager manager,
       final Path directory,
       final String folderSuffix) {
-    return setupForExport(datastore, manager, directory)
-        .exportMostRecentVersion(folderSuffix);
+    return setupForExport(datastore, manager, directory).exportMostRecentVersion(folderSuffix);
   }
 
   public static Path exportVersions(
@@ -220,34 +221,34 @@ public class MonitoringTestUtils {
     return loadMemoryStatFromFolder(folderPath, x -> true);
   }
 
-  public static IMemoryStatistic loadDatastoreMemoryStatFromFolder(
-      final Path folderPath) {
+  public static IMemoryStatistic loadDatastoreMemoryStatFromFolder(final Path folderPath) {
     return loadMemoryStatFromFolder(
         folderPath,
-        path -> path.getFileName().toString()
-            .startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
+        path -> path.getFileName().toString().startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
   }
 
-  public static IMemoryStatistic loadPivotMemoryStatFromFolder(
-      final Path folderPath) {
+  public static IMemoryStatistic loadPivotMemoryStatFromFolder(final Path folderPath) {
     return loadMemoryStatFromFolder(
         folderPath,
-        path -> path.getFileName().toString()
-            .startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
+        path -> path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
   }
 
   public static IMemoryStatistic loadMemoryStatFromFolder(
       final Path folderPath, final Predicate<Path> filter) {
     final List<IMemoryStatistic> childStats;
     try (final var fileList = Files.list(folderPath)) {
-      childStats = fileList.filter(filter)
-          .map(file -> {
-            try {
-              return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-            } catch (IOException e) {
-              throw new RuntimeException("Cannot read " + file, e);
-            }
-          }).collect(Collectors.toList());
+      childStats =
+          fileList
+              .filter(filter)
+              .map(
+                  file -> {
+                    try {
+                      return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
+                    } catch (IOException e) {
+                      throw new RuntimeException("Cannot read " + file, e);
+                    }
+                  })
+              .collect(Collectors.toList());
     } catch (IOException e) {
       throw new IllegalArgumentException("Cannot list files under " + folderPath, e);
     }
@@ -268,8 +269,7 @@ public class MonitoringTestUtils {
   }
 
   public static IDatastore assertLoadsCorrectly(
-      IMemoryStatistic statistic,
-      AResourcesExtension resourcesExtension) {
+      IMemoryStatistic statistic, AResourcesExtension resourcesExtension) {
     final IDatastore monitoringDatastore = createAnalysisDatastore(statistic, resourcesExtension);
 
     final StatisticsSummary statisticsSummary =
@@ -284,17 +284,16 @@ public class MonitoringTestUtils {
   }
 
   public static IDatastore createAnalysisDatastore(
-      IMemoryStatistic statistics,
-      AResourcesExtension resourcesExtension) {
+      IMemoryStatistic statistics, AResourcesExtension resourcesExtension) {
     final IDatastore datastore = createAnalysisDatastore(resourcesExtension);
     feedStatisticsIntoDatastore(statistics, datastore);
     return datastore;
   }
 
   public static IDatastore createAnalysisDatastore(AResourcesExtension resourcesExtension) {
-    return resourcesExtension.create(StartBuilding.datastore()
-        .setSchemaDescription(new MemoryAnalysisDatastoreDescription())
-        ::build);
+    return resourcesExtension.create(
+        StartBuilding.datastore().setSchemaDescription(new MemoryAnalysisDatastoreDescription())
+            ::build);
   }
 
   public static String ownershipCountMdxExpression(final String hierarchyUniqueName) {
@@ -305,7 +304,9 @@ public class MonitoringTestUtils {
         + "      {[Measures].[contributors.COUNT]}"
         + "    ),"
         + "    NonEmpty("
-        + "      " + hierarchyUniqueName + ".[ALL].[AllMember].Children,"
+        + "      "
+        + hierarchyUniqueName
+        + ".[ALL].[AllMember].Children,"
         + "      {[Measures].[contributors.COUNT]}"
         + "    )"
         + "  )"
@@ -326,9 +327,8 @@ public class MonitoringTestUtils {
         extractLatestChunkInfos(monitoringDatastore);
 
     final long chunkCount = latestChunkInfos.size();
-    final long totalChunkOffHeapSize = latestChunkInfos.values().stream()
-        .mapToLong(chunk -> chunk.offHeapSize)
-        .sum();
+    final long totalChunkOffHeapSize =
+        latestChunkInfos.values().stream().mapToLong(chunk -> chunk.offHeapSize).sum();
     Multimap<String, Long> chunkIdsByClass = HashMultimap.create();
     latestChunkInfos.forEach((key, value) -> chunkIdsByClass.put(value.chunkClass, key));
 
@@ -350,14 +350,15 @@ public class MonitoringTestUtils {
   }
 
   private static Map<Long, VersionedChunkInfo> extractLatestChunkInfos(final IDatastore datastore) {
-    IDictionaryCursor cursor = datastore
-        .getHead()
-        .getQueryRunner()
-        .forStore(CHUNK_STORE)
-        .withoutCondition()
-        .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
-        .onCurrentThread()
-        .run();
+    IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withoutCondition()
+            .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
+            .onCurrentThread()
+            .run();
 
     final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
     for (final IRecordReader reader : cursor) {
@@ -368,9 +369,7 @@ public class MonitoringTestUtils {
       if (chunkInfo == null || chunkInfo.epochId < epochId) {
         final long offHeapSize = reader.readLong(2);
         final String chunkClass = (String) reader.read(3);
-        latestChunkInfos.put(
-            chunkId,
-            new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
+        latestChunkInfos.put(chunkId, new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
       }
     }
 
@@ -403,27 +402,21 @@ public class MonitoringTestUtils {
     }
   }
 
-  /**
-   * Checks that all chunks have an owner and a component.
-   */
+  /** Checks that all chunks have an owner and a component. */
   private static void checkForUnrootedChunks(final IDatastore monitoringDatastore) {
     final Set<Long> unrootedChunks =
         retrieveAllChunkIds(
             monitoringDatastore,
             BaseConditions.Or(
+                BaseConditions.Equal(DatastoreConstants.OWNER__OWNER, NoOwner.getInstance()),
                 BaseConditions.Equal(
-                    DatastoreConstants.OWNER__OWNER,
-                    NoOwner.getInstance()),
-                BaseConditions.Equal(
-                    DatastoreConstants.OWNER__COMPONENT,
-                    ParentType.NO_COMPONENT)));
+                    DatastoreConstants.OWNER__COMPONENT, ParentType.NO_COMPONENT)));
 
     Assertions.assertThat(unrootedChunks).isEmpty();
   }
 
   private static Set<Long> retrieveAllChunkIds(
-      final IDatastore monitoringDatastore,
-      final ICondition condition) {
+      final IDatastore monitoringDatastore, final ICondition condition) {
     final IDictionaryCursor cursor =
         monitoringDatastore
             .getHead()

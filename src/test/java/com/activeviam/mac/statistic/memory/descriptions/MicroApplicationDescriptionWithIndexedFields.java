@@ -18,47 +18,50 @@ import java.util.stream.IntStream;
 
 public class MicroApplicationDescriptionWithIndexedFields implements ITestApplicationDescription {
 
-	public static final int ADDED_DATA_SIZE = 20;
-	public static final int CHUNK_SIZE = 256;
+  public static final int ADDED_DATA_SIZE = 20;
+  public static final int CHUNK_SIZE = 256;
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id0", ILiteralType.INT)
-								.asKeyField()
-								.withField("id1", ILiteralType.INT)
-								.asKeyField()
-								.withField("id2", ILiteralType.INT)
-								.asKeyField()
-								.withField("field", ILiteralType.INT)
-								.dictionarized()
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.withStore(StartBuilding.store()
-						.withStoreName("B")
-						.withField("id0", ILiteralType.INT)
-						.asKeyField()
-						.build())
-				.withReference(StartBuilding.reference()
-						.fromStore("A")
-						.toStore("B")
-						.withName("ref")
-						.withMapping("id0", "id0")
-						.build())
-				.build();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id0", ILiteralType.INT)
+                .asKeyField()
+                .withField("id1", ILiteralType.INT)
+                .asKeyField()
+                .withField("id2", ILiteralType.INT)
+                .asKeyField()
+                .withField("field", ILiteralType.INT)
+                .dictionarized()
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("B")
+                .withField("id0", ILiteralType.INT)
+                .asKeyField()
+                .build())
+        .withReference(
+            StartBuilding.reference()
+                .fromStore("A")
+                .toStore("B")
+                .withName("ref")
+                .withMapping("id0", "id0")
+                .build())
+        .build();
+  }
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		return new ActivePivotManagerDescription();
-	}
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    return new ActivePivotManagerDescription();
+  }
 
-	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
-		datastore.edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-				.forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
-	}
+  public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
+    datastore.edit(
+        tm ->
+            IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
+  }
 }

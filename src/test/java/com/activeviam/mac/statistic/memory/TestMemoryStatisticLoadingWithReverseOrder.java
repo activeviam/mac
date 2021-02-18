@@ -40,96 +40,113 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @ExtendWith(RegistrySetupExtension.class)
 public class TestMemoryStatisticLoadingWithReverseOrder {
 
-	@RegisterExtension
-	protected static ActiveViamPropertyExtension propertyExtension =
-			new ActiveViamPropertyExtensionBuilder()
-					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
-					.build();
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-	@RegisterExtension
-	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir =
-			QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoadingWithReverseOrder.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoadingWithReverseOrder.class);
 
-	@Test
-	public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
-		final Application monitoredApplication = MonitoringTestUtils
-				.setupApplication(new FullApplicationDescription(), resources,
-						FullApplicationDescription::fillWithGenericData);
+  @Test
+  public void testLoadDatastoreStats() throws AgentException, DatastoreTransactionException {
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new FullApplicationDescription(),
+            resources,
+            FullApplicationDescription::fillWithGenericData);
 
-		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-				monitoredApplication.getDatastore(),
-				monitoredApplication.getManager(), tempDir, "testLoadDatastoreStatsWithReverseOrder");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testLoadDatastoreStatsWithReverseOrder");
 
-		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
-				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
+    final List<? extends IMemoryStatistic> storeStats =
+        new ArrayList<>(MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
 
-		Collections.reverse(storeStats);
+    Collections.reverse(storeStats);
 
-		Assertions.assertThat(storeStats).isNotEmpty();
-		MonitoringTestUtils.assertLoadsCorrectly(new TestMemoryStatisticBuilder()
-						.withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
-						.withChildren(storeStats)
-						.build(),
-				resources);
-	}
+    Assertions.assertThat(storeStats).isNotEmpty();
+    MonitoringTestUtils.assertLoadsCorrectly(
+        new TestMemoryStatisticBuilder()
+            .withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
+            .withChildren(storeStats)
+            .build(),
+        resources);
+  }
 
-	@Test
-	public void testLoadDatastoreStatsWithVectors()
-			throws AgentException, DatastoreTransactionException {
-		final Application monitoredApplication = MonitoringTestUtils
-				.setupApplication(new FullApplicationDescriptionWithVectors(),
-						resources,
-						FullApplicationDescriptionWithVectors::fillWithGenericData);
+  @Test
+  public void testLoadDatastoreStatsWithVectors()
+      throws AgentException, DatastoreTransactionException {
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new FullApplicationDescriptionWithVectors(),
+            resources,
+            FullApplicationDescriptionWithVectors::fillWithGenericData);
 
-		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-				monitoredApplication.getDatastore(),
-				monitoredApplication.getManager(), tempDir, "testLoadDatastoreStatsWithReverseOrder");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testLoadDatastoreStatsWithReverseOrder");
 
-		final List<? extends IMemoryStatistic> storeStats = new ArrayList<>(
-				MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
+    final List<? extends IMemoryStatistic> storeStats =
+        new ArrayList<>(MonitoringTestUtils.loadMemoryStatFromFolder(exportPath).getChildren());
 
-		Collections.reverse(storeStats);
+    Collections.reverse(storeStats);
 
-		Assertions.assertThat(storeStats).isNotEmpty();
-		final IDatastore monitoringDatastore = MonitoringTestUtils.assertLoadsCorrectly(
-				new TestMemoryStatisticBuilder()
-						.withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
-						.withChildren(storeStats)
-						.build(),
-				resources);
+    Assertions.assertThat(storeStats).isNotEmpty();
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.assertLoadsCorrectly(
+            new TestMemoryStatisticBuilder()
+                .withCreatorClasses(TestMemoryStatisticLoadingWithReverseOrder.class)
+                .withChildren(storeStats)
+                .build(),
+            resources);
 
-		final Set<Long> vectorBlocks = extractVectorBlocks(monitoringDatastore);
-		assertVectorBlockAttributesArePresent(monitoringDatastore, vectorBlocks);
-	}
+    final Set<Long> vectorBlocks = extractVectorBlocks(monitoringDatastore);
+    assertVectorBlockAttributesArePresent(monitoringDatastore, vectorBlocks);
+  }
 
-	protected void assertVectorBlockAttributesArePresent(
-			final IDatastore monitoringDatastore, final Collection<Long> chunkIdSubset) {
-		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
-				.forStore(DatastoreConstants.CHUNK_STORE)
-				.withCondition(BaseConditions.And(
-						BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkIdSubset.toArray()),
-						BaseConditions.Equal(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, null)))
-				.selecting(DatastoreConstants.CHUNK_ID)
-				.onCurrentThread()
-				.run();
+  protected void assertVectorBlockAttributesArePresent(
+      final IDatastore monitoringDatastore, final Collection<Long> chunkIdSubset) {
+    final ICursor cursor =
+        monitoringDatastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.And(
+                    BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkIdSubset.toArray()),
+                    BaseConditions.Equal(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, null)))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
 
-		Assertions.assertThat(StreamSupport.stream(cursor.spliterator(), false).count())
-				.isZero();
-	}
+    Assertions.assertThat(StreamSupport.stream(cursor.spliterator(), false).count()).isZero();
+  }
 
-	protected Set<Long> extractVectorBlocks(final IDatastore monitoringDatastore) {
-		final ICursor cursor = monitoringDatastore.getHead().getQueryRunner()
-				.forStore(DatastoreConstants.CHUNK_STORE)
-				.withCondition(
-						BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.VECTOR_BLOCK))
-				.selecting(DatastoreConstants.CHUNK_ID)
-				.onCurrentThread()
-				.run();
+  protected Set<Long> extractVectorBlocks(final IDatastore monitoringDatastore) {
+    final ICursor cursor =
+        monitoringDatastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.VECTOR_BLOCK))
+            .selecting(DatastoreConstants.CHUNK_ID)
+            .onCurrentThread()
+            .run();
 
-		return StreamSupport.stream(cursor.spliterator(), false)
-				.map(reader -> reader.readLong(0))
-				.collect(Collectors.toSet());
-	}
+    return StreamSupport.stream(cursor.spliterator(), false)
+        .map(reader -> reader.readLong(0))
+        .collect(Collectors.toSet());
+  }
 }

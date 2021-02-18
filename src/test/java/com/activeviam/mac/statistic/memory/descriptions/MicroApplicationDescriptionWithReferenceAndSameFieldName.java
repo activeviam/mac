@@ -15,45 +15,44 @@ import com.quartetfs.biz.pivot.IActivePivotManager;
 import java.util.stream.IntStream;
 
 public class MicroApplicationDescriptionWithReferenceAndSameFieldName
-		extends MicroApplicationDescriptionWithReference {
+    extends MicroApplicationDescriptionWithReference {
 
-	public static final int ADDED_DATA_SIZE = CHUNK_SIZE;
+  public static final int ADDED_DATA_SIZE = CHUNK_SIZE;
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id", ILiteralType.INT)
-								.asKeyField()
-								.withField("val", ILiteralType.INT)
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("B")
-								.withField("tgt_id", ILiteralType.INT)
-								.asKeyField()
-								.withField("val", ILiteralType.INT)
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.withReference(
-						StartBuilding.reference()
-								.fromStore("A")
-								.toStore("B")
-								.withName("AToB")
-								.withMapping("val", "tgt_id")
-								.build())
-				.build();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withField("val", ILiteralType.INT)
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("B")
+                .withField("tgt_id", ILiteralType.INT)
+                .asKeyField()
+                .withField("val", ILiteralType.INT)
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .withReference(
+            StartBuilding.reference()
+                .fromStore("A")
+                .toStore("B")
+                .withName("AToB")
+                .withMapping("val", "tgt_id")
+                .build())
+        .build();
+  }
 
-	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
-		datastore.edit(tm -> {
-			IntStream.range(0, ADDED_DATA_SIZE)
-					.forEach(i -> tm.add("A", i, i * i));
-			IntStream.range(0, 3 * ADDED_DATA_SIZE)
-					.forEach(i -> tm.add("B", i, -i * i));
-		});
-	}
+  public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
+    datastore.edit(
+        tm -> {
+          IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i, i * i));
+          IntStream.range(0, 3 * ADDED_DATA_SIZE).forEach(i -> tm.add("B", i, -i * i));
+        });
+  }
 }

@@ -58,38 +58,40 @@ public class TestViewEpochs {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy(),
-        resources,
-        (datastore, manager) -> {
-          final ITransactionManager transactionManager = datastore.getTransactionManager();
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy(),
+            resources,
+            (datastore, manager) -> {
+              final ITransactionManager transactionManager = datastore.getTransactionManager();
 
-          // epoch 1 -> store A + cube
-          transactionManager.startTransaction("A");
-          IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
-          transactionManager.commitTransaction();
+              // epoch 1 -> store A + cube
+              transactionManager.startTransaction("A");
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
+              transactionManager.commitTransaction();
 
-          // epoch 2 -> store B
-          transactionManager.startTransaction("B");
-          IntStream.range(0, 10).forEach(i -> transactionManager.add("B", i, 0.));
-          transactionManager.commitTransaction();
+              // epoch 2 -> store B
+              transactionManager.startTransaction("B");
+              IntStream.range(0, 10).forEach(i -> transactionManager.add("B", i, 0.));
+              transactionManager.commitTransaction();
 
-          // epoch 3 -> store A + cube
-          transactionManager.startTransaction("A");
-          IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.));
-          transactionManager.commitTransaction();
+              // epoch 3 -> store A + cube
+              transactionManager.startTransaction("A");
+              IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.));
+              transactionManager.commitTransaction();
 
-          // epoch 4 -> store B
-          transactionManager.startTransaction("B");
-          IntStream.range(10, 20).forEach(i -> transactionManager.add("B", i, 1.));
-          transactionManager.commitTransaction();
-        });
+              // epoch 4 -> store B
+              transactionManager.startTransaction("B");
+              IntStream.range(10, 20).forEach(i -> transactionManager.add("B", i, 1.));
+              transactionManager.commitTransaction();
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportApplication(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportApplication(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
     statistics = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(statistics, resources);
@@ -191,22 +193,24 @@ public class TestViewEpochs {
   }
 
   protected Map<ChunkOwner, Multimap<Long, Long>> retrieveViewEpochIdsPerOwner() {
-    final ICursor cursor = monitoringApplication
-        .getDatastore()
-        .getHead()
-        .getQueryRunner()
-        .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-        .withoutCondition()
-        .selecting(
-            DatastoreConstants.EPOCH_VIEW__OWNER,
-            DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-            DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApplication
+            .getDatastore()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withoutCondition()
+            .selecting(
+                DatastoreConstants.EPOCH_VIEW__OWNER,
+                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
+                DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
     final Map<ChunkOwner, Multimap<Long, Long>> epochs = new HashMap<>();
     for (final IRecordReader record : cursor) {
-      epochs.computeIfAbsent((ChunkOwner) record.read(0), key -> HashMultimap.create())
+      epochs
+          .computeIfAbsent((ChunkOwner) record.read(0), key -> HashMultimap.create())
           .put(record.readLong(1), ((EpochView) record.read(2)).getEpochId());
     }
 

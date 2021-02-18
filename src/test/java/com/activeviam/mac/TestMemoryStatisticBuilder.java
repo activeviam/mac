@@ -22,8 +22,9 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /** @author ActiveViam */
-public class TestMemoryStatisticBuilder extends GenericMonitoringStatisticBuilder<
-    IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
+public class TestMemoryStatisticBuilder
+    extends GenericMonitoringStatisticBuilder<
+        IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
     implements IMemoryStatisticBuilder {
 
   /** Name of the statistic */

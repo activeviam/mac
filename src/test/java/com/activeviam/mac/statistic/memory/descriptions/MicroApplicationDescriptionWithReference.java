@@ -14,53 +14,55 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
 public class MicroApplicationDescriptionWithReference implements ITestApplicationDescription {
-	public static final int CHUNK_SIZE = 256;
+  public static final int CHUNK_SIZE = 256;
 
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withField("val", ILiteralType.INT)
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("B")
+                .withField("tgt_id", ILiteralType.INT)
+                .asKeyField()
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .withReference(
+            StartBuilding.reference()
+                .fromStore("A")
+                .toStore("B")
+                .withName("AToB")
+                .withMapping("val", "tgt_id")
+                .build())
+        .build();
+  }
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id", ILiteralType.INT)
-								.asKeyField()
-								.withField("val", ILiteralType.INT)
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("B")
-								.withField("tgt_id", ILiteralType.INT)
-								.asKeyField()
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.withReference(
-						StartBuilding.reference()
-								.fromStore("A")
-								.toStore("B")
-								.withName("AToB")
-								.withMapping("val", "tgt_id")
-								.build())
-				.build();	}
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    final IActivePivotManagerDescription managerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllReachableFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(
-						StartBuilding.selection(schemaDescription)
-								.fromBaseStore("A")
-								.withAllReachableFields()
-								.build())
-				.withCube(
-						StartBuilding.cube("Cube")
-								.withContributorsCount()
-								.withSingleLevelDimension("id")
-								.asDefaultHierarchy()
-								.build())
-				.build();
-
-		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);	}
+    return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+  }
 }

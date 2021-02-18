@@ -14,6 +14,6 @@ import lombok.Data;
 @Data
 public class Application {
 
-	private final IDatastore datastore;
-	private final IActivePivotManager manager;
+  private final IDatastore datastore;
+  private final IActivePivotManager manager;
 }

@@ -31,75 +31,78 @@ import java.nio.file.Path;
 
 public class WithAvgPrimitiveVectorMeasureBitmap {
 
-	private static final Path EXPORT_PATH = Path.of("sampleStats");
+  private static final Path EXPORT_PATH = Path.of("sampleStats");
 
-	public static void main(String[] args) throws AgentException {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
+  public static void main(String[] args) throws AgentException {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
 
-		final IDatastoreSchemaDescription datastoreSchemaDescription = StartBuilding.datastoreSchema()
-				.withStore(StartBuilding.store()
-						.withStoreName("a")
-						.withField("id", ILiteralType.INT).asKeyField()
-						.withField("hierarchy")
-						.withVectorField("measure", ILiteralType.DOUBLE)
-						.build())
-				.build();
+    final IDatastoreSchemaDescription datastoreSchemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("a")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("hierarchy")
+                    .withVectorField("measure", ILiteralType.DOUBLE)
+                    .build())
+            .build();
 
-		IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withName("manager")
-				.withSchema()
+    IActivePivotManagerDescription managerDescription =
+        StartBuilding.managerDescription()
+            .withName("manager")
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(datastoreSchemaDescription)
+                    .fromBaseStore("a")
+                    .withAllReachableFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("cube")
+                    .withContributorsCount()
+                    .withAggregatedMeasure()
+                    .sum("measure")
+                    .withName("measure.SUM")
+                    .withAggregatedMeasure()
+                    .avg("measure")
+                    .withName("measure.AVG")
+                    .withSingleLevelDimension("id")
+                    .withPropertyName("id")
+                    .withSingleLevelDimension("hierarchy")
+                    .withPropertyName("hierarchy")
+                    .withAggregateProvider()
+                    .bitmap()
+                    .build())
+            .build();
 
-				.withSelection(StartBuilding.selection(datastoreSchemaDescription)
-						.fromBaseStore("a")
-						.withAllReachableFields()
-						.build())
+    managerDescription =
+        ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchemaDescription);
 
-				.withCube(StartBuilding.cube("cube")
-						.withContributorsCount()
-						.withAggregatedMeasure()
-						.sum("measure")
-						.withName("measure.SUM")
-						.withAggregatedMeasure()
-						.avg("measure")
-						.withName("measure.AVG")
+    final IDatastore datastore =
+        StartBuilding.datastore()
+            .setSchemaDescription(datastoreSchemaDescription)
+            .addSchemaDescriptionPostProcessors(
+                ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+            .build();
 
-						.withSingleLevelDimension("id")
-						.withPropertyName("id")
+    datastore.edit(
+        tm -> {
+          tm.add("a", 0, "member", new double[] {1.});
+          tm.add("a", 1, "member", new double[] {2.});
+          tm.add("a", 2, "member", new double[] {3.});
+        });
 
-						.withSingleLevelDimension("hierarchy")
-						.withPropertyName("hierarchy")
+    final IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDatastoreAndPermissions(datastore)
+            .setDescription(managerDescription)
+            .buildAndStart();
 
-						.withAggregateProvider()
-						.bitmap()
+    final IMemoryAnalysisService analysisService =
+        new MemoryAnalysisService(datastore, manager, datastore.getEpochManager(), EXPORT_PATH);
+    analysisService.exportMostRecentVersion(WithAvgPrimitiveVectorMeasureBitmap.class.getName());
 
-						.build())
-				.build();
-
-		managerDescription =
-				ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchemaDescription);
-
-		final IDatastore datastore = StartBuilding.datastore()
-				.setSchemaDescription(datastoreSchemaDescription)
-				.addSchemaDescriptionPostProcessors(
-						ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-				.build();
-
-		datastore.edit(tm -> {
-			tm.add("a", 0, "member", new double[] {1.});
-			tm.add("a", 1, "member", new double[] {2.});
-			tm.add("a", 2, "member", new double[] {3.});
-		});
-
-		final IActivePivotManager manager = StartBuilding.manager()
-				.setDatastoreAndPermissions(datastore)
-				.setDescription(managerDescription)
-				.buildAndStart();
-
-		final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-				datastore, manager, datastore.getEpochManager(), EXPORT_PATH);
-		analysisService.exportMostRecentVersion(WithAvgPrimitiveVectorMeasureBitmap.class.getName());
-
-		manager.stop();
-		datastore.close();
-	}
+    manager.stop();
+    datastore.close();
+  }
 }

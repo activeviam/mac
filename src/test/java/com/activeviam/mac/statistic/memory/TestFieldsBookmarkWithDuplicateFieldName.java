@@ -49,16 +49,18 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithReferenceAndSameFieldName(),
-        resources,
-        MicroApplicationDescriptionWithReferenceAndSameFieldName::fillWithGenericData);
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithReferenceAndSameFieldName(),
+            resources,
+            MicroApplicationDescriptionWithReferenceAndSameFieldName::fillWithGenericData);
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
@@ -71,12 +73,13 @@ public class TestFieldsBookmarkWithDuplicateFieldName {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
     final MDXQuery usageQuery =
-        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-            + "{"
-            + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"
-            + "  ([Owners].[Owner].[Owner].[Store B], [Fields].[Field].[Field].[val])"
-            + "} ON ROWS "
-            + "FROM [MemoryCube]");
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "{"
+                + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"
+                + "  ([Owners].[Owner].[Owner].[Store B], [Fields].[Field].[Field].[val])"
+                + "} ON ROWS "
+                + "FROM [MemoryCube]");
 
     final CellSetDTO result = pivot.execute(usageQuery);
 

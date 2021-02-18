@@ -25,16 +25,12 @@ public class CellSetUtils {
 
   @SuppressWarnings("unchecked")
   public static <T> List<T> extractValuesFromCellSetDTO(CellSetDTO data) {
-    return data.getCells().stream()
-        .map(c -> (T) c.getValue())
-        .collect(Collectors.toList());
+    return data.getCells().stream().map(c -> (T) c.getValue()).collect(Collectors.toList());
   }
 
   @SuppressWarnings("unchecked")
   public static <T extends Number> T sumValuesFromCellSetDTO(
       CellSetDTO data, T identity, BinaryOperator<T> sumFunction) {
-    return data.getCells().stream()
-        .map(c -> (T) c.getValue())
-        .reduce(identity, sumFunction);
+    return data.getCells().stream().map(c -> (T) c.getValue()).reduce(identity, sumFunction);
   }
 }

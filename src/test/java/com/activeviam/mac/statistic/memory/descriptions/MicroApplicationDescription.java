@@ -21,68 +21,69 @@ import java.util.stream.IntStream;
 
 public class MicroApplicationDescription implements ITestApplicationDescription {
 
-	public static final int CHUNK_SIZE = 256;
-	public static final int ADDED_DATA_SIZE = 100;
-	public static final int REMOVED_DATA_SIZE = 10;
+  public static final int CHUNK_SIZE = 256;
+  public static final int ADDED_DATA_SIZE = 100;
+  public static final int REMOVED_DATA_SIZE = 10;
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id", ILiteralType.INT)
-								.asKeyField()
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.build();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .build();
+  }
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(
-						StartBuilding.selection(schemaDescription)
-								.fromBaseStore("A")
-								.withAllFields()
-								.build())
-				.withCube(
-						StartBuilding.cube("Cube")
-								.withContributorsCount()
-								.withSingleLevelDimension("id")
-								.asDefaultHierarchy()
-								.build())
-				.build();
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    final IActivePivotManagerDescription managerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .build())
+            .build();
 
-		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
-	}
+    return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+  }
 
-	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
-		datastore.edit(
-				tm -> {
-					IntStream.range(0, ADDED_DATA_SIZE)
-							.forEach(
-									i -> {
-										tm.add("A", i * i);
-									});
-				});
+  public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
+    datastore.edit(
+        tm -> {
+          IntStream.range(0, ADDED_DATA_SIZE)
+              .forEach(
+                  i -> {
+                    tm.add("A", i * i);
+                  });
+        });
 
-		datastore.edit(
-				tm -> {
-					IntStream.range(50, 50 + REMOVED_DATA_SIZE)
-							.forEach(
-									i -> {
-										try {
-											tm.remove("A", i * i);
-										} catch (NoTransactionException
-												| DatastoreTransactionException
-												| IllegalArgumentException
-												| NullPointerException e) {
-											throw new ActiveViamRuntimeException(e);
-										}
-									});
-				});
-	}
+    datastore.edit(
+        tm -> {
+          IntStream.range(50, 50 + REMOVED_DATA_SIZE)
+              .forEach(
+                  i -> {
+                    try {
+                      tm.remove("A", i * i);
+                    } catch (NoTransactionException
+                        | DatastoreTransactionException
+                        | IllegalArgumentException
+                        | NullPointerException e) {
+                      throw new ActiveViamRuntimeException(e);
+                    }
+                  });
+        });
+  }
 }

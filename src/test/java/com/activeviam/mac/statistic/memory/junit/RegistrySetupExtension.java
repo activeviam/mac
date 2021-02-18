@@ -14,8 +14,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class RegistrySetupExtension implements BeforeAllCallback {
 
-	@Override
-	public void beforeAll(ExtensionContext context) {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
-	}
+  @Override
+  public void beforeAll(ExtensionContext context) {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
 }

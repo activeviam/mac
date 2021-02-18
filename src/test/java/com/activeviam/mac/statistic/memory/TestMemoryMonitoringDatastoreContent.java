@@ -79,23 +79,25 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testDatastoreMonitoringValues() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MinimalApplicationDescription(),
-        resources,
-        MinimalApplicationDescription::fillWithGenericData);
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MinimalApplicationDescription(),
+            resources,
+            MinimalApplicationDescription::fillWithGenericData);
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testDatastoreMonitoringValues");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testDatastoreMonitoringValues");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
-    IDictionary<Object> dic = monitoredApplication.getDatastore()
-        .getDictionaries().getDictionary("Sales", "id");
+    IDictionary<Object> dic =
+        monitoredApplication.getDatastore().getDictionaries().getDictionary("Sales", "id");
 
     final long[] chunkIds = new long[2];
     final long[] chunkSizes = new long[2];
@@ -116,10 +118,8 @@ public class TestMemoryMonitoringDatastoreContent {
                             .getChildren()
                             .forEach(
                                 (c_c_c_st) -> {
-                                  chunkSizes[rnk.get()] =
-                                      c_c_c_st.getAttribute("length").asLong();
-                                  chunkIds[rnk.get()] =
-                                      c_c_c_st.getAttribute("chunkId").asLong();
+                                  chunkSizes[rnk.get()] = c_c_c_st.getAttribute("length").asLong();
+                                  chunkIds[rnk.get()] = c_c_c_st.getAttribute("chunkId").asLong();
                                   rnk.getAndIncrement();
                                 });
                       });
@@ -134,8 +134,7 @@ public class TestMemoryMonitoringDatastoreContent {
             final ICursor records =
                 tm.getQueryRunner()
                     .forStore(DatastoreConstants.CHUNK_STORE)
-                    .withCondition(
-                        BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
+                    .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
                     .selecting(DatastoreConstants.CHUNK__SIZE)
                     .onCurrentThread()
                     .run();
@@ -151,30 +150,32 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testChunkStructureFieldsWithSingleRecord() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add a single record
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 1)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * 100000000);
-                        });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add a single record
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 1)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * 100000000);
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testChunkStructureFieldsWithSingleRecord");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testChunkStructureFieldsWithSingleRecord");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -216,28 +217,32 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testChunkStructureFieldsWithFullChunk() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add a single record
-          datastore.edit(tm -> {
-            IntStream.range(0, 256).forEach(
-                i -> {
-                  tm.add("A", i * i * i);
-                });
-          });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add a single record
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 256)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testChunkStructureFieldsWithFullChunk");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testChunkStructureFieldsWithFullChunk");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -269,35 +274,38 @@ public class TestMemoryMonitoringDatastoreContent {
     Assertions.assertThat(list.size()).isEqualTo(2);
     Assertions.assertThat(list)
         .containsExactlyInAnyOrder(
-            new Object[] {0L, 0L, 256L, 256L},
-            new Object[] {0L, 0L, 256L, 2048L});
+            new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
   }
 
   @Test
   public void testChunkStructureFieldsWithTwoChunks() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add a full chunk + 10 records on the second chunk
-          datastore.edit(tm -> {
-            IntStream.range(0, 266).forEach(
-                i -> {
-                  tm.add("A", i * i * i);
-                });
-          });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add a full chunk + 10 records on the second chunk
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 266)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testChunkStructureFieldsWithTwoChunks");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testChunkStructureFieldsWithTwoChunks");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -344,46 +352,48 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testChunkStructureFieldsWithFreedRows() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add 100 records
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 100)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-          // Delete 10 records
-          datastore.edit(
-              tm -> {
-                IntStream.range(50, 50 + 20)
-                    .forEach(
-                        i -> {
-                          try {
-                            tm.remove("A", i * i);
-                          } catch (NoTransactionException
-                              | DatastoreTransactionException
-                              | IllegalArgumentException
-                              | NullPointerException e) {
-                            throw new RuntimeException(e);
-                          }
-                        });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add 100 records
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+              // Delete 10 records
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(50, 50 + 20)
+                        .forEach(
+                            i -> {
+                              try {
+                                tm.remove("A", i * i);
+                              } catch (NoTransactionException
+                                  | DatastoreTransactionException
+                                  | IllegalArgumentException
+                                  | NullPointerException e) {
+                                throw new RuntimeException(e);
+                              }
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testChunkStructureFieldsWithFreedRows");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testChunkStructureFieldsWithFreedRows");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
     // Query record chunks data :
     final IDictionaryCursor cursor =
@@ -427,30 +437,32 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testLevelStoreContent() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add 10 records
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 10)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i * i);
-                        });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add 10 records
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 10)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i * i);
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testLevelStoreContent");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testLevelStoreContent");
 
     final IMemoryStatistic fullStats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        fullStats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(fullStats, resources);
 
     // Query record of level data :
     final IDictionaryCursor cursor =
@@ -474,30 +486,32 @@ public class TestMemoryMonitoringDatastoreContent {
   @Test
   public void testMappingFromChunkToFields() throws AgentException {
 
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add 100 records
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 10)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add 100 records
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 10)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+            });
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testMappingFromChunkToFields");
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testMappingFromChunkToFields");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(
-        stats, resources);
+    final IDatastore monitoringDatastore =
+        MonitoringTestUtils.createAnalysisDatastore(stats, resources);
 
     final List<IMemoryStatistic> dics =
         collectStatistics(
@@ -506,8 +520,8 @@ public class TestMemoryMonitoringDatastoreContent {
                 stat ->
                     stat.getName().equals(MemoryStatisticConstants.STAT_NAME_STORE)
                         && stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME)
-                        .asText()
-                        .equals("A"),
+                            .asText()
+                            .equals("A"),
                 stat ->
                     stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_MANAGER),
                 stat -> stat.getAttribute("field").asText().equals("id")));
@@ -566,50 +580,56 @@ public class TestMemoryMonitoringDatastoreContent {
 
   @Test
   public void testCompareDumpsOfDifferentEpochs() throws AgentException {
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          // Add 100 records
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 100)
-                    .forEach(
-                        i -> {
-                          tm.add("A", i * i);
-                        });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              // Add 100 records
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+            });
 
-    Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testCompareDumpsOfDifferentEpochs");
+    Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testCompareDumpsOfDifferentEpochs");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     // Delete 10 records
-    monitoredApplication.getDatastore().edit(tm -> {
-      IntStream.range(50, 50 + 10)
-          .forEach(
-              i -> {
-                try {
-                  tm.remove("A", i * i);
-                } catch (NoTransactionException
-                    | DatastoreTransactionException
-                    | IllegalArgumentException
-                    | NullPointerException e) {
-                  throw new ActiveViamRuntimeException(e);
-                }
-              });
-    });
+    monitoredApplication
+        .getDatastore()
+        .edit(
+            tm -> {
+              IntStream.range(50, 50 + 10)
+                  .forEach(
+                      i -> {
+                        try {
+                          tm.remove("A", i * i);
+                        } catch (NoTransactionException
+                            | DatastoreTransactionException
+                            | IllegalArgumentException
+                            | NullPointerException e) {
+                          throw new ActiveViamRuntimeException(e);
+                        }
+                      });
+            });
 
-    exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testCompareDumpsOfDifferentEpochs");
+    exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testCompareDumpsOfDifferentEpochs");
     final IMemoryStatistic statsEpoch2 = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     final IDatastore monitoringDatastore = MonitoringTestUtils.createAnalysisDatastore(resources);
@@ -677,46 +697,52 @@ public class TestMemoryMonitoringDatastoreContent {
   public void testCompareDumpsOfDifferentApps() throws AgentException {
 
     // create first app
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescription(),
-        resources,
-        (datastore, manager) -> {
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 100).forEach(
-                    i -> {
-                      tm.add("A", i * i);
-                    });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
+            (datastore, manager) -> {
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+            });
 
-    Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testCompareDumpsOfDifferentApps");
+    Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testCompareDumpsOfDifferentApps");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
 
     // create second app
-    final Application monitoredAppWithBitmap = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithLeafBitmap(),
-        resources,
-        (datastore, manager) -> {
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 100).forEach(
-                    i -> {
-                      tm.add("A", i * i);
-                    });
-              });
-        });
+    final Application monitoredAppWithBitmap =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithLeafBitmap(),
+            resources,
+            (datastore, manager) -> {
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i);
+                            });
+                  });
+            });
 
-    exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredAppWithBitmap.getDatastore(),
-        monitoredAppWithBitmap.getManager(),
-        tempDir,
-        "testCompareDumpsOfDifferentApps");
+    exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredAppWithBitmap.getDatastore(),
+            monitoredAppWithBitmap.getManager(),
+            tempDir,
+            "testCompareDumpsOfDifferentApps");
 
     final IMemoryStatistic statsWithBitmap =
         MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
@@ -773,25 +799,28 @@ public class TestMemoryMonitoringDatastoreContent {
 
   @Test
   public void testChunkToReferencesDatastoreContentWithReference() throws AgentException {
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithReference(),
-        resources,
-        (datastore, manager) -> {
-          datastore.edit(
-              tm -> {
-                IntStream.range(0, 100).forEach(
-                    i -> {
-                      tm.add("A", i * i, i);
-                      tm.add("B", i);
-                    });
-              });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithReference(),
+            resources,
+            (datastore, manager) -> {
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 100)
+                        .forEach(
+                            i -> {
+                              tm.add("A", i * i, i);
+                              tm.add("B", i);
+                            });
+                  });
+            });
 
-    Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testChunkToReferencesDatastoreContentWithReference");
+    Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testChunkToReferencesDatastoreContentWithReference");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore =
@@ -817,58 +846,59 @@ public class TestMemoryMonitoringDatastoreContent {
 
   @Test
   public void testBlocksOfSingleVectors() throws AgentException {
-    final Application monitoredApplication = MonitoringTestUtils.setupApplication(
-        new FullApplicationDescriptionWithVectors(),
-        resources,
-        (datastore, manager) -> {
-          datastore.edit(tm -> {
-            IntStream.range(0, 24).forEach(
-                i -> {
-                  tm.add(
-                      FullApplicationDescriptionWithVectors.VECTOR_STORE_NAME,
-                      i,
-                      IntStream.rangeClosed(1, 5).toArray(),
-                      IntStream.rangeClosed(10, 20).toArray(),
-                      LongStream.rangeClosed(3, 8).toArray());
-                });
-          });
-        });
+    final Application monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new FullApplicationDescriptionWithVectors(),
+            resources,
+            (datastore, manager) -> {
+              datastore.edit(
+                  tm -> {
+                    IntStream.range(0, 24)
+                        .forEach(
+                            i -> {
+                              tm.add(
+                                  FullApplicationDescriptionWithVectors.VECTOR_STORE_NAME,
+                                  i,
+                                  IntStream.rangeClosed(1, 5).toArray(),
+                                  IntStream.rangeClosed(10, 20).toArray(),
+                                  LongStream.rangeClosed(3, 8).toArray());
+                            });
+                  });
+            });
 
-    Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        "testDatastoreMonitoringValues");
+    Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            "testDatastoreMonitoringValues");
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     final IDatastore monitoringDatastore =
         MonitoringTestUtils.createAnalysisDatastore(stats, resources);
 
     // Test that we have chunks of single values
-    final Set<String> recordTypes = retrieveClassesOfChunks(
-        monitoringDatastore,
-        retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
+    final Set<String> recordTypes =
+        retrieveClassesOfChunks(
+            monitoringDatastore, retrieveChunksOfType(monitoringDatastore, ParentType.RECORDS));
     Assertions.assertThat(recordTypes).contains(ChunkSingleVector.class.getName());
 
     // Test that we have chunks of single values
-    final Set<String> vectorTypes = retrieveClassesOfChunks(
-        monitoringDatastore,
-        retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
+    final Set<String> vectorTypes =
+        retrieveClassesOfChunks(
+            monitoringDatastore,
+            retrieveChunksOfType(monitoringDatastore, ParentType.VECTOR_BLOCK));
     Assertions.assertThat(vectorTypes)
-        .contains(
-            DirectIntegerVectorBlock.class.getName(),
-            DirectLongVectorBlock.class.getName());
+        .contains(DirectIntegerVectorBlock.class.getName(), DirectLongVectorBlock.class.getName());
   }
 
-  private Set<Long> retrieveChunksOfType(
-      final IDatastore datastore, final ParentType component) {
+  private Set<Long> retrieveChunksOfType(final IDatastore datastore, final ParentType component) {
     final IDictionaryCursor cursor =
         datastore
             .getHead()
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
+            .withCondition(BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
             .selecting(DatastoreConstants.CHUNK_ID)
             .onCurrentThread()
             .run();
@@ -885,8 +915,7 @@ public class TestMemoryMonitoringDatastoreContent {
             .getHead()
             .getQueryRunner()
             .forStore(CHUNK_STORE)
-            .withCondition(
-                BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
+            .withCondition(BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
             .selecting(DatastoreConstants.CHUNK__CLASS)
             .onCurrentThread()
             .run();

@@ -27,7 +27,6 @@ public class DistributedApplicationDescription implements ITestApplicationDescri
     this.clusterName = clusterName;
   }
 
-
   @Override
   public IDatastoreSchemaDescription datastoreDescription() {
     return StartBuilding.datastoreSchema()
@@ -50,10 +49,7 @@ public class DistributedApplicationDescription implements ITestApplicationDescri
     return StartBuilding.managerDescription()
         .withSchema()
         .withSelection(
-            StartBuilding.selection(schemaDescription)
-                .fromBaseStore("A")
-                .withAllFields()
-                .build())
+            StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
         .withCube(
             StartBuilding.cube()
                 .withName("Data")

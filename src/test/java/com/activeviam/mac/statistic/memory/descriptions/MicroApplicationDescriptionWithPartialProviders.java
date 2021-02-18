@@ -17,75 +17,67 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import java.util.stream.IntStream;
 
 public class MicroApplicationDescriptionWithPartialProviders
-		implements ITestApplicationDescription {
+    implements ITestApplicationDescription {
 
-	public static final int CHUNK_SIZE = 256;
+  public static final int CHUNK_SIZE = 256;
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id", ILiteralType.INT)
-								.asKeyField()
-								.withField("hierId", ILiteralType.INT)
-								.withField("measure1", ILiteralType.DOUBLE)
-								.withField("measure2", ILiteralType.DOUBLE)
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.build();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withField("hierId", ILiteralType.INT)
+                .withField("measure1", ILiteralType.DOUBLE)
+                .withField("measure2", ILiteralType.DOUBLE)
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .build();
+  }
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		return StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(
-						StartBuilding.selection(schemaDescription)
-								.fromBaseStore("A")
-								.withAllFields()
-								.build())
-				.withCube(
-						StartBuilding.cube("Cube")
-								.withContributorsCount()
-								.withAggregatedMeasure()
-								.sum("measure1")
-								.withAggregatedMeasure()
-								.sum("measure2")
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    return StartBuilding.managerDescription()
+        .withSchema()
+        .withSelection(
+            StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
+        .withCube(
+            StartBuilding.cube("Cube")
+                .withContributorsCount()
+                .withAggregatedMeasure()
+                .sum("measure1")
+                .withAggregatedMeasure()
+                .sum("measure2")
+                .withSingleLevelDimension("id")
+                .asDefaultHierarchy()
+                .withSingleLevelDimension("hierId")
+                .withAggregateProvider()
+                .bitmap()
+                .withPartialProvider()
+                .bitmap()
+                .excludingHierarchies(HierarchyIdentifier.simple("hierId"))
+                .includingOnlyMeasures("measure1.SUM")
+                .withPartialProvider()
+                .leaf()
+                .includingOnlyMeasures("measure2.SUM")
+                .withPartialProvider()
+                .bitmap()
+                .includingOnlyMeasures("contributors.COUNT")
+                .build())
+        .build();
+  }
 
-								.withSingleLevelDimension("id")
-								.asDefaultHierarchy()
-								.withSingleLevelDimension("hierId")
-
-								.withAggregateProvider()
-								.bitmap()
-								.withPartialProvider()
-								.bitmap()
-								.excludingHierarchies(HierarchyIdentifier.simple("hierId"))
-								.includingOnlyMeasures("measure1.SUM")
-
-								.withPartialProvider()
-								.leaf()
-								.includingOnlyMeasures("measure2.SUM")
-
-								.withPartialProvider()
-								.bitmap()
-								.includingOnlyMeasures("contributors.COUNT")
-
-								.build())
-				.build();
-	}
-
-	public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
-		datastore.edit(
-				tm -> {
-					IntStream.range(0, 100)
-							.forEach(
-									i -> {
-										tm.add("A", i, i, i * i, -i * i);
-									});
-				});
-	}
+  public static void fillWithGenericData(IDatastore datastore, IActivePivotManager manager) {
+    datastore.edit(
+        tm -> {
+          IntStream.range(0, 100)
+              .forEach(
+                  i -> {
+                    tm.add("A", i, i, i * i, -i * i);
+                  });
+        });
+  }
 }

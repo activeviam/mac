@@ -33,102 +33,114 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @ExtendWith(RegistrySetupExtension.class)
 public class TestVectorBlockBookmark {
 
-	@RegisterExtension
-	protected static ActiveViamPropertyExtension propertyExtension =
-			new ActiveViamPropertyExtensionBuilder()
-					.withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
-					.build();
+  @RegisterExtension
+  protected static ActiveViamPropertyExtension propertyExtension =
+      new ActiveViamPropertyExtensionBuilder()
+          .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
+          .build();
 
-	@RegisterExtension
-	protected final LocalResourcesExtension resources = new LocalResourcesExtension();
+  @RegisterExtension
+  protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-	protected static Path tempDir = QfsFileTestUtils.createTempDirectory(TestVectorBlockBookmark.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(TestVectorBlockBookmark.class);
 
-	protected Application monitoredApplication;
-	protected Application monitoringApplication;
-	protected StatisticsSummary statisticsSummary;
-	protected CubeTester tester;
+  protected Application monitoredApplication;
+  protected Application monitoringApplication;
+  protected StatisticsSummary statisticsSummary;
+  protected CubeTester tester;
 
-	@BeforeEach
-	public void setup() throws AgentException {
-		monitoredApplication = MonitoringTestUtils.setupApplication(
-				new MicroApplicationDescriptionWithSharedVectorField(),
-				resources,
-				MicroApplicationDescriptionWithSharedVectorField::fillWithGenericData);
+  @BeforeEach
+  public void setup() throws AgentException {
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithSharedVectorField(),
+            resources,
+            MicroApplicationDescriptionWithSharedVectorField::fillWithGenericData);
 
-		final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-				monitoredApplication.getDatastore(),
-				monitoredApplication.getManager(),
-				tempDir,
-				this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
-		final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-		statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
+    statisticsSummary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
-		monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
+    monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
 
-		tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
-	}
+    tester = MonitoringTestUtils.createMonitoringCubeTester(monitoringApplication.getManager());
+  }
 
-	@Test
-	public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
-		tester.mdxQuery("SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
-				+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
-				+ " FROM [MemoryCube]"
-				+ " WHERE ("
-				+ "   [Owners].[Owner].[Owner].[Store A],"
-				+ "   [Fields].[Field].[Field].[vector1]"
-				+ " )").getTester()
-				.hasOnlyOneCell()
-				.containing(0L);
-	}
+  @Test
+  public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
+    tester
+        .mdxQuery(
+            "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
+                + " [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )")
+        .getTester()
+        .hasOnlyOneCell()
+        .containing(0L);
+  }
 
-	@Test
-	public void testVectorBlockConsumption() throws QueryException {
-		final IMultiVersionActivePivot pivot = tester.pivot();
+  @Test
+  public void testVectorBlockConsumption() throws QueryException {
+    final IMultiVersionActivePivot pivot = tester.pivot();
 
-		final MDXQuery vectorBlockQuery = new MDXQuery(
-				"SELECT {"
-						+ "   [Components].[Component].[ALL].[AllMember],"
-						+ "   [Components].[Component].[Component].[VECTOR_BLOCK]"
-						+ " } ON ROWS,"
-						+ " [Measures].[DirectMemory.SUM] ON COLUMNS"
-						+ " FROM [MemoryCube]"
-						+ " WHERE ("
-						+ "   [Owners].[Owner].[Owner].[Store A],"
-						+ "   [Fields].[Field].[Field].[vector1]"
-						+ " )");
+    final MDXQuery vectorBlockQuery =
+        new MDXQuery(
+            "SELECT {"
+                + "   [Components].[Component].[ALL].[AllMember],"
+                + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
+                + " } ON ROWS,"
+                + " [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )");
 
-		final CellSetDTO result = pivot.execute(vectorBlockQuery);
+    final CellSetDTO result = pivot.execute(vectorBlockQuery);
 
-		Assertions.assertThat((long) result.getCells().get(1).getValue())
-				.isEqualTo((long) result.getCells().get(0).getValue());
-	}
+    Assertions.assertThat((long) result.getCells().get(1).getValue())
+        .isEqualTo((long) result.getCells().get(0).getValue());
+  }
 
-	@Test
-	public void testVectorBlockLength() {
-		tester.mdxQuery("SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
-				+ " FROM [MemoryCube]"
-				+ " WHERE ("
-				+ "   [Owners].[Owner].[Owner].[Store A],"
-				+ "   [Fields].[Field].[Field].[vector1]"
-				+ " )")
-				.getTester()
-				.hasOnlyOneCell()
-				.containing((long) MicroApplicationDescriptionWithSharedVectorField.VECTOR_BLOCK_SIZE);
-	}
+  @Test
+  public void testVectorBlockLength() {
+    tester
+        .mdxQuery(
+            "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )")
+        .getTester()
+        .hasOnlyOneCell()
+        .containing((long) MicroApplicationDescriptionWithSharedVectorField.VECTOR_BLOCK_SIZE);
+  }
 
-	@Test
-	public void testVectorBlockRefCount() {
-		tester.mdxQuery("SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
-				+ " FROM [MemoryCube]"
-				+ " WHERE ("
-				+ "   [Owners].[Owner].[Owner].[Store A],"
-				+ "   [Fields].[Field].[Field].[vector1]"
-				+ " )")
-				.getTester()
-				.hasOnlyOneCell()
-				.containing((long) MicroApplicationDescriptionWithSharedVectorField.FIELD_SHARING_COUNT
-						* MicroApplicationDescriptionWithSharedVectorField.ADDED_DATA_SIZE);
-	}
+  @Test
+  public void testVectorBlockRefCount() {
+    tester
+        .mdxQuery(
+            "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector1]"
+                + " )")
+        .getTester()
+        .hasOnlyOneCell()
+        .containing(
+            (long) MicroApplicationDescriptionWithSharedVectorField.FIELD_SHARING_COUNT
+                * MicroApplicationDescriptionWithSharedVectorField.ADDED_DATA_SIZE);
+  }
 }

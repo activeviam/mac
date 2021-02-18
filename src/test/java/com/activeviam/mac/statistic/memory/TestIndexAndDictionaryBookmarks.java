@@ -55,16 +55,18 @@ public class TestIndexAndDictionaryBookmarks {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils.setupApplication(
-        new MicroApplicationDescriptionWithIndexedFields(),
-        resources,
-        MicroApplicationDescriptionWithIndexedFields::fillWithGenericData);
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescriptionWithIndexedFields(),
+            resources,
+            MicroApplicationDescriptionWithIndexedFields::fillWithGenericData);
 
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
@@ -150,9 +152,7 @@ public class TestIndexAndDictionaryBookmarks {
     final CellSetDTO total = pivot.execute(totalQuery);
     final CellSetDTO perField = pivot.execute(perFieldQuery);
 
-    Assertions.assertThat(perField.getCells().stream()
-        .mapToLong(x -> (long) x.getValue())
-        .sum())
+    Assertions.assertThat(perField.getCells().stream().mapToLong(x -> (long) x.getValue()).sum())
         .isEqualTo((long) total.getCells().get(0).getValue());
   }
 
@@ -176,23 +176,27 @@ public class TestIndexAndDictionaryBookmarks {
 
     final CellSetDTO result = pivot.execute(totalQuery);
 
-    final IDictionaryProvider dictionaryProvider = monitoredApplication.getDatastore()
-        .getDictionaries().getStoreDictionaries("A");
+    final IDictionaryProvider dictionaryProvider =
+        monitoredApplication.getDatastore().getDictionaries().getStoreDictionaries("A");
 
-    SoftAssertions.assertSoftly(assertions -> {
-      final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
-      for (final CellDTO cell : result.getCells()) {
-        final String fieldName =
-            positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          final List<AxisPositionDTO> positions = result.getAxes().get(0).getPositions();
+          for (final CellDTO cell : result.getCells()) {
+            final String fieldName =
+                positions.get(cell.getOrdinal()).getMembers().get(0).getPath().getPath()[1];
 
-        final long expectedDictionarySize = dictionaryProvider
-            .getDictionary(monitoredApplication.getDatastore()
-                .getSchemaMetadata().getFieldIndex("A", fieldName))
-            .size();
+            final long expectedDictionarySize =
+                dictionaryProvider
+                    .getDictionary(
+                        monitoredApplication
+                            .getDatastore()
+                            .getSchemaMetadata()
+                            .getFieldIndex("A", fieldName))
+                    .size();
 
-        assertions.assertThat((long) cell.getValue())
-            .isEqualTo(expectedDictionarySize);
-      }
-    });
+            assertions.assertThat((long) cell.getValue()).isEqualTo(expectedDictionarySize);
+          }
+        });
   }
 }

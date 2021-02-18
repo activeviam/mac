@@ -15,24 +15,24 @@ import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 
 public class MicroApplicationDescriptionWithKeepAllEpochPolicy extends MicroApplicationDescription {
 
-	@Override
-	public IDatastoreSchemaDescription datastoreDescription() {
-		return StartBuilding.datastoreSchema()
-				.withStore(
-						StartBuilding.store()
-								.withStoreName("A")
-								.withField("id", ILiteralType.INT)
-								.asKeyField()
-								.withField("value", ILiteralType.DOUBLE)
-								.asKeyField()
-								.withValuePartitioningOn("value")
-								.withChunkSize(CHUNK_SIZE)
-								.build())
-				.build();
-	}
+  @Override
+  public IDatastoreSchemaDescription datastoreDescription() {
+    return StartBuilding.datastoreSchema()
+        .withStore(
+            StartBuilding.store()
+                .withStoreName("A")
+                .withField("id", ILiteralType.INT)
+                .asKeyField()
+                .withField("value", ILiteralType.DOUBLE)
+                .asKeyField()
+                .withValuePartitioningOn("value")
+                .withChunkSize(CHUNK_SIZE)
+                .build())
+        .build();
+  }
 
-	@Override
-	public IEpochManagementPolicy epochManagementPolicy() {
-		return new KeepAllEpochPolicy();
-	}
+  @Override
+  public IEpochManagementPolicy epochManagementPolicy() {
+    return new KeepAllEpochPolicy();
+  }
 }

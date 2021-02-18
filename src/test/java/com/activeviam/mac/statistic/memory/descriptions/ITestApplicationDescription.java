@@ -14,11 +14,11 @@ import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 
 public interface ITestApplicationDescription {
 
-	IDatastoreSchemaDescription datastoreDescription();
+  IDatastoreSchemaDescription datastoreDescription();
 
-	IActivePivotManagerDescription managerDescription(IDatastoreSchemaDescription schemaDescription);
+  IActivePivotManagerDescription managerDescription(IDatastoreSchemaDescription schemaDescription);
 
-	default IEpochManagementPolicy epochManagementPolicy() {
-		return new KeepLastEpochPolicy();
-	}
+  default IEpochManagementPolicy epochManagementPolicy() {
+    return new KeepLastEpochPolicy();
+  }
 }

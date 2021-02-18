@@ -63,12 +63,15 @@ public class TestMACMeasures {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils
-        .setupApplication(new MicroApplicationDescription(), resources,
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
             MicroApplicationDescription::fillWithGenericData);
 
     final Path exportPath =
-        MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
             monitoredApplication.getManager(),
             tempDir,
             this.getClass().getSimpleName());
@@ -86,63 +89,68 @@ public class TestMACMeasures {
   public void testDirectMemorySum() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
     long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
-    final MDXQuery query2 = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query2 =
+        new MDXQuery(
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
-    final MDXQuery query3 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query3 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
     // Check that the cell size is the expected one (the amount of chunks)
-    Assertions.assertThat(res3.getCells().size())
-        .isEqualTo(nbC);
+    Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC);
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
     Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3, 0L, Long::sum))
         .isEqualTo(value);
     // Check that the summed value corresponds to the Exported sum
-    Assertions.assertThat(statisticsSummary.offHeapMemory)
-        .isEqualTo(value);
+    Assertions.assertThat(statisticsSummary.offHeapMemory).isEqualTo(value);
   }
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
     long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
-    final MDXQuery query2 = new MDXQuery("SELECT"
-        + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query2 =
+        new MDXQuery(
+            "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
     long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
-    final MDXQuery query3 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query3 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
     // Check that the cell size is the expected one (the amount of chunks)
-    Assertions.assertThat(res3.getCells().size())
-        .isEqualTo(nbC);
+    Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC);
     // Check that the summed value corresponds to the sum on each chunk of the Chunk
     // Level
     Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3, 0L, Long::sum))
@@ -159,10 +167,12 @@ public class TestMACMeasures {
   public void testChunkSize() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
@@ -173,32 +183,39 @@ public class TestMACMeasures {
   public void testNonWrittenCount() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
-        .contains((long) MicroApplicationDescription.CHUNK_SIZE
-            - MicroApplicationDescription.ADDED_DATA_SIZE);
+        .contains(
+            (long) MicroApplicationDescription.CHUNK_SIZE
+                - MicroApplicationDescription.ADDED_DATA_SIZE);
   }
 
   @Test
   public void testApplicationMeasures() {
-    SoftAssertions.assertSoftly(assertions -> {
-      applicationStatistics.forEach(
-          cast((measure, value) -> {
-            tester.mdxQuery("SELECT"
-                + "  NON EMPTY [Measures].["
-                + measure
-                + "] ON COLUMNS"
-                + "  FROM [MemoryCube]")
-                .getTester()
-                .hasOnlyOneCell()
-                .containing(value);
-          }));
-    });
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          applicationStatistics.forEach(
+              cast(
+                  (measure, value) -> {
+                    tester
+                        .mdxQuery(
+                            "SELECT"
+                                + "  NON EMPTY [Measures].["
+                                + measure
+                                + "] ON COLUMNS"
+                                + "  FROM [MemoryCube]")
+                        .getTester()
+                        .hasOnlyOneCell()
+                        .containing(value);
+                  }));
+        });
   }
 
   /**
@@ -210,35 +227,41 @@ public class TestMACMeasures {
     SoftAssertions.assertSoftly(
         assertions -> {
           applicationStatistics.forEach(
-              cast((measure, value) -> {
-                tester.mdxQuery("SELECT"
-                    + " NON EMPTY [Measures].["
-                    + measure
-                    + "] ON COLUMNS"
-                    + " FROM [MemoryCube]"
-                    + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)")
-                    .getTester()
-                    .hasOnlyOneCell()
-                    .containing(value);
-              }));
+              cast(
+                  (measure, value) -> {
+                    tester
+                        .mdxQuery(
+                            "SELECT"
+                                + " NON EMPTY [Measures].["
+                                + measure
+                                + "] ON COLUMNS"
+                                + " FROM [MemoryCube]"
+                                + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)")
+                        .getTester()
+                        .hasOnlyOneCell()
+                        .containing(value);
+                  }));
         });
 
     SoftAssertions.assertSoftly(
         assertions -> {
           applicationStatistics.forEach(
-              cast((measure, value) -> {
-                tester.mdxQuery("SELECT"
-                    + " NON EMPTY [Measures].["
-                    + measure
-                    + "] ON COLUMNS"
-                    + " FROM [MemoryCube]"
-                    + " WHERE (["
-                    + ManagerDescriptionConfig.CHUNK_DIMENSION
-                    + "].[ChunkId].[ALL].[AllMember].FirstChild)")
-                    .getTester()
-                    .hasOnlyOneCell()
-                    .containing(value);
-              }));
+              cast(
+                  (measure, value) -> {
+                    tester
+                        .mdxQuery(
+                            "SELECT"
+                                + " NON EMPTY [Measures].["
+                                + measure
+                                + "] ON COLUMNS"
+                                + " FROM [MemoryCube]"
+                                + " WHERE (["
+                                + ManagerDescriptionConfig.CHUNK_DIMENSION
+                                + "].[ChunkId].[ALL].[AllMember].FirstChild)")
+                        .getTester()
+                        .hasOnlyOneCell()
+                        .containing(value);
+                  }));
         });
   }
 
@@ -246,10 +269,12 @@ public class TestMACMeasures {
   public void testFreedCount() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  [Measures].[DeletedRows.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  [Measures].[DeletedRows.COUNT] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
@@ -260,22 +285,28 @@ public class TestMACMeasures {
   public void testNonWrittenRatio() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    final MDXQuery query2 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query2 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
 
-    final MDXQuery query3 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[NonWrittenRows.Ratio] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query3 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[NonWrittenRows.Ratio] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
     final List<Long> chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
@@ -292,22 +323,28 @@ public class TestMACMeasures {
   public void testDeletedRatio() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
-    final MDXQuery query2 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[DeletedRows.COUNT] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query2 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[DeletedRows.COUNT] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
 
-    final MDXQuery query3 = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + "  NON EMPTY [Measures].[DeletedRows.Ratio] ON COLUMNS"
-        + "  FROM [MemoryCube]");
+    final MDXQuery query3 =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + "  NON EMPTY [Measures].[DeletedRows.Ratio] ON COLUMNS"
+                + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
     final List<Long> chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
@@ -324,19 +361,20 @@ public class TestMACMeasures {
   public void testDictionarySize() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery query = new MDXQuery("SELECT"
-        + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-        + " NON EMPTY [Measures].[DictionarySize.SUM] ON COLUMNS"
-        + " FROM [MemoryCube]"
-        + " WHERE ("
-        + "  [Owners].[Owner].[Owner].[Store A],"
-        + "  [Fields].[Field].[Field].[id]"
-        + " )");
+    final MDXQuery query =
+        new MDXQuery(
+            "SELECT"
+                + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
+                + " NON EMPTY [Measures].[DictionarySize.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "  [Owners].[Owner].[Owner].[Store A],"
+                + "  [Fields].[Field].[Field].[id]"
+                + " )");
     CellSetDTO res = pivot.execute(query);
 
-    final long expectedDictionarySize = monitoredApplication.getDatastore().getDictionaries()
-        .getDictionary("A", "id")
-        .size();
+    final long expectedDictionarySize =
+        monitoredApplication.getDatastore().getDictionaries().getDictionary("A", "id").size();
 
     Assertions.assertThat(res.getCells())
         .isNotEmpty()
@@ -347,17 +385,18 @@ public class TestMACMeasures {
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
     final IMemoryStatistic firstChild = export.getChildren().iterator().next();
     return QfsArrays.<String, String>mutableMap(
-        ManagerDescriptionConfig.USED_HEAP,
-        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
-        ManagerDescriptionConfig.COMMITTED_HEAP,
-        MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
-        ManagerDescriptionConfig.USED_DIRECT,
-        MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
-        ManagerDescriptionConfig.MAX_DIRECT,
-        MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
+            ManagerDescriptionConfig.USED_HEAP,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
+            ManagerDescriptionConfig.COMMITTED_HEAP,
+            MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+            ManagerDescriptionConfig.USED_DIRECT,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
+            ManagerDescriptionConfig.MAX_DIRECT,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
         .entrySet().stream()
-        .collect(Collectors.toMap(
-            Map.Entry::getKey,
-            entry -> firstChild.getAttributes().get(entry.getValue()).asLong()));
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> firstChild.getAttributes().get(entry.getValue()).asLong()));
   }
 }

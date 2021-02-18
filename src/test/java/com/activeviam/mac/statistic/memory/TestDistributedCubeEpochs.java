@@ -60,38 +60,44 @@ public class TestDistributedCubeEpochs {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws AgentException {
-    monitoredApplication = MonitoringTestUtils.setupApplication(
-        new DistributedApplicationDescription(testInfo.getDisplayName()),
-        resources,
-        (datastore, manager) -> {
-          final var queryCubeA =
-              ((MultiVersionDistributedActivePivot) manager.getActivePivots().get("QueryCubeA"));
-          final var queryCubeB =
-              ((MultiVersionDistributedActivePivot) manager.getActivePivots().get("QueryCubeB"));
-          awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 2);
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new DistributedApplicationDescription(testInfo.getDisplayName()),
+            resources,
+            (datastore, manager) -> {
+              final var queryCubeA =
+                  ((MultiVersionDistributedActivePivot)
+                      manager.getActivePivots().get("QueryCubeA"));
+              final var queryCubeB =
+                  ((MultiVersionDistributedActivePivot)
+                      manager.getActivePivots().get("QueryCubeB"));
+              awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 2);
 
-          // epoch 1
-          datastore.edit(transactionManager -> IntStream.range(0, 10)
-              .forEach(i -> transactionManager.add("A", i, (double) i)));
-          awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
+              // epoch 1
+              datastore.edit(
+                  transactionManager ->
+                      IntStream.range(0, 10)
+                          .forEach(i -> transactionManager.add("A", i, (double) i)));
+              awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
 
-          // emulate commits on the query cubes at a greater epoch that does not exist in the
-          // datastore
-          // produces 5 distributed epochs
-          for (int i = 0; i < 5; ++i) {
-            queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
-          }
+              // emulate commits on the query cubes at a greater epoch that does not exist in the
+              // datastore
+              // produces 5 distributed epochs
+              for (int i = 0; i < 5; ++i) {
+                queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
+              }
 
-          // produces 1 distributed epoch
-          queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
-        });
+              // produces 1 distributed epoch
+              queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
+            });
 
     // todo vlg: use export application after 5.9.5
-    final Path exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        this.getClass().getSimpleName());
+    final Path exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
 
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
     monitoringApplication = MonitoringTestUtils.setupMonitoringApplication(stats, resources);
@@ -102,14 +108,16 @@ public class TestDistributedCubeEpochs {
     waitAndAssert(
         1,
         TimeUnit.MINUTES,
-        () -> SoftAssertions.assertSoftly(
-            assertions -> {
-              for (final var cube : cubes) {
-                assertions.assertThat(cube.getHead().getEpochId())
-                    .as(cube.getId())
-                    .isEqualTo(epochId);
-              }
-            }));
+        () ->
+            SoftAssertions.assertSoftly(
+                assertions -> {
+                  for (final var cube : cubes) {
+                    assertions
+                        .assertThat(cube.getHead().getEpochId())
+                        .as(cube.getId())
+                        .isEqualTo(epochId);
+                  }
+                }));
   }
 
   @Test
@@ -132,14 +140,16 @@ public class TestDistributedCubeEpochs {
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {
-    final ICursor cursor = monitoringApplication.getDatastore()
-        .getHead()
-        .getQueryRunner()
-        .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-        .withoutCondition()
-        .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-        .onCurrentThread()
-        .run();
+    final ICursor cursor =
+        monitoringApplication
+            .getDatastore()
+            .getHead()
+            .getQueryRunner()
+            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withoutCondition()
+            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+            .onCurrentThread()
+            .run();
 
     return StreamSupport.stream(cursor.spliterator(), false)
         .map(c -> (EpochView) c.read(0))

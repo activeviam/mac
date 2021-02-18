@@ -50,32 +50,32 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure {
   @RegisterExtension
   protected final LocalResourcesExtension resources = new LocalResourcesExtension();
 
-  protected static Path tempDir = QfsFileTestUtils
-      .createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
+  protected static Path tempDir =
+      QfsFileTestUtils.createTempDirectory(
+          TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
 
   protected Application monitoredApplication;
   protected Path exportPath;
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils.setupApplication(
-        new ScenarioApplication(),
-        resources,
-        ScenarioApplication::fill);
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new ScenarioApplication(), resources, ScenarioApplication::fill);
 
-    exportPath = MonitoringTestUtils.exportMostRecentVersion(
-        monitoredApplication.getDatastore(),
-        monitoredApplication.getManager(),
-        tempDir,
-        this.getClass().getSimpleName());
-
+    exportPath =
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
+            monitoredApplication.getManager(),
+            tempDir,
+            this.getClass().getSimpleName());
   }
 
   @Test
   public void testLoading() {
     final IMemoryStatistic stats = MonitoringTestUtils.loadMemoryStatFromFolder(exportPath);
-    Assertions.assertDoesNotThrow(() ->
-        MonitoringTestUtils.createAnalysisDatastore(stats, resources));
+    Assertions.assertDoesNotThrow(
+        () -> MonitoringTestUtils.createAnalysisDatastore(stats, resources));
   }
 
   private static final class ScenarioApplication implements ITestApplicationDescription {
@@ -98,34 +98,36 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure {
     @Override
     public IActivePivotManagerDescription managerDescription(
         IDatastoreSchemaDescription schemaDescription) {
-      final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-          .withSchema()
-          .withSelection(
-              StartBuilding.selection(schemaDescription)
-                  .fromBaseStore("Store")
-                  .withAllFields()
-                  .build())
-          .withCube(
-              StartBuilding.cube("Cube")
-                  .withContributorsCount()
-                  .withAggregatedMeasure()
-                  .sum("vectorMeasure")
-                  .withSingleLevelDimension("id")
-                  .withPropertyName("id")
-                  .withAggregateProvider()
-                  .bitmap()
-                  .build())
-          .build();
+      final IActivePivotManagerDescription managerDescription =
+          StartBuilding.managerDescription()
+              .withSchema()
+              .withSelection(
+                  StartBuilding.selection(schemaDescription)
+                      .fromBaseStore("Store")
+                      .withAllFields()
+                      .build())
+              .withCube(
+                  StartBuilding.cube("Cube")
+                      .withContributorsCount()
+                      .withAggregatedMeasure()
+                      .sum("vectorMeasure")
+                      .withSingleLevelDimension("id")
+                      .withPropertyName("id")
+                      .withAggregateProvider()
+                      .bitmap()
+                      .build())
+              .build();
 
       return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
     }
 
     public static void fill(IDatastore datastore, IActivePivotManager manager) {
-      datastore.edit(transactionManager -> {
-        for (int i = 0; i < RECORD_COUNT; ++i) {
-          transactionManager.add("Store", i, new double[] {i, -i});
-        }
-      });
+      datastore.edit(
+          transactionManager -> {
+            for (int i = 0; i < RECORD_COUNT; ++i) {
+              transactionManager.add("Store", i, new double[] {i, -i});
+            }
+          });
     }
   }
 }

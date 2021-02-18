@@ -33,136 +33,142 @@ import java.nio.file.Path;
 
 public class WithManyCubesAndPartials {
 
-	private static final Path EXPORT_PATH = Path.of("sampleStats");
+  private static final Path EXPORT_PATH = Path.of("sampleStats");
 
-	private static final int CUBE_COUNT = 20;
-	private static final int PROVIDER_COUNT_PER_CUBE = 5;
+  private static final int CUBE_COUNT = 20;
+  private static final int PROVIDER_COUNT_PER_CUBE = 5;
 
-	public static void main(String[] args) throws AgentException {
-		Registry.setContributionProvider(new ClasspathContributionProvider());
+  public static void main(String[] args) throws AgentException {
+    Registry.setContributionProvider(new ClasspathContributionProvider());
 
-		final IDatastoreSchemaDescription datastoreSchemaDescription = StartBuilding.datastoreSchema()
-				.withStore(StartBuilding.store()
-						.withStoreName("a")
-						.withField("id", ILiteralType.INT).asKeyField()
-						.withField("hierarchy")
-						.withField("measure", ILiteralType.DOUBLE)
-						.withVectorField("vectorMeasure", ILiteralType.DOUBLE)
-						.build())
-				.build();
+    final IDatastoreSchemaDescription datastoreSchemaDescription =
+        StartBuilding.datastoreSchema()
+            .withStore(
+                StartBuilding.store()
+                    .withStoreName("a")
+                    .withField("id", ILiteralType.INT)
+                    .asKeyField()
+                    .withField("hierarchy")
+                    .withField("measure", ILiteralType.DOUBLE)
+                    .withVectorField("vectorMeasure", ILiteralType.DOUBLE)
+                    .build())
+            .build();
 
-		var managerDescriptionBuilder = StartBuilding.managerDescription()
-				.withName("manager")
-				.withSchema()
+    var managerDescriptionBuilder =
+        StartBuilding.managerDescription()
+            .withName("manager")
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(datastoreSchemaDescription)
+                    .fromBaseStore("a")
+                    .withAllReachableFields()
+                    .build())
+            .withCube(generateCubeDescription("cube 0", ProviderType.BITMAP));
 
-				.withSelection(StartBuilding.selection(datastoreSchemaDescription)
-						.fromBaseStore("a")
-						.withAllReachableFields()
-						.build())
+    for (int i = 1; i < CUBE_COUNT; ++i) {
+      managerDescriptionBuilder =
+          managerDescriptionBuilder.withCube(
+              generateCubeDescription("cube " + i, ProviderType.BITMAP));
+    }
 
-				.withCube(generateCubeDescription("cube 0", ProviderType.BITMAP));
+    final var managerDescription =
+        ActivePivotManagerBuilder.postProcess(
+            managerDescriptionBuilder.build(), datastoreSchemaDescription);
 
-		for (int i = 1; i < CUBE_COUNT; ++i) {
-			managerDescriptionBuilder = managerDescriptionBuilder
-					.withCube(generateCubeDescription("cube " + i, ProviderType.BITMAP));
-		}
+    final IDatastore datastore =
+        StartBuilding.datastore()
+            .setSchemaDescription(datastoreSchemaDescription)
+            .addSchemaDescriptionPostProcessors(
+                ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+            .build();
 
-		final var managerDescription =
-				ActivePivotManagerBuilder
-						.postProcess(managerDescriptionBuilder.build(), datastoreSchemaDescription);
+    datastore.edit(
+        tm -> {
+          tm.add("a", 0, "member", 1., new double[] {1., 2., 3.});
+          tm.add("a", 1, "member", 2., new double[] {1., 2., 3.});
+          tm.add("a", 2, "member", 3., new double[] {1., 2., 3.});
+        });
 
-		final IDatastore datastore = StartBuilding.datastore()
-				.setSchemaDescription(datastoreSchemaDescription)
-				.addSchemaDescriptionPostProcessors(
-						ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-				.build();
+    final IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDatastoreAndPermissions(datastore)
+            .setDescription(managerDescription)
+            .buildAndStart();
 
-		datastore.edit(tm -> {
-			tm.add("a", 0, "member", 1., new double[] {1., 2., 3.});
-			tm.add("a", 1, "member", 2., new double[] {1., 2., 3.});
-			tm.add("a", 2, "member", 3., new double[] {1., 2., 3.});
-		});
+    final IMemoryAnalysisService analysisService =
+        new MemoryAnalysisService(datastore, manager, datastore.getEpochManager(), EXPORT_PATH);
+    analysisService.exportMostRecentVersion(WithManyCubesAndPartials.class.getSimpleName());
 
-		final IActivePivotManager manager = StartBuilding.manager()
-				.setDatastoreAndPermissions(datastore)
-				.setDescription(managerDescription)
-				.buildAndStart();
+    manager.stop();
+    datastore.close();
+  }
 
-		final IMemoryAnalysisService analysisService = new MemoryAnalysisService(
-				datastore, manager, datastore.getEpochManager(), EXPORT_PATH);
-		analysisService.exportMostRecentVersion(WithManyCubesAndPartials.class.getSimpleName());
+  protected enum ProviderType {
+    LEAF,
+    BITMAP,
+    JIT
+  }
 
-		manager.stop();
-		datastore.close();
-	}
+  protected static IActivePivotInstanceDescription generateCubeDescription(
+      String cubeName, ProviderType providerType) {
+    final var cubeDesc =
+        StartBuilding.cube(cubeName)
+            .withContributorsCount()
+            .withAggregatedMeasure()
+            .sum("measure")
+            .withName("measure.SUM")
+            .withAggregatedMeasure()
+            .avg("measure")
+            .withName("measure.AVG")
+            .withAggregatedMeasure()
+            .max("measure")
+            .withName("measure.MAX")
+            .withAggregatedMeasure()
+            .sum("vectorMeasure")
+            .withName("vectorMeasure.SUM")
+            .withSingleLevelDimension("id")
+            .withPropertyName("id")
+            .withSingleLevelDimension("hierarchy")
+            .withPropertyName("hierarchy")
+            .withAggregateProvider();
 
-	protected enum ProviderType {
-		LEAF,
-		BITMAP,
-		JIT
-	}
+    IBuildableAggregateProviderDescriptionBuilder<IActivePivotInstanceDescription> withFull;
+    switch (providerType) {
+      case LEAF:
+        withFull = cubeDesc.leaf();
+        break;
+      case BITMAP:
+        withFull = cubeDesc.bitmap();
+        break;
+      case JIT:
+        withFull = cubeDesc.jit();
+        break;
+      default:
+        withFull = cubeDesc.jit();
+        break;
+    }
 
-	protected static IActivePivotInstanceDescription generateCubeDescription(
-			String cubeName, ProviderType providerType) {
-		final var cubeDesc = StartBuilding.cube(cubeName)
-				.withContributorsCount()
-				.withAggregatedMeasure()
-				.sum("measure")
-				.withName("measure.SUM")
-				.withAggregatedMeasure()
-				.avg("measure")
-				.withName("measure.AVG")
-				.withAggregatedMeasure()
-				.max("measure")
-				.withName("measure.MAX")
-				.withAggregatedMeasure()
-				.sum("vectorMeasure")
-				.withName("vectorMeasure.SUM")
+    for (int i = 0; i < PROVIDER_COUNT_PER_CUBE; ++i) {
+      withFull = addPartial(withFull, ProviderType.BITMAP, "measure.SUM");
+    }
 
-				.withSingleLevelDimension("id")
-				.withPropertyName("id")
+    return withFull.build();
+  }
 
-				.withSingleLevelDimension("hierarchy")
-				.withPropertyName("hierarchy")
-
-				.withAggregateProvider();
-
-		IBuildableAggregateProviderDescriptionBuilder<IActivePivotInstanceDescription> withFull;
-		switch (providerType) {
-			case LEAF:
-				withFull = cubeDesc.leaf();
-				break;
-			case BITMAP:
-				withFull = cubeDesc.bitmap();
-				break;
-			case JIT:
-				withFull = cubeDesc.jit();
-				break;
-			default:
-				withFull = cubeDesc.jit();
-				break;
-		}
-
-		for (int i = 0; i < PROVIDER_COUNT_PER_CUBE; ++i) {
-			withFull = addPartial(withFull, ProviderType.BITMAP, "measure.SUM");
-		}
-
-		return withFull.build();
-	}
-
-	protected static IBuildableAggregateProviderDescriptionBuilder<IActivePivotInstanceDescription> addPartial(
-			ICanStartPartialProvider<IActivePivotInstanceDescription> builder,
-			ProviderType providerType,
-			String... measures) {
-		final var withPartial = builder.withPartialProvider();
-		switch (providerType) {
-			case LEAF:
-				return withPartial.leaf().includingOnlyMeasures(measures);
-			case BITMAP:
-				return withPartial.bitmap().includingOnlyMeasures(measures);
-			case JIT:
-			default:
-				return withPartial.bitmap().includingOnlyMeasures(measures);
-		}
-	}
+  protected static IBuildableAggregateProviderDescriptionBuilder<IActivePivotInstanceDescription>
+      addPartial(
+          ICanStartPartialProvider<IActivePivotInstanceDescription> builder,
+          ProviderType providerType,
+          String... measures) {
+    final var withPartial = builder.withPartialProvider();
+    switch (providerType) {
+      case LEAF:
+        return withPartial.leaf().includingOnlyMeasures(measures);
+      case BITMAP:
+        return withPartial.bitmap().includingOnlyMeasures(measures);
+      case JIT:
+      default:
+        return withPartial.bitmap().includingOnlyMeasures(measures);
+    }
+  }
 }

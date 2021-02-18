@@ -14,7 +14,8 @@ import com.qfs.multiversion.IEpochManagementPolicy;
 import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 
-public class MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy implements ITestApplicationDescription {
+public class MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy
+    implements ITestApplicationDescription {
 
   public static final int CHUNK_SIZE = 256;
 
@@ -50,10 +51,7 @@ public class MicroApplicationDescriptionWithIsolatedStoreAndKeepAllPolicy implem
     return StartBuilding.managerDescription()
         .withSchema()
         .withSelection(
-            StartBuilding.selection(schemaDescription)
-                .fromBaseStore("A")
-                .withAllFields()
-                .build())
+            StartBuilding.selection(schemaDescription).fromBaseStore("A").withAllFields().build())
         .withCube(
             StartBuilding.cube("Cube")
                 .withContributorsCount()

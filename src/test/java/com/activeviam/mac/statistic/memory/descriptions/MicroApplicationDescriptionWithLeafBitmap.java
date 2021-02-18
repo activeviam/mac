@@ -14,26 +14,27 @@ import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 
 public class MicroApplicationDescriptionWithLeafBitmap extends MicroApplicationDescription {
 
-	@Override
-	public IActivePivotManagerDescription managerDescription(
-			IDatastoreSchemaDescription schemaDescription) {
-		final IActivePivotManagerDescription managerDescription = StartBuilding.managerDescription()
-				.withSchema()
-				.withSelection(
-						StartBuilding.selection(schemaDescription)
-								.fromBaseStore("A")
-								.withAllFields()
-								.build())
-				.withCube(
-						StartBuilding.cube("Cube")
-								.withContributorsCount()
-								.withSingleLevelDimension("id")
-								.asDefaultHierarchy()
-								.withAggregateProvider()
-								.leaf()
-								.build())
-				.build();
+  @Override
+  public IActivePivotManagerDescription managerDescription(
+      IDatastoreSchemaDescription schemaDescription) {
+    final IActivePivotManagerDescription managerDescription =
+        StartBuilding.managerDescription()
+            .withSchema()
+            .withSelection(
+                StartBuilding.selection(schemaDescription)
+                    .fromBaseStore("A")
+                    .withAllFields()
+                    .build())
+            .withCube(
+                StartBuilding.cube("Cube")
+                    .withContributorsCount()
+                    .withSingleLevelDimension("id")
+                    .asDefaultHierarchy()
+                    .withAggregateProvider()
+                    .leaf()
+                    .build())
+            .build();
 
-		return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
-	}
+    return ActivePivotManagerBuilder.postProcess(managerDescription, schemaDescription);
+  }
 }

@@ -41,12 +41,15 @@ public class TestFieldsBookmark {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApplication = MonitoringTestUtils
-        .setupApplication(new MicroApplicationDescription(), resources,
+    monitoredApplication =
+        MonitoringTestUtils.setupApplication(
+            new MicroApplicationDescription(),
+            resources,
             MicroApplicationDescription::fillWithGenericData);
 
     final Path exportPath =
-        MonitoringTestUtils.exportMostRecentVersion(monitoredApplication.getDatastore(),
+        MonitoringTestUtils.exportMostRecentVersion(
+            monitoredApplication.getDatastore(),
             monitoredApplication.getManager(),
             tempDir,
             this.getClass().getSimpleName());
@@ -61,37 +64,41 @@ public class TestFieldsBookmark {
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot = tester.pivot();
 
-    final MDXQuery storeTotal = new MDXQuery(
-        "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-            + "FROM [MemoryCube]"
-            + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery storeTotal =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery perFieldQuery = new MDXQuery(
-        "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
-            + "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
-            + "FROM [MemoryCube]"
-            + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery perFieldQuery =
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
+                + "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery excessMemoryQuery = new MDXQuery(
-        "WITH MEMBER [Measures].[Field.COUNT] AS "
-            + MonitoringTestUtils.ownershipCountMdxExpression("[Fields].[Field]")
-            + " MEMBER [Measures].[ExcessDirectMemory] AS"
-            + " Sum("
-            + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
-            + "   IIF([Measures].[Field.COUNT] > 1,"
-            + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
-            + "     0)"
-            + " )"
-            + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
-            + " FROM [MemoryCube]"
-            + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+    final MDXQuery excessMemoryQuery =
+        new MDXQuery(
+            "WITH MEMBER [Measures].[Field.COUNT] AS "
+                + MonitoringTestUtils.ownershipCountMdxExpression("[Fields].[Field]")
+                + " MEMBER [Measures].[ExcessDirectMemory] AS"
+                + " Sum("
+                + "   [Chunks].[ChunkId].[ALL].[AllMember].Children,"
+                + "   IIF([Measures].[Field.COUNT] > 1,"
+                + "     ([Measures].[Field.COUNT] - 1) * [Measures].[DirectMemory.SUM],"
+                + "     0)"
+                + " )"
+                + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final CellSetDTO totalResult = pivot.execute(storeTotal);
     final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
     final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
 
     Assertions.assertThat(CellSetUtils.<Long>extractValueFromSingleCellDTO(totalResult))
-        .isEqualTo(CellSetUtils.sumValuesFromCellSetDTO(fieldResult, 0L, Long::sum)
-            - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessResult).longValue());
+        .isEqualTo(
+            CellSetUtils.sumValuesFromCellSetDTO(fieldResult, 0L, Long::sum)
+                - CellSetUtils.<Double>extractValueFromSingleCellDTO(excessResult).longValue());
   }
 }
