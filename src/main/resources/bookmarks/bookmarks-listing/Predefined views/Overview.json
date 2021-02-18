@@ -21,7 +21,10 @@
                   "horizontalSubplots" : [ ],
                   "verticalSubplots" : [ ]
                 },
-                "switchedTo" : "plotly-pie-chart"
+                "switchedTo" : "plotly-pie-chart",
+                "style" : {
+                  "isTextVisible" : false
+                }
               },
               "query" : {
                 "serverUrl" : "",
@@ -65,14 +68,43 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides several general views summarizing where the application\nconsumes the most direct memory.\n\nTwo axes of analysis are explored:\n- Owners (cubes and stores)\n- Components (indexes, dictionaries, records, ...)\n\nThe next pages offer more details in tabular fashion about memory consumption per owner and component.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
-            "ck" : "1"
+            "children" : {
+              "0" : {
+                "ck" : "3",
+                "size" : 0.22
+              },
+              "1" : {
+                "ck" : "1",
+                "size" : 0.78
+              }
+            },
+            "size" : 0.74,
+            "direction" : "column"
           },
           "1" : {
-            "ck" : "2"
+            "ck" : "2",
+            "size" : 0.26
           }
         },
         "direction" : "row"
@@ -323,7 +355,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[contributors.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Chunks.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -369,6 +401,9 @@
                   "columns" : [ {
                     "key" : "[Measures].[DirectMemory.SUM]",
                     "width" : 149
+                  }, {
+                    "key" : "[Measures].[DirectMemory.Ratio]",
+                    "width" : 137
                   } ],
                   "expansion" : {
                     "automaticExpansion" : true
@@ -432,6 +467,23 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "6",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This page offers similar information as the *Components* page, with the added information of which chunk implementations are used, with their respective memory consumption.\n\nFor example, this can be useful to check whether or not chunk compression is used by looking for classes using some sort of compression on their data. A non-exhaustive list of these classes would include:\n* `DirectChunkBits`\n* `DirectChunkHexa`\n* `DirectChunkQuad`\n* `ChunkSingleInteger`\n* `DirectChunkPositiveInteger`\n* `FrequentTChunk`\n* ...\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
@@ -450,8 +502,18 @@
             "direction" : "column"
           },
           "1" : {
-            "ck" : "1",
-            "size" : 0.79
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.65
+              },
+              "1" : {
+                "ck" : "6",
+                "size" : 0.35
+              }
+            },
+            "size" : 0.79,
+            "direction" : "row"
           }
         },
         "direction" : "column"

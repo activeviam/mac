@@ -24,27 +24,25 @@ using MAC.
 
 The process is explained below:
 
-* [Exporting your application](docs/setting_up/exporting.md)
-* [Structure of memory statistics and decompressing generated
-  files](docs/setting_up/statistics.md)
-* [Importing data in MAC](docs/setting_up/importing.md)
+* [Exporting your application](setting_up/exporting.md)
+* [Structure of memory statistics and decompressing generated files](setting_up/statistics.md)
+* [Importing data in MAC](setting_up/importing.md)
 
 ## MAC Data Model
 
 To fully make use of MAC's capabilities for analyzing your project, it is
-important to get familiar with its [data model](docs/data_model.md).
+important to get familiar with its [data model](data_model.md).
 
 ## Bookmarks
 
 MAC comes with a number of predefined bookmarks that each offer some insights to
 various aspects of the monitored application.
 
-* [Overview](docs/bookmarks/overview.md)
-* [Per-field Analysis](docs/bookmarks/fields.md)
-* [Vector Block Analysis](docs/bookmarks/vectors.md)
-* [Dictionary and Index
-  Analysis](docs/bookmarks/dictionaries_indexes.md)
-* [Aggregate Provider Analysis](docs/bookmarks/aggregate_providers.md)
+* [Overview](bookmarks/overview.md)
+* [Per-field Analysis](bookmarks/fields.md)
+* [Vector Block Analysis](bookmarks/vectors.md)
+* [Dictionary and Index Analysis](bookmarks/dictionaries_indexes.md)
+* [Aggregate Provider Analysis](bookmarks/aggregate_providers.md)
 
 ## Known limitations
 

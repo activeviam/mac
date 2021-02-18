@@ -1,3 +1,5 @@
 {
-  "key" : "c40"
+  "key" : "overview",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

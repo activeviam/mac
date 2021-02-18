@@ -58,7 +58,7 @@
           "children": {
             "preferences": {
               "entry": {
-                "content": "{\n  \"map\": {\n    \"defaultPermissions\": {\n      \"owners\": [\n        \"admin\"\n      ],\n      \"readers\": [\n        \"admin\"\n      ]\n    }\n  }\n}",
+                "content": "{\n  \"map\": {\n    \"defaultPermissions\": {\n      \"owners\": [\n        \"admin\"\n      ],\n      \"readers\": [\n        \"admin\"\n      ]\n    },\n    \"application.home\": \"home\"\n  }\n}",
                 "isDirectory": false,
                 "owners": [
                   "admin"

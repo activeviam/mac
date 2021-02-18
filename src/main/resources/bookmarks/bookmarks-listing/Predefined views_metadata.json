@@ -1,3 +1,6 @@
 {
-  "key" : "Predefined views"
+  "key": "predefined_views",
+  "description": "Predefined bookmarks for analyses",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

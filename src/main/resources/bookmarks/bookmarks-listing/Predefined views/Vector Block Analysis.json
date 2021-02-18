@@ -96,14 +96,43 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides specialized views for analyzing the direct memory consumption tied to vector data.\n\nIn the case of a name conflict between fields of different stores, the memory consumption is displayed per owner under each field.\n\nVector blocks may be shared across multiple fields, thus a very large vector block can make several fields appear to be very large.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
-            "ck" : "0"
+            "ck" : "0",
+            "size" : 0.49
           },
           "1" : {
-            "ck" : "1"
+            "children" : {
+              "0" : {
+                "ck" : "2",
+                "size" : 0.16
+              },
+              "1" : {
+                "ck" : "1",
+                "size" : 0.84
+              }
+            },
+            "size" : 0.51,
+            "direction" : "column"
           }
         },
         "direction" : "row"
@@ -249,11 +278,28 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY Order(Crossjoin(TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]), TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM])), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]",
                 "updateMode" : "once"
               }
             },
             "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This page offers a view of the memory consumption of vector blocks per owner.\n\nVector blocks can be shared by multiple owners and fields, meaning that a very large vector block may impact several fields, even across owners.\n"
+            },
+            "containerKey" : "rich-text-editor"
           },
           "writable" : true
         }
@@ -275,10 +321,22 @@
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "0"
+                "ck" : "0",
+                "size" : 0.49
               },
               "1" : {
-                "ck" : "3"
+                "children" : {
+                  "0" : {
+                    "ck" : "4",
+                    "size" : 0.16
+                  },
+                  "1" : {
+                    "ck" : "3",
+                    "size" : 0.84
+                  }
+                },
+                "size" : 0.51,
+                "direction" : "column"
               }
             },
             "size" : 0.81,

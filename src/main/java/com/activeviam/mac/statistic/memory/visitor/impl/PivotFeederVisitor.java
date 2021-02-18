@@ -53,7 +53,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Long epochId = null;
   /** The branch of the pivot we're currently reading statistics. */
   protected String branch = null;
-  /** current {@link ActivePivotManager}. */
+  /** Current {@link ActivePivotManager}. */
   protected String manager;
   /** Aggregate provider being currently visited. */
   protected Long providerId;
@@ -61,11 +61,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Integer partition;
   /** Dictionary being currently visited. */
   protected Long dictionaryId;
-  /** dimension being currently visited. */
+  /** Dimension being currently visited. */
   protected String dimension;
-  /** hierarchy being currently visited. */
+  /** Hierarchy being currently visited. */
   protected String hierarchy;
-  /** level being currently visited. */
+  /** Level being currently visited. */
   protected String level;
   /** Type of the aggregate Provider being currently visited. */
   protected ProviderComponentType providerComponentType;
@@ -73,7 +73,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected ParentType rootComponent;
   /** Type of the direct parent structure. */
   protected ParentType directParentType;
-  /** id of the direct parent structure. */
+  /** Id of the direct parent structure. */
   protected String directParentId;
 
   /** Whether or not to ignore the field attributes of the visited statistics. */

@@ -15,7 +15,7 @@ package com.activeviam.tools.bookmark.constant.impl;
  *
  * @author ActiveViam
  */
-public class CsConstants {
+public class ContentServerConstants {
 
   public static class Paths {
 

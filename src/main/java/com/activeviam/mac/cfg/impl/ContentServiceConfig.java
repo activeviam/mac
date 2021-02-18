@@ -8,7 +8,7 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
-import com.activeviam.tools.bookmark.constant.impl.CsConstants.Role;
+import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
 import com.qfs.content.service.IContentService;
@@ -59,6 +59,12 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    * service.
    */
   public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
+
+  /**
+   * The name of the property that controls whether or not to force the reloading of the predefined
+   * bookmarks even if they were already loaded previously.
+   */
+  public static final String FORCE_BOOKMARK_RELOAD_PROPERTY = "bookmarks.reloadOnStartup";
 
   /** Instance of the Spring context environment. */
   @Autowired public Environment env;
@@ -138,6 +144,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       name = "exportBookMarks",
       desc = "Export the current bookmark structure",
       params = {})
+  @SuppressWarnings("unused")
   public void exportBookMarks() {
     BookmarkTool.exportBookmarks(
         new ContentServiceSnapshotter(contentService().withRootPrivileges()),
@@ -156,7 +163,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   /** Returns true if the bookmarks must be reloaded even if already present. */
   private boolean shouldReloadBookmarks() {
-    return this.env.getProperty("bookmarks.reloadOnStartup", Boolean.class, Boolean.FALSE);
+    return this.env.getProperty(FORCE_BOOKMARK_RELOAD_PROPERTY, Boolean.class, false);
   }
 
   /**
@@ -174,7 +181,8 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       Method createDataSourceMethod =
           dataSourceKlass.getMethod("createDataSource", Properties.class);
       return (DataSource)
-          createDataSourceMethod.invoke(dataSourceKlass.newInstance(), hibernateProperties);
+          createDataSourceMethod.invoke(
+              dataSourceKlass.getDeclaredConstructor().newInstance(), hibernateProperties);
     } catch (Exception e) {
       throw new BeanInitializationException("Initialization of " + DataSource.class + " failed", e);
     }

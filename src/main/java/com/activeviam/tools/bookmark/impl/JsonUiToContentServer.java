@@ -7,7 +7,7 @@
 
 package com.activeviam.tools.bookmark.impl;
 
-import com.activeviam.tools.bookmark.constant.impl.CsConstants;
+import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -39,19 +39,24 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  * returns a SnapshotContentTree representing this subtree where the root is "/ui".
  */
 class JsonUiToContentServer {
+
   static final Map<String, List<String>> ROOT_ONLY_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> ROOT_OWNER_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> DEFAULT_PERMISSIONS = new HashMap<>();
 
   static {
     ROOT_ONLY_PERMISSIONS.put(
-        CsConstants.Role.OWNERS, Collections.singletonList(CsConstants.Role.ROLE_CS_ROOT));
+        ContentServerConstants.Role.OWNERS,
+        Collections.singletonList(ContentServerConstants.Role.ROLE_CS_ROOT));
     ROOT_ONLY_PERMISSIONS.put(
-        CsConstants.Role.READERS, Collections.singletonList(CsConstants.Role.ROLE_CS_ROOT));
+        ContentServerConstants.Role.READERS,
+        Collections.singletonList(ContentServerConstants.Role.ROLE_CS_ROOT));
     ROOT_OWNER_PERMISSIONS.put(
-        CsConstants.Role.OWNERS, Collections.singletonList(CsConstants.Role.ROLE_CS_ROOT));
+        ContentServerConstants.Role.OWNERS,
+        Collections.singletonList(ContentServerConstants.Role.ROLE_CS_ROOT));
     ROOT_OWNER_PERMISSIONS.put(
-        CsConstants.Role.READERS, Collections.singletonList(CsConstants.Role.ROLE_USER));
+        ContentServerConstants.Role.READERS,
+        Collections.singletonList(ContentServerConstants.Role.ROLE_USER));
   }
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JsonUiToContentServer.class);
@@ -70,22 +75,23 @@ class JsonUiToContentServer {
       ContentServiceSnapshotter snapshotter,
       String folderName,
       Map<String, List<String>> defaultPermissions) {
-    snapshotter.eraseAndImport(CsConstants.Paths.UI, loadBookmarks(folderName, defaultPermissions));
+    snapshotter.eraseAndImport(
+        ContentServerConstants.Paths.UI, loadBookmarks(folderName, defaultPermissions));
 
     try {
       snapshotter.eraseAndImport(
-          CsConstants.Paths.I18N,
+          ContentServerConstants.Paths.I18N,
           standaloneResolver
-              .getResource(folderName + CsConstants.Paths.I18N_JSON)
+              .getResource(folderName + ContentServerConstants.Paths.I18N_JSON)
               .getInputStream());
     } catch (Exception e) {
       LOGGER.error("Could not import internationalisation file. Please check file exists.");
     }
     try {
       snapshotter.eraseAndImport(
-          CsConstants.Paths.SETTINGS,
+          ContentServerConstants.Paths.SETTINGS,
           standaloneResolver
-              .getResource(folderName + CsConstants.Paths.SETTINGS_JSON)
+              .getResource(folderName + ContentServerConstants.Paths.SETTINGS_JSON)
               .getInputStream());
     } catch (Exception e) {
       LOGGER.error("Could not import settings file. Please check file exists.");
@@ -119,18 +125,22 @@ class JsonUiToContentServer {
     /* get filepath for root meta file */
     /* Generate the Structure and Content Trees */
     /* File path to the bookmarks */
-    File bookDir = null;
+    final File bookDir;
     try {
       /* get URL of the directory to import */
       bookDir =
           bookmarkTreeResolver
               .getResource(
-                  bookmarkFolder + CsConstants.Paths.SEPARATOR + CsConstants.Paths.BOOKMARK_LISTING)
+                  bookmarkFolder
+                      + ContentServerConstants.Paths.SEPARATOR
+                      + ContentServerConstants.Paths.BOOKMARK_LISTING)
               .getFile();
     } catch (IOException e) {
       LOGGER.error(
           "Unable to load directory {} from resources. The import will fail.",
-          bookmarkFolder + CsConstants.Paths.SEPARATOR + CsConstants.Paths.BOOKMARK_LISTING);
+          bookmarkFolder
+              + ContentServerConstants.Paths.SEPARATOR
+              + ContentServerConstants.Paths.BOOKMARK_LISTING);
       return null;
     }
 
@@ -152,24 +162,24 @@ class JsonUiToContentServer {
      * add Bookmark header and connect the contentTre and the structureTree as
      * children
      */
-    SnapshotContentTree bookmarkContentRoot =
+    final SnapshotContentTree bookmarkContentRoot =
         new SnapshotContentTree(
             null,
             true,
-            ROOT_OWNER_PERMISSIONS.get(CsConstants.Role.OWNERS),
-            ROOT_OWNER_PERMISSIONS.get(CsConstants.Role.READERS),
+            ROOT_OWNER_PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
+            ROOT_OWNER_PERMISSIONS.get(ContentServerConstants.Role.READERS),
             new HashMap<>());
 
-    bookmarkContentRoot.putChild(CsConstants.Tree.CONTENT, contentTree, true);
-    bookmarkContentRoot.putChild(CsConstants.Tree.STRUCTURE, structureTree, true);
-    SnapshotContentTree ui =
+    bookmarkContentRoot.putChild(ContentServerConstants.Tree.CONTENT, contentTree, true);
+    bookmarkContentRoot.putChild(ContentServerConstants.Tree.STRUCTURE, structureTree, true);
+    final SnapshotContentTree ui =
         new SnapshotContentTree(
             null,
             true,
-            ROOT_ONLY_PERMISSIONS.get(CsConstants.Role.OWNERS),
-            ROOT_ONLY_PERMISSIONS.get(CsConstants.Role.READERS),
+            ROOT_ONLY_PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
+            ROOT_ONLY_PERMISSIONS.get(ContentServerConstants.Role.READERS),
             new HashMap<>());
-    ui.putChild(CsConstants.Tree.BOOKMARKS, bookmarkContentRoot, true);
+    ui.putChild(ContentServerConstants.Tree.BOOKMARKS, bookmarkContentRoot, true);
     return ui;
   }
 
@@ -186,7 +196,7 @@ class JsonUiToContentServer {
   private static IPair<SnapshotContentTree, String> createFileNode(
       File file, Boolean dir, Map<String, List<String>> parentPermissions) {
     // Fill the bookmark template from the JSON file.
-    ObjectNode bookmarkTemplate;
+    final ObjectNode bookmarkTemplate;
     try {
       bookmarkTemplate =
           (ObjectNode)
@@ -194,37 +204,40 @@ class JsonUiToContentServer {
                   bookmarkTreeResolver
                       .getResource(
                           ResourceLoader.CLASSPATH_URL_PREFIX
-                              + CsConstants.Paths.BOOKMARK_TEMPLATE_FILE)
+                              + ContentServerConstants.Paths.BOOKMARK_TEMPLATE_FILE)
                       .getInputStream());
     } catch (IOException ioe) {
       LOGGER.error(
           "Unable to retrieve bookmark template. The {} bookmark will be skipped.", file.getName());
       return null;
     }
-    bookmarkTemplate.put(CsConstants.Tree.NAME, file.getName().replace(CsConstants.Paths.JSON, ""));
-    JsonNode jsonNodeContent = loadFileIntoNode(file);
-    bookmarkTemplate.set(CsConstants.Tree.VALUE, jsonNodeContent);
-    String type = jsonNodeContent.path(CsConstants.Tree.TYPE).asText();
-    bookmarkTemplate.put(CsConstants.Tree.TYPE, CsConstants.getBookmarkType(type));
+    bookmarkTemplate.put(
+        ContentServerConstants.Tree.NAME,
+        file.getName().replace(ContentServerConstants.Paths.JSON, ""));
+    final JsonNode jsonNodeContent = loadFileIntoNode(file);
+    bookmarkTemplate.set(ContentServerConstants.Tree.VALUE, jsonNodeContent);
+    final String type = jsonNodeContent.path(ContentServerConstants.Tree.TYPE).asText();
+    bookmarkTemplate.put(
+        ContentServerConstants.Tree.TYPE, ContentServerConstants.getBookmarkType(type));
 
     BookmarkMetadata metadata = getMetadata(file, parentPermissions);
-    String description = metadata.getDescription();
-    String key = metadata.getKey();
-    Map<String, List<String>> permissions = metadata.getPermissions();
+    final String description = metadata.getDescription();
+    final String key = metadata.getKey();
+    final Map<String, List<String>> permissions = metadata.getPermissions();
 
     if (description != null && !description.isEmpty()) {
-      bookmarkTemplate.put(CsConstants.Tree.DESCRIPTION, description);
+      bookmarkTemplate.put(ContentServerConstants.Tree.DESCRIPTION, description);
     } else {
-      bookmarkTemplate.remove(CsConstants.Tree.DESCRIPTION);
+      bookmarkTemplate.remove(ContentServerConstants.Tree.DESCRIPTION);
     }
 
-    String content = bookmarkTemplate.toString();
-    SnapshotContentTree structure =
+    final String content = bookmarkTemplate.toString();
+    final SnapshotContentTree structure =
         new SnapshotContentTree(
             content,
             dir,
-            permissions.get(CsConstants.Role.OWNERS),
-            permissions.get(CsConstants.Role.READERS),
+            permissions.get(ContentServerConstants.Role.OWNERS),
+            permissions.get(ContentServerConstants.Role.READERS),
             new HashMap<>());
 
     return new Pair<>(structure, key);
@@ -246,12 +259,13 @@ class JsonUiToContentServer {
       Boolean contentFlag,
       Map<String, List<String>> parentPermissions) {
     // get the contents of the given files
-    InputStream folderTemplateInputStream;
+    final InputStream folderTemplateInputStream;
     try {
       folderTemplateInputStream =
           bookmarkTreeResolver
               .getResource(
-                  ResourceLoader.CLASSPATH_URL_PREFIX + CsConstants.Paths.FOLDER_TEMPLATE_FILE)
+                  ResourceLoader.CLASSPATH_URL_PREFIX
+                      + ContentServerConstants.Paths.FOLDER_TEMPLATE_FILE)
               .getInputStream();
     } catch (IOException ioe) {
       LOGGER.error(
@@ -259,33 +273,35 @@ class JsonUiToContentServer {
           folder.getName());
       return null;
     }
-    JsonNode templateNode = loadStreamIntoNode(folderTemplateInputStream);
-    ObjectNode contentNode = (ObjectNode) templateNode.path(CsConstants.Tree.CONTENT);
+    final JsonNode templateNode = loadStreamIntoNode(folderTemplateInputStream);
+    final ObjectNode contentNode =
+        (ObjectNode) templateNode.path(ContentServerConstants.Tree.CONTENT);
 
-    BookmarkMetadata metadata = getMetadata(folder, parentPermissions);
-    String description = metadata.getDescription();
-    String key = metadata.getKey();
-    Map<String, List<String>> permissions = metadata.getPermissions();
+    final BookmarkMetadata metadata = getMetadata(folder, parentPermissions);
+    final String description = metadata.getDescription();
+    final String key = metadata.getKey();
+    final Map<String, List<String>> permissions = metadata.getPermissions();
 
     if (description != null && !description.isEmpty()) {
-      contentNode.put(CsConstants.Tree.DESCRIPTION, description);
+      contentNode.put(ContentServerConstants.Tree.DESCRIPTION, description);
     } else {
-      contentNode.remove(CsConstants.Tree.DESCRIPTION);
+      contentNode.remove(ContentServerConstants.Tree.DESCRIPTION);
     }
 
-    Map<String, SnapshotContentTree> children = new HashMap<>();
+    final Map<String, SnapshotContentTree> children = new HashMap<>();
 
     /*
      * Set isDirectory to true if flag is true, load content if the content flag is
      * true
      */
-    String content = contentNode.put(CsConstants.Tree.NAME, folder.getName()).toString();
-    SnapshotContentTree structure =
+    final String content =
+        contentNode.put(ContentServerConstants.Tree.NAME, folder.getName()).toString();
+    final SnapshotContentTree structure =
         new SnapshotContentTree(
             directoryFlag && !contentFlag ? null : content,
             directoryFlag,
-            permissions.get(CsConstants.Role.OWNERS),
-            permissions.get(CsConstants.Role.READERS),
+            permissions.get(ContentServerConstants.Role.OWNERS),
+            permissions.get(ContentServerConstants.Role.READERS),
             children);
 
     return new Pair<>(structure, key);
@@ -305,13 +321,13 @@ class JsonUiToContentServer {
       Map<String, SnapshotContentTree> structure,
       Map<String, List<String>> parentPermissions) {
 
-    File[] files =
+    final File[] files =
         root.listFiles(
             file ->
                 (file.isDirectory() || file.isFile())
-                    && !file.getName().contains(CsConstants.Paths.METADATA_FILE));
+                    && !file.getName().contains(ContentServerConstants.Paths.METADATA_FILE));
 
-    BookmarkMetadata metadata;
+    final BookmarkMetadata metadata;
     try {
       metadata = getMetadata(root, parentPermissions);
     } catch (Exception e) {
@@ -321,14 +337,14 @@ class JsonUiToContentServer {
 
     for (File file : files) {
       boolean directory = file.isDirectory();
-      Map<String, SnapshotContentTree> localStructureChildren = new HashMap<>();
+      final Map<String, SnapshotContentTree> localStructureChildren = new HashMap<>();
       if (directory) {
         createStructure(file, content, localStructureChildren, metadata.getPermissions());
       }
 
-      IPair<SnapshotContentTree, String> structureNode =
+      final IPair<SnapshotContentTree, String> structureNode =
           createDirectoryNode(file, true, false, metadata.getPermissions());
-      IPair<SnapshotContentTree, String> contentNode =
+      final IPair<SnapshotContentTree, String> contentNode =
           directory
               ? createDirectoryNode(file, false, false, metadata.getPermissions())
               : createFileNode(file, false, metadata.getPermissions());
@@ -337,19 +353,19 @@ class JsonUiToContentServer {
         addChildrenToNode(structureNode.getLeft(), localStructureChildren);
       }
 
-      SnapshotContentTree structureTree = structureNode.getLeft();
-      SnapshotContentTree contentTree = contentNode.getLeft();
+      final SnapshotContentTree structureTree = structureNode.getLeft();
+      final SnapshotContentTree contentTree = contentNode.getLeft();
 
-      String persistedStructureKey = structureNode.getRight();
-      String persistedContentKey = contentNode.getRight();
-      String generatedKey =
+      final String persistedStructureKey = structureNode.getRight();
+      final String persistedContentKey = contentNode.getRight();
+      final String generatedKey =
           String.valueOf(Objects.hash(root.getName(), contentTree, structureTree));
 
-      String structureKey =
+      final String structureKey =
           persistedStructureKey == null || persistedStructureKey.isEmpty()
               ? generatedKey
               : persistedStructureKey;
-      String contentKey =
+      final String contentKey =
           persistedContentKey == null || persistedContentKey.isEmpty()
               ? generatedKey
               : persistedContentKey;
@@ -386,27 +402,26 @@ class JsonUiToContentServer {
    */
   private static BookmarkMetadata getMetadata(
       File file, Map<String, List<String>> parentPermissions) {
-    BookmarkMetadata metadata = new BookmarkMetadata();
+    final BookmarkMetadata metadata = new BookmarkMetadata();
     metadata.permissions = parentPermissions;
-    Map<String, List<String>> permissionsToAdd = parentPermissions;
-    File[] foundMetadataFiles =
+    final File[] foundMetadataFiles =
         file.getParentFile()
             .listFiles(
                 child ->
                     child
                         .getName()
                         .equals(
-                            file.getName().replace(CsConstants.Paths.JSON, "")
-                                + CsConstants.Paths.METADATA_FILE));
+                            file.getName().replace(ContentServerConstants.Paths.JSON, "")
+                                + ContentServerConstants.Paths.METADATA_FILE));
 
     if (foundMetadataFiles != null && foundMetadataFiles.length > 0) {
-      JsonNode metadataJsonNode = loadFileIntoNode(foundMetadataFiles[0]);
-      Optional<IPair<JsonNode, JsonNode>> pair = retrievePermissions(metadataJsonNode);
-      if (pair.isPresent()) {
-        metadata.setPermissions(getPermissions(pair.get()));
-      }
-      metadata.setDescription(metadataJsonNode.path(CsConstants.Tree.DESCRIPTION).asText());
-      metadata.setKey(metadataJsonNode.path(CsConstants.Tree.KEY).asText());
+      final JsonNode metadataJsonNode = loadFileIntoNode(foundMetadataFiles[0]);
+      final Optional<IPair<JsonNode, JsonNode>> pair = retrievePermissions(metadataJsonNode);
+      pair.ifPresent(
+          jsonNodeJsonNodeIPair -> metadata.setPermissions(getPermissions(jsonNodeJsonNodeIPair)));
+      metadata.setDescription(
+          metadataJsonNode.path(ContentServerConstants.Tree.DESCRIPTION).asText());
+      metadata.setKey(metadataJsonNode.path(ContentServerConstants.Tree.KEY).asText());
     }
 
     return metadata;
@@ -415,23 +430,12 @@ class JsonUiToContentServer {
   /** Metadata for a bookmark. */
   @Data
   protected static class BookmarkMetadata {
-    /**
-     * Description of the bookmark.
-     *
-     * @return the description
-     */
+
+    /** Description of the bookmark. */
     private String description;
-    /**
-     * List of permissions for the bookmark.
-     *
-     * @return the permissions
-     */
+    /** List of permissions for the bookmark. */
     private Map<String, List<String>> permissions;
-    /**
-     * Key of the bookmark.
-     *
-     * @return the key
-     */
+    /** Key of the bookmark. */
     private String key;
   }
 
@@ -442,8 +446,8 @@ class JsonUiToContentServer {
    * @return a map containing the owners and readers
    */
   private static Map<String, List<String>> getPermissions(IPair<JsonNode, JsonNode> permissions) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, List<String>> ownAndRead = new HashMap<>();
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final Map<String, List<String>> ownAndRead = new HashMap<>();
     List<String> owners = null;
     List<String> readers = null;
     try {
@@ -455,8 +459,8 @@ class JsonUiToContentServer {
       LOGGER.warn(e.toString());
     }
 
-    ownAndRead.put(CsConstants.Role.OWNERS, owners);
-    ownAndRead.put(CsConstants.Role.READERS, readers);
+    ownAndRead.put(ContentServerConstants.Role.OWNERS, owners);
+    ownAndRead.put(ContentServerConstants.Role.READERS, readers);
     return ownAndRead;
   }
 
@@ -469,13 +473,13 @@ class JsonUiToContentServer {
    */
   private static Optional<IPair<JsonNode, JsonNode>> retrievePermissions(JsonNode jsonNodeMeta) {
     Optional<IPair<JsonNode, JsonNode>> pair = Optional.empty();
-    if (jsonNodeMeta.hasNonNull(CsConstants.Role.OWNERS)
-        || jsonNodeMeta.hasNonNull(CsConstants.Role.READERS)) {
+    if (jsonNodeMeta.hasNonNull(ContentServerConstants.Role.OWNERS)
+        || jsonNodeMeta.hasNonNull(ContentServerConstants.Role.READERS)) {
       pair =
           Optional.of(
               new Pair<>(
-                  jsonNodeMeta.path(CsConstants.Role.OWNERS),
-                  jsonNodeMeta.path(CsConstants.Role.READERS)));
+                  jsonNodeMeta.path(ContentServerConstants.Role.OWNERS),
+                  jsonNodeMeta.path(ContentServerConstants.Role.READERS)));
     }
 
     return pair;
@@ -488,9 +492,9 @@ class JsonUiToContentServer {
    * @return The contents of the stream, as a JsonNode.
    */
   private static JsonNode loadStreamIntoNode(InputStream stream) {
-    JsonNode loadedStream;
+    final JsonNode loadedStream;
     try {
-      ObjectMapper mapper = new ObjectMapper();
+      final ObjectMapper mapper = new ObjectMapper();
       loadedStream = mapper.readTree(stream);
     } catch (Exception e) {
       LOGGER.warn("Unable to retrieve contents of the input stream.");

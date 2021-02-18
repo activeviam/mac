@@ -195,11 +195,7 @@ public class StatisticTreePrinter {
 
     @Override
     public String toString() {
-      final StringBuilder sb = new StringBuilder("Node{");
-      sb.append("childrenCount=").append(children.size());
-      sb.append(", item=").append(item);
-      sb.append('}');
-      return sb.toString();
+      return "Node{" + "childrenCount=" + children.size() + ", item=" + item + '}';
     }
   }
 }
