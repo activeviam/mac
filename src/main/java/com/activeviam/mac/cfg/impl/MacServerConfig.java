@@ -79,7 +79,7 @@ import org.springframework.core.env.Environment;
       SecurityConfig.class,
       UserConfig.class,
       SourceConfig.class,
-      ActiveUIResourceServerConfig.class,
+      ActiveUiResourceServerConfig.class,
     })
 public class MacServerConfig {
 
@@ -90,7 +90,7 @@ public class MacServerConfig {
   @Autowired protected IActivePivotConfig apConfig;
 
   /** ActivePivot content service spring configuration. */
-  @Autowired protected IActivePivotContentServiceConfig apCSConfig;
+  @Autowired protected IActivePivotContentServiceConfig apContentServiceConfig;
 
   /** Content Service configuration. */
   @Autowired protected ContentServiceConfig contentServiceConfig;
@@ -138,7 +138,7 @@ public class MacServerConfig {
    * @return the {@link JMXEnabler} attached to the source
    */
   @Bean
-  public JMXEnabler JMXMonitoringConnectorEnabler() {
+  public JMXEnabler jmxMonitoringConnectorEnabler() {
     return new JMXEnabler("StatisticSource", sourceConfig);
   }
 
@@ -148,7 +148,7 @@ public class MacServerConfig {
    * @return the {@link JMXEnabler} attached to the datastore
    */
   @Bean
-  public JMXEnabler JMXDatastoreEnabler() {
+  public JMXEnabler jmxDatastoreEnabler() {
     return new JMXEnabler(datastoreConfig.datastore());
   }
 
@@ -158,7 +158,7 @@ public class MacServerConfig {
    * @return the {@link JMXEnabler} attached to the activePivotManager
    */
   @Bean
-  public JMXEnabler JMXActivePivotEnabler() {
+  public JMXEnabler jmxActivePivotEnabler() {
     startManager();
 
     return new JMXEnabler(apConfig.activePivotManager());
@@ -170,7 +170,7 @@ public class MacServerConfig {
    * @return the MBean
    */
   @Bean
-  public JMXEnabler JMXBookmarkEnabler() {
+  public JMXEnabler jmxBookmarkEnabler() {
     return new JMXEnabler("Bookmark", contentServiceConfig);
   }
 
@@ -180,11 +180,11 @@ public class MacServerConfig {
    * @return the {@link JMXEnabler} attached to the Content Service
    */
   @Bean
-  public JMXEnabler JMXActivePivotContentServiceEnabler() {
+  public JMXEnabler jmxActivePivotContentServiceEnabler() {
     // to allow operations from the JMX bean
     return new JMXEnabler(
         new DynamicActivePivotContentServiceMBean(
-            apCSConfig.activePivotContentService(), apConfig.activePivotManager()));
+            apContentServiceConfig.activePivotContentService(), apConfig.activePivotManager()));
   }
 
   /**
@@ -193,7 +193,7 @@ public class MacServerConfig {
    * @return the {@link JMXEnabler} attached to the memory analysis service.
    */
   @Bean
-  public JMXEnabler JMXMemoryMonitoringServiceEnabler() {
+  public JMXEnabler jmxMemoryMonitoringServiceEnabler() {
     return new JMXEnabler(
         new MemoryAnalysisService(
             this.datastoreConfig.datastore(),

@@ -30,8 +30,7 @@ public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
    * constant below.
    */
   protected static final Map<String, IStoreSecurity> storesSecurityMap =
-      new HashMap<String, IStoreSecurity>() {
-
+      new HashMap<>() {
         private static final long serialVersionUID = 5_08_00L;
 
         @Override

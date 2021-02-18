@@ -128,25 +128,52 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the pivots of the application, starting with a general overview\nof memory consumption per cube in this page.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
             "ck" : "2",
-            "size" : 0.12
+            "size" : 0.09
           },
           "1" : {
             "children" : {
               "0" : {
                 "ck" : "1",
-                "size" : 0.56
+                "size" : 0.35
               },
               "1" : {
-                "ck" : "3",
-                "size" : 0.44
+                "children" : {
+                  "0" : {
+                    "ck" : "4",
+                    "size" : 0.1
+                  },
+                  "1" : {
+                    "ck" : "3",
+                    "size" : 0.9
+                  }
+                },
+                "size" : 0.65,
+                "direction" : "column"
               }
             },
-            "size" : 0.88,
+            "size" : 0.91,
             "direction" : "row"
           }
         },
@@ -279,23 +306,52 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "A view focused on aggregate providers. Each cube has its memory consumption\ndetailed according to its aggregate providers.\n\nJIT aggregate providers typically will not consume any direct memory, contrary\nto bitmap and leaf aggregate providers, which will have chunks for their\naggregate store and point index."
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
             "ck" : "2",
-            "size" : 0.13
+            "size" : 0.1
           },
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "1"
+                "ck" : "1",
+                "size" : 0.44
               },
               "1" : {
-                "ck" : "3"
+                "children" : {
+                  "0" : {
+                    "ck" : "4",
+                    "size" : 0.15
+                  },
+                  "1" : {
+                    "ck" : "3",
+                    "size" : 0.85
+                  }
+                },
+                "size" : 0.56,
+                "direction" : "column"
               }
             },
-            "size" : 0.87,
+            "size" : 0.9,
             "direction" : "row"
           }
         },
@@ -416,11 +472,28 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE ([Owners].[Owner Type].[ALL].[AllMember].[Cube], [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube] WHERE ([Owners].[Owner Type].[ALL].[AllMember].[Cube], [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])",
                 "updateMode" : "once"
               }
             },
             "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "A view focused on aggregate stores for leaf and bitmap aggregate providers.\n\nFor each provider type, memory consumption of chunks is categorized according to\nthe measure in the aggregate store it corresponds to.\n"
+            },
+            "containerKey" : "rich-text-editor"
           },
           "writable" : true
         }
@@ -434,10 +507,22 @@
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "0"
+                "ck" : "0",
+                "size" : 0.37
               },
               "1" : {
-                "ck" : "2"
+                "children" : {
+                  "0" : {
+                    "ck" : "3",
+                    "size" : 0.1
+                  },
+                  "1" : {
+                    "ck" : "2",
+                    "size" : 0.9
+                  }
+                },
+                "size" : 0.63,
+                "direction" : "column"
               }
             },
             "size" : 0.9,
@@ -509,6 +594,10 @@
                     }
                   },
                   "defaultOptions" : { },
+                  "columns" : [ {
+                    "key" : "c-treeCells-member",
+                    "width" : 491
+                  } ],
                   "expansion" : {
                     "automaticExpansion" : true
                   }
@@ -567,11 +656,28 @@
               },
               "query" : {
                 "serverUrl" : "",
-                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Order(Crossjoin(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Fields].[Field].[Field].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[LEVEL]",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube] WHERE [Components].[Component].[ALL].[AllMember].[LEVEL]",
                 "updateMode" : "once"
               }
             },
             "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "A view that exposes memory consumption of cubes associated with the dictionaries\nused to store level information."
+            },
+            "containerKey" : "rich-text-editor"
           },
           "writable" : true
         }
@@ -585,10 +691,22 @@
           "1" : {
             "children" : {
               "0" : {
-                "ck" : "0"
+                "ck" : "0",
+                "size" : 0.47
               },
               "1" : {
-                "ck" : "2"
+                "children" : {
+                  "0" : {
+                    "ck" : "3",
+                    "size" : 0.06
+                  },
+                  "1" : {
+                    "ck" : "2",
+                    "size" : 0.94
+                  }
+                },
+                "size" : 0.53,
+                "direction" : "column"
               }
             },
             "size" : 0.9,

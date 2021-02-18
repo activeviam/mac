@@ -20,29 +20,14 @@ import lombok.Data;
  */
 @Data
 public class SnapshotNode {
-  /**
-   * Key of this node.
-   *
-   * @return the key
-   */
+
+  /** Key of this node. */
   private String key;
-  /**
-   * Path to this node from the root.
-   *
-   * @return the path
-   */
+  /** Path to this node from the root. */
   private String path = "";
-  /**
-   * Content of this node.
-   *
-   * @return the content
-   */
+  /** Content of this node. */
   private BasicJsonContentEntry entry;
-  /**
-   * Child nodes for this node.
-   *
-   * @return the children
-   */
+  /** Child nodes for this node. */
   private List<SnapshotNode> children;
 
   /**

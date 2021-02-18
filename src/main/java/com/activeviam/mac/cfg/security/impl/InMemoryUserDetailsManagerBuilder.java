@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer;
 import org.springframework.security.config.annotation.authentication.configurers.provisioning.UserDetailsManagerConfigurer;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
@@ -28,7 +27,7 @@ public class InMemoryUserDetailsManagerBuilder
 
   /** Creates a new instance. */
   public InMemoryUserDetailsManagerBuilder() {
-    super(new InMemoryUserDetailsManager(new ArrayList<UserDetails>()));
+    super(new InMemoryUserDetailsManager(new ArrayList<>()));
   }
 
   @Override

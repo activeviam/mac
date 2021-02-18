@@ -1,1 +1,87 @@
-{"entry":{"isDirectory":true,"owners":["ROLE_CS_ROOT"],"readers":["ROLE_USER"]},"children":{"default":{"entry":{"isDirectory":true,"owners":["ROLE_CS_ROOT"],"readers":["ROLE_USER"]},"children":{"preferences":{"entry":{"content":"{\n  \"allow\": [],\n  \"deny\": [],\n  \"map\": {}\n}","isDirectory":false,"owners":["ROLE_CS_ROOT"],"readers":["ROLE_USER"]}}}},"users":{"entry":{"isDirectory":true,"owners":["ROLE_USER"],"readers":["ROLE_USER"]},"children":{"admin":{"entry":{"isDirectory":true,"owners":["admin"],"readers":["admin"]},"children":{"preferences":{"entry":{"content":"{\n  \"map\": {\n    \"defaultPermissions\": {\n      \"owners\": [\n        \"admin\"\n      ],\n      \"readers\": [\n        \"admin\"\n      ]\n    }\n  }\n}","isDirectory":false,"owners":["admin"],"readers":["admin"]}}}}}},"roles":{"entry":{"isDirectory":true,"owners":["ROLE_CS_ROOT"],"readers":["ROLE_USER"]}}}}
+{
+  "entry": {
+    "isDirectory": true,
+    "owners": [
+      "ROLE_CS_ROOT"
+    ],
+    "readers": [
+      "ROLE_USER"
+    ]
+  },
+  "children": {
+    "default": {
+      "entry": {
+        "isDirectory": true,
+        "owners": [
+          "ROLE_CS_ROOT"
+        ],
+        "readers": [
+          "ROLE_USER"
+        ]
+      },
+      "children": {
+        "preferences": {
+          "entry": {
+            "content": "{\n  \"allow\": [],\n  \"deny\": [],\n  \"map\": {\n    \"memberSelection.smartFiltering\": true,\n    \"memberSelection.smartFiltering.[Import info].[Import info]\": false,\n    \"memberSelection.smartFiltering.[Versions].[Branch]\": false\n  }\n}",
+            "isDirectory": false,
+            "owners": [
+              "ROLE_CS_ROOT"
+            ],
+            "readers": [
+              "ROLE_USER"
+            ]
+          }
+        }
+      }
+    },
+    "users": {
+      "entry": {
+        "isDirectory": true,
+        "owners": [
+          "ROLE_USER"
+        ],
+        "readers": [
+          "ROLE_USER"
+        ]
+      },
+      "children": {
+        "admin": {
+          "entry": {
+            "isDirectory": true,
+            "owners": [
+              "admin"
+            ],
+            "readers": [
+              "admin"
+            ]
+          },
+          "children": {
+            "preferences": {
+              "entry": {
+                "content": "{\n  \"map\": {\n    \"defaultPermissions\": {\n      \"owners\": [\n        \"admin\"\n      ],\n      \"readers\": [\n        \"admin\"\n      ]\n    },\n    \"application.home\": \"home\"\n  }\n}",
+                "isDirectory": false,
+                "owners": [
+                  "admin"
+                ],
+                "readers": [
+                  "admin"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "entry": {
+        "isDirectory": true,
+        "owners": [
+          "ROLE_CS_ROOT"
+        ],
+        "readers": [
+          "ROLE_USER"
+        ]
+      }
+    }
+  }
+}

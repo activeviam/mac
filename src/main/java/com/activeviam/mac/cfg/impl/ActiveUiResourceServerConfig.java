@@ -10,8 +10,6 @@ package com.activeviam.mac.cfg.impl;
 import com.qfs.server.cfg.impl.ASpringResourceServerConfig;
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -20,13 +18,13 @@ import org.springframework.context.annotation.Configuration;
  * @author ActiveViam
  */
 @Configuration
-public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
+public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
 
   /** The namespace of the ActiveUI web application. */
   public static final String NAMESPACE = "ui";
 
   /** Constructor. */
-  public ActiveUIResourceServerConfig() {
+  public ActiveUiResourceServerConfig() {
     super("/" + NAMESPACE);
   }
 
@@ -61,25 +59,24 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
    */
   @Override
   public Set<String> getServedExtensions() {
-    return Stream.of(
-            // Default HTML files
-            "html",
-            "js",
-            "css",
-            "map",
-            "json",
-            // Image extensions
-            "png",
-            "jpg",
-            "gif",
-            "ico",
-            // Font extensions
-            "eot",
-            "svg",
-            "ttf",
-            "woff",
-            "woff2")
-        .collect(Collectors.toSet());
+    return Set.of(
+        // Default HTML files
+        "html",
+        "js",
+        "css",
+        "map",
+        "json",
+        // Image extensions
+        "png",
+        "jpg",
+        "gif",
+        "ico",
+        // Font extensions
+        "eot",
+        "svg",
+        "ttf",
+        "woff",
+        "woff2");
   }
 
   @Override
@@ -93,10 +90,9 @@ public class ActiveUIResourceServerConfig extends ASpringResourceServerConfig {
     // You can read more about this feature here
     // https://support.activeviam.com/documentation/activeui/4.2.0/dev/setup/maven-integration.html
 
-    return Stream.of(
-            "/activeui/", // index.html, favicon.ico, etc.
-            "classpath:META-INF/resources/webjars/activeui/") // ActiveUI SDK UMD scripts
-        // and supporting assets
-        .collect(Collectors.toSet());
+    return Set.of(
+        "/activeui/", // index.html, favicon.ico, etc.
+        "classpath:META-INF/resources/webjars/activeui/"); // ActiveUI SDK UMD scripts
+    // and supporting assets
   }
 }

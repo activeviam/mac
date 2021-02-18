@@ -7,17 +7,18 @@
 
 package com.activeviam.tools.bookmark.constant.impl;
 
-import java.io.File;
-
 // CHECKSTYLE.OFF: JavadocVariable (Internal constants)
 // CHECKSTYLE.OFF: JavadocType (Internal constants)
 
-/** @author ActiveViam */
-public class CSConstants {
+/**
+ * Constants to use to export bookmarks from the Content Server.
+ *
+ * @author ActiveViam
+ */
+public class ContentServerConstants {
 
   public static class Paths {
 
-    public static final String FILESYSTEM_SEPARATOR = File.separator;
     public static final String SEPARATOR = "/";
 
     public static final String UI = "ui";
@@ -36,8 +37,6 @@ public class CSConstants {
     public static final String METADATA_FILE = METADATA + JSON;
     public static final String FOLDER_TEMPLATE_FILE = "folder_template.json";
     public static final String BOOKMARK_TEMPLATE_FILE = "bookmark_template.json";
-
-    public static final String IS_DIRECTORY = "isDirectory";
   }
 
   public static class Tree {
@@ -45,7 +44,6 @@ public class CSConstants {
     public static final String CONTENT = "content";
     public static final String STRUCTURE = "structure";
     public static final String BOOKMARKS = "bookmarks";
-    public static final String CHILDREN = "children";
     public static final String ENTRY = "entry";
     public static final String NAME = "name";
     public static final String VALUE = "value";

@@ -1,3 +1,5 @@
 {
-  "key" : "649230966"
+  "key" : "vectors",
+  "owners" : [ "admin" ],
+  "readers" : [ "admin" ]
 }

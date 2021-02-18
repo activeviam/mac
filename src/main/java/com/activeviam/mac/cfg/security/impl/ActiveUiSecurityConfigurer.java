@@ -7,7 +7,7 @@
 
 package com.activeviam.mac.cfg.security.impl;
 
-import com.activeviam.mac.cfg.impl.ActiveUIResourceServerConfig;
+import com.activeviam.mac.cfg.impl.ActiveUiResourceServerConfig;
 import com.activeviam.mac.cfg.security.impl.ASecurityConfig.AWebSecurityConfigurer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -21,12 +21,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
  */
 @Configuration
 @Order(1)
-public class ActiveUISecurityConfigurer extends AWebSecurityConfigurer {
+public class ActiveUiSecurityConfigurer extends AWebSecurityConfigurer {
 
   @Override
   protected void doConfigure(HttpSecurity http) throws Exception {
     // Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
-    final String pattern = "^(.{0}|\\/|\\/" + ActiveUIResourceServerConfig.NAMESPACE + "(\\/.*)?)$";
+    final String pattern = "^(.{0}|\\/|\\/" + ActiveUiResourceServerConfig.NAMESPACE + "(\\/.*)?)$";
     http
         // Only theses URLs must be handled by this HttpSecurity
         .regexMatcher(pattern)

@@ -4,6 +4,223 @@
   "body" : {
     "pages" : [ {
       "content" : [ {
+        "key" : "1",
+        "bookmark" : {
+          "name" : "Top-Consuming Fields across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "serverUrl" : "",
+              "mdx" : "SELECT NON EMPTY Order(Crossjoin(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), [Owners].[Owner].[Owner].Members), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "contextValues" : { },
+              "updateMode" : "once",
+              "refreshInterval" : 10,
+              "ranges" : {
+                "row" : {
+                  "chunkSize" : 2000,
+                  "thresholdPercentage" : 0.1
+                },
+                "column" : {
+                  "chunkSize" : 50,
+                  "thresholdPercentage" : 0.2
+                }
+              },
+              "configuration" : {
+                "tabular" : {
+                  "pinnedHeaderSelector" : "member",
+                  "sortingMode" : "non-breaking",
+                  "addButtonFilter" : "numeric",
+                  "cellRenderers" : [ "tree-layout" ],
+                  "statisticsShown" : true,
+                  "columnsGroups" : [ {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "kpi-status",
+                    "selector" : "kpi-status"
+                  }, {
+                    "captionProducer" : "firstColumn",
+                    "cellFactory" : "lookup",
+                    "selector" : "lookup"
+                  }, {
+                    "captionProducer" : "expiry",
+                    "cellFactory" : "expiry",
+                    "selector" : "kpi-expiry"
+                  }, {
+                    "captionProducer" : "columnMerge",
+                    "cellFactory" : {
+                      "args" : { },
+                      "key" : "treeCells"
+                    },
+                    "selector" : "member"
+                  } ],
+                  "hideAddButton" : true,
+                  "columnOrder" : {
+                    "key" : "explicit",
+                    "args" : {
+                      "orderedColumns" : [ "c-treeCells-member", "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+                    }
+                  },
+                  "defaultOptions" : { },
+                  "expansion" : {
+                    "automaticExpansion" : true
+                  }
+                }
+              }
+            },
+            "containerKey" : "pivot-table"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "2",
+        "bookmark" : {
+          "name" : "Owner filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Owners",
+                "hierarchy" : "Owner",
+                "level" : "Owner",
+                "caption" : "Owner"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "3",
+        "bookmark" : {
+          "name" : "Partition filter",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "displayedAsSelect" : true,
+                "multipleSelection" : false
+              },
+              "filterKey" : "explicit",
+              "levelDetails" : {
+                "cube" : "MemoryCube",
+                "dimension" : "Partitions",
+                "hierarchy" : "Partition",
+                "level" : "Partition",
+                "caption" : "Partition"
+              }
+            },
+            "containerKey" : "quick-filter"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Top-Consuming Fields across Owners",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Fields].[Field].[Field]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ ]
+                },
+                "subplotModeEnabled" : true
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store]",
+                "updateMode" : "once"
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the various stores of the application, with a focus on the fields\nthe chunks can be attributed to.\n\nIn the case of a name conflict between fields of different stores, the memory\nconsumption is displayed per owner under each field.\n\nChunks may be shared across multiple fields (in the case of indexes over\nmultiple fields for example). As such, a very large index will impact the memory\nconsumption of all the fields it is attributed to.\n"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
+      } ],
+      "layout" : {
+        "children" : {
+          "0" : {
+            "children" : {
+              "0" : {
+                "ck" : "2",
+                "size" : 0.5
+              },
+              "1" : {
+                "ck" : "3",
+                "size" : 0.5
+              }
+            },
+            "direction" : "column",
+            "size" : 0.19
+          },
+          "1" : {
+            "children" : {
+              "0" : {
+                "ck" : "1",
+                "size" : 0.38
+              },
+              "1" : {
+                "children" : {
+                  "0" : {
+                    "ck" : "5",
+                    "size" : 0.26
+                  },
+                  "1" : {
+                    "ck" : "4",
+                    "size" : 0.74
+                  }
+                },
+                "size" : 0.62,
+                "direction" : "column"
+              }
+            },
+            "size" : 0.81,
+            "direction" : "row"
+          }
+        },
+        "direction" : "column"
+      },
+      "name" : "Top-Consuming Fields",
+      "filters" : {
+        "MemoryCube" : [ ]
+      }
+    }, {
+      "content" : [ {
         "key" : "0",
         "bookmark" : {
           "name" : "Per-field Analysis",
@@ -13,7 +230,7 @@
             "showTitleBar" : true,
             "body" : {
               "serverUrl" : "",
-              "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+              "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
               "contextValues" : { },
               "updateMode" : "once",
               "refreshInterval" : 10,
@@ -122,24 +339,93 @@
           },
           "writable" : true
         }
+      }, {
+        "key" : "4",
+        "bookmark" : {
+          "name" : "Field Consumption of Top Stores",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : true,
+            "body" : {
+              "configuration" : {
+                "type" : "plotly-tree-map",
+                "mapping" : {
+                  "values" : [ "[Measures].[DirectMemory.SUM]" ],
+                  "groupBy" : [ "[Fields].[Field].[Field]" ],
+                  "splitBy" : [ ],
+                  "horizontalSubplots" : [ ],
+                  "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+                },
+                "subplotModeEnabled" : true
+              },
+              "query" : {
+                "serverUrl" : "",
+                "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin(Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube] WHERE [Owners].[Owner Type].[ALL].[AllMember].[Store]",
+                "updateMode" : "once"
+              }
+            },
+            "containerKey" : "chart"
+          },
+          "writable" : true
+        }
+      }, {
+        "key" : "5",
+        "bookmark" : {
+          "name" : "Untitled Text Editor",
+          "type" : "container",
+          "value" : {
+            "style" : { },
+            "showTitleBar" : false,
+            "body" : {
+              "editingMode" : "view",
+              "renderer" : "markdown",
+              "content" : "This view displays the per-component memory consumption of each field per store.\n\nThe various possible components that can be attributed to a field are:\n* `INDEX`: an index indexes the corresponding field. It is usually the highest\n  direct-memory-consuming component for store fields.\n\n  > All indices indexing this field are taken into account (e.g. an index on\n  > fields `A, B` and another index on field `B` both contribute to field B's\n  > memory consumption)\n  >\n  > An index attributes its chunks to all fields it indexes.\n\n* `DICTIONARY`\n* `RECORDS`: the chunks the stores use to store their fields' values fall into\n  this category.\n* `VECTOR_BLOCK`: specific to vector fields, the memory consumption of the\n  corresponding vector blocks (**includes swapped memory**)\n\nIt is important to note that not all chunks of a store appear in this page.\n\nSome store chunks are not be attributed to any field in particular:\n* the chunks of the versioning column of a store (`RECORDS` component)\n* partition mapping chunks used by references between stores (`REFERENCE`\n  component)"
+            },
+            "containerKey" : "rich-text-editor"
+          },
+          "writable" : true
+        }
       } ],
       "layout" : {
         "children" : {
           "0" : {
             "children" : {
               "0" : {
-                "ck" : "3"
+                "ck" : "3",
+                "size" : 0.48
               },
               "1" : {
-                "ck" : "2"
+                "ck" : "2",
+                "size" : 0.52
               }
             },
             "size" : 0.19,
             "direction" : "column"
           },
           "1" : {
-            "ck" : "0",
-            "size" : 0.81
+            "children" : {
+              "0" : {
+                "ck" : "0",
+                "size" : 0.38
+              },
+              "1" : {
+                "children" : {
+                  "0" : {
+                    "ck" : "4",
+                    "size" : 0.64
+                  },
+                  "1" : {
+                    "ck" : "5",
+                    "size" : 0.36
+                  }
+                },
+                "size" : 0.62,
+                "direction" : "row"
+              }
+            },
+            "size" : 0.81,
+            "direction" : "row"
           }
         },
         "direction" : "column"
