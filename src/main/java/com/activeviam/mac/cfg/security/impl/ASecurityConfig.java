@@ -101,6 +101,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
    * @return The {@link PasswordEncoder} to encode passwords with.
    */
   @Bean
+  @SuppressWarnings({"deprecation", "unused"})
   public PasswordEncoder passwordEncoder() {
     PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     ((DelegatingPasswordEncoder) passwordEncoder)

@@ -150,8 +150,8 @@ public class AnalysisDatastoreFeeder {
     final IRecordFormat epochViewRecordFormat =
         transaction
             .getMetadata()
-            .getDatastoreSchemaFormat()
-            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreFormat()
             .getRecordFormat();
 
     for (final var datastoreEpochId : this.datastoreEpochs) {
@@ -189,8 +189,8 @@ public class AnalysisDatastoreFeeder {
     final IRecordFormat epochViewRecordFormat =
         transaction
             .getMetadata()
-            .getDatastoreSchemaFormat()
-            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreFormat()
             .getRecordFormat();
 
     for (final ChunkOwner owner : distributedEpochsPerOwner.keySet()) {

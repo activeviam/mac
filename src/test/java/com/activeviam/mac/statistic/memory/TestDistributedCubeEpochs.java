@@ -36,21 +36,21 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   private Pair<IDatastore, IActivePivotManager> monitoredApp;
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException {
     initializeApplication();
 
@@ -82,9 +82,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     monitoredApp
         .getLeft()
         .edit(
-            transactionManager -> {
-              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i));
-            });
+            transactionManager -> IntStream.range(0, 10)
+                .forEach(i -> transactionManager.add("A", i, (double) i)));
     awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
@@ -102,17 +101,15 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     waitAndAssert(
         1,
         TimeUnit.MINUTES,
-        () -> {
-          SoftAssertions.assertSoftly(
-              assertions -> {
-                for (final var cube : cubes) {
-                  assertions
-                      .assertThat(cube.getHead().getEpochId())
-                      .as(cube.getId())
-                      .isEqualTo(epochId);
-                }
-              });
-        });
+        () -> SoftAssertions.assertSoftly(
+            assertions -> {
+              for (final var cube : cubes) {
+                assertions
+                    .assertThat(cube.getHead().getEpochId())
+                    .as(cube.getId())
+                    .isEqualTo(epochId);
+              }
+            }));
   }
 
   private Path generateMemoryStatistics() {
@@ -121,9 +118,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
-    return analysisService.exportMostRecentVersion("testEpochs");
-    //    return analysisService.exportApplication("testEpochs"); // todo vlg: update the test to
-    // use this when export is fixed PIVOT-4460
+    return analysisService.exportApplication("testEpochs");
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {

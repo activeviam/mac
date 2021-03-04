@@ -37,6 +37,12 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
   /** Depth of the current memory statistic in the tree. */
   protected int depth = 0;
 
+  @Override
+  public Void visit(final IMemoryStatistic memoryStatistic) {
+    enrichStatisticWithDebugAttributes(memoryStatistic);
+    return null;
+  }
+
   /**
    * Created a {@link StatisticTreePrinter printer} of the tree created from the input {@link
    * IMemoryStatistic}.

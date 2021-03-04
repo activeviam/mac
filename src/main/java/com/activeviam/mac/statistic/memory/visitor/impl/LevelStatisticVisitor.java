@@ -7,11 +7,16 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.store.structure.impl.StructureDictionaryManager;
+import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -25,7 +30,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
- * PivotMemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
+ * MemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
  *
  * @author ActiveViam
  */
@@ -42,7 +47,10 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   /** The number of members of the visited level. */
   protected Integer memberCount;
 
-  private Long dictionaryId;
+  protected Long dictionaryId;
+  protected String dictionaryClass;
+  protected Integer dictionarySize;
+  protected Integer dictionaryOrder;
 
   /**
    * Constructor.
@@ -87,7 +95,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private void processLevelMember(final IMemoryStatistic stat) {
     this.memberCount =
-        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
     assert stat.getChildren().isEmpty();
   }
 
@@ -131,15 +139,45 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   @Override
   public Void visit(DictionaryStatistic stat) {
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
-
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
     final Long previousDictionaryId = this.dictionaryId;
-    this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
-    this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
+    final Integer previousSize = this.dictionarySize;
+    final Integer previousOrder = this.dictionaryOrder;
+    final String previousDictionaryClass = this.dictionaryClass;
+
+    if (!stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_UNDERLYING)) {
+      final IStatisticAttribute dictionaryIdAttribute = stat.getAttribute(ATTR_NAME_DICTIONARY_ID);
+      if (dictionaryIdAttribute != null) {
+        this.dictionaryId = dictionaryIdAttribute.asLong();
+      }
+
+      final var classAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
+      if (classAttribute != null) {
+        this.dictionaryClass = classAttribute.asText();
+      } else if (previousDictionaryClass == null) {
+        this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+      }
+
+      final var sizeAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE);
+      if (sizeAttribute != null) {
+        this.dictionarySize = sizeAttribute.asInt();
+      }
+
+      final var orderAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER);
+      if (orderAttribute != null) {
+        this.dictionaryOrder = orderAttribute.asInt();
+      }
+
+      if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
+        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
+            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
+        FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
+      }
+    }
 
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
@@ -150,6 +188,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     visitChildren(stat);
 
     this.dictionaryId = previousDictionaryId;
+    this.dictionarySize = previousSize;
+    this.dictionaryOrder = previousOrder;
+    this.dictionaryClass = previousDictionaryClass;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
@@ -174,13 +215,10 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(final DefaultMemoryStatistic stat) {
-    switch (stat.getName()) {
-      case PivotMemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS:
-        processLevelMember(stat);
-        break;
-      default:
-        visitChildren(stat);
-        break;
+    if (MemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS.equals(stat.getName())) {
+      processLevelMember(stat);
+    } else {
+      visitChildren(stat);
     }
     return null;
   }

@@ -27,10 +27,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
@@ -42,12 +42,12 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   public static final int ADDED_DATA_SIZE = 20;
   public static final int FIELD_SHARING_COUNT = 2;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException {
     monitoredApp = createMicroApplicationWithSharedVectorField();
 
@@ -91,7 +91,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     Assertions.assertThat(pivot).isNotNull();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws AgentException {
     monitoringApp.getLeft().close();
     monitoringApp.getRight().stop();

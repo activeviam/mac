@@ -7,12 +7,16 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.activeviam.store.structure.impl.StructureDictionaryManager;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -24,7 +28,6 @@ import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.IStore;
-import com.qfs.store.impl.DictionaryManager;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
@@ -46,7 +49,6 @@ import java.util.logging.Logger;
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** Class logger. */
-  @SuppressWarnings("unused")
   private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
   /**
@@ -200,6 +202,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public Void visit(final DefaultMemoryStatistic stat) {
     final Long initialEpoch = this.epochId;
     final String initialBranch = this.branch;
@@ -220,7 +223,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         processStorePartition(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
+      case MemoryStatisticConstants.STAT_NAME_UNIQUE_INDICES:
         processPrimaryIndices(stat);
+        break;
+      case MemoryStatisticConstants.STAT_NAME_KEY_INDEX:
+        processKeyIndices(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_SECONDARY_INDICES:
         processSecondaryIndices(stat);
@@ -317,7 +324,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.INDEX_TYPE, this.indexType);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
     FeedVisitor.add(stat, this.transaction, DatastoreConstants.INDEX_STORE, tuple);
 
     final ParentType previousParentType = this.directParentType;
@@ -331,7 +337,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final Collection<String> oldFields = this.fields;
     assert fieldNames != null && fieldNames.length > 0
         : "Cannot find fields in the attributes of " + stat;
-    this.fields = List.of(fieldNames);
+    this.fields = Arrays.asList(fieldNames);
 
     visitChildren(stat);
 
@@ -360,13 +366,46 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     }
 
     final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
-    this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
+    final Long previousDictionaryId = this.dictionaryId;
+    final Integer previousSize = this.dictionarySize;
+    final Integer previousOrder = this.dictionaryOrder;
+    final String previousDictionaryClass = this.dictionaryClass;
 
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+    if (!stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_UNDERLYING)) {
+      final IStatisticAttribute dictionaryIdAttribute = stat.getAttribute(ATTR_NAME_DICTIONARY_ID);
+      if (dictionaryIdAttribute != null) {
+        this.dictionaryId = dictionaryIdAttribute.asLong();
+      }
 
-    FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
+      final var classAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
+      if (classAttribute != null) {
+        this.dictionaryClass = classAttribute.asText();
+      } else if (previousDictionaryClass == null) {
+        logger.warning("Dictionary does not state its class " + stat);
+        this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
+      }
+
+      final var sizeAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE);
+      if (sizeAttribute != null) {
+        this.dictionarySize = sizeAttribute.asInt();
+      }
+
+      final var orderAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER);
+      if (orderAttribute != null) {
+        this.dictionaryOrder = orderAttribute.asInt();
+      }
+
+      if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
+        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
+            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+        FeedVisitor.setTupleElement(
+            tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+
+        FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
+      }
+    }
 
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
@@ -381,7 +420,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     // Reset
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
-    this.dictionaryId = null;
+    this.dictionaryId = previousDictionaryId;
+    this.dictionarySize = previousSize;
+    this.dictionaryOrder = previousOrder;
+    this.dictionaryClass = previousDictionaryClass;
     this.fields = oldFields;
 
     return null;
@@ -390,8 +432,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   /**
    * Checks whether or not the given storage specification concerns a single field.
    *
-   * <p>Due to how {@link DictionaryManager} exports its dictionaries, dictionary entries that are
-   * not {@link com.qfs.dic.impl.FieldStorageSpecification}s should be ignored, as they are
+   * <h2>pre-5.10</h2>
+   *
+   * <p>Due to how {@code DictionaryManager} exports its dictionaries, dictionary entries that are
+   * not {@code com.qfs.dic.impl.FieldStorageSpecification}s should be ignored, as they are
    * duplicates with potentially wrong field attributions.
    *
    * @param storageSpecification a string representing a storage specification
@@ -402,7 +446,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   /**
-   * Processes the statistic of a {@link DictionaryManager}.
+   * Processes the statistic of a {@code DictionaryManager}.
    *
    * @param stat statistic to be processed
    */
@@ -452,9 +496,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
 
     this.directParentType = ParentType.RECORDS;
-    this.directParentId =
-        String.valueOf(
-            stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID).asLong());
+    this.directParentId = String.valueOf(
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID)
+        .asLong());
     this.rootComponent = ParentType.RECORDS;
     visitChildren(stat);
     this.directParentType = previousParentType;
@@ -470,7 +514,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void processPrimaryIndices(final IMemoryStatistic stat) {
-    processIndexList(stat, IndexType.PRIMARY);
+    processIndexList(stat, IndexType.UNIQUE);
+  }
+
+  private void processKeyIndices(final IMemoryStatistic stat) {
+    processIndexList(stat, IndexType.KEY);
   }
 
   private void processSecondaryIndices(final IMemoryStatistic stat) {
@@ -478,16 +526,21 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void processIndexList(final IMemoryStatistic stat, final IndexType type) {
+    final var oldComponent = rootComponent;
+    final var oldParent = directParentType;
+
     this.indexType = type;
+    this.rootComponent = ParentType.INDEX;
+    this.directParentType = ParentType.INDEX;
     visitChildren(stat);
+    this.directParentType = oldParent;
+    this.rootComponent = oldComponent;
     this.indexType = null;
   }
 
   private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
     isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
-
     visitChildren(stat);
-
     isVersionColumn = false;
   }
 

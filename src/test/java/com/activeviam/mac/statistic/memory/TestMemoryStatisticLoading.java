@@ -6,7 +6,7 @@
  */
 package com.activeviam.mac.statistic.memory;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
 
@@ -50,7 +50,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
         });
   }
 
-  public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) throws Exception {
+  public void doTestLoadMonitoringDatastoreWithVectors(boolean duplicateVectors) {
     createApplicationWithVector(
         duplicateVectors,
         (monitoredDatastore, monitoredManager) -> {
@@ -176,9 +176,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           fillApplication(monitoredDatastore);
           fillApplicationWithBranches(monitoredDatastore, branchSet, true);
 
-          long epochs[] = new long[2];
-          epochs[0] = 1L;
-          epochs[1] = 2L;
+          long[] epochs = new long[] {1L, 2L};
 
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
@@ -202,8 +200,6 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
   /**
    * Asserts the chunks number and off-heap memory as computed from the loaded datastore are
    * consistent with the ones computed by visiting the statistic.
-   *
-   * @param statistic
    */
   protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
     assertLoadsCorrectly(Collections.singleton(statistic), getClass());

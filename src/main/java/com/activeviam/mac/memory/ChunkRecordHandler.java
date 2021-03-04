@@ -13,8 +13,7 @@ import com.qfs.store.IStoreMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.record.IWritableRecord;
-import com.qfs.store.record.impl.Records;
-import com.qfs.store.record.impl.Records.IDictionaryProvider;
+import com.qfs.store.record.impl.IDictionaryProvider;
 
 /**
  * {@link IDuplicateKeyHandler} implementation defining the process of dealing with duplicated
@@ -30,23 +29,12 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   private int defaultIdxId = -1;
 
   @Override
-  public IRecordReader selectDuplicateKeyWithinTransaction(
-      final IRecordReader duplicateRecord,
-      final IRecordReader previousRecord,
-      final IStoreMetadata storeMetadata,
-      final Records.IDictionaryProvider dictionaryProvider,
-      final int[] primaryIndexFields,
-      final int partitionId) {
-    return createMergedRecord(duplicateRecord, previousRecord, storeMetadata, dictionaryProvider);
-  }
-
-  @Override
   public IRecordReader selectDuplicateKeyInDatastore(
       final IRecordReader duplicateRecord,
       final IRecordReader previousRecord,
       final IStoreMetadata storeMetadata,
-      final Records.IDictionaryProvider dictionaryProvider,
-      final int[] primaryIndexFields,
+      final IDictionaryProvider dictionaryProvider,
+      final int[] uniqueIndexFields,
       final int partitionId) {
     return createMergedRecord(duplicateRecord, previousRecord, storeMetadata, dictionaryProvider);
   }
@@ -121,7 +109,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   }
 
   private void init(
-      final IStoreMetadata storeMetadata, final Records.IDictionaryProvider dictionaryProvider) {
+      final IStoreMetadata storeMetadata, final IDictionaryProvider dictionaryProvider) {
     if (sharedPartitionId < 0) {
       final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
       @SuppressWarnings("unchecked")

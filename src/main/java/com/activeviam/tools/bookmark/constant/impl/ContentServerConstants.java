@@ -75,12 +75,10 @@ public class ContentServerConstants {
    * @return exported type
    */
   public static String getBookmarkType(String contentType) {
-    switch (contentType) {
-      case Content.FILTER:
-        return Content.MDX;
-      default:
-        return Content.CONTAINER;
+    if (Content.FILTER.equals(contentType)) {
+      return Content.MDX;
     }
+    return Content.CONTAINER;
   }
 }
 
