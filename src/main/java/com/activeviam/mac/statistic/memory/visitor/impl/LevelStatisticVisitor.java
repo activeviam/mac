@@ -168,8 +168,9 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       }
 
       if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
-            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        final Object[] tuple =
+            FeedVisitor.buildDictionaryTupleFrom(
+                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
         FeedVisitor.setTupleElement(

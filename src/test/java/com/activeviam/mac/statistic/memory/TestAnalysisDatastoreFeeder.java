@@ -202,7 +202,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     distributedMonitoredApp
         .getLeft()
         .edit(
-            transactionManager -> IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
+            transactionManager ->
+                IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =

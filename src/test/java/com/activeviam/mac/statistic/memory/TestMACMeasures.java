@@ -80,26 +80,24 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     // Add 100 records
     monitoredApp
         .getLeft()
-        .edit(
-            tm -> IntStream.range(0, ADDED_DATA_SIZE)
-                .forEach(
-                    i -> tm.add("A", i * i)));
+        .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
     monitoredApp
         .getLeft()
         .edit(
-            tm -> IntStream.range(50, 50 + REMOVED_DATA_SIZE)
-                .forEach(
-                    i -> {
-                      try {
-                        tm.remove("A", i * i);
-                      } catch (NoTransactionException
-                          | DatastoreTransactionException
-                          | IllegalArgumentException
-                          | NullPointerException e) {
-                        throw new ActiveViamRuntimeException(e);
-                      }
-                    }));
+            tm ->
+                IntStream.range(50, 50 + REMOVED_DATA_SIZE)
+                    .forEach(
+                        i -> {
+                          try {
+                            tm.remove("A", i * i);
+                          } catch (NoTransactionException
+                              | DatastoreTransactionException
+                              | IllegalArgumentException
+                              | NullPointerException e) {
+                            throw new ActiveViamRuntimeException(e);
+                          }
+                        }));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -256,21 +254,22 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
-        assertions -> appStats.forEach(
-            cast(
-                (measure, value) -> {
-                  final MDXQuery query =
-                      new MDXQuery(
-                          "SELECT"
-                              + "  NON EMPTY [Measures].["
-                              + measure
-                              + "] ON COLUMNS"
-                              + "  FROM [MemoryCube]");
-                  final CellSetDTO result = pivot.execute(query);
-                  System.out.println(measure);
-                  final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                  assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                })));
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + "  NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + "  FROM [MemoryCube]");
+                      final CellSetDTO result = pivot.execute(query);
+                      System.out.println(measure);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
   }
 
   /**
@@ -283,40 +282,42 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
-        assertions -> appStats.forEach(
-            cast(
-                (measure, value) -> {
-                  final MDXQuery query =
-                      new MDXQuery(
-                          "SELECT"
-                              + " NON EMPTY [Measures].["
-                              + measure
-                              + "] ON COLUMNS"
-                              + " FROM [MemoryCube]"
-                              + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
-                  final CellSetDTO result = pivot.execute(query);
-                  final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                  assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                })));
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + " NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + " FROM [MemoryCube]"
+                                  + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
+                      final CellSetDTO result = pivot.execute(query);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
 
     SoftAssertions.assertSoftly(
-        assertions -> appStats.forEach(
-            cast(
-                (measure, value) -> {
-                  final MDXQuery query =
-                      new MDXQuery(
-                          "SELECT"
-                              + " NON EMPTY [Measures].["
-                              + measure
-                              + "] ON COLUMNS"
-                              + " FROM [MemoryCube]"
-                              + " WHERE (["
-                              + ManagerDescriptionConfig.CHUNK_DIMENSION
-                              + "].[ChunkId].[ALL].[AllMember].FirstChild)");
-                  final CellSetDTO result = pivot.execute(query);
-                  final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                  assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                })));
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + " NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + " FROM [MemoryCube]"
+                                  + " WHERE (["
+                                  + ManagerDescriptionConfig.CHUNK_DIMENSION
+                                  + "].[ChunkId].[ALL].[AllMember].FirstChild)");
+                      final CellSetDTO result = pivot.execute(query);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
   }
 
   @Test

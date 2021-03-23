@@ -83,19 +83,34 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           // Check all the chunks held by the Dictionary of that key field of the store
           IMemoryStatistic stat = dic.getMemoryStatistic();
 
-          stat.getChildren().forEach(
-              c_st -> c_st.getChildren().forEach(
-                  c_c_st -> c_c_st.getChildren().forEach(
-                      c_c_c_st -> c_c_c_st.getChildren().forEach(
-                          c_c_c_c_st -> {
-                            chunkSizes[rnk.get()] =
-                                c_c_c_c_st.getAttribute(
-                                    MemoryStatisticConstants.ATTR_NAME_LENGTH).asLong();
-                            chunkIds[rnk.get()] =
-                                c_c_c_c_st.getAttribute(
-                                    MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong();
-                            rnk.incrementAndGet();
-                          }))));
+          stat.getChildren()
+              .forEach(
+                  c_st ->
+                      c_st.getChildren()
+                          .forEach(
+                              c_c_st ->
+                                  c_c_st
+                                      .getChildren()
+                                      .forEach(
+                                          c_c_c_st ->
+                                              c_c_c_st
+                                                  .getChildren()
+                                                  .forEach(
+                                                      c_c_c_c_st -> {
+                                                        chunkSizes[rnk.get()] =
+                                                            c_c_c_c_st
+                                                                .getAttribute(
+                                                                    MemoryStatisticConstants
+                                                                        .ATTR_NAME_LENGTH)
+                                                                .asLong();
+                                                        chunkIds[rnk.get()] =
+                                                            c_c_c_c_st
+                                                                .getAttribute(
+                                                                    MemoryStatisticConstants
+                                                                        .ATTR_NAME_CHUNK_ID)
+                                                                .asLong();
+                                                        rnk.incrementAndGet();
+                                                      }))));
 
           ATestMemoryStatistic.feedMonitoringApplication(
               monitoringDatastore, List.of(fullStats), "test");
@@ -141,21 +156,22 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     // Query record chunks data :
-    final IDictionaryCursor cursor = monitoringDatastore
-        .getHead()
-        .getQueryRunner()
-        .forStore(CHUNK_STORE)
-        .withCondition(
-            BaseConditions.Equal(
-                DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
-                MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
-        .selecting(
-            DatastoreConstants.CHUNK__FREE_ROWS,
-            DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
-            DatastoreConstants.CHUNK__SIZE,
-            DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-        .onCurrentThread()
-        .run();
+    final IDictionaryCursor cursor =
+        monitoringDatastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withCondition(
+                BaseConditions.Equal(
+                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
+                    MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
+            .selecting(
+                DatastoreConstants.CHUNK__FREE_ROWS,
+                DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
+                DatastoreConstants.CHUNK__SIZE,
+                DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+            .onCurrentThread()
+            .run();
     final List<Object[]> list = new ArrayList<>();
     cursor.forEach(record -> list.add(record.toTuple()));
     // Expect 3 Chunks :
@@ -166,10 +182,11 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     //         * 1 Content Chunk (DirectChunkBits) -> "0" is stored as the dictionary value 1,
     // the underlying chunk is promoted to DirectChunkBits (order = 1), which allocates
     // 32B of off-heap memory
-    Assertions.assertThat(list).containsExactly(
-        new Object[] {0L, 255L, 256L, 0L},
-        new Object[] {0L, 255L, 256L, 32L},
-        new Object[] {0L, 255L, 256L, 2048L});
+    Assertions.assertThat(list)
+        .containsExactly(
+            new Object[] {0L, 255L, 256L, 0L},
+            new Object[] {0L, 255L, 256L, 32L},
+            new Object[] {0L, 255L, 256L, 2048L});
   }
 
   @Test
@@ -177,10 +194,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
 
     // Add a full chunk
-    monitoredApp
-        .getLeft()
-        .edit(tm -> IntStream.range(0, 256).forEach(
-            i -> tm.add("A", i * i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 256).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -237,10 +251,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
 
     // Add a full chunk + 10 records on the second chunk
-    monitoredApp
-        .getLeft()
-        .edit(tm -> IntStream.range(0, 266).forEach(
-            i -> tm.add("A", i * i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 266).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -304,24 +315,24 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
     // Add 100 records
-    monitoredApp
-        .getLeft()
-        .edit(tm -> IntStream.range(0, 100).forEach(
-            i -> tm.add("A", i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
     monitoredApp
         .getLeft()
-        .edit(tm -> IntStream.range(50, 50 + 20).forEach(
-            i -> {
-              try {
-                tm.remove("A", i * i);
-              } catch (NoTransactionException
-                  | DatastoreTransactionException
-                  | IllegalArgumentException
-                  | NullPointerException e) {
-                throw new ActiveViamRuntimeException(e);
-              }
-            }));
+        .edit(
+            tm ->
+                IntStream.range(50, 50 + 20)
+                    .forEach(
+                        i -> {
+                          try {
+                            tm.remove("A", i * i);
+                          } catch (NoTransactionException
+                              | DatastoreTransactionException
+                              | IllegalArgumentException
+                              | NullPointerException e) {
+                            throw new ActiveViamRuntimeException(e);
+                          }
+                        }));
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
@@ -378,10 +389,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
 
     // Add 10 records
-    monitoredApp
-        .getLeft()
-        .edit(tm -> IntStream.range(0, 10).forEach(
-            i -> tm.add("A", i * i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -424,12 +432,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
     // Add 100 records
-    monitoredApp
-        .getLeft()
-        .edit(
-            tm -> IntStream.range(0, 10)
-                .forEach(
-                    i -> tm.add("A", i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -509,12 +512,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
 
     // Add 100 records
-    monitoredApp
-        .getLeft()
-        .edit(
-            tm -> IntStream.range(0, 100)
-                .forEach(
-                    i -> tm.add("A", i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -522,18 +520,19 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     monitoredApp
         .getLeft()
         .edit(
-            tm -> IntStream.range(50, 50 + 10)
-                .forEach(
-                    i -> {
-                      try {
-                        tm.remove("A", i * i);
-                      } catch (NoTransactionException
-                          | DatastoreTransactionException
-                          | IllegalArgumentException
-                          | NullPointerException e) {
-                        throw new ActiveViamRuntimeException(e);
-                      }
-                    }));
+            tm ->
+                IntStream.range(50, 50 + 10)
+                    .forEach(
+                        i -> {
+                          try {
+                            tm.remove("A", i * i);
+                          } catch (NoTransactionException
+                              | DatastoreTransactionException
+                              | IllegalArgumentException
+                              | NullPointerException e) {
+                            throw new ActiveViamRuntimeException(e);
+                          }
+                        }));
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
@@ -607,12 +606,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getLeft(), monitoredApp.getRight());
-    monitoredApp
-        .getLeft()
-        .edit(
-            tm -> IntStream.range(0, 100)
-                .forEach(
-                    i -> tm.add("A", i * i)));
+    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Export first app
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -623,10 +617,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         createService(monitoredAppWithBitmap.getLeft(), monitoredAppWithBitmap.getRight());
     monitoredAppWithBitmap
         .getLeft()
-        .edit(
-            tm -> IntStream.range(0, 100)
-                .forEach(
-                    i -> tm.add("A", i * i)));
+        .edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Export second app
     exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
 
@@ -691,12 +682,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     monitoredApp
         .getLeft()
         .edit(
-            tm -> IntStream.range(0, 100)
-                .forEach(
-                    i -> {
-                      tm.add("A", i * i, i);
-                      tm.add("B", i);
-                    }));
+            tm ->
+                IntStream.range(0, 100)
+                    .forEach(
+                        i -> {
+                          tm.add("A", i * i, i);
+                          tm.add("B", i);
+                        }));
     // Export first app
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -727,14 +719,16 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         true,
         (monitoredDatastore, monitoredManager) -> {
           monitoredDatastore.edit(
-              tm -> IntStream.range(0, 24)
-                  .forEach(
-                      i -> tm.add(
-                          VECTOR_STORE_NAME,
-                          i,
-                          IntStream.rangeClosed(1, 5).toArray(),
-                          IntStream.rangeClosed(10, 20).toArray(),
-                          LongStream.rangeClosed(3, 8).toArray())));
+              tm ->
+                  IntStream.range(0, 24)
+                      .forEach(
+                          i ->
+                              tm.add(
+                                  VECTOR_STORE_NAME,
+                                  i,
+                                  IntStream.rangeClosed(1, 5).toArray(),
+                                  IntStream.rangeClosed(10, 20).toArray(),
+                                  LongStream.rangeClosed(3, 8).toArray())));
 
           monitoredDatastore.getEpochManager().forceDiscardEpochs(node -> true);
 

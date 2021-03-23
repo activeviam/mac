@@ -82,8 +82,8 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     monitoredApp
         .getLeft()
         .edit(
-            transactionManager -> IntStream.range(0, 10)
-                .forEach(i -> transactionManager.add("A", i, (double) i)));
+            transactionManager ->
+                IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i)));
     awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
@@ -101,15 +101,16 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     waitAndAssert(
         1,
         TimeUnit.MINUTES,
-        () -> SoftAssertions.assertSoftly(
-            assertions -> {
-              for (final var cube : cubes) {
-                assertions
-                    .assertThat(cube.getHead().getEpochId())
-                    .as(cube.getId())
-                    .isEqualTo(epochId);
-              }
-            }));
+        () ->
+            SoftAssertions.assertSoftly(
+                assertions -> {
+                  for (final var cube : cubes) {
+                    assertions
+                        .assertThat(cube.getHead().getEpochId())
+                        .as(cube.getId())
+                        .isEqualTo(epochId);
+                  }
+                }));
   }
 
   private Path generateMemoryStatistics() {

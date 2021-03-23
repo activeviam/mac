@@ -67,8 +67,10 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
     monitoredApp
         .getLeft()
-        .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE)
-            .forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
+        .edit(
+            tm ->
+                IntStream.range(0, ADDED_DATA_SIZE)
+                    .forEach(i -> tm.add("A", i, i % 11, i % 7, i % 5)));
   }
 
   private Path generateMemoryStatistics() {

@@ -28,6 +28,7 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
 
   /** ID of the current dictionary. */
   protected Long dictionaryId;
+
   protected String dictionaryClass;
   protected Integer dictionarySize;
   protected Integer dictionaryOrder;

@@ -473,16 +473,15 @@ public abstract class ATestMemoryStatistic {
           final int peopleCount = STORE_PEOPLE_COUNT;
           IntStream.range(0, peopleCount)
               .forEach(
-                  i -> tm.add(
-                      "People",
-                      String.valueOf(i),
-                      "FN" + (i % 4),
-                      "LN" + i,
-                      "Corp" + (i + 1 % 3)));
+                  i ->
+                      tm.add(
+                          "People",
+                          String.valueOf(i),
+                          "FN" + (i % 4),
+                          "LN" + i,
+                          "Corp" + (i + 1 % 3)));
           final int productCount = STORE_PRODUCT_COUNT;
-          LongStream.range(0, productCount)
-              .forEach(
-                  i -> tm.add("Products", i, "p" + i));
+          LongStream.range(0, productCount).forEach(i -> tm.add("Products", i, "p" + i));
 
           final Random r = new Random(47605);
           IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
@@ -741,8 +740,7 @@ public abstract class ATestMemoryStatistic {
 
       final Object vec = cursor.next() ? cursor.getRecord().read("vectorInt1") : null;
 
-      monitoredDatastore.edit(
-          tm -> tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2));
+      monitoredDatastore.edit(tm -> tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2));
     }
   }
 
@@ -1411,8 +1409,8 @@ public abstract class ATestMemoryStatistic {
             .forStore(CHUNK_STORE)
             .withCondition(
                 BaseConditions.Or(
-                    BaseConditions
-                        .Equal(CHUNK__CLOSEST_PARENT_TYPE, TypeValues.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(
+                        CHUNK__CLOSEST_PARENT_TYPE, TypeValues.GLOBAL_DEFAULT_STRING),
                     BaseConditions.Equal(CHUNK__PARENT_ID, TypeValues.GLOBAL_DEFAULT_STRING)))
             .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
             .onCurrentThread()
@@ -1498,8 +1496,8 @@ public abstract class ATestMemoryStatistic {
         extractLatestChunkInfos(monitoringDatastore);
 
     final long chunkCount = latestChunkInfos.size();
-    final long totalChunkOffHeapSize = latestChunkInfos.values().stream()
-        .mapToLong(chunk -> chunk.offHeapSize).sum();
+    final long totalChunkOffHeapSize =
+        latestChunkInfos.values().stream().mapToLong(chunk -> chunk.offHeapSize).sum();
     final Multimap<String, Long> chunkIdsByClass = HashMultimap.create();
     latestChunkInfos.forEach((key, value) -> chunkIdsByClass.put(value.chunkClass, key));
 
@@ -1521,14 +1519,15 @@ public abstract class ATestMemoryStatistic {
   }
 
   static Map<Long, VersionedChunkInfo> extractLatestChunkInfos(final IDatastore datastore) {
-    final IDictionaryCursor cursor = datastore
-        .getHead()
-        .getQueryRunner()
-        .forStore(CHUNK_STORE)
-        .withoutCondition()
-        .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
-        .onCurrentThread()
-        .run();
+    final IDictionaryCursor cursor =
+        datastore
+            .getHead()
+            .getQueryRunner()
+            .forStore(CHUNK_STORE)
+            .withoutCondition()
+            .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
+            .onCurrentThread()
+            .run();
 
     final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
     for (final IRecordReader reader : cursor) {

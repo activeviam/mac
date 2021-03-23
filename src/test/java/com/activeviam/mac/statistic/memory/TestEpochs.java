@@ -72,32 +72,43 @@ public class TestEpochs extends ATestMemoryStatistic {
     monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
     // epoch 1
-    monitoredApp.getLeft().edit(
-        transactionManager -> IntStream.range(0, 10)
-            .forEach(i -> transactionManager.add("A", i, 0.)));
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager ->
+                IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     // epoch 2
-    monitoredApp.getLeft().edit(
-        transactionManager -> IntStream.range(10, 20)
-            .forEach(i -> transactionManager.add("A", i, 1.)));
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager ->
+                IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.)));
 
     // epoch 3
     // drop partition from epoch 2
-    monitoredApp.getLeft().edit(
-        transactionManager -> transactionManager
-            .removeWhere("A", BaseConditions.Equal("value", 1.)));
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager ->
+                transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.)));
 
     // epoch 4
     // make sure to add a new chunk on the 0-valued partition
-    monitoredApp.getLeft().edit(
-        transactionManager -> IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
-            .forEach(i -> transactionManager.add("A", i, 0.)));
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager ->
+                IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
+                    .forEach(i -> transactionManager.add("A", i, 0.)));
 
     // epoch 5
     // remaining chunks from epoch 4, but not used by version
-    monitoredApp.getLeft().edit(
-        transactionManager -> transactionManager
-            .removeWhere("A", BaseConditions.GreaterOrEqual("id", 20)));
+    monitoredApp
+        .getLeft()
+        .edit(
+            transactionManager ->
+                transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20)));
 
     monitoredApp.getRight().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
@@ -116,10 +127,11 @@ public class TestEpochs extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore =
         StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
 
-    final IActivePivotManager manager = StartBuilding.manager()
-        .setDescription(config.managerDescription())
-        .setDatastoreAndPermissions(monitoringDatastore)
-        .buildAndStart();
+    final IActivePivotManager manager =
+        StartBuilding.manager()
+            .setDescription(config.managerDescription())
+            .setDatastoreAndPermissions(monitoringDatastore)
+            .buildAndStart();
     monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(

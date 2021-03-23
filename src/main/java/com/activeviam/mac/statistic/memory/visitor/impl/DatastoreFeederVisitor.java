@@ -396,8 +396,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       }
 
       if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
-            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        final Object[] tuple =
+            FeedVisitor.buildDictionaryTupleFrom(
+                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
         FeedVisitor.setTupleElement(
@@ -496,9 +497,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String previousParentId = this.directParentId;
 
     this.directParentType = ParentType.RECORDS;
-    this.directParentId = String.valueOf(
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID)
-        .asLong());
+    this.directParentId =
+        String.valueOf(
+            stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_RECORD_SET_ID).asLong());
     this.rootComponent = ParentType.RECORDS;
     visitChildren(stat);
     this.directParentType = previousParentType;

@@ -64,6 +64,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Integer partition;
   /** Dictionary being currently visited. */
   protected Long dictionaryId;
+
   protected String dictionaryClass;
   protected Integer dictionarySize;
   protected Integer dictionaryOrder;
@@ -293,8 +294,9 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       }
 
       if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
-            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        final Object[] tuple =
+            FeedVisitor.buildDictionaryTupleFrom(
+                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
         FeedVisitor.setTupleElement(
