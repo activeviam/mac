@@ -410,7 +410,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
   @Override
   public Collection<Set<String>> getDictionaryGroups() {
-    // todo vlg
+    // todo: specify shared dictionaries
     return Collections.emptyList();
   }
 
