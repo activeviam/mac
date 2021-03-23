@@ -37,18 +37,15 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.impl.ActivePivotManager;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.logging.Logger;
+import lombok.extern.java.Log;
 
 /**
  * Implementation of {@link IMemoryStatisticVisitor} for pivot statistics.
  *
  * @author ActiveViam
  */
+@Log(topic = Loggers.ACTIVEPIVOT_LOADING)
 public class PivotFeederVisitor extends AFeedVisitor<Void> {
-
-  /** Class logger. */
-  @SuppressWarnings("unused")
-  private static final Logger logger = Logger.getLogger(Loggers.ACTIVEPIVOT_LOADING);
 
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
@@ -279,7 +276,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
-        logger.warning("Dictionary does not state its class " + stat);
+        log.warning("Dictionary does not state its class " + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 

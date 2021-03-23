@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
+import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
@@ -27,6 +28,7 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import lombok.extern.java.Log;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
@@ -34,6 +36,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
  *
  * @author ActiveViam
  */
+@Log(topic = Loggers.ACTIVEPIVOT_LOADING)
 public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private final PivotFeederVisitor parent;
@@ -74,14 +77,13 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
     this.epochId = epochId;
 
     this.directParentType = ParentType.LEVEL;
-    this.directParentId =
-        parent.owner.getName()
-            + "/"
-            + parent.dimension
-            + "/"
-            + parent.hierarchy
-            + "/"
-            + parent.level;
+    this.directParentId = parent.owner.getName()
+        + "/"
+        + parent.dimension
+        + "/"
+        + parent.hierarchy
+        + "/"
+        + parent.level;
   }
 
   /**
@@ -154,6 +156,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
+        log.warning("Dictionary does not state its class " + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 
@@ -168,9 +171,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       }
 
       if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple =
-            FeedVisitor.buildDictionaryTupleFrom(
-                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
+        final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(
+            format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
         FeedVisitor.setTupleElement(

@@ -31,14 +31,12 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
+import lombok.extern.java.Log;
 
 /** This class is responsible for parsing memory statistics into an analysis datastore. */
+@Log(topic = Loggers.LOADING)
 public class AnalysisDatastoreFeeder {
-
-  /** Logger. */
-  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
   /** The dump name associated with this feeder. */
   private final String dumpName;
@@ -92,14 +90,14 @@ public class AnalysisDatastoreFeeder {
    * @param transaction the transaction to add facts to
    */
   private void feedChunk(final IOpenedTransaction transaction, final IMemoryStatistic statistic) {
-    if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("Start feeding the application with " + statistic);
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Start feeding the application with " + statistic);
     }
 
     statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, dumpName));
 
-    if (LOGGER.isLoggable(Level.FINE)) {
-      LOGGER.fine("Application processed " + statistic);
+    if (log.isLoggable(Level.FINE)) {
+      log.fine("Application processed " + statistic);
     }
   }
 

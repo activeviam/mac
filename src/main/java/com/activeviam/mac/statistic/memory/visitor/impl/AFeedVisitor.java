@@ -50,7 +50,6 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
 
   @Override
   public R visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println("unknown stat " + memoryStatistic);
     visitChildren(memoryStatistic);
     return null;
   }

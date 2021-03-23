@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
+import lombok.extern.java.Log;
 
 /**
  * This visitor is not reusable.
@@ -46,17 +46,15 @@ import java.util.logging.Logger;
  *
  * @author ActiveViam
  */
+@Log(topic = Loggers.DATASTORE_LOADING)
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
-
-  /** Class logger. */
-  private static final Logger logger = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
   /**
    * A boolean that if true tells us that the currently visited component is responsible for storing
    * versioning data.
    */
-  protected boolean isVersionColumn =
-      false; // FIXME find a cleaner way to do that. (specific stat for instance).
+  // FIXME find a cleaner way to do that. (specific stat for instance).
+  protected boolean isVersionColumn = false;
 
   /** The record format of the store that stores the chunks. */
   protected final IRecordFormat chunkRecordFormat;
@@ -243,6 +241,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         break;
       default:
         recordStatAndExplore(stat);
+        break;
     }
 
     this.epochId = initialEpoch;
@@ -381,7 +380,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
-        logger.warning("Dictionary does not state its class " + stat);
+        log.warning("Dictionary does not state its class " + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 

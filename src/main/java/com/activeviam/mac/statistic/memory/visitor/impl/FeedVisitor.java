@@ -27,17 +27,15 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.logging.Logger;
+import lombok.extern.java.Log;
 
 /**
  * Visitor for chunks.
  *
  * @author ActiveViam
  */
+@Log(topic = Loggers.LOADING)
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
-
-  /** Class logger. */
-  private static final Logger logger = Logger.getLogger(Loggers.LOADING);
 
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;

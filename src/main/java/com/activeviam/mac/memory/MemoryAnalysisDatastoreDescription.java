@@ -275,9 +275,8 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
 
         /* Attributes */
         .withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
-        .withField(
-            DatastoreConstants.LEVEL__OFF_HEAP_SIZE,
-            ILiteralType.LONG) // TODO(ope) will be empty, but how to consider this in the cube
+        // TODO(ope) will be empty, but how to consider this in the cube
+        .withField(DatastoreConstants.LEVEL__OFF_HEAP_SIZE, ILiteralType.LONG)
         .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
         .build();
   }
