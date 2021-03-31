@@ -234,11 +234,11 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           Object[] data = record.toTuple();
           list.add(data);
         });
-    // Expect 2 Chunks :
+    // Expect 3 Chunks :
     // - 1 Chunk for versions : directChunkLong
-    // - 1 ChunkOffset for the records -> verify it does not consume memory
+    // - 1 ChunkOffset for the records -> verify it does not consume off-heap memory
     // - 1 Chunk for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored
-    // offheap
+    // off-heap
     Assertions.assertThat(list)
         .containsExactlyInAnyOrder(
             new Object[] {0L, 0L, 256L, 256L},
@@ -291,10 +291,10 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           Object[] data = record.toTuple();
           list.add(data);
         });
-    // Expect 5 Chunks :
+    // Expect 6 Chunks :
     // - 2 Chunk for versions : directChunkLong
-    // - 3 Chunks for the actual records
-    //		   * 2 Wrapping chunk
+    // - 4 Chunks for the actual records
+    //         * 2 Wrapping chunk
     //         * 2 Content Chunk
     Assertions.assertThat(list)
         .containsExactlyInAnyOrder(

@@ -57,7 +57,7 @@ public class DatastoreConstants {
   /** Field containing debug data for the memory statistics. */
   public static final String CHUNK__DEBUG_TREE = "chunkDebugTree";
 
-  /** Date field. */
+  /** Formatting pattern of the date field. */
   public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSSZ";
 
   // Ids of different stores used as key.

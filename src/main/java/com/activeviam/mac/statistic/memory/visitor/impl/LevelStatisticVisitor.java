@@ -28,7 +28,7 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
-import lombok.extern.java.Log;
+import java.util.logging.Logger;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
@@ -36,8 +36,9 @@ import lombok.extern.java.Log;
  *
  * @author ActiveViam
  */
-@Log(topic = Loggers.ACTIVEPIVOT_LOADING)
 public class LevelStatisticVisitor extends AFeedVisitor<Void> {
+
+  private static final Logger LOGGER = Logger.getLogger(Loggers.ACTIVEPIVOT_LOADING);
 
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
@@ -50,9 +51,13 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
   /** The number of members of the visited level. */
   protected Integer memberCount;
 
+  /** ID of the current dictionary. */
   protected Long dictionaryId;
+  /** Class of the current dictionary. */
   protected String dictionaryClass;
+  /** Size of the current dictionary. */
   protected Integer dictionarySize;
+  /** Order of the current dictionary (i.e. base-2 log of its size). */
   protected Integer dictionaryOrder;
 
   /**
@@ -157,7 +162,8 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
-        log.warning("Dictionary does not state its class " + stat);
+        LOGGER.warning("Dictionary does not state its class."
+            + " The following statistic assumes the creator's class as dictionary class : " + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 

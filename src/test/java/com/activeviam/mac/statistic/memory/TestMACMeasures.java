@@ -18,6 +18,7 @@ import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.transaction.DatastoreTransactionException;
+import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellDTO;
@@ -441,7 +442,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
     final IMemoryStatistic firstChild = export.getChildren().iterator().next();
-    return Map.of(
+    return QfsArrays.<String, String>mutableMap(
             ManagerDescriptionConfig.USED_HEAP,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
             ManagerDescriptionConfig.COMMITTED_HEAP,

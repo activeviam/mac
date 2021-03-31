@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import lombok.extern.java.Log;
+import java.util.logging.Logger;
 
 /**
  * This visitor is not reusable.
@@ -46,8 +46,9 @@ import lombok.extern.java.Log;
  *
  * @author ActiveViam
  */
-@Log(topic = Loggers.DATASTORE_LOADING)
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
+
+  private static final Logger LOGGER = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
   /**
    * A boolean that if true tells us that the currently visited component is responsible for storing
@@ -222,7 +223,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         break;
       case MemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
       case MemoryStatisticConstants.STAT_NAME_UNIQUE_INDICES:
-        processPrimaryIndices(stat);
+        processUniqueIndices(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_KEY_INDEX:
         processKeyIndices(stat);
@@ -380,7 +381,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
-        log.warning("Dictionary does not state its class " + stat);
+        LOGGER.warning("Dictionary does not state its class."
+            + " The following statistic assumes the creator's class as dictionary class : " + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 
@@ -432,7 +434,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   /**
    * Checks whether or not the given storage specification concerns a single field.
    *
-   * <h2>pre-5.10</h2>
+   * <h2>When importing data from an AP version prior to 5.10</h2>
    *
    * <p>Due to how {@code DictionaryManager} exports its dictionaries, dictionary entries that are
    * not {@code com.qfs.dic.impl.FieldStorageSpecification}s should be ignored, as they are
@@ -513,7 +515,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     isVersionColumn = false;
   }
 
-  private void processPrimaryIndices(final IMemoryStatistic stat) {
+  private void processUniqueIndices(final IMemoryStatistic stat) {
     processIndexList(stat, IndexType.UNIQUE);
   }
 

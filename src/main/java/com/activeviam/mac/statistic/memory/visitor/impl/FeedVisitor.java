@@ -27,15 +27,16 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import lombok.extern.java.Log;
+import java.util.logging.Logger;
 
 /**
  * Visitor for chunks.
  *
  * @author ActiveViam
  */
-@Log(topic = Loggers.LOADING)
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
+
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;
@@ -43,7 +44,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
   @Override
   public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println("unknown stat " + memoryStatistic);
+    System.err.println("Unexpected type of statistics : "
+        + memoryStatistic + " which is a " + memoryStatistic.getClass().getSimpleName());
     visitChildren(this, memoryStatistic);
     return null;
   }

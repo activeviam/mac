@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,17 +52,20 @@ import org.springframework.core.env.Environment;
  * @author ActiveViam
  */
 @Configuration
-@Log(topic = Loggers.LOADING)
 public class SourceConfig {
+
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
   /** The name of the property that holds the path to the statistics folder. */
   public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
 
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired protected IDatastore datastore;
+  @Autowired
+  protected IDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  @Autowired protected Environment env;
+  @Autowired
+  protected Environment env;
 
   /**
    * Provides a {@link DirectoryCSVTopic topic}.
@@ -79,12 +82,11 @@ public class SourceConfig {
   @Lazy
   public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
     final String statisticFolder = env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
-    if (log.isLoggable(Level.INFO)) {
+    if (LOGGER.isLoggable(Level.INFO)) {
       final Path folderPath = Paths.get(statisticFolder);
-      log.info(
-          "Using directory `"
-              + folderPath.toAbsolutePath().toString()
-              + "` to load data into the application");
+      LOGGER.info("Using directory `"
+          + folderPath.toAbsolutePath().toString()
+          + "` to load data into the application");
     }
 
     return new DirectoryCSVTopic(
@@ -114,8 +116,8 @@ public class SourceConfig {
       } catch (final Exception e) {
         // PIVOT-3965 Some class loaders (e.g. spring-boot LaunchedURLClassLoader) may throw this
         // exception when encountering absolute paths on Windows, instead of returning null.
-        if (log.isLoggable(Level.FINEST)) {
-          log.log(
+        if (LOGGER.isLoggable(Level.FINEST)) {
+          LOGGER.log(
               Level.FINEST,
               "Suppressed an exception because directory '"
                   + directory
@@ -211,7 +213,7 @@ public class SourceConfig {
             final Stream<IMemoryStatistic> inputs =
                 entry.stream().parallel().map(this::readStatisticFile);
             final String message = feedDatastore(inputs, dumpName);
-            log.info(message);
+            LOGGER.info(message);
           } catch (final Exception e) {
             throw new ActiveViamRuntimeException(e);
           }
@@ -220,12 +222,12 @@ public class SourceConfig {
 
   private IMemoryStatistic readStatisticFile(final Path file) {
     try {
-      if (log.isLoggable(Level.FINE)) {
-        log.fine("Reading statistics from " + file.toAbsolutePath());
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Reading statistics from " + file.toAbsolutePath());
       }
       final IMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-      if (log.isLoggable(Level.FINE)) {
-        log.fine("Statistics read from " + file.toAbsolutePath());
+      if (LOGGER.isLoggable(Level.FINE)) {
+        LOGGER.fine("Statistics read from " + file.toAbsolutePath());
       }
       return read;
     } catch (final IOException ioe) {
@@ -263,8 +265,8 @@ public class SourceConfig {
       params = {"path"})
   @SuppressWarnings("unused")
   public String loadDirectory(final String path) throws IOException {
-    if (log.isLoggable(Level.INFO)) {
-      log.info("Loading user data from " + path);
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Loading user data from " + path);
     }
     final long start = System.nanoTime();
     final Path dirPath = Paths.get(path);
@@ -273,8 +275,8 @@ public class SourceConfig {
     loadDumps(Map.of(dumpName, files));
     final long end = System.nanoTime();
 
-    if (log.isLoggable(Level.INFO)) {
-      log.info("Loading complete for " + path);
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Loading complete for " + path);
     }
     return "Done (" + TimeUnit.NANOSECONDS.toMillis(end - start) + "ms)";
   }
@@ -291,16 +293,16 @@ public class SourceConfig {
       params = {"path"})
   @SuppressWarnings("unused")
   public String loadFile(final String path) {
-    if (log.isLoggable(Level.INFO)) {
-      log.info("Loading user data from " + path);
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Loading user data from " + path);
     }
     final long start = System.nanoTime();
     final String dumpName = Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", "");
     loadDumps(Map.of(dumpName, List.of(Paths.get(path))));
     final long end = System.nanoTime();
 
-    if (log.isLoggable(Level.INFO)) {
-      log.info("Loading complete for " + path);
+    if (LOGGER.isLoggable(Level.INFO)) {
+      LOGGER.info("Loading complete for " + path);
     }
     return "Done (" + TimeUnit.NANOSECONDS.toMillis(end - start) + "ms)";
   }
