@@ -44,8 +44,11 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
   @Override
   public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println("Unexpected type of statistics : "
-        + memoryStatistic + " which is a " + memoryStatistic.getClass().getSimpleName());
+    System.err.println(
+        "Unexpected type of statistics : "
+            + memoryStatistic
+            + " which is a "
+            + memoryStatistic.getClass().getSimpleName());
     visitChildren(this, memoryStatistic);
     return null;
   }

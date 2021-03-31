@@ -415,18 +415,22 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         Set.of(
             reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
             reference(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
-            reference(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            reference(
+                DatastoreConstants.REFERENCE_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             reference(DatastoreConstants.INDEX_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            reference(
+                DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             reference(DatastoreConstants.LEVEL_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             reference(DatastoreConstants.CHUNK_TO_LEVEL_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
             reference(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__DUMP_NAME),
             reference(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             reference(DatastoreConstants.PIVOT_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.APPLICATION_STORE, DatastoreConstants.APPLICATION__DUMP_NAME)),
+            reference(
+                DatastoreConstants.APPLICATION_STORE, DatastoreConstants.APPLICATION__DUMP_NAME)),
         Set.of(
             reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID),
+            reference(
+                DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID),
             reference(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             reference(DatastoreConstants.INDEX_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             reference(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.VERSION__EPOCH_ID),

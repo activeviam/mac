@@ -277,8 +277,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       if (classAttribute != null) {
         this.dictionaryClass = classAttribute.asText();
       } else if (previousDictionaryClass == null) {
-        LOGGER.warning("Dictionary does not state its class."
-            + " The following statistic assumes the creator's class as dictionary class : " + stat);
+        LOGGER.warning(
+            "Dictionary does not state its class."
+                + " The following statistic assumes the creator's class as dictionary class : "
+                + stat);
         this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
       }
 

@@ -60,12 +60,10 @@ public class SourceConfig {
   public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
 
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired
-  protected IDatastore datastore;
+  @Autowired protected IDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  @Autowired
-  protected Environment env;
+  @Autowired protected Environment env;
 
   /**
    * Provides a {@link DirectoryCSVTopic topic}.
@@ -84,9 +82,10 @@ public class SourceConfig {
     final String statisticFolder = env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
     if (LOGGER.isLoggable(Level.INFO)) {
       final Path folderPath = Paths.get(statisticFolder);
-      LOGGER.info("Using directory `"
-          + folderPath.toAbsolutePath().toString()
-          + "` to load data into the application");
+      LOGGER.info(
+          "Using directory `"
+              + folderPath.toAbsolutePath().toString()
+              + "` to load data into the application");
     }
 
     return new DirectoryCSVTopic(
