@@ -1,1 +1,0 @@
-Drag & drop statistic file (.json or .json.sz) in this folder

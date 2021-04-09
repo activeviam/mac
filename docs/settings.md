@@ -7,7 +7,7 @@ The usual ActivePivot spring application properties can be set in this file. A f
 MAC specific settings can also be set:
 
 * `statistic.folder`: the path to the statistics folder, from which MAC extracts
-  the memory reports to analyze (default: *./statistics*)
+  the memory reports to analyze (default: *./input_statistics*)
 
 * `bookmarks.reloadOnStartup`: whether or not to force the reloading of the
   predefined bookmarks in MAC's content server on startup (*true* or *false*,
