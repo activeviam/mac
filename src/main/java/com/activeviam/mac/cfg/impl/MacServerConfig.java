@@ -18,6 +18,7 @@ import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.i18n.impl.LocalI18nConfig;
 import com.qfs.server.cfg.impl.ActivePivotConfig;
 import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
 import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
 import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
 import com.qfs.server.cfg.impl.DatastoreConfig;
@@ -70,6 +71,7 @@ import org.springframework.core.env.Environment;
       ActivePivotServicesConfig.class,
       ActiveViamRestServicesConfig.class,
       ActiveViamWebSocketServicesConfig.class,
+      ActivePivotXmlaServletConfig.class,
 
       // Content server
       ContentServiceConfig.class,
