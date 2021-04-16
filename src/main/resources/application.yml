@@ -47,7 +47,7 @@ qfs:
 
 # The name of the folder containing statistic files in .json format
 statistic:
-  folder: ./statistics
+  folder: ./input_statistics
 
 content-service:
   db:

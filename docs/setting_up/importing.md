@@ -3,7 +3,7 @@
 The import path of the application can be configured through the
 _application.yml_ configuration file . The `statistic.folder` property defines
 the folder being watched by the application, the path can either be relative or
-absolute. It is set to `./statistics` by default.
+absolute. It is set to `./input_statistics` by default.
 
 It is not required to manually decompress the exported files before using them
 in the application.
