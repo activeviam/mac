@@ -258,9 +258,10 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         FeedVisitor.setTupleElement(
             tuple, format, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
       }
-      if (this.dictionaryId != null) {
+      final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
+      if (dictionaryId != null) {
         FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+            tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
       }
       if (this.providerId != null) {
         FeedVisitor.setTupleElement(

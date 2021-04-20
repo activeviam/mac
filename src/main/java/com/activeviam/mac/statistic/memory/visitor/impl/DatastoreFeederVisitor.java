@@ -7,16 +7,11 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
-
-import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
-import com.activeviam.store.structure.impl.StructureDictionaryManager;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -36,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * This visitor is not reusable.
@@ -47,8 +41,6 @@ import java.util.logging.Logger;
  * @author ActiveViam
  */
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
-
-  private static final Logger LOGGER = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
   /**
    * A boolean that if true tells us that the currently visited component is responsible for storing
@@ -179,9 +171,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       FeedVisitor.setTupleElement(
           tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
     }
-    if (this.dictionaryId != null) {
+    final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
+    if (dictionaryId != null) {
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
     }
     tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__USED_BY_VERSION)] =
         this.usedByVersion;
@@ -365,58 +358,13 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       return null;
     }
 
-    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final Long previousDictionaryId = this.dictionaryId;
-    final Integer previousSize = this.dictionarySize;
-    final Integer previousOrder = this.dictionaryOrder;
-    final String previousDictionaryClass = this.dictionaryClass;
-
-    if (!stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_UNDERLYING)) {
-      final IStatisticAttribute dictionaryIdAttribute = stat.getAttribute(ATTR_NAME_DICTIONARY_ID);
-      if (dictionaryIdAttribute != null) {
-        this.dictionaryId = dictionaryIdAttribute.asLong();
-      }
-
-      final var classAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
-      if (classAttribute != null) {
-        this.dictionaryClass = classAttribute.asText();
-      } else if (previousDictionaryClass == null) {
-        LOGGER.warning(
-            "Dictionary does not state its class."
-                + " The following statistic assumes the creator's class as dictionary class : "
-                + stat);
-        this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
-      }
-
-      final var sizeAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE);
-      if (sizeAttribute != null) {
-        this.dictionarySize = sizeAttribute.asInt();
-      }
-
-      final var orderAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER);
-      if (orderAttribute != null) {
-        this.dictionaryOrder = orderAttribute.asInt();
-      }
-
-      if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple =
-            FeedVisitor.buildDictionaryTupleFrom(
-                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
-        FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-        FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
-        FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
-      }
-    }
-
+    final var previousDictionaryAttributes = processDictionaryStatistic(stat, this.epochId);
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = ParentType.DICTIONARY;
-    this.directParentId = String.valueOf(this.dictionaryId);
-    final Collection<String> oldFields = this.fields;
+    this.directParentId = String.valueOf(this.dictionaryAttributes.getDictionaryId());
 
+    final Collection<String> oldFields = this.fields;
     readFieldsIfAny(stat);
 
     visitChildren(stat);
@@ -424,10 +372,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     // Reset
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
-    this.dictionaryId = previousDictionaryId;
-    this.dictionarySize = previousSize;
-    this.dictionaryOrder = previousOrder;
-    this.dictionaryClass = previousDictionaryClass;
+    this.dictionaryAttributes = previousDictionaryAttributes;
     this.fields = oldFields;
 
     return null;

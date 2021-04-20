@@ -7,19 +7,14 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
-
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
-import com.activeviam.store.structure.impl.StructureDictionaryManager;
 import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -37,16 +32,13 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import com.quartetfs.biz.pivot.impl.ActivePivotManager;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * Implementation of {@link IMemoryStatisticVisitor} for pivot statistics.
  *
  * @author ActiveViam
  */
-public class PivotFeederVisitor extends AFeedVisitor<Void> {
-
-  private static final Logger LOGGER = Logger.getLogger(Loggers.ACTIVEPIVOT_LOADING);
+public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
@@ -60,12 +52,6 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
   protected Long providerId;
   /** Partition being currently visited. */
   protected Integer partition;
-  /** Dictionary being currently visited. */
-  protected Long dictionaryId;
-
-  protected String dictionaryClass;
-  protected Integer dictionarySize;
-  protected Integer dictionaryOrder;
   /** Dimension being currently visited. */
   protected String dimension;
   /** Hierarchy being currently visited. */
@@ -234,9 +220,10 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] = this.partition;
 
-    if (this.dictionaryId != null) {
+    final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
+    if (dictionaryId != null) {
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
     }
 
     this.transaction.add(DatastoreConstants.CHUNK_STORE, tuple);
@@ -261,56 +248,11 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       }
     }
 
-    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final Long previousDictionaryId = this.dictionaryId;
-    final Integer previousSize = this.dictionarySize;
-    final Integer previousOrder = this.dictionaryOrder;
-    final String previousDictionaryClass = this.dictionaryClass;
-
-    if (!stat.getName().equals(MemoryStatisticConstants.STAT_NAME_DICTIONARY_UNDERLYING)) {
-      final IStatisticAttribute dictionaryIdAttribute = stat.getAttribute(ATTR_NAME_DICTIONARY_ID);
-      if (dictionaryIdAttribute != null) {
-        this.dictionaryId = dictionaryIdAttribute.asLong();
-      }
-
-      final var classAttribute = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
-      if (classAttribute != null) {
-        this.dictionaryClass = classAttribute.asText();
-      } else if (previousDictionaryClass == null) {
-        LOGGER.warning(
-            "Dictionary does not state its class."
-                + " The following statistic assumes the creator's class as dictionary class : "
-                + stat);
-        this.dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
-      }
-
-      final var sizeAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE);
-      if (sizeAttribute != null) {
-        this.dictionarySize = sizeAttribute.asInt();
-      }
-
-      final var orderAttribute = stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER);
-      if (orderAttribute != null) {
-        this.dictionaryOrder = orderAttribute.asInt();
-      }
-
-      if (!dictionaryClass.equals(StructureDictionaryManager.class.getName())) {
-        final Object[] tuple =
-            FeedVisitor.buildDictionaryTupleFrom(
-                format, dictionaryId, dictionaryClass, dictionarySize, dictionaryOrder);
-        FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-        FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
-        FeedVisitor.add(stat, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
-      }
-    }
-
+    final var previousDictionaryAttributes = processDictionaryStatistic(stat, this.epochId);
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = cpnType != null ? this.rootComponent : ParentType.DICTIONARY;
-    this.directParentId = String.valueOf(this.dictionaryId);
+    this.directParentId = String.valueOf(this.dictionaryAttributes.getDictionaryId());
 
     if (this.providerId != null) {
       visitChildren(stat);
@@ -325,10 +267,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
       throw new ActiveViamRuntimeException("Unexpected stat on dictionary: " + stat);
     }
 
-    this.dictionaryId = previousDictionaryId;
-    this.dictionarySize = previousSize;
-    this.dictionaryOrder = previousOrder;
-    this.dictionaryClass = previousDictionaryClass;
+    this.dictionaryAttributes = previousDictionaryAttributes;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.ignoreFieldSpecifications = previousIgnoreFieldSpecifications;
@@ -504,7 +443,7 @@ public class PivotFeederVisitor extends AFeedVisitor<Void> {
 
     this.transaction.add(DatastoreConstants.LEVEL_STORE, tuple);
 
-    this.dictionaryId = null;
+    this.dictionaryAttributes = DictionaryAttributes.NONE;
     this.level = null;
   }
 
