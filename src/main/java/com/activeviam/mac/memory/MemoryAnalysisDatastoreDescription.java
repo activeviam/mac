@@ -7,6 +7,8 @@
 
 package com.activeviam.mac.memory;
 
+import static com.qfs.desc.impl.DatastoreSchemaDescriptionUtil.createPath;
+
 import com.activeviam.builders.StartBuilding;
 import com.qfs.chunk.IChunk;
 import com.qfs.desc.IDatastoreSchemaDescription;
@@ -16,7 +18,6 @@ import com.qfs.desc.impl.DuplicateKeyHandlers;
 import com.qfs.desc.impl.StoreDescriptionBuilder;
 import com.qfs.literal.ILiteralType;
 import com.qfs.pool.impl.QFSPools;
-import com.qfs.store.IDatastoreSchema;
 import com.qfs.util.impl.QfsArrays;
 import com.quartetfs.fwk.format.IParser;
 import java.util.Arrays;
@@ -413,48 +414,47 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   public Collection<Set<String>> getDictionaryGroups() {
     return List.of(
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
-            reference(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
-            reference(
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
+            createPath(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
+            createPath(
                 DatastoreConstants.REFERENCE_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.INDEX_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(
+            createPath(DatastoreConstants.INDEX_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            createPath(
                 DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.LEVEL_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.CHUNK_TO_LEVEL_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
-            reference(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__DUMP_NAME),
-            reference(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(DatastoreConstants.PIVOT_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            reference(
+            createPath(DatastoreConstants.LEVEL_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            createPath(
+                DatastoreConstants.CHUNK_TO_LEVEL_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
+            createPath(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__DUMP_NAME),
+            createPath(
+                DatastoreConstants.PROVIDER_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            createPath(DatastoreConstants.PIVOT_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
+            createPath(
                 DatastoreConstants.APPLICATION_STORE, DatastoreConstants.APPLICATION__DUMP_NAME)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.VERSION__EPOCH_ID),
+            createPath(
                 DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID),
-            reference(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(DatastoreConstants.INDEX_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(DatastoreConstants.LEVEL_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            reference(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__EPOCH_ID)),
+            createPath(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.VERSION__EPOCH_ID),
+            createPath(DatastoreConstants.INDEX_STORE, DatastoreConstants.VERSION__EPOCH_ID),
+            createPath(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.VERSION__EPOCH_ID),
+            createPath(DatastoreConstants.LEVEL_STORE, DatastoreConstants.VERSION__EPOCH_ID),
+            createPath(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__EPOCH_ID)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.OWNER__OWNER),
-            reference(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__OWNER)),
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.OWNER__OWNER),
+            createPath(DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__OWNER)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PROVIDER_ID),
-            reference(DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__PROVIDER_ID)),
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PROVIDER_ID),
+            createPath(
+                DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__PROVIDER_ID)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_DICO_ID),
-            reference(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_ID)),
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_DICO_ID),
+            createPath(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_ID)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_INDEX_ID),
-            reference(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_ID)),
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_INDEX_ID),
+            createPath(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_ID)),
         Set.of(
-            reference(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_REF_ID),
-            reference(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_ID)));
-  }
-
-  private String reference(String store, String field) {
-    return store + IDatastoreSchema.PATH_SEPARATOR + field;
+            createPath(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_REF_ID),
+            createPath(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_ID)));
   }
 
   private Stream<IReferenceDescription> getChunkReferences() {
