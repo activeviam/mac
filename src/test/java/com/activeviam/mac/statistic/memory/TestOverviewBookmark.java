@@ -20,10 +20,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestOverviewBookmark extends ATestMemoryStatistic {
 
@@ -34,12 +34,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 20;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException {
     initializeApplication();
 
@@ -88,7 +88,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws AgentException {
     monitoringApp.getLeft().close();
     monitoringApp.getRight().stop();

@@ -12,7 +12,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
-import com.qfs.store.record.impl.Records.IDictionaryProvider;
+import com.qfs.store.record.impl.IDictionaryProvider;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.AxisDTO;
@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
@@ -42,12 +42,12 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 20;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException {
     initializeApplication();
 
@@ -98,7 +98,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws AgentException {
     monitoringApp.getLeft().close();
     monitoringApp.getRight().stop();

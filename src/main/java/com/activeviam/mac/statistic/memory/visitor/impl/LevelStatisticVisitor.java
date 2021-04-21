@@ -7,11 +7,12 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -22,14 +23,17 @@ import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
 import com.qfs.store.IDatastoreSchemaMetadata;
 import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.transaction.IOpenedTransaction;
+import java.util.logging.Logger;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
- * PivotMemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
+ * MemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
  *
  * @author ActiveViam
  */
-public class LevelStatisticVisitor extends AFeedVisitor<Void> {
+public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
+
+  private static final Logger LOGGER = Logger.getLogger(Loggers.ACTIVEPIVOT_LOADING);
 
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
@@ -41,8 +45,6 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   /** The number of members of the visited level. */
   protected Integer memberCount;
-
-  private Long dictionaryId;
 
   /**
    * Constructor.
@@ -87,7 +89,7 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   private void processLevelMember(final IMemoryStatistic stat) {
     this.memberCount =
-        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
     assert stat.getChildren().isEmpty();
   }
 
@@ -117,9 +119,10 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
         DatastoreConstants.CHUNK__PARTITION_ID,
         MemoryAnalysisDatastoreDescription.NO_PARTITION);
 
-    if (this.dictionaryId != null) {
+    final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
+    if (dictionaryId != null) {
       FeedVisitor.setTupleElement(
-          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, this.dictionaryId);
+          tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
     }
     FeedVisitor.writeChunkTupleForFields(stat, transaction, null, format, tuple);
 
@@ -130,26 +133,17 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(DictionaryStatistic stat) {
-    final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-    final Object[] tuple = FeedVisitor.buildDictionaryTupleFrom(format, stat);
-
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.APPLICATION__DUMP_NAME, this.dumpName);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
-
-    final Long previousDictionaryId = this.dictionaryId;
-    this.dictionaryId = (Long) tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)];
-    this.transaction.add(DatastoreConstants.DICTIONARY_STORE, tuple);
-
+    final var previousDictionaryAttributes = processDictionaryStatistic(stat, this.epochId);
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
+
     this.directParentType = ParentType.DICTIONARY;
-    this.directParentId = String.valueOf(this.dictionaryId);
+    this.directParentId = String.valueOf(this.dictionaryAttributes.getDictionaryId());
 
     // We are processing a hierarchy/level
     visitChildren(stat);
 
-    this.dictionaryId = previousDictionaryId;
+    this.dictionaryAttributes = previousDictionaryAttributes;
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
 
@@ -174,13 +168,10 @@ public class LevelStatisticVisitor extends AFeedVisitor<Void> {
 
   @Override
   public Void visit(final DefaultMemoryStatistic stat) {
-    switch (stat.getName()) {
-      case PivotMemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS:
-        processLevelMember(stat);
-        break;
-      default:
-        visitChildren(stat);
-        break;
+    if (MemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS.equals(stat.getName())) {
+      processLevelMember(stat);
+    } else {
+      visitChildren(stat);
     }
     return null;
   }

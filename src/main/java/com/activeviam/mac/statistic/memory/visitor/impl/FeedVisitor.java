@@ -8,14 +8,12 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -29,7 +27,6 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -39,15 +36,25 @@ import java.util.logging.Logger;
  */
 public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
-  /** Class logger. */
-  private static final Logger logger = Logger.getLogger(Loggers.LOADING);
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;
   private final String dumpName;
 
+  @Override
+  public Void visit(final IMemoryStatistic memoryStatistic) {
+    System.err.println(
+        "Unexpected type of statistics : "
+            + memoryStatistic
+            + " which is a "
+            + memoryStatistic.getClass().getSimpleName());
+    visitChildren(this, memoryStatistic);
+    return null;
+  }
+
   /**
-   * Contructor.
+   * Constructor.
    *
    * @param storageMetadata metadata of the Datastore schema
    * @param tm ongoing transaction
@@ -126,30 +133,16 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   static Object[] buildDictionaryTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
+      final IRecordFormat format,
+      final long dictionaryId,
+      final String dictionaryClass,
+      final int dictionarySize,
+      final int dictionaryOrder) {
     final Object[] tuple = new Object[format.getFieldCount()];
-
-    final IStatisticAttribute dicIdAttr =
-        Objects.requireNonNull(
-            stat.getAttribute(ATTR_NAME_DICTIONARY_ID), () -> "No dictionary ID for " + stat);
-    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dicIdAttr.asLong();
-
-    final IStatisticAttribute dicClassAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CLASS);
-    final String dictionaryClass;
-    if (dicClassAttr != null) {
-      dictionaryClass = dicClassAttr.asText();
-    } else {
-      logger.warning("Dictionary does not state its class " + stat);
-      dictionaryClass = stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
-    }
-    //
+    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
-    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] =
-        stat.getAttribute(DatastoreConstants.DICTIONARY_SIZE).asInt();
-    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] =
-        stat.getAttribute(DatastoreConstants.DICTIONARY_ORDER).asInt();
-
+    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] = dictionarySize;
+    tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ORDER)] = dictionaryOrder;
     return tuple;
   }
 
@@ -176,9 +169,9 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
             new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         visitor.startFrom(stat);
         break;
-      case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
-      case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
-      case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
+      case MemoryStatisticConstants.STAT_NAME_MANAGER:
+      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+      case MemoryStatisticConstants.STAT_NAME_PIVOT:
         final PivotFeederVisitor feed =
             new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         feed.startFrom(stat);
@@ -238,7 +231,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     final IStatisticAttribute usedHeap =
         stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY);
     final IStatisticAttribute maxHeap =
-        stat.getAttribute(MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY);
+        stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY);
     final IStatisticAttribute usedOffHeap =
         stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY);
     final IStatisticAttribute maxOffHeap =

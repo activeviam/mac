@@ -17,7 +17,7 @@ import java.util.Collection;
  * @param <R> Type of the result to return by the visitor
  * @author ActiveViam
  */
-public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
+public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitorWithDictionary<R> {
 
   /** Names of the currently visited fields. */
   protected Collection<String> fields;
@@ -25,9 +25,6 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitor<R> {
   protected Long indexId;
   /** ID of the current reference. */
   protected Long referenceId;
-
-  /** ID of the current dictionary. */
-  protected Long dictionaryId;
 
   /**
    * Constructor.

@@ -33,7 +33,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   protected ChunkOwner owner = null;
 
   /**
-   * Constuctor.
+   * Constructor.
    *
    * @param transaction transaction to fill with visited statistics
    * @param storageMetadata Metadata of the Analysis Datastore
@@ -46,6 +46,12 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
     this.transaction = transaction;
     this.storageMetadata = storageMetadata;
     this.dumpName = dumpName;
+  }
+
+  @Override
+  public R visit(final IMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
+    return null;
   }
 
   /**

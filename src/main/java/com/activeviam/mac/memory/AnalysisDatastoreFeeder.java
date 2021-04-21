@@ -37,8 +37,7 @@ import java.util.stream.Stream;
 /** This class is responsible for parsing memory statistics into an analysis datastore. */
 public class AnalysisDatastoreFeeder {
 
-  /** Logger. */
-  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
+  private static final Logger LOGGER = Logger.getLogger(Loggers.DATASTORE_LOADING);
 
   /** The dump name associated with this feeder. */
   private final String dumpName;
@@ -150,8 +149,8 @@ public class AnalysisDatastoreFeeder {
     final IRecordFormat epochViewRecordFormat =
         transaction
             .getMetadata()
-            .getDatastoreSchemaFormat()
-            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreFormat()
             .getRecordFormat();
 
     for (final var datastoreEpochId : this.datastoreEpochs) {
@@ -189,8 +188,8 @@ public class AnalysisDatastoreFeeder {
     final IRecordFormat epochViewRecordFormat =
         transaction
             .getMetadata()
-            .getDatastoreSchemaFormat()
-            .getStoreFormat(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getStoreFormat()
             .getRecordFormat();
 
     for (final ChunkOwner owner : distributedEpochsPerOwner.keySet()) {

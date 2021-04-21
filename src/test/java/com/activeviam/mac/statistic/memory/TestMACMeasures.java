@@ -3,12 +3,13 @@ package com.activeviam.mac.statistic.memory;
 import static com.qfs.util.impl.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.pivot.builders.StartBuilding;
 import com.activeviam.properties.impl.ActiveViamProperty;
-import com.activeviam.properties.impl.ActiveViamPropertyRule;
-import com.activeviam.properties.impl.ActiveViamPropertyRule.ActiveViamPropertyRuleBuilder;
-import com.qfs.junit.ResourceRule;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension;
+import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -24,23 +25,20 @@ import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.QuartetRuntimeException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Test class verifying the results obtained by the Measures provided in the MemoryAnalysisCube
@@ -55,57 +53,52 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   Pair<IDatastore, IActivePivotManager> monitoringApp;
 
+  IMemoryStatistic stats;
   Map<String, Long> appStats;
   StatisticsSummary statsSumm;
 
   public static final int ADDED_DATA_SIZE = 100;
   public static final int REMOVED_DATA_SIZE = 10;
 
-  @ClassRule
-  public static ActiveViamPropertyRule propertyRule =
-      new ActiveViamPropertyRuleBuilder()
+  @RegisterExtension
+  @SuppressWarnings("unused")
+  public static ActiveViamPropertyExtension propertyRule =
+      new ActiveViamPropertyExtensionBuilder()
           .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
           .build();
 
-  @Rule public final ResourceRule methodResources = new ResourceRule();
+  @RegisterExtension
+  public final LocalResourcesExtension methodResources = new LocalResourcesExtension();
 
-  @BeforeClass
+  @BeforeAll
   public static void init() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
-  public void setup() throws AgentException, IOException {
+  @BeforeEach
+  public void setup() throws AgentException {
     monitoredApp = createMicroApplication();
     // Add 100 records
     monitoredApp
         .getLeft()
-        .edit(
-            tm -> {
-              IntStream.range(0, ADDED_DATA_SIZE)
-                  .forEach(
-                      i -> {
-                        tm.add("A", i * i);
-                      });
-            });
+        .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
     monitoredApp
         .getLeft()
         .edit(
-            tm -> {
-              IntStream.range(50, 50 + REMOVED_DATA_SIZE)
-                  .forEach(
-                      i -> {
-                        try {
-                          tm.remove("A", i * i);
-                        } catch (NoTransactionException
-                            | DatastoreTransactionException
-                            | IllegalArgumentException
-                            | NullPointerException e) {
-                          throw new QuartetRuntimeException(e);
-                        }
-                      });
-            });
+            tm ->
+                IntStream.range(50, 50 + REMOVED_DATA_SIZE)
+                    .forEach(
+                        i -> {
+                          try {
+                            tm.remove("A", i * i);
+                          } catch (NoTransactionException
+                              | DatastoreTransactionException
+                              | IllegalArgumentException
+                              | NullPointerException e) {
+                            throw new ActiveViamRuntimeException(e);
+                          }
+                        }));
 
     // Force to discard all versions
     monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -115,7 +108,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    stats = loadMemoryStatFromFolder(exportPath);
     appStats = extractApplicationStats(stats);
     statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
@@ -262,23 +255,22 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
-        assertions -> {
-          appStats.forEach(
-              cast(
-                  (measure, value) -> {
-                    final MDXQuery query =
-                        new MDXQuery(
-                            "SELECT"
-                                + "  NON EMPTY [Measures].["
-                                + measure
-                                + "] ON COLUMNS"
-                                + "  FROM [MemoryCube]");
-                    final CellSetDTO result = pivot.execute(query);
-                    System.out.println(measure);
-                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                    assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                  }));
-        });
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + "  NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + "  FROM [MemoryCube]");
+                      final CellSetDTO result = pivot.execute(query);
+                      System.out.println(measure);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
   }
 
   /**
@@ -291,44 +283,42 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
-        assertions -> {
-          appStats.forEach(
-              cast(
-                  (measure, value) -> {
-                    final MDXQuery query =
-                        new MDXQuery(
-                            "SELECT"
-                                + " NON EMPTY [Measures].["
-                                + measure
-                                + "] ON COLUMNS"
-                                + " FROM [MemoryCube]"
-                                + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
-                    final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                    assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                  }));
-        });
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + " NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + " FROM [MemoryCube]"
+                                  + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
+                      final CellSetDTO result = pivot.execute(query);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
 
     SoftAssertions.assertSoftly(
-        assertions -> {
-          appStats.forEach(
-              cast(
-                  (measure, value) -> {
-                    final MDXQuery query =
-                        new MDXQuery(
-                            "SELECT"
-                                + " NON EMPTY [Measures].["
-                                + measure
-                                + "] ON COLUMNS"
-                                + " FROM [MemoryCube]"
-                                + " WHERE (["
-                                + ManagerDescriptionConfig.CHUNK_DIMENSION
-                                + "].[ChunkId].[ALL].[AllMember].FirstChild)");
-                    final CellSetDTO result = pivot.execute(query);
-                    final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
-                    assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
-                  }));
-        });
+        assertions ->
+            appStats.forEach(
+                cast(
+                    (measure, value) -> {
+                      final MDXQuery query =
+                          new MDXQuery(
+                              "SELECT"
+                                  + " NON EMPTY [Measures].["
+                                  + measure
+                                  + "] ON COLUMNS"
+                                  + " FROM [MemoryCube]"
+                                  + " WHERE (["
+                                  + ManagerDescriptionConfig.CHUNK_DIMENSION
+                                  + "].[ChunkId].[ALL].[AllMember].FirstChild)");
+                      final CellSetDTO result = pivot.execute(query);
+                      final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
+                      assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
+                    })));
   }
 
   @Test
@@ -456,7 +446,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             ManagerDescriptionConfig.USED_HEAP,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
             ManagerDescriptionConfig.COMMITTED_HEAP,
-            MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY,
             ManagerDescriptionConfig.USED_DIRECT,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
             ManagerDescriptionConfig.MAX_DIRECT,

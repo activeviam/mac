@@ -16,10 +16,14 @@
   <name>ActivePivot Memory Analysis Cube</name>
 
   <properties>
-    <activepivot.version>5.9.2</activepivot.version>
-    <activeui.version>4.3.10</activeui.version>
+    <jdk.version>11</jdk.version>
+
+    <activepivot.version>5.10.1</activepivot.version>
+    <activeui.version>4.3.16</activeui.version>
+    <content-server-ui.version>2.0.0</content-server-ui.version>
+
     <tomcat.version>9.0.31</tomcat.version>
-    <lombok.version>1.18.12</lombok.version>
+    <lombok.version>1.18.18</lombok.version>
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
 
@@ -105,7 +109,7 @@
     <dependency>
       <groupId>com.activeviam.tech</groupId>
       <artifactId>content-server-ui</artifactId>
-      <version>2.0.0</version>
+      <version>${content-server-ui.version}</version>
       <scope>runtime</scope>
     </dependency>
 
@@ -122,11 +126,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.websocket</groupId>
-      <artifactId>javax.websocket-client-api</artifactId>
-      <version>1.1</version>
     </dependency>
 
     <!-- Connection pool. Scope test to use import it only when using Jetty
@@ -171,18 +170,6 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- Useful dependencies to run some tests in a given order to reproduce errors -->
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-suite-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-runner</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -204,7 +191,7 @@
                   <version>3.5.2</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[11,)</version>
+                  <version>[${jdk.version},)</version>
                 </requireJavaVersion>
               </rules>
               <fail>true</fail>
@@ -218,9 +205,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>11</source>
-          <target>11</target>
-          <release>11</release>
+          <source>${jdk.version}</source>
+          <target>${jdk.version}</target>
+          <release>${jdk.version}</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -308,23 +295,4 @@
 
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <!-- Including Lombok as a plain dependency to make Intellij happy -->
-      <id>activeInIdea</id>
-      <activation>
-        <property>
-          <name>idea.version</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.projectlombok</groupId>
-          <artifactId>lombok</artifactId>
-          <version>${lombok.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 </project>

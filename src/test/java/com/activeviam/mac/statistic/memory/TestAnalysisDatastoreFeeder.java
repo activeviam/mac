@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
@@ -49,12 +49,12 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   private IMemoryStatistic appStatistics;
   private IMemoryStatistic distributedAppStatistics;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws DatastoreTransactionException, AgentException {
     initializeApplication();
 
@@ -202,9 +202,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     distributedMonitoredApp
         .getLeft()
         .edit(
-            transactionManager -> {
-              IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
-            });
+            transactionManager ->
+                IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =

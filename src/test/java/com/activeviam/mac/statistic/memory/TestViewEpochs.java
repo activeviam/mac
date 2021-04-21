@@ -30,6 +30,7 @@ import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +38,10 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestViewEpochs extends ATestMemoryStatistic {
 
@@ -48,12 +49,12 @@ public class TestViewEpochs extends ATestMemoryStatistic {
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
   private IMemoryStatistic statistics;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException, DatastoreTransactionException {
     initializeApplication();
 
@@ -119,7 +120,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
         monitoringDatastore, List.of(data), "testViewEpochs");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws AgentException {
     monitoringApp.getLeft().close();
     monitoringApp.getRight().stop();
@@ -148,11 +149,11 @@ public class TestViewEpochs extends ATestMemoryStatistic {
           assertions
               .assertThat(epochIds.get(storeA))
               .as("store A epochs")
-              .containsExactlyInAnyOrder(1L, 3L);
+              .containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
           assertions
               .assertThat(epochIds.get(storeB))
               .as("store B epochs")
-              .containsExactlyInAnyOrder(0L, 2L, 4L);
+              .containsExactlyInAnyOrder(1L, 2L, 3L, 4L);
           assertions
               .assertThat(epochIds.get(cube))
               .as("cube epochs")
@@ -180,16 +181,19 @@ public class TestViewEpochs extends ATestMemoryStatistic {
               .as("store A epochs")
               .containsExactlyInAnyOrderEntriesOf(
                   Map.of(
-                      1L, Set.of(1L, 2L),
-                      3L, Set.of(3L, 4L)));
+                      1L, Collections.singleton(1L),
+                      2L, Collections.singleton(2L),
+                      3L, Collections.singleton(3L),
+                      4L, Collections.singleton(4L)));
           assertions
               .assertThat(viewEpochs.get(storeB).asMap())
               .as("store B epochs")
               .containsExactlyInAnyOrderEntriesOf(
                   Map.of(
-                      0L, Set.of(0L, 1L),
-                      2L, Set.of(2L, 3L),
-                      4L, Set.of(4L)));
+                      1L, Collections.singleton(1L),
+                      2L, Collections.singleton(2L),
+                      3L, Collections.singleton(3L),
+                      4L, Collections.singleton(4L)));
           assertions
               .assertThat(viewEpochs.get(cube).asMap())
               .as("cube epochs")

@@ -37,21 +37,21 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestBranches extends ATestMemoryStatistic {
 
   private Pair<IDatastore, IActivePivotManager> monitoredApp;
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws AgentException, DatastoreTransactionException {
     initializeApplication();
 

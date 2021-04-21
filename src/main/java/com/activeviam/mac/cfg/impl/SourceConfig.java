@@ -54,7 +54,6 @@ import org.springframework.core.env.Environment;
 @Configuration
 public class SourceConfig {
 
-  /** Logger. */
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
   /** The name of the property that holds the path to the statistics folder. */
