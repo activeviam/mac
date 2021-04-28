@@ -2,7 +2,9 @@ Memory Analysis Cube
 ==============
 
 The Memory Analysis Cube is a project that allows the exploration and analysis of the data consumption from any ActivePivot application. 
-This project builds as a stand-alone SpringBoot jar file that with an embedded ActiveUI app available on `localhost:9092`
+This project builds as a stand-alone SpringBoot jar file that with an embedded ActiveUI app available on `localhost:9092`.
+
+This version is compatibile with ActivePivot 5.8. To use this project with other versions pick the right branch.
 
 Features
 --------
