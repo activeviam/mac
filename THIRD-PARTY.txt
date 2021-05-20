@@ -1,0 +1,170 @@
+Name	Artifact	Url	Version	Licenses
+AntLR Parser Generator	antlr:antlr	http://www.antlr.org/	2.7.7	BSD License
+Logback Classic Module	ch.qos.logback:logback-classic	http://logback.qos.ch/logback-classic	1.2.3	Eclipse Public License - v 1.0;GNU Lesser General Public License
+Logback Core Module	ch.qos.logback:logback-core	http://logback.qos.ch/logback-core	1.2.3	Eclipse Public License - v 1.0;GNU Lesser General Public License
+ClassMate	com.fasterxml:classmate	https://github.com/FasterXML/java-classmate	1.5.1	Apache License 2.0
+Jackson-annotations	com.fasterxml.jackson.core:jackson-annotations	http://github.com/FasterXML/jackson	2.11.4	Apache License 2.0
+Jackson-core	com.fasterxml.jackson.core:jackson-core	https://github.com/FasterXML/jackson-core	2.11.4	Apache License 2.0
+jackson-databind	com.fasterxml.jackson.core:jackson-databind	http://github.com/FasterXML/jackson	2.11.4	Apache License 2.0
+Jackson datatype: jdk8	com.fasterxml.jackson.datatype:jackson-datatype-jdk8	https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jdk8	2.11.4	Apache License 2.0
+Jackson datatype: JSR310	com.fasterxml.jackson.datatype:jackson-datatype-jsr310	https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310	2.11.4	Apache License 2.0
+Jackson-JAXRS-base	com.fasterxml.jackson.jaxrs:jackson-jaxrs-base	http://github.com/FasterXML/jackson-jaxrs-providers/jackson-jaxrs-base	2.11.4	Apache License 2.0
+Jackson-JAXRS-JSON	com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider	http://github.com/FasterXML/jackson-jaxrs-providers/jackson-jaxrs-json-provider	2.11.4	Apache License 2.0
+Jackson module: JAXB Annotations	com.fasterxml.jackson.module:jackson-module-jaxb-annotations	https://github.com/FasterXML/jackson-modules-base	2.11.4	Apache License 2.0
+Jackson-module-parameter-names	com.fasterxml.jackson.module:jackson-module-parameter-names	https://github.com/FasterXML/jackson-modules-java8/jackson-module-parameter-names	2.11.4	Apache License 2.0
+Woodstox	com.fasterxml.woodstox:woodstox-core	https://github.com/FasterXML/woodstox	6.1.1	Apache License 2.0
+JCIP Annotations under Apache License	com.github.stephenc.jcip:jcip-annotations	http://stephenc.github.com/jcip-annotations	1.0-1	Apache License 2.0
+FindBugs-jsr305	com.google.code.findbugs:jsr305	http://findbugs.sourceforge.net/	3.0.2	Apache License 2.0
+FlatBuffers Java API	com.google.flatbuffers:flatbuffers-java	https://github.com/google/flatbuffers	1.9.0	Apache License 2.0
+Guava: Google Core Libraries for Java	com.google.guava:guava	https://github.com/google/guava/guava	19.0	Apache License 2.0
+H2 Database Engine	com.h2database:h2	https://h2database.com	1.4.200	MPL 2.0 or EPL 1.0
+c3p0	com.mchange:c3p0	https://github.com/swaldman/c3p0	0.9.5.3	Eclipse Public License, Version 1.0;GNU Lesser General Public License, Version 2.1
+mchange-commons-java	com.mchange:mchange-commons-java	https://github.com/swaldman/mchange-commons-java	0.2.15	Eclipse Public License, Version 1.0;GNU Lesser General Public License, Version 2.1
+Nimbus JOSE+JWT	com.nimbusds:nimbus-jose-jwt	https://bitbucket.org/connect2id/nimbus-jose-jwt	9.1.3	Apache License 2.0
+JavaBeans Activation Framework	com.sun.activation:javax.activation	http://java.net/all/javax.activation/	1.2.0	CDDL/GPLv2+CE
+istack common utility code runtime	com.sun.istack:istack-commons-runtime	https://projects.eclipse.org/projects/ee4j/istack-commons/istack-commons-runtime	3.0.8	Eclipse Distribution License - v 1.0
+Old JAXB Core	com.sun.xml.bind:jaxb-core	http://jaxb.java.net/jaxb-bundles/jaxb-core	2.3.0	CDDL+GPL License
+Old JAXB Runtime	com.sun.xml.bind:jaxb-impl	https://javaee.github.io/jaxb-v2/jaxb-bundles/jaxb-impl/	2.3.2	Eclipse Distribution License - v 1.0
+Old JAXB JXC	com.sun.xml.bind:jaxb-jxc	http://jaxb.java.net/jaxb-bundles/jaxb-jxc	2.3.1	CDDL+GPL License
+Old JAXB XJC	com.sun.xml.bind:jaxb-xjc	https://javaee.github.io/jaxb-v2/jaxb-bundles/jaxb-xjc/	2.3.2	Eclipse Distribution License - v 1.0
+fastinfoset	com.sun.xml.fastinfoset:FastInfoset	https://projects.eclipse.org/projects/ee4j.jaxb-impl/FastInfoset	1.2.18	Apache License 2.0;Eclipse Distribution License - v 1.0
+saaj-impl	com.sun.xml.messaging.saaj:saaj-impl	https://projects.eclipse.org/projects/ee4j/saaj-impl	1.5.1	Eclipse Distribution License - v 1.0
+xmlstreambuffer	com.sun.xml.stream.buffer:streambuffer	http://xmlstreambuffer.java.net/	1.5.6	Dual license consisting of the CDDL v1.1 and GPL v2
+JAX-WS RI Eclipselink Plugin	com.sun.xml.ws:jaxws-eclipselink-plugin	https://javaee.github.io/metro-jax-ws/project/jaxws-eclipselink-plugin	2.3.1	CDDL + GPLv2 with classpath exception
+JAX-WS RI Standalone Zipped Bundle	com.sun.xml.ws:jaxws-ri	https://javaee.github.io/metro-jax-ws/project/bundles/jaxws-ri	2.3.1	CDDL + GPLv2 with classpath exception
+JAX-WS RI Runtime Bundle	com.sun.xml.ws:jaxws-rt	https://javaee.github.io/metro-jax-ws/project/bundles/jaxws-rt	2.3.1	CDDL + GPLv2 with classpath exception
+JAX-WS RI Tools Bundle	com.sun.xml.ws:jaxws-tools	https://javaee.github.io/metro-jax-ws/project/bundles/jaxws-tools	2.3.1	CDDL + GPLv2 with classpath exception
+policy	com.sun.xml.ws:policy	http://policy.java.net/	2.7.5	Dual License: CDDL 1.0 and GPL V2 with Classpath Exception
+JAX-WS RI Release Documentation	com.sun.xml.ws:release-documentation	https://javaee.github.io/metro-jax-ws/project/docs/release-documentation	2.3.1	CDDL + GPLv2 with classpath exception
+JAX-WS RI Samples	com.sun.xml.ws:samples	https://javaee.github.io/metro-jax-ws/project/samples	2.3.1	CDDL + GPLv2 with classpath exception
+JAX-WS RI Eclipselink SDO Plugin	com.sun.xml.ws:sdo-eclipselink-plugin	https://javaee.github.io/metro-jax-ws/project/sdo-eclipselink-plugin	2.3.1	CDDL + GPLv2 with classpath exception
+SDO API	commonj.sdo:commonj.sdo	http://www.eclipse.org/eclipselink	2.1.1.v201112051852	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+Apache Commons Codec	commons-codec:commons-codec	https://commons.apache.org/proper/commons-codec/	1.13	Apache License 2.0
+micrometer-core	io.micrometer:micrometer-core	https://github.com/micrometer-metrics/micrometer	1.6.3	Apache License 2.0
+Netty/All-in-One	io.netty:netty-all	https://netty.io/netty-all/	4.1.58.Final	Apache License 2.0
+Netty/Common	io.netty:netty-common	https://netty.io/netty-common/	4.1.58.Final	Apache License 2.0
+Jakarta Activation API jar	jakarta.activation:jakarta.activation-api	https://github.com/eclipse-ee4j/jaf/jakarta.activation-api	1.2.2	EDL 1.0
+Jakarta Annotations API	jakarta.annotation:jakarta.annotation-api	https://projects.eclipse.org/projects/ee4j.ca	1.3.5	EPL 2.0;GPL2 w/ CPE
+Jakarta Bean Validation API	jakarta.validation:jakarta.validation-api	https://beanvalidation.org	2.0.2	Apache License 2.0
+jakarta.ws.rs-api	jakarta.ws.rs:jakarta.ws.rs-api	https://github.com/eclipse-ee4j/jaxrs-api	2.1.6	EPL 2.0;GPL2 w/ CPE
+jakarta.xml.bind-api	jakarta.xml.bind:jakarta.xml.bind-api	https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api	2.3.2	Eclipse Distribution License - v 1.0
+Jakarta SOAP with Attachments API	jakarta.xml.soap:jakarta.xml.soap-api	https://github.com/eclipse-ee4j/saaj-api	1.4.2	Eclipse Distribution License - v 1.0
+JavaBeans Activation Framework API jar	javax.activation:javax.activation-api	http://java.net/all/javax.activation-api/	1.2.0	CDDL/GPLv2+CE
+javax.annotation API	javax.annotation:javax.annotation-api	http://jcp.org/en/jsr/detail?id=250	1.3.2	CDDL + GPLv2 with classpath exception
+javax.jws API	javax.jws:javax.jws-api	http://glassfish.java.net	1.1	CDDL + GPLv2 with classpath exception
+JavaMail API (compat)	javax.mail:mail	http://kenai.com/projects/javamail/mail	1.4.7	CDDL;GPLv2+CE
+javax.persistence-api	javax.persistence:javax.persistence-api	https://github.com/javaee/jpa-spec	2.2	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+Java Servlet API	javax.servlet:javax.servlet-api	https://javaee.github.io/servlet-spec/	4.0.1	CDDL + GPLv2 with classpath exception
+Bean Validation API	javax.validation:validation-api	http://beanvalidation.org	2.0.1.Final	Apache License 2.0
+javax.ws.rs-api	javax.ws.rs:javax.ws.rs-api	https://github.com/eclipse-ee4j/jaxrs-api	2.1.1	EPL 2.0;GPL2 w/ CPE
+jaxb-api	javax.xml.bind:jaxb-api	https://github.com/javaee/jaxb-spec/jaxb-api	2.3.1	CDDL 1.1;GPL2 w/ CPE
+javax.xml.soap API	javax.xml.soap:javax.xml.soap-api	https://javaee.github.io/javaee-spec/	1.4.0	CDDL + GPLv2 with classpath exception
+JAX-WS API	javax.xml.ws:jaxws-api	https://github.com/javaee/jax-ws-spec	2.3.1	CDDL + GPLv2 with classpath exception
+Byte Buddy (without dependencies)	net.bytebuddy:byte-buddy	https://bytebuddy.net/byte-buddy	1.10.8	Apache License 2.0
+Java Native Access	net.java.dev.jna:jna	https://github.com/java-native-access/jna	4.5.2	Apache License 2.0;LGPL 2.1
+Java Native Access Platform	net.java.dev.jna:jna-platform	https://github.com/java-native-access/jna	4.5.2	Apache License 2.0;LGPL 2.1
+JUNG - Algorithms	net.sf.jung:jung-algorithms	http://jrtom.github.io/jung/jung-algorithms/	2.1.1	BSD License
+JUNG - API	net.sf.jung:jung-api	http://jrtom.github.io/jung/jung-api/	2.1.1	BSD License
+JUNG - Graph Implementations	net.sf.jung:jung-graph-impl	http://jrtom.github.io/jung/jung-graph-impl/	2.1.1	BSD License
+JUNG - Visualization Support	net.sf.jung:jung-visualization	http://jrtom.github.io/jung/jung-visualization/	2.1.1	BSD License
+GNU Trove	net.sf.trove4j:trove4j	http://trove4j.sf.net	3.0.3	LGPL 2.1
+StringTemplate 4	org.antlr:ST4	http://www.stringtemplate.org	4.0.8	BSD licence
+ANTLR 3 Tool	org.antlr:antlr	http://antlr.org/antlr	3.5.2	BSD licence
+ANTLR 3 Runtime	org.antlr:antlr-runtime	http://www.antlr.org	3.5.2	BSD licence
+Arrow Format	org.apache.arrow:arrow-format	https://arrow.apache.org/arrow-format/	3.0.0	Apache License 2.0
+Arrow Memory - Core	org.apache.arrow:arrow-memory-core	https://arrow.apache.org/arrow-memory/arrow-memory-core/	3.0.0	Apache License 2.0
+Arrow Memory - Unsafe	org.apache.arrow:arrow-memory-unsafe	https://arrow.apache.org/arrow-memory/arrow-memory-unsafe/	3.0.0	Apache License 2.0
+Arrow Vectors	org.apache.arrow:arrow-vector	https://arrow.apache.org/arrow-vector/	3.0.0	Apache License 2.0
+Apache Commons Compress	org.apache.commons:commons-compress	https://commons.apache.org/proper/commons-compress/	1.20	Apache License 2.0
+Apache CXF Core	org.apache.cxf:cxf-core	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime SOAP Binding	org.apache.cxf:cxf-rt-bindings-soap	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime XML Binding	org.apache.cxf:cxf-rt-bindings-xml	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime JAXB DataBinding	org.apache.cxf:cxf-rt-databinding-jaxb	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime JAX-RS Frontend	org.apache.cxf:cxf-rt-frontend-jaxrs	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime JAX-WS Frontend	org.apache.cxf:cxf-rt-frontend-jaxws	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime Simple Frontend	org.apache.cxf:cxf-rt-frontend-simple	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF JAX-RS Client	org.apache.cxf:cxf-rt-rs-client	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF RS Cross-Origin Resource Sharing	org.apache.cxf:cxf-rt-rs-security-cors	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF JAX-RS Service Description	org.apache.cxf:cxf-rt-rs-service-description	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime Security functionality	org.apache.cxf:cxf-rt-security	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime HTTP Transport	org.apache.cxf:cxf-rt-transports-http	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime WS Addressing	org.apache.cxf:cxf-rt-ws-addr	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime WS Policy	org.apache.cxf:cxf-rt-ws-policy	https://cxf.apache.org	3.3.5	Apache License 2.0
+Apache CXF Runtime Core for WSDL	org.apache.cxf:cxf-rt-wsdl	https://cxf.apache.org	3.3.5	Apache License 2.0
+JTA 1.1	org.apache.geronimo.specs:geronimo-jta_1.1_spec	http://geronimo.apache.org/specs/geronimo-jta_1.1_spec	1.1.1	Apache License 2.0
+Web Services Metadata 2.0	org.apache.geronimo.specs:geronimo-ws-metadata_2.0_spec	http://geronimo.apache.org/maven/specs/geronimo-ws-metadata_2.0_spec/1.1.3	1.1.3	Apache License 2.0
+Apache HttpClient	org.apache.httpcomponents:httpclient	http://hc.apache.org/httpcomponents-client	4.5.11	Apache License 2.0
+Apache HttpCore	org.apache.httpcomponents:httpcore	http://hc.apache.org/httpcomponents-core-ga	4.4.13	Apache License 2.0
+Apache Log4j API	org.apache.logging.log4j:log4j-api	https://logging.apache.org/log4j/2.x/log4j-api/	2.13.3	Apache License 2.0
+Apache Log4j to SLF4J Adapter	org.apache.logging.log4j:log4j-to-slf4j	https://logging.apache.org/log4j/2.x/log4j-to-slf4j/	2.12.1	Apache License 2.0
+Apache Neethi	org.apache.neethi:neethi	http://ws.apache.org/neethi/	3.1.1	Apache License 2.0
+tomcat-jdbc	org.apache.tomcat:tomcat-jdbc	https://tomcat.apache.org/	9.0.31	Apache License 2.0
+tomcat-juli	org.apache.tomcat:tomcat-juli	https://tomcat.apache.org/	9.0.31	Apache License 2.0
+tomcat-embed-core	org.apache.tomcat.embed:tomcat-embed-core	https://tomcat.apache.org/	9.0.31	Apache License 2.0
+tomcat-embed-el	org.apache.tomcat.embed:tomcat-embed-el	https://tomcat.apache.org/	9.0.31	Apache License 2.0
+tomcat-embed-websocket	org.apache.tomcat.embed:tomcat-embed-websocket	https://tomcat.apache.org/	9.0.31	Apache License 2.0
+XmlSchema Core	org.apache.ws.xmlschema:xmlschema-core	https://ws.apache.org/commons/xmlschema20/xmlschema-core/	2.2.5	Apache License 2.0
+Stax2 API	org.codehaus.woodstox:stax2-api	http://github.com/FasterXML/stax2-api	4.2	BSD License
+dom4j	org.dom4j:dom4j	http://dom4j.github.io/	2.1.1	BSD 3-clause New License
+SDO API	org.eclipse.persistence:commonj.sdo	http://www.eclipse.org/eclipselink	2.1.1	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+EclipseLink ASM	org.eclipse.persistence:org.eclipse.persistence.asm	http://www.eclipse.org/eclipselink	2.7.2	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+EclipseLink Core	org.eclipse.persistence:org.eclipse.persistence.core	http://www.eclipse.org/eclipselink	2.7.2	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+EclipseLink Moxy	org.eclipse.persistence:org.eclipse.persistence.moxy	http://www.eclipse.org/eclipselink	2.7.2	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+EclipseLink SDO	org.eclipse.persistence:org.eclipse.persistence.sdo	http://www.eclipse.org/eclipselink	2.7.2	Eclipse Distribution License v. 1.0;Eclipse Public License v1.0
+JSR 353 (JSON Processing) Default Provider	org.glassfish:javax.json	http://jsonp.java.net	1.0.4	Dual license consisting of the CDDL v1.1 and GPL v2
+management-api	org.glassfish.external:management-api	http://kenai.com/hg/gmbal~gf_common	3.0.0-b012	CDDL+GPL
+gmbal-api-only	org.glassfish.gmbal:gmbal-api-only	http://kenai.com/hg/gmbal~master	3.1.0-b001	CDDL+GPL
+GlassFish High Availability APIs and SPI	org.glassfish.ha:ha-api	http://java.net/ha-api/	3.1.9	EPL 2.0
+JAXB Runtime	org.glassfish.jaxb:jaxb-runtime	https://javaee.github.io/jaxb-v2/jaxb-runtime-parent/jaxb-runtime/	2.3.2	Eclipse Distribution License - v 1.0
+TXW2 Runtime	org.glassfish.jaxb:txw2	https://javaee.github.io/jaxb-v2/jaxb-txw-parent/txw2/	2.3.2	Eclipse Distribution License - v 1.0
+HdrHistogram	org.hdrhistogram:HdrHistogram	http://hdrhistogram.github.io/HdrHistogram/	2.1.12	BSD-2-Clause;Public Domain, per Creative Commons CC0
+Hibernate ORM - hibernate-c3p0	org.hibernate:hibernate-c3p0	http://hibernate.org/orm	5.4.12.Final	GNU Library General Public License v2.1 or later
+Hibernate ORM - hibernate-core	org.hibernate:hibernate-core	http://hibernate.org/orm	5.4.12.Final	GNU Library General Public License v2.1 or later
+Hibernate Commons Annotations	org.hibernate.common:hibernate-commons-annotations	http://hibernate.org	5.1.0.Final	GNU Library General Public License v2.1 or later
+Hibernate Validator Engine	org.hibernate.validator:hibernate-validator	http://hibernate.org/validator/hibernate-validator	6.0.18.Final	Apache License 2.0
+JacORB OMG-API	org.jacorb:jacorb-omgapi	http://www.jacorb.org	3.9	GNU Lesser General Public License
+Javassist	org.javassist:javassist	http://www.javassist.org/	3.27.0-GA	Apache License 2.0;LGPL 2.1;MPL 1.1
+Javolution Core (Java)	org.javolution:javolution-core-java	http://javolution.org/javolution-core-java	6.0.0	BSD License
+Java Annotation Indexer	org.jboss:jandex	http://www.jboss.org/jandex	2.1.1.Final	Apache License 2.0
+JBoss Logging 3	org.jboss.logging:jboss-logging	http://www.jboss.org	3.4.1.Final	Apache License 2.0
+Java RMI API	org.jboss.spec.javax.rmi:jboss-rmi-api_1.0_spec	http://www.jboss.org/jboss-rmi-api_1.0_spec	1.0.6.Final	lgpl
+Java Transaction API	org.jboss.spec.javax.transaction:jboss-transaction-api_1.2_spec	http://www.jboss.org/jboss-transaction-api_1.2_spec	1.1.1.Final	Common Development and Distribution License 1.0;GPL2 w/ CPE
+JGroups	org.jgroups:jgroups	http://www.jgroups.org	4.2.1.Final	Apache License 2.0
+MIME streaming extension	org.jvnet.mimepull:mimepull	https://github.com/eclipse-ee4j/metro-mimepull	1.9.12	Eclipse Distribution License - v 1.0
+Extended StAX API	org.jvnet.staxex:stax-ex	https://projects.eclipse.org/projects/ee4j/stax-ex	1.8.3	Eclipse Distribution License - v 1.0
+LatencyUtils	org.latencyutils:LatencyUtils	http://latencyutils.github.io/LatencyUtils/	2.0.3	Public Domain, per Creative Commons CC0
+osgi.cmpn	org.osgi:org.osgi.compendium	http://www.osgi.org	4.3.1	Apache License 2.0
+osgi.core	org.osgi:org.osgi.core	http://www.osgi.org	4.3.1	Apache License 2.0
+asm	org.ow2.asm:asm	http://asm.ow2.io/	7.3.1	BSD-3-Clause
+Project Lombok	org.projectlombok:lombok	https://projectlombok.org	1.18.18	MIT License
+JUL to SLF4J bridge	org.slf4j:jul-to-slf4j	http://www.slf4j.org	1.7.30	MIT License
+SLF4J API Module	org.slf4j:slf4j-api	http://www.slf4j.org	1.7.30	MIT License
+Spring AOP	org.springframework:spring-aop	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Beans	org.springframework:spring-beans	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Context	org.springframework:spring-context	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Context Support	org.springframework:spring-context-support	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Core	org.springframework:spring-core	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Expression Language (SpEL)	org.springframework:spring-expression	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Framework (Bill of Materials)	org.springframework:spring-framework-bom	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Commons Logging Bridge	org.springframework:spring-jcl	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Transaction	org.springframework:spring-tx	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Web	org.springframework:spring-web	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Web MVC	org.springframework:spring-webmvc	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring WebSocket	org.springframework:spring-websocket	https://github.com/spring-projects/spring-framework	5.3.3	Apache License 2.0
+Spring Boot	org.springframework.boot:spring-boot	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Actuator	org.springframework.boot:spring-boot-actuator	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-actuator	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Actuator AutoConfigure	org.springframework.boot:spring-boot-actuator-autoconfigure	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-actuator-autoconfigure	2.2.5.RELEASE	Apache License 2.0
+Spring Boot AutoConfigure	org.springframework.boot:spring-boot-autoconfigure	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-autoconfigure	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Starter	org.springframework.boot:spring-boot-starter	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Actuator Starter	org.springframework.boot:spring-boot-starter-actuator	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-actuator	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Json Starter	org.springframework.boot:spring-boot-starter-json	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-json	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Logging Starter	org.springframework.boot:spring-boot-starter-logging	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-logging	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Tomcat Starter	org.springframework.boot:spring-boot-starter-tomcat	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-tomcat	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Validation Starter	org.springframework.boot:spring-boot-starter-validation	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-validation	2.2.5.RELEASE	Apache License 2.0
+Spring Boot Web Starter	org.springframework.boot:spring-boot-starter-web	https://projects.spring.io/spring-boot/#/spring-boot-parent/spring-boot-starters/spring-boot-starter-web	2.2.5.RELEASE	Apache License 2.0
+spring-security-config	org.springframework.security:spring-security-config	https://spring.io/spring-security	5.4.2	Apache License 2.0
+spring-security-core	org.springframework.security:spring-security-core	https://spring.io/spring-security	5.4.2	Apache License 2.0
+spring-security-web	org.springframework.security:spring-security-web	https://spring.io/spring-security	5.4.2	Apache License 2.0
+SnakeYAML	org.yaml:snakeyaml	http://www.snakeyaml.org	1.25	Apache License 2.0
+WSDL4J	wsdl4j:wsdl4j	http://sf.net/projects/wsdl4j	1.6.3	CPL
+XML Commons Resolver Component	xml-resolver:xml-resolver	http://xml.apache.org/commons/components/resolver/	1.2	Apache License 2.0

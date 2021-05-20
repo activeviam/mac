@@ -15,23 +15,31 @@
   <version>2.0.0-SNAPSHOT</version>
   <name>ActivePivot Memory Analysis Cube</name>
 
-  <prerequisites>
-    <maven>3.0</maven>
-  </prerequisites>
+  <licenses>
+    <license>
+      <name>Apache 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
   <properties>
-    <activepivot.version>5.9.0</activepivot.version>
-    <activeui.version>4.3.7</activeui.version>
+    <jdk.version>11</jdk.version>
+
+    <activepivot.version>5.8.17</activepivot.version>
+    <activeui.version>4.3.16</activeui.version>
+    <content-server-ui.version>2.0.0</content-server-ui.version>
+
     <tomcat.version>9.0.31</tomcat.version>
-    <lombok.version>1.18.12</lombok.version>
+    <lombok.version>1.18.18</lombok.version>
 
     <spring.boot.mainclass>com.activeviam.mac.app.MacSpringBootApp</spring.boot.mainclass>
 
-    <checkstyle.maxAllowedViolations>0</checkstyle.maxAllowedViolations>
-    <checkstyle.console>false</checkstyle.console>
-
     <!-- CLI args, meant to be overridden by each call -->
     <unsnappy.file>not-a-file.txt</unsnappy.file>
+
+    <!-- Sonar configuration -->
+    <sonar.projectKey>mac</sonar.projectKey>
+    <sonar.projectName>MAC</sonar.projectName>
   </properties>
 
   <dependencyManagement>
@@ -102,6 +110,14 @@
       <groupId>com.activeviam.activeui</groupId>
       <artifactId>activeui</artifactId>
       <version>${activeui.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.activeviam.tech</groupId>
+      <artifactId>content-server-ui</artifactId>
+      <version>${content-server-ui.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- SpringBoot dependencies -->
@@ -117,11 +133,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.websocket</groupId>
-      <artifactId>javax.websocket-client-api</artifactId>
-      <version>1.1</version>
     </dependency>
 
     <!-- Connection pool. Scope test to use import it only when using Jetty
@@ -187,7 +198,7 @@
                   <version>3.5.2</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[11,)</version>
+                  <version>[${jdk.version},)</version>
                 </requireJavaVersion>
               </rules>
               <fail>true</fail>
@@ -201,7 +212,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <release>11</release>
+          <source>${jdk.version}</source>
+          <target>${jdk.version}</target>
+          <release>${jdk.version}</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -231,53 +244,12 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>verify-doc</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <includeTestSourceDirectory>false</includeTestSourceDirectory>
-              <violationSeverity>warning</violationSeverity>
-              <checkstyleRules>
-                <module name="Checker">
-                  <property name="severity" value="warning"/>
-                  <module name="TreeWalker">
-                    <property name="fileExtensions" value="java"/>
-                    <!-- Required for disabling comments, later in the rules -->
-                    <module name="JavadocType">
-                      <property name="scope" value="package"/>
-                    </module>
-                    <module name="JavadocMethod">
-                      <property name="scope" value="protected"/>
-                      <property name="validateThrows" value="true"/>
-                      <property name="allowedAnnotations"
-                        value="Override, Test, Before, BeforeClass, After, AfterClass"/>
-                      <property name="allowThrowsTagsForSubclasses" value="true"/>
-                    </module>
-                    <module name="JavadocVariable">
-                      <property name="scope" value="protected"/>
-                      <property name="ignoreNamePattern" value="log|logger"/>
-                    </module>
-                  </module>
-                </module>
-              </checkstyleRules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
         <version>2.9</version>
         <executions>
           <execution>
+            <phase>none</phase>
             <id>format-code</id>
             <goals>
               <goal>format</goal>
@@ -289,6 +261,10 @@
             <goals>
               <goal>check</goal>
             </goals>
+            <configuration>
+              <displayFiles>true</displayFiles>
+              <displayLimit>25</displayLimit>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -324,25 +300,56 @@
         </executions>
       </plugin>
 
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>1.13</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-core</artifactId>
+            <!-- The version has to be 1.4 otherwise mvn license:third-party-report
+							will fail with java.lang.ClassNotFoundException: org.apache.maven.doxia.sink.render.RenderingContext -->
+            <!-- see: https://github.com/mojohaus/license-maven-plugin/issues/73 -->
+            <version>1.4</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>default-cli</id>
+            <configuration>
+              <excludedGroups>activeviam</excludedGroups>
+              <excludedScopes>test</excludedScopes>
+              <failIfWarning>true</failIfWarning>
+              <fileTemplate>${project.basedir}/src/license/third-party-file.ftl</fileTemplate>
+              <useMissingFile>true</useMissingFile>
+              <licenseMerges>
+                <licenseMerge>Apache License 2.0|ASL, version 2</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache 2</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache License V2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache License v2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache License, Version 2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache License, version 2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|The Apache License, Version 2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache Software License - Version 2.0</licenseMerge>
+                <licenseMerge>Apache License 2.0|Apache v2</licenseMerge>
+                <licenseMerge>Apache License 2.0|The Apache Software License, Version 2.0</licenseMerge>
+                <licenseMerge>BSD License|BSD</licenseMerge>
+                <licenseMerge>BSD License|The BSD License</licenseMerge>
+                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution License</licenseMerge>
+                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution License (CDDL) v1.0</licenseMerge>
+                <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - Version 1.0</licenseMerge>
+                <licenseMerge>Eclipse Public License 1.0|Eclipse Public License (EPL), Version 1.0</licenseMerge>
+                <licenseMerge>GPL2 w/ CPE|GNU General Public License, Version 2 with the Classpath Exception</licenseMerge>
+                <licenseMerge>LGPL 2.1|LGPL, version 2.1</licenseMerge>
+                <licenseMerge>LGPL 2.1|GNU Lesser General Public License 2.1</licenseMerge>
+                <licenseMerge>MIT License|The MIT License</licenseMerge>
+              </licenseMerges>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <!-- Including Lombok as a plain dependency to make Intellij happy -->
-      <id>activeInIdea</id>
-      <activation>
-        <property>
-          <name>idea.version</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.projectlombok</groupId>
-          <artifactId>lombok</artifactId>
-          <version>${lombok.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 </project>
