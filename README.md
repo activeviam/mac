@@ -7,7 +7,7 @@ ActivePivot application, starting from ActivePivot 5.8 onward.
 The project is built as a standalone Spring Boot jar file with an embedded
 ActiveUI application available on `localhost:9092` by default.
 
-This version is compatibile with ActivePivot 5.10. To use this project with other versions, pick the right branch.
+This version is compatible with ActivePivot 5.10. To use this project with other versions, pick the right branch.
 
 ## Main Features
 
