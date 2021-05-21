@@ -36,7 +36,7 @@ import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
+import com.qfs.monitoring.statistic.memory.impl.MemoryStatisticBuilder;
 import com.qfs.multiversion.impl.KeepAllEpochPolicy;
 import com.qfs.multiversion.impl.KeepLastEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
@@ -44,10 +44,10 @@ import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
-import com.qfs.store.TypeValues;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.IDictionaryCursor;
+import com.qfs.store.record.IRecordFormat;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.ITransactionManager;
@@ -1410,8 +1410,8 @@ public abstract class ATestMemoryStatistic {
             .withCondition(
                 BaseConditions.Or(
                     BaseConditions.Equal(
-                        CHUNK__CLOSEST_PARENT_TYPE, TypeValues.GLOBAL_DEFAULT_STRING),
-                    BaseConditions.Equal(CHUNK__PARENT_ID, TypeValues.GLOBAL_DEFAULT_STRING)))
+                        CHUNK__CLOSEST_PARENT_TYPE, IRecordFormat.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.Equal(CHUNK__PARENT_ID, IRecordFormat.GLOBAL_DEFAULT_STRING)))
             .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
             .onCurrentThread()
             .run();
@@ -1590,7 +1590,7 @@ public abstract class ATestMemoryStatistic {
                 })
             .collect(Collectors.toList());
 
-    return new DefaultMemoryStatistic.Builder()
+    return new MemoryStatisticBuilder()
         .withCreatorClasses(TestMemoryStatisticLoading.class)
         .withChildren(childStats)
         .build();
