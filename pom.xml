@@ -25,9 +25,9 @@
   <properties>
     <jdk.version>11</jdk.version>
 
-    <activepivot.version>5.9.7</activepivot.version>
+    <activepivot.version>5.8.17-jdk11</activepivot.version>
     <activeui.version>4.3.16</activeui.version>
-    <content-server-ui.version>2.0.0</content-server-ui.version>
+    <content-server-ui.version>1.1.2</content-server-ui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.18</lombok.version>
