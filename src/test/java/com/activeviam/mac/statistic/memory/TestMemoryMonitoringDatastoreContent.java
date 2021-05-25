@@ -85,32 +85,22 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
           stat.getChildren()
               .forEach(
-                  c_st ->
-                      c_st.getChildren()
-                          .forEach(
-                              c_c_st ->
-                                  c_c_st
-                                      .getChildren()
-                                      .forEach(
-                                          c_c_c_st ->
-                                              c_c_c_st
-                                                  .getChildren()
-                                                  .forEach(
-                                                      c_c_c_c_st -> {
-                                                        chunkSizes[rnk.get()] =
-                                                            c_c_c_c_st
-                                                                .getAttribute(
-                                                                    MemoryStatisticConstants
-                                                                        .ATTR_NAME_LENGTH)
-                                                                .asLong();
-                                                        chunkIds[rnk.get()] =
-                                                            c_c_c_c_st
-                                                                .getAttribute(
-                                                                    MemoryStatisticConstants
-                                                                        .ATTR_NAME_CHUNK_ID)
-                                                                .asLong();
-                                                        rnk.incrementAndGet();
-                                                      }))));
+                  (c_st) -> {
+                    c_st.getChildren()
+                        .forEach(
+                            (c_c_st) -> {
+                              c_c_st
+                                  .getChildren()
+                                  .forEach(
+                                      (c_c_c_st) -> {
+                                        chunkSizes[rnk.get()] =
+                                            c_c_c_st.getAttribute("length").asLong();
+                                        chunkIds[rnk.get()] =
+                                            c_c_c_st.getAttribute("chunkId").asLong();
+                                        rnk.getAndIncrement();
+                                      });
+                            });
+                  });
 
           ATestMemoryStatistic.feedMonitoringApplication(
               monitoringDatastore, List.of(fullStats), "test");
@@ -179,13 +169,12 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     // - 2 Chunks for the actual records
     //         * 1 Wrapper chunk (DirectChunkPositiveInteger) -> Verify that the offHeap size equal
     // to Zero
-    //         * 1 Content Chunk (DirectChunkBits) -> "0" is stored as the dictionary value 1,
-    // the underlying chunk is promoted to DirectChunkBits (order = 1), which allocates
-    // 32B of off-heap memory
+    //         * 1 Content Chunk (ChunkSingleInteger) -> Verify that no data is stored offheap
+    Assertions.assertThat(list.size()).isEqualTo(3);
     Assertions.assertThat(list)
         .containsExactly(
             new Object[] {0L, 255L, 256L, 0L},
-            new Object[] {0L, 255L, 256L, 32L},
+            new Object[] {0L, 255L, 256L, 0L},
             new Object[] {0L, 255L, 256L, 2048L});
   }
 
@@ -234,16 +223,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           Object[] data = record.toTuple();
           list.add(data);
         });
-    // Expect 3 Chunks :
+    // Expect 2 Chunks :
     // - 1 Chunk for versions : directChunkLong
-    // - 1 ChunkOffset for the records -> verify it does not consume off-heap memory
-    // - 1 Chunk for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored
-    // off-heap
+    // - 1 Chunks for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored
+    // offheap
+    Assertions.assertThat(list.size()).isEqualTo(2);
     Assertions.assertThat(list)
         .containsExactlyInAnyOrder(
-            new Object[] {0L, 0L, 256L, 256L},
-            new Object[] {0L, 0L, 256L, 0L},
-            new Object[] {0L, 0L, 256L, 2048L});
+            new Object[] {0L, 0L, 256L, 256L}, new Object[] {0L, 0L, 256L, 2048L});
   }
 
   @Test
@@ -291,10 +278,10 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           Object[] data = record.toTuple();
           list.add(data);
         });
-    // Expect 6 Chunks :
+    // Expect 5 Chunks :
     // - 2 Chunk for versions : directChunkLong
-    // - 4 Chunks for the actual records
-    //         * 2 Wrapping chunk
+    // - 3 Chunks for the actual records
+    //		   * 1 Wrapping chunk
     //         * 2 Content Chunk
     Assertions.assertThat(list)
         .containsExactlyInAnyOrder(
@@ -302,8 +289,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             new Object[] {0L, 0L, 256L, 2048L},
             new Object[] {0L, 246L, 256L, 2048L},
             // Content chunks
-            // Chunk full (wrapper+data)
-            new Object[] {0L, 0L, 256L, 0L},
+            // Chunk full (not wrapped)
             new Object[] {0L, 0L, 256L, 256L},
             // Partially full chunk (wrapper+data)
             new Object[] {0L, 246L, 256L, 0L},

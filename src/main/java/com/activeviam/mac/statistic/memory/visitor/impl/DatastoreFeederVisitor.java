@@ -215,7 +215,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         processStorePartition(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
-      case MemoryStatisticConstants.STAT_NAME_UNIQUE_INDICES:
         processUniqueIndices(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_KEY_INDEX:

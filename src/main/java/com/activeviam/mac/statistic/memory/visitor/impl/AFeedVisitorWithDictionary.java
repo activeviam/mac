@@ -12,7 +12,6 @@ import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.store.structure.impl.StructureDictionaryManager;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
@@ -85,23 +84,19 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
         this.dictionaryAttributes.setDictionaryOrder(orderAttribute.asInt());
       }
 
-      if (!this.dictionaryAttributes
-          .getDictionaryClass()
-          .equals(StructureDictionaryManager.class.getName())) {
-        final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
-        final Object[] tuple =
-            FeedVisitor.buildDictionaryTupleFrom(
-                format,
-                this.dictionaryAttributes.getDictionaryId(),
-                this.dictionaryAttributes.getDictionaryClass(),
-                this.dictionaryAttributes.getDictionarySize(),
-                this.dictionaryAttributes.getDictionaryOrder());
-        FeedVisitor.setTupleElement(
-            tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
-        FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, epochId);
+      final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
+      final Object[] tuple =
+          FeedVisitor.buildDictionaryTupleFrom(
+              format,
+              this.dictionaryAttributes.getDictionaryId(),
+              this.dictionaryAttributes.getDictionaryClass(),
+              this.dictionaryAttributes.getDictionarySize(),
+              this.dictionaryAttributes.getDictionaryOrder());
+      FeedVisitor.setTupleElement(
+          tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+      FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, epochId);
 
-        FeedVisitor.add(statistic, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
-      }
+      FeedVisitor.add(statistic, this.transaction, DatastoreConstants.DICTIONARY_STORE, tuple);
     }
     return previousAttributes;
   }

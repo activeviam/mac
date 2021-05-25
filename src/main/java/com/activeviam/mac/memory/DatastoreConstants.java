@@ -8,6 +8,7 @@
 package com.activeviam.mac.memory;
 
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.quartetfs.biz.pivot.impl.ActivePivotManager;
 
 /**
@@ -99,7 +100,8 @@ public class DatastoreConstants {
   public static final String CHUNK__FREE_ROWS = "freeRows";
 
   /** Field for the id of the aggregate provider. */
-  public static final String PROVIDER__PROVIDER_ID = MemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
+  public static final String PROVIDER__PROVIDER_ID =
+      PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID;
 
   /** Field for the id of the pivot. */
   public static final String PROVIDER__PIVOT_ID = "pivotId_prov";
