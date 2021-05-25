@@ -501,9 +501,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
-    Copper.newHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY)
-        .fromField(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
-        .withLevelOfSameName()
+    Copper.newSingleLevelHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY, EPOCH_ID_HIERARCHY)
+        .from(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
         .withComparator(ReverseEpochViewComparator.PLUGIN_KEY)
         .publish(context);
   }
@@ -516,9 +515,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
-    Copper.newHierarchy(REFERENCE_NAMES_HIERARCHY)
-        .fromField(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
-        .withLevelOfSameName()
+    Copper.newSingleLevelHierarchy(REFERENCE_NAMES_HIERARCHY)
+        .from(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
         .publish(context);
   }
 
@@ -530,22 +528,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, CHUNK_DUMP_NAME_LEVEL)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_HIERARCHY);
 
-    Copper.newHierarchy(INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY)
-        .fromField(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
-        .withLevelOfSameName()
+    Copper.newSingleLevelHierarchy(
+            INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY, INDEXED_FIELDS_HIERARCHY)
+        .from(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
         .publish(context);
 
-    Copper.newHierarchy(INDEX_DIMENSION, INDEX_TYPE_HIERARCHY)
-        .fromField(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
-        .withLevelOfSameName()
+    Copper.newSingleLevelHierarchy(INDEX_DIMENSION, INDEX_TYPE_HIERARCHY, INDEX_TYPE_HIERARCHY)
+        .from(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
         .publish(context);
   }
 
   private void bucketingHierarchies(final ICopperContext context) {
-    Copper.newHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY)
-        .fromValues(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
+    Copper.newSingleLevelHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY, OWNER_TYPE_HIERARCHY)
+        .from(Copper.level(OWNER_HIERARCHY).map(ChunkOwner::getType))
         .withMemberList((Object[]) OwnerType.values())
-        .withLevelOfSameName()
         .publish(context);
   }
 

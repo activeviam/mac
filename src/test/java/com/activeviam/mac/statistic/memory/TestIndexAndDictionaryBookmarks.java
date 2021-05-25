@@ -12,7 +12,7 @@ import com.activeviam.pivot.builders.StartBuilding;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.store.IDatastore;
-import com.qfs.store.record.impl.IDictionaryProvider;
+import com.qfs.store.record.impl.Records.IDictionaryProvider;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.AxisDTO;

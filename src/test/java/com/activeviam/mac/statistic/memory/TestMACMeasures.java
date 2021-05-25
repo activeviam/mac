@@ -446,7 +446,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             ManagerDescriptionConfig.USED_HEAP,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
             ManagerDescriptionConfig.COMMITTED_HEAP,
-            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+            MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY,
             ManagerDescriptionConfig.USED_DIRECT,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
             ManagerDescriptionConfig.MAX_DIRECT,

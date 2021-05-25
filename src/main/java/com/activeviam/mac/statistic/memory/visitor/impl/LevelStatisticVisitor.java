@@ -12,7 +12,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 /**
  * {@link IMemoryStatisticVisitor} implementation for visiting {@link
- * MemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
+ * PivotMemoryStatisticConstants#STAT_NAME_LEVEL} named statistics.
  *
  * @author ActiveViam
  */
@@ -89,7 +89,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private void processLevelMember(final IMemoryStatistic stat) {
     this.memberCount =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_MEMBER_COUNT).asInt();
     assert stat.getChildren().isEmpty();
   }
 
@@ -168,7 +168,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
 
   @Override
   public Void visit(final DefaultMemoryStatistic stat) {
-    if (MemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS.equals(stat.getName())) {
+    if (PivotMemoryStatisticConstants.STAT_NAME_LEVEL_MEMBERS.equals(stat.getName())) {
       processLevelMember(stat);
     } else {
       visitChildren(stat);

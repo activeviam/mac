@@ -14,6 +14,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -41,17 +42,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;
   private final String dumpName;
-
-  @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println(
-        "Unexpected type of statistics : "
-            + memoryStatistic
-            + " which is a "
-            + memoryStatistic.getClass().getSimpleName());
-    visitChildren(this, memoryStatistic);
-    return null;
-  }
 
   /**
    * Constructor.
@@ -169,9 +159,9 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
             new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         visitor.startFrom(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_MANAGER:
-      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
-      case MemoryStatisticConstants.STAT_NAME_PIVOT:
+      case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
+      case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+      case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
         final PivotFeederVisitor feed =
             new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
         feed.startFrom(stat);
@@ -231,7 +221,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     final IStatisticAttribute usedHeap =
         stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY);
     final IStatisticAttribute maxHeap =
-        stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY);
+        stat.getAttribute(MemoryStatisticConstants.ST$AT_NAME_GLOBAL_MAX_HEAP_MEMORY);
     final IStatisticAttribute usedOffHeap =
         stat.getAttribute(MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY);
     final IStatisticAttribute maxOffHeap =

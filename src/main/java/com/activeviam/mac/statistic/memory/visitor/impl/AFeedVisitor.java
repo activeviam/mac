@@ -48,12 +48,6 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
     this.dumpName = dumpName;
   }
 
-  @Override
-  public R visit(final IMemoryStatistic memoryStatistic) {
-    visitChildren(memoryStatistic);
-    return null;
-  }
-
   /**
    * Visits all the children of the given {@link IMemoryStatistic}.
    *

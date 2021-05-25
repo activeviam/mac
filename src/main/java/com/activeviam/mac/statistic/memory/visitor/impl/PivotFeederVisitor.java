@@ -19,6 +19,7 @@ import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
+import com.qfs.monitoring.statistic.memory.PivotMemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
 import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
@@ -91,9 +92,9 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    * Initializes the visit of the statistics of an entire pivot.
    *
    * @param stat Entry point of the tree creation, should be a {@link
-   *     MemoryStatisticConstants#STAT_NAME_MULTIVERSION_PIVOT} , a {@link
-   *     MemoryStatisticConstants#STAT_NAME_PIVOT} or {@link
-   *     MemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
+   *     PivotMemoryStatisticConstants#STAT_NAME_MULTIVERSION_PIVOT} , a {@link
+   *     PivotMemoryStatisticConstants#STAT_NAME_PIVOT} or {@link
+   *     PivotMemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
   public void startFrom(final IMemoryStatistic stat) {
     this.printer = DebugVisitor.createDebugPrinter(stat);
@@ -106,7 +107,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
       readEpochAndBranchIfAny(stat);
       if (this.epochId == null
-          && stat.getName().equals(MemoryStatisticConstants.STAT_NAME_MANAGER)) {
+          && stat.getName().equals(PivotMemoryStatisticConstants.STAT_NAME_MANAGER)) {
         // Look amongst the children to find the epoch
         for (final IMemoryStatistic child : stat.getChildren()) {
           readEpochAndBranchIfAny(child);
@@ -132,29 +133,29 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   @Override
   public Void visit(final DefaultMemoryStatistic stat) {
     switch (stat.getName()) {
-      case MemoryStatisticConstants.STAT_NAME_MANAGER:
+      case PivotMemoryStatisticConstants.STAT_NAME_MANAGER:
         processManager(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+      case PivotMemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
         processMultiVersionPivot(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_PIVOT:
+      case PivotMemoryStatisticConstants.STAT_NAME_PIVOT:
         processPivot(stat);
         break;
         // Unless said otherwise we assume all providers are partial,safer than the
         // other way
-      case MemoryStatisticConstants.STAT_NAME_PROVIDER:
-      case MemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
-      case MemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
         processProvider(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_PROVIDER_PARTITION:
+      case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER_PARTITION:
         processPartition(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_HIERARCHY:
+      case PivotMemoryStatisticConstants.STAT_NAME_HIERARCHY:
         processHierarchy(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_LEVEL:
+      case PivotMemoryStatisticConstants.STAT_NAME_LEVEL:
         processLevel(stat);
         break;
       case MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY:
@@ -290,7 +291,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   private void processManager(final IMemoryStatistic stat) {
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
-            stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_MANAGER_ID),
+            stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID),
             () -> "No manager id in " + stat);
     this.manager = idAttr.asText();
 
@@ -301,7 +302,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private void processMultiVersionPivot(final IMemoryStatistic stat) {
     final IStatisticAttribute managerAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
     if (managerAttr != null) {
       assert this.manager == null;
       this.manager = managerAttr.asText();
@@ -326,7 +327,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
-            stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PIVOT_ID),
+            stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PIVOT_ID),
             () -> "No pivot id in " + stat);
     final String pivotId = idAttr.asText();
     if (isPivotDistributed(stat)) {
@@ -336,7 +337,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     }
 
     final IStatisticAttribute managerAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
     if (managerAttr != null) {
       assert this.manager == null;
       this.manager = managerAttr.asText();
@@ -354,11 +355,11 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private static boolean isPivotDistributed(final IMemoryStatistic pivotStat) {
     return pivotStat.getChildren().stream()
-        .filter(stat -> stat.getName().equals(MemoryStatisticConstants.STAT_NAME_PROVIDER))
+        .filter(stat -> stat.getName().equals(PivotMemoryStatisticConstants.STAT_NAME_PROVIDER))
         .anyMatch(
             stat -> {
               final IStatisticAttribute providerType =
-                  stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
+                  stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE);
               return providerType != null
                   && providerType.asText().equals(IMultiVersionDistributedActivePivot.PLUGIN_KEY);
             });
@@ -385,7 +386,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   private void processPartition(final IMemoryStatistic stat) {
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
-            stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_PARTITION_ID),
+            stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_PARTITION_ID),
             () -> "No partition id in " + stat);
     assert this.partition == null;
     this.partition = idAttr.asInt();
@@ -397,7 +398,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private void processHierarchy(final IMemoryStatistic stat) {
     String hierarchyDescription =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_HIERARCHY_ID).asText();
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_HIERARCHY_ID).asText();
     HierarchyIdentifier hc = HierarchyIdentifier.fromDescription(hierarchyDescription);
     this.dimension = hc.dimension;
     this.hierarchy = hc.hierarchy;
@@ -412,7 +413,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     final Object[] tuple = buildLevelTupleFrom(format, stat);
 
     String levelDescription =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
     LevelIdentifier lc = LevelIdentifier.fromDescription(levelDescription);
     this.level = lc.level;
 
@@ -491,13 +492,13 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    */
   protected ProviderComponentType detectProviderComponent(final IMemoryStatistic stat) {
     switch (stat.getName()) {
-      case MemoryStatisticConstants.STAT_NAME_POINT_INDEX:
+      case PivotMemoryStatisticConstants.STAT_NAME_POINT_INDEX:
         return ProviderComponentType.POINT_INDEX;
-      case MemoryStatisticConstants.STAT_NAME_POINT_MAPPING:
+      case PivotMemoryStatisticConstants.STAT_NAME_POINT_MAPPING:
         return ProviderComponentType.POINT_MAPPING;
-      case MemoryStatisticConstants.STAT_NAME_AGGREGATE_STORE:
+      case PivotMemoryStatisticConstants.STAT_NAME_AGGREGATE_STORE:
         return ProviderComponentType.AGGREGATE_STORE;
-      case MemoryStatisticConstants.STAT_NAME_BITMAP_MATCHER:
+      case PivotMemoryStatisticConstants.STAT_NAME_BITMAP_MATCHER:
         return ProviderComponentType.BITMAP_MATCHER;
       default:
         return null;
@@ -553,15 +554,15 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     final Object[] tuple = new Object[format.getFieldCount()];
 
     final IStatisticAttribute indexAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_INDEX);
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_INDEX);
     if (indexAttr != null) {
       tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__INDEX)] = indexAttr.asText();
     }
 
     tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__PROVIDER_ID)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_ID).asLong();
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_ID).asLong();
     tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__TYPE)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
+        stat.getAttribute(PivotMemoryStatisticConstants.ATTR_NAME_PROVIDER_TYPE)
             .asText(); // JIT, BITMAP, LEAF
     tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__CATEGORY)] = getProviderCategory(stat);
 
@@ -580,11 +581,11 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private static String getProviderCategory(final IMemoryStatistic stat) {
     switch (stat.getName()) {
-      case MemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
         return "Full";
-      case MemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
         return "Partial";
-      case MemoryStatisticConstants.STAT_NAME_PROVIDER:
+      case PivotMemoryStatisticConstants.STAT_NAME_PROVIDER:
         return "Unique";
       default:
         throw new IllegalArgumentException("Unsupported provider type " + stat);
