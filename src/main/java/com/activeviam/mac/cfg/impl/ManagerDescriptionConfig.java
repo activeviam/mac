@@ -423,7 +423,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withComparator(ReverseOrderComparator.type)
         .withHierarchy(BRANCH_HIERARCHY)
-//        .slicing()
         .withProperty("description", "The branch of the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
