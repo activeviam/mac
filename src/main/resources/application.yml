@@ -2,6 +2,8 @@ server:
   port: 9092
   remote:
     uri: localhost:9090
+  debug: false
+
 
 management:
   endpoints:
