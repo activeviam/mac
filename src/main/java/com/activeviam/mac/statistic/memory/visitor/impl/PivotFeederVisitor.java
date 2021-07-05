@@ -7,7 +7,6 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-
 import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
 import com.activeviam.copper.HierarchyIdentifier;
