@@ -100,14 +100,6 @@ public class MacServerConfig {
   /** Spring configuration of the source files of the Memory Analysis Cube application. */
   @Autowired protected SourceConfig sourceConfig;
 
-  /** Spring environment, automatically wired. */
-  @Autowired protected Environment env;
-
-  /**
-   * The name of the property that holds the boolean stating if the debug mode is activated or not.
-   */
-  public static Boolean DEBUG_PROPERTY;
-
   /**
    * Initialize and start the ActivePivot Manager, after performing all the injections into the
    * ActivePivot plug-ins.
@@ -116,9 +108,6 @@ public class MacServerConfig {
    */
   @Bean
   public Void startManager() {
-    DEBUG_PROPERTY =
-        env.getProperty("server.debug") != null
-            && Boolean.parseBoolean(env.getProperty("server.debug"));
     contentServiceConfig.loadPredefinedBookmarks();
 
     /* *********************************************** */

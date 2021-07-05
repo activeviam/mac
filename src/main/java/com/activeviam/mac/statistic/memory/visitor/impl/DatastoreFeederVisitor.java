@@ -7,7 +7,7 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.activeviam.mac.cfg.impl.MacServerConfig.DEBUG_PROPERTY;
+import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -106,9 +106,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    * @param stat Entry point for the traversal of the memory statistics tree
    */
   public void startFrom(final IMemoryStatistic stat) {
-    final Boolean isDebugMode = DEBUG_PROPERTY;
-
-    if (isDebugMode) {
+    if (DEBUG) {
       this.printer = DebugVisitor.createDebugPrinter(stat);
     }
     if (this.current == null) {

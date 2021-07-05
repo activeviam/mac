@@ -7,7 +7,8 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.activeviam.mac.cfg.impl.MacServerConfig.DEBUG_PROPERTY;
+
+import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.LevelIdentifier;
@@ -99,9 +100,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    *     PivotMemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
   public void startFrom(final IMemoryStatistic stat) {
-    final Boolean isDebugMode = DEBUG_PROPERTY;
-
-    if (isDebugMode) {
+    if (DEBUG) {
       this.printer = DebugVisitor.createDebugPrinter(stat);
     }
     if (this.current == null) {
