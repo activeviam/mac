@@ -115,7 +115,8 @@ public class MacServerConfig {
    */
   @Bean
   public Void startManager() {
-    DEBUG_PROPERTY = Boolean.parseBoolean(env.getProperty("server.debug"));
+    DEBUG_PROPERTY = env.getProperty("server.debug") != null &&
+        Boolean.parseBoolean(env.getProperty("server.debug"));
     contentServiceConfig.loadPredefinedBookmarks();
 
     /* *********************************************** */
