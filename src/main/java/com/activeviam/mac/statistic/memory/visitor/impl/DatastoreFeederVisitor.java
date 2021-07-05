@@ -9,7 +9,6 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.activeviam.mac.cfg.impl.MacServerConfig.DEBUG_PROPERTY;
 
-import com.activeviam.mac.cfg.impl.MacServerConfig;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
