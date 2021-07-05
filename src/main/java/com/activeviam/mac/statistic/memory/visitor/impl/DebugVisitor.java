@@ -38,7 +38,7 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
   protected int depth = 0;
 
   /** Boolean stating if the debug mode is activated or not. */
-  public final static Boolean DEBUG = false;
+  public static final Boolean DEBUG = false;
 
   /**
    * Created a {@link StatisticTreePrinter printer} of the tree created from the input {@link
