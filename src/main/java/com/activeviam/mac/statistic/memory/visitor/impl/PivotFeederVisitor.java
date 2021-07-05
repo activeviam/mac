@@ -7,6 +7,8 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
+
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.LevelIdentifier;
 import com.activeviam.fwk.ActiveViamRuntimeException;
@@ -96,7 +98,9 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    *     MemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
   public void startFrom(final IMemoryStatistic stat) {
-    this.printer = DebugVisitor.createDebugPrinter(stat);
+    if (DEBUG) {
+      this.printer = DebugVisitor.createDebugPrinter(stat);
+    }
     if (this.current == null) {
       final IStatisticAttribute dateAtt =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);

@@ -33,6 +33,7 @@ import com.qfs.literal.ILiteralType;
 import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
+import com.quartetfs.biz.pivot.context.impl.QueriesResultLimit;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.dimension.IDimension;
 import com.quartetfs.biz.pivot.cube.hierarchy.IHierarchy;
@@ -288,6 +289,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDimensions(this::defineDimensions)
         .withSharedContextValue(
             QueriesTimeLimit.of(TIMEOUT_DURATION.getSeconds(), TimeUnit.SECONDS))
+        .withSharedContextValue(QueriesResultLimit.withoutLimit())
         .withSharedMdxContext()
         .withDefaultMember()
         .onHierarchy(MdxNamingUtil.hierarchyUniqueName(IDimension.MEASURES, IHierarchy.MEASURES))

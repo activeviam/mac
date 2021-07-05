@@ -37,6 +37,9 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
   /** Depth of the current memory statistic in the tree. */
   protected int depth = 0;
 
+  /** Boolean stating if the debug mode is activated or not. */
+  public static final Boolean DEBUG = false;
+
   @Override
   public Void visit(final IMemoryStatistic memoryStatistic) {
     enrichStatisticWithDebugAttributes(memoryStatistic);
