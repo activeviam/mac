@@ -17,3 +17,5 @@ target
 .recommenders
 .vscode
 .factorypath
+/ui/node_modules/
+/ui/build/

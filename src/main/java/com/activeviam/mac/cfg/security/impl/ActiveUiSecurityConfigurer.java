@@ -7,7 +7,8 @@
 
 package com.activeviam.mac.cfg.security.impl;
 
-import com.activeviam.mac.cfg.impl.ActiveUiResourceServerConfig;
+import static com.activeviam.mac.cfg.security.impl.ASecurityConfig.ACTIVEUI_ADDRESS;
+
 import com.activeviam.mac.cfg.security.impl.ASecurityConfig.AWebSecurityConfigurer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -25,18 +26,18 @@ public class ActiveUiSecurityConfigurer extends AWebSecurityConfigurer {
 
   @Override
   protected void doConfigure(HttpSecurity http) throws Exception {
-    // Permit all on ActiveUI resources and the root (/) that redirects to ActiveUI index.html.
-    final String pattern = "^(.{0}|\\/|\\/" + ActiveUiResourceServerConfig.NAMESPACE + "(\\/.*)?)$";
+    final String activeUiUrl = env.getRequiredProperty(ACTIVEUI_ADDRESS);
     http
         // Only theses URLs must be handled by this HttpSecurity
-        .regexMatcher(pattern)
+        .regexMatcher(activeUiUrl)
         .authorizeRequests()
         // The order of the matchers matters
-        .regexMatchers(HttpMethod.OPTIONS, pattern)
+        .regexMatchers(HttpMethod.OPTIONS, activeUiUrl)
         .permitAll()
-        .regexMatchers(HttpMethod.GET, pattern)
+        .regexMatchers(HttpMethod.GET, activeUiUrl)
         .permitAll();
-
+    //this allows pre-flight cross-origin requests
+    http.cors();
     // Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
     http.headers().frameOptions().disable();
   }

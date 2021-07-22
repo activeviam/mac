@@ -82,12 +82,17 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /** Name of the ContentService Root Role. */
   public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
+  /**
+   * The address the UI is exposed to.
+   */
+  public static final String ACTIVEUI_ADDRESS = "activeui.address";
   /** The User Configuration. */
   @Autowired protected UserConfig userDetailsConfig;
 
   /** The JWT Configuration. */
   @Autowired protected IJwtConfig jwtConfig;
-
+  /** The name of the Environment to use. */
+  @Autowired protected Environment env;
   /**
    * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
    * the input password will be encoded and compared with the stored encoded password. To determine
@@ -163,7 +168,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
   @Override
   public List<String> getAllowedOrigins() {
-    return Collections.singletonList(CorsConfiguration.ALL);
+    return Collections.singletonList(env.getRequiredProperty(ACTIVEUI_ADDRESS));
   }
 
   /**

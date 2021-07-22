@@ -26,8 +26,8 @@
     <jdk.version>11</jdk.version>
 
     <activepivot.version>5.10.1</activepivot.version>
-    <activeui.version>4.3.16</activeui.version>
-    <content-server-ui.version>2.0.0</content-server-ui.version>
+    <activeui.version>5.0.0-rc3</activeui.version>
+    <content-server-ui.version>2.0.1</content-server-ui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.18</lombok.version>
@@ -110,9 +110,7 @@
       <groupId>com.activeviam.activeui</groupId>
       <artifactId>activeui</artifactId>
       <version>${activeui.version}</version>
-      <scope>runtime</scope>
     </dependency>
-
     <dependency>
       <groupId>com.activeviam.tech</groupId>
       <artifactId>content-server-ui</artifactId>
