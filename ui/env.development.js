@@ -6,7 +6,7 @@ window.env = {
   activePivotServers: {
     "MAC": {
       url: baseUrl,
-      version: "5.11.0",
+      version: "5.10.0",
     },
   },
 };

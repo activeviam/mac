@@ -155,9 +155,9 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   /** Loads the bookmarks packaged with the application. */
   public void loadPredefinedBookmarks() {
     final var service = contentService().withRootPrivileges();
-    if (!service.exists("/ui/bookmarks") || shouldReloadBookmarks()) {
+    if (!service.exists("/ui/dashboards") || shouldReloadBookmarks()) {
       BookmarkTool.importBookmarks(
-          new ContentServiceSnapshotter(service), "bookmarks", defaultBookmarkPermissions());
+          new ContentServiceSnapshotter(service), "ui", defaultBookmarkPermissions());
     }
   }
 

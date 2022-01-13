@@ -10,6 +10,8 @@ package com.activeviam.tools.bookmark.constant.impl;
 // CHECKSTYLE.OFF: JavadocVariable (Internal constants)
 // CHECKSTYLE.OFF: JavadocType (Internal constants)
 
+import java.nio.file.Path;
+
 /**
  * Constants to use to export bookmarks from the Content Server.
  *
@@ -22,6 +24,11 @@ public class ContentServerConstants {
     public static final String SEPARATOR = "/";
 
     public static final String UI = "ui";
+    public static final String DASHBOARDS = UI+SEPARATOR+Tree.DASHBOARDS;
+    public static final String CONTENT = SEPARATOR+Tree.CONTENT;
+    public static final String STRUCTURE = SEPARATOR+Tree.STRUCTURE;
+    public static final String THUMBNAILS = SEPARATOR+Tree.THUMBNAILS;
+    public static final String USERS = UI+SEPARATOR+Tree.USERS;
     public static final String I18N_TOKEN = "i18n";
     public static final String SETTINGS_TOKEN = "settings";
     public static final String I18N = UI + SEPARATOR + Tree.BOOKMARKS + SEPARATOR + I18N_TOKEN;
@@ -37,13 +44,17 @@ public class ContentServerConstants {
     public static final String METADATA_FILE = METADATA + JSON;
     public static final String FOLDER_TEMPLATE_FILE = "folder_template.json";
     public static final String BOOKMARK_TEMPLATE_FILE = "bookmark_template.json";
+    public static final Path INITIAL_CONTENT = Path.of("target","classes","initial_content.json");
   }
 
   public static class Tree {
 
     public static final String CONTENT = "content";
     public static final String STRUCTURE = "structure";
+    public static final String THUMBNAILS = "thumbnails";
     public static final String BOOKMARKS = "bookmarks";
+    public static final String DASHBOARDS = "dashboards";
+    public static final String USERS = "users";
     public static final String ENTRY = "entry";
     public static final String NAME = "name";
     public static final String VALUE = "value";

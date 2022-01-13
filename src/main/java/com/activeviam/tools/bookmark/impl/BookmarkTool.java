@@ -42,8 +42,7 @@ public class BookmarkTool {
       String folderName,
       Map<String, List<String>> defaultPermissions) {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    JsonUiToContentServer.setBookmarkTreeResolver(resolver);
-    JsonUiToContentServer.setStandaloneResolver(resolver);
+    JsonUiToContentServer.setDashboardTreeResolver(resolver);
     JsonUiToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
   }
 
