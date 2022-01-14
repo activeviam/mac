@@ -163,21 +163,21 @@ public class JsonUiToContentServer {
 	 */
 	private static SnapshotContentTree createTwoLevelsDirectoryTree(
 			File root) {
-		final File[] subdirectories = root.listFiles(File::isFile);
+		final File[] subdirectories = root.listFiles();
 		if (subdirectories == null) {
 			return null;
 		}
 		Map<String, SnapshotContentTree> structureNodes = new HashMap<>();
 		for (File file : subdirectories) {
-			final File[] files = file.listFiles(File::isFile);
-			if (files != null && files.length > 1) {
+			final File[] files = file.listFiles();
+			if (files != null && files.length >= 1) {
 				final JsonNode jsonNodeContent = loadFileIntoNode(files[0]);
 				final SnapshotContentTree metadataNode =
 						new SnapshotContentTree(
 								jsonNodeContent.toString(),
 								false,
 								PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-								DEFAULT_PERMISSIONS.get(ContentServerConstants.Role.READERS),
+								PERMISSIONS.get(ContentServerConstants.Role.READERS),
 								new HashMap<>());
 				Map<String, SnapshotContentTree> metadataNodes = new HashMap<>();
 				metadataNodes.put(file.getName() + Paths.METADATA, metadataNode);
@@ -210,29 +210,11 @@ public class JsonUiToContentServer {
 	private static JsonNode loadFileIntoNode(File file) {
 		JsonNode loadedFile = JsonNodeFactory.instance.objectNode();
 		try {
-			loadedFile = loadStreamIntoNode(new FileInputStream(file));
-		} catch (FileNotFoundException fnfe) {
+			final ObjectMapper mapper = new ObjectMapper();
+			loadedFile = mapper.readTree(new FileInputStream(file));
+		} catch (Exception e) {
 			LOGGER.warn("Unable to find file " + file.getName());
 		}
 		return loadedFile;
 	}
-
-	/**
-	 * Loads the contents of a stream into a JsonNode.
-	 *
-	 * @param stream The stream to load.
-	 * @return The contents of the stream, as a JsonNode.
-	 */
-	private static JsonNode loadStreamIntoNode(InputStream stream) {
-		final JsonNode loadedStream;
-		try {
-			final ObjectMapper mapper = new ObjectMapper();
-			loadedStream = mapper.readTree(stream);
-		} catch (Exception e) {
-			LOGGER.warn("Unable to retrieve contents of the input stream.");
-			return JsonNodeFactory.instance.objectNode();
-		}
-		return loadedStream;
-	}
-
 }

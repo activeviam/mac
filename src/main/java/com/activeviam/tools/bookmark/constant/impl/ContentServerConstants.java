@@ -19,78 +19,40 @@ import java.nio.file.Path;
  */
 public class ContentServerConstants {
 
-  public static class Paths {
+	public static class Paths {
 
-    public static final String SEPARATOR = "/";
+		public static final String SEPARATOR = "/";
 
-    public static final String UI = "ui";
-    public static final String DASHBOARDS = UI+SEPARATOR+Tree.DASHBOARDS;
-    public static final String CONTENT = SEPARATOR+Tree.CONTENT;
-    public static final String STRUCTURE = SEPARATOR+Tree.STRUCTURE;
-    public static final String THUMBNAILS = SEPARATOR+Tree.THUMBNAILS;
-    public static final String USERS = UI+SEPARATOR+Tree.USERS;
-    public static final String I18N_TOKEN = "i18n";
-    public static final String SETTINGS_TOKEN = "settings";
-    public static final String I18N = UI + SEPARATOR + Tree.BOOKMARKS + SEPARATOR + I18N_TOKEN;
-    public static final String SETTINGS = UI + SEPARATOR + SETTINGS_TOKEN;
+		public static final String UI = "ui";
+		public static final String DASHBOARDS = UI + SEPARATOR + Tree.DASHBOARDS;
+		public static final String CONTENT = SEPARATOR + Tree.CONTENT;
+		public static final String STRUCTURE = SEPARATOR + Tree.STRUCTURE;
+		public static final String THUMBNAILS = SEPARATOR + Tree.THUMBNAILS;
+		public static final String USERS = UI + SEPARATOR + Tree.USERS;
+		public static final String JSON = ".json";
+		public static final String METADATA = "_metadata";
+		public static final Path INITIAL_CONTENT = Path.of("target", "classes", "initial_content.json");
+	}
 
-    public static final String BOOKMARK_LISTING = "bookmarks-listing";
+	public static class Tree {
 
-    public static final String JSON = ".json";
-    public static final String I18N_JSON = SEPARATOR + I18N_TOKEN + JSON;
-    public static final String SETTINGS_JSON = SEPARATOR + SETTINGS_TOKEN + JSON;
+		public static final String CALCULATED_MEASURES = "calculated_measures";
+		public static final String DASHBOARDS = "dashboards";
+		public static final String FILTERS = "filters";
+		public static final String USERS = "users";
+		public static final String WIDGETS = "widgets";
+		public static final String CONTENT = "content";
+		public static final String STRUCTURE = "structure";
+		public static final String THUMBNAILS = "thumbnails";
+	}
 
-    public static final String METADATA = "_metadata";
-    public static final String METADATA_FILE = METADATA + JSON;
-    public static final String FOLDER_TEMPLATE_FILE = "folder_template.json";
-    public static final String BOOKMARK_TEMPLATE_FILE = "bookmark_template.json";
-    public static final Path INITIAL_CONTENT = Path.of("target","classes","initial_content.json");
-  }
+	public static class Role {
 
-  public static class Tree {
-
-    public static final String CONTENT = "content";
-    public static final String STRUCTURE = "structure";
-    public static final String THUMBNAILS = "thumbnails";
-    public static final String BOOKMARKS = "bookmarks";
-    public static final String DASHBOARDS = "dashboards";
-    public static final String USERS = "users";
-    public static final String ENTRY = "entry";
-    public static final String NAME = "name";
-    public static final String VALUE = "value";
-    public static final String TYPE = "type";
-    public static final String DESCRIPTION = "description";
-    public static final String KEY = "key";
-  }
-
-  public static class Role {
-
-    public static final String OWNERS = "owners";
-    public static final String READERS = "readers";
-    public static final String ROLE_CS_ROOT = "ROLE_CS_ROOT";
-    public static final String ROLE_USER = "ROLE_USER";
-  }
-
-  public static class Content {
-
-    public static final String FILTER = "filter";
-    public static final String CONTAINER = "container";
-    public static final String MDX = "mdx";
-    public static final String FOLDER = "folder";
-  }
-
-  /**
-   * Gets the type of a bookmark from its name.
-   *
-   * @param contentType name of the type
-   * @return exported type
-   */
-  public static String getBookmarkType(String contentType) {
-    if (Content.FILTER.equals(contentType)) {
-      return Content.MDX;
-    }
-    return Content.CONTAINER;
-  }
+		public static final String OWNERS = "owners";
+		public static final String READERS = "readers";
+		public static final String ROLE_CS_ROOT = "ROLE_CS_ROOT";
+		public static final String ROLE_USER = "ROLE_USER";
+	}
 }
 
 // CHECKSTYLE.ON: JavadocType
