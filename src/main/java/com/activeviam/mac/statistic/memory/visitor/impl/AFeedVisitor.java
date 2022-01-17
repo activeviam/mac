@@ -48,23 +48,6 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
     this.dumpName = dumpName;
   }
 
-  @Override
-  public R visit(final IMemoryStatistic memoryStatistic) {
-    visitChildren(memoryStatistic);
-    return null;
-  }
-
-  /**
-   * Visits all the children of the given {@link IMemoryStatistic}.
-   *
-   * @param statistic The statistics whose children to visit.
-   */
-  protected void visitChildren(final IMemoryStatistic statistic) {
-    for (final IMemoryStatistic child : statistic.getChildren()) {
-      child.accept(this);
-    }
-  }
-
   /**
    * Returns the {@link IRecordFormat } of the Chunk store.
    *
@@ -133,5 +116,22 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    */
   protected static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
+  }
+
+  @Override
+  public R visit(final IMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
+    return null;
+  }
+
+  /**
+   * Visits all the children of the given {@link IMemoryStatistic}.
+   *
+   * @param statistic The statistics whose children to visit.
+   */
+  protected void visitChildren(final IMemoryStatistic statistic) {
+    for (final IMemoryStatistic child : statistic.getChildren()) {
+      child.accept(this);
+    }
   }
 }

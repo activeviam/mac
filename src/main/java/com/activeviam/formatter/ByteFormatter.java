@@ -18,11 +18,8 @@ import com.quartetfs.fwk.format.IFormatter;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
 public class ByteFormatter implements IFormatter {
 
-  private static final long serialVersionUID = 1342335544322063849L;
-
   /** Plugin key. */
   public static final String KEY = "ByteFormatter";
-
   /** Number of bytes in 1 GB. */
   protected static final long GB = 1_000_000_000;
   /** Number of bytes in 1 MB. */
@@ -30,15 +27,7 @@ public class ByteFormatter implements IFormatter {
   /** Number of bytes in 1 kB. */
   protected static final long KB = 1_000;
 
-  @Override
-  public String getType() {
-    return KEY;
-  }
-
-  @Override
-  public String format(Object object) {
-    return printDataSize(((Number) object).longValue());
-  }
+  private static final long serialVersionUID = 1342335544322063849L;
 
   /**
    * Format a number of bytes into a readable data size.
@@ -82,5 +71,15 @@ public class ByteFormatter implements IFormatter {
     } else {
       return String.format("%.3f %s", value + decimal / 1000.f, unit);
     }
+  }
+
+  @Override
+  public String getType() {
+    return KEY;
+  }
+
+  @Override
+  public String format(Object object) {
+    return printDataSize(((Number) object).longValue());
   }
 }

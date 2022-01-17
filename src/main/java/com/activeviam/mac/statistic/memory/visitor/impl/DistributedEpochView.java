@@ -25,6 +25,6 @@ public class DistributedEpochView implements EpochView {
 
   @Override
   public String toString() {
-    return "[QUERY " + distributedCubeId + "] " + epochId;
+    return "[QUERY " + this.distributedCubeId + "] " + this.epochId;
   }
 }

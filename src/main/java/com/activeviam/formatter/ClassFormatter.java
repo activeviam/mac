@@ -21,9 +21,10 @@ import java.util.stream.Collectors;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
 public class ClassFormatter implements IFormatter {
 
-  private static final long serialVersionUID = 1L;
   /** Plugin key. */
   public static final String KEY = "ClassFormatter";
+
+  private static final long serialVersionUID = 1L;
 
   @Override
   public String getType() {

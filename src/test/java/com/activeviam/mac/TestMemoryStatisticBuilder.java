@@ -45,19 +45,19 @@ public class TestMemoryStatisticBuilder
   @Override
   public IMemoryStatistic build() {
     IStatisticAttribute parentClass =
-        attributes.get(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS);
+        this.attributes.get(MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS);
     if (parentClass == null) {
       throw new ActiveViamRuntimeException(
-          "It is mandatory to add a parent class to statistic with name '" + name + "'");
+          "It is mandatory to add a parent class to statistic with name '" + this.name + "'");
     }
 
-    if (name == null) {
+    if (this.name == null) {
       // Default name
-      name = parentClass.asText();
+      this.name = parentClass.asText();
     }
 
     IMemoryStatistic statistic;
-    switch (name) {
+    switch (this.name) {
       case MemoryStatisticConstants.STAT_NAME_CHUNK:
         statistic = new ChunkStatistic();
         break;
@@ -76,10 +76,10 @@ public class TestMemoryStatisticBuilder
       default:
         statistic = new DefaultMemoryStatistic();
     }
-    statistic.setShallowOffHeap(offHeap);
-    statistic.setShallowOnHeap(onHeap);
-    statistic.setName(name);
-    statistic.setAttributes(attributes);
+    statistic.setShallowOffHeap(this.offHeap);
+    statistic.setShallowOnHeap(this.onHeap);
+    statistic.setName(this.name);
+    statistic.setAttributes(this.attributes);
     IMemoryStatistic delegateParent = null;
     if (this.children != null && !this.children.isEmpty()) {
       // The children should have a distinct name, see setChildren method.

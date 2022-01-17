@@ -114,6 +114,14 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
 
     /** An instance representing no dictionary (all attributes set to {@code null}. */
     public static final DictionaryAttributes NONE = new DictionaryAttributes();
+    /** ID of the current dictionary. */
+    protected Long dictionaryId;
+    /** Class of the current dictionary. */
+    protected String dictionaryClass;
+    /** Size of the current dictionary. */
+    protected Integer dictionarySize;
+    /** Order of the current dictionary (i.e. base-2 log of its size). */
+    protected Integer dictionaryOrder;
 
     public DictionaryAttributes(DictionaryAttributes other) {
       this(
@@ -127,14 +135,5 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
     public static DictionaryAttributes none() {
       return NONE;
     }
-
-    /** ID of the current dictionary. */
-    protected Long dictionaryId;
-    /** Class of the current dictionary. */
-    protected String dictionaryClass;
-    /** Size of the current dictionary. */
-    protected Integer dictionarySize;
-    /** Order of the current dictionary (i.e. base-2 log of its size). */
-    protected Integer dictionaryOrder;
   }
 }

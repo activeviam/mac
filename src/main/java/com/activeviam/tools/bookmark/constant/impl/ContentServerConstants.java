@@ -17,6 +17,19 @@ package com.activeviam.tools.bookmark.constant.impl;
  */
 public class ContentServerConstants {
 
+  /**
+   * Gets the type of a bookmark from its name.
+   *
+   * @param contentType name of the type
+   * @return exported type
+   */
+  public static String getBookmarkType(String contentType) {
+    if (Content.FILTER.equals(contentType)) {
+      return Content.MDX;
+    }
+    return Content.CONTAINER;
+  }
+
   public static class Paths {
 
     public static final String SEPARATOR = "/";
@@ -66,19 +79,6 @@ public class ContentServerConstants {
     public static final String CONTAINER = "container";
     public static final String MDX = "mdx";
     public static final String FOLDER = "folder";
-  }
-
-  /**
-   * Gets the type of a bookmark from its name.
-   *
-   * @param contentType name of the type
-   * @return exported type
-   */
-  public static String getBookmarkType(String contentType) {
-    if (Content.FILTER.equals(contentType)) {
-      return Content.MDX;
-    }
-    return Content.CONTAINER;
   }
 }
 

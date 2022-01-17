@@ -42,13 +42,11 @@ class ContentServerToJsonUi {
   private static final String WINDOWS_OS = "Windows";
   private static final String UNIX_OS = "Unix/BSD";
   private static final String CUSTOM = "Custom";
-
+  private static final String DEFAULT_ENCODING_CHAR = "_";
+  private static final Map<String, List<String>> FILESYSTEM_RESTRICTED_CHARACTERS = new HashMap<>();
   private static ObjectMapper mapper;
   private static ObjectWriter writer;
-
-  private static final String DEFAULT_ENCODING_CHAR = "_";
   private static String encodingChar = DEFAULT_ENCODING_CHAR;
-  private static final Map<String, List<String>> FILESYSTEM_RESTRICTED_CHARACTERS = new HashMap<>();
 
   static {
     FILESYSTEM_RESTRICTED_CHARACTERS.put(
@@ -292,8 +290,7 @@ class ContentServerToJsonUi {
       if (!bookmarkFolder.exists()) {
         boolean createdDirectories = bookmarkFolder.mkdirs();
         if (!createdDirectories) {
-          throw new IOException(
-              "Could not create export directories. Check path: " + folderName.toString());
+          throw new IOException("Could not create export directories. Check path: " + folderName);
         }
       }
 

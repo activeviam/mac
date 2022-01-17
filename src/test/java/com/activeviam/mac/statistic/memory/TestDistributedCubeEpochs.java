@@ -60,26 +60,29 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     initializeMonitoringApplication(statistics);
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     assertThat(pivot).isNotNull();
   }
 
   private void initializeApplication() {
     // In JUnit5, we can also use TestInfo to complete the cluster name with the test name
-    monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
-    resources.register(monitoredApp.getRight()::stop);
-    resources.register(monitoredApp.getLeft()::stop);
+    this.monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
+    resources.register(this.monitoredApp.getRight()::stop);
+    resources.register(this.monitoredApp.getLeft()::stop);
 
     final var queryCubeA =
         ((MultiVersionDistributedActivePivot)
-            monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
+            this.monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
     final var queryCubeB =
         ((MultiVersionDistributedActivePivot)
-            monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
+            this.monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
     awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 2);
 
     // epoch 1
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
@@ -114,11 +117,12 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   private Path generateMemoryStatistics() {
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     return analysisService.exportApplication("testEpochs");
   }
 
@@ -135,7 +139,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
     resources.register(manager::stop);
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(data), "testDistributedCubeEpochs");
@@ -153,7 +157,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   private long getHeadEpochId(String queryCubeA) {
-    return monitoredApp
+    return this.monitoredApp
         .getRight()
         .getActivePivots()
         .get(queryCubeA)
@@ -163,7 +167,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   protected Set<EpochView> retrieveViewEpochIds() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()

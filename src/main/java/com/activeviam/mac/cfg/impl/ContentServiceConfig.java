@@ -70,6 +70,40 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   @Autowired public Environment env;
 
   /**
+   * Loads the Hibernate's configuration from the specified file.
+   *
+   * @return the Hibernate's configuration
+   */
+  private static org.hibernate.cfg.Configuration loadConfiguration(
+      final Properties hibernateProperties) {
+    hibernateProperties.put(
+        AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
+    return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+  }
+
+  /**
+   * This {@link DataSource} is specific to the connection pool we want to use with Hibernate. If
+   * you don't want to use the same as we do, you don't need it.
+   *
+   * @param hibernateProperties the hibernate properties loaded from <i>hibernate.properties</i>
+   *     file.
+   * @return the {@link DataSource} for {@link HibernateContentService}.
+   */
+  private static DataSource createTomcatJdbcDataSource(Properties hibernateProperties) {
+    try {
+      // Reflection is used to not make the sandbox depends on tomcat-jdbc.jar
+      Class<?> dataSourceKlass = Class.forName("org.apache.tomcat.jdbc.pool.DataSourceFactory");
+      Method createDataSourceMethod =
+          dataSourceKlass.getMethod("createDataSource", Properties.class);
+      return (DataSource)
+          createDataSourceMethod.invoke(
+              dataSourceKlass.getDeclaredConstructor().newInstance(), hibernateProperties);
+    } catch (Exception e) {
+      throw new BeanInitializationException("Initialization of " + DataSource.class + " failed", e);
+    }
+  }
+
+  /**
    * [Bean] Configuration for the Content Service database.
    *
    * @return configuration properties
@@ -112,21 +146,9 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
         .with(contentService())
         .withCacheForEntitlements(-1)
         .needInitialization(
-            env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
-            env.getRequiredProperty(KPI_ROLE_PROPERTY))
+            this.env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
+            this.env.getRequiredProperty(KPI_ROLE_PROPERTY))
         .build();
-  }
-
-  /**
-   * Loads the Hibernate's configuration from the specified file.
-   *
-   * @return the Hibernate's configuration
-   */
-  private static org.hibernate.cfg.Configuration loadConfiguration(
-      final Properties hibernateProperties) {
-    hibernateProperties.put(
-        AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
-    return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
   }
 
   private Map<String, List<String>> defaultBookmarkPermissions() {
@@ -164,27 +186,5 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   /** Returns true if the bookmarks must be reloaded even if already present. */
   private boolean shouldReloadBookmarks() {
     return this.env.getProperty(FORCE_BOOKMARK_RELOAD_PROPERTY, Boolean.class, false);
-  }
-
-  /**
-   * This {@link DataSource} is specific to the connection pool we want to use with Hibernate. If
-   * you don't want to use the same as we do, you don't need it.
-   *
-   * @param hibernateProperties the hibernate properties loaded from <i>hibernate.properties</i>
-   *     file.
-   * @return the {@link DataSource} for {@link HibernateContentService}.
-   */
-  private static DataSource createTomcatJdbcDataSource(Properties hibernateProperties) {
-    try {
-      // Reflection is used to not make the sandbox depends on tomcat-jdbc.jar
-      Class<?> dataSourceKlass = Class.forName("org.apache.tomcat.jdbc.pool.DataSourceFactory");
-      Method createDataSourceMethod =
-          dataSourceKlass.getMethod("createDataSource", Properties.class);
-      return (DataSource)
-          createDataSourceMethod.invoke(
-              dataSourceKlass.getDeclaredConstructor().newInstance(), hibernateProperties);
-    } catch (Exception e) {
-      throw new BeanInitializationException("Initialization of " + DataSource.class + " failed", e);
-    }
   }
 }

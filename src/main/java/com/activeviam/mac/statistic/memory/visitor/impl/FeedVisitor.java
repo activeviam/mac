@@ -42,17 +42,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   private final IOpenedTransaction transaction;
   private final String dumpName;
 
-  @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println(
-        "Unexpected type of statistics : "
-            + memoryStatistic
-            + " which is a "
-            + memoryStatistic.getClass().getSimpleName());
-    visitChildren(this, memoryStatistic);
-    return null;
-  }
-
   /**
    * Constructor.
    *
@@ -159,55 +148,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     return tuple;
   }
 
-  @Override
-  public Void visit(DefaultMemoryStatistic stat) {
-    switch (stat.getName()) {
-      case MemoryStatisticConstants.STAT_NAME_DATASTORE:
-      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
-      case MemoryStatisticConstants.STAT_NAME_STORE:
-        final DatastoreFeederVisitor visitor =
-            new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
-        visitor.startFrom(stat);
-        break;
-      case MemoryStatisticConstants.STAT_NAME_MANAGER:
-      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
-      case MemoryStatisticConstants.STAT_NAME_PIVOT:
-        final PivotFeederVisitor feed =
-            new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
-        feed.startFrom(stat);
-        break;
-      default:
-        visitChildren(this, stat);
-    }
-
-    return null;
-  }
-
-  @Override
-  public Void visit(ChunkSetStatistic chunkSetStatistic) {
-    return null;
-  }
-
-  @Override
-  public Void visit(ChunkStatistic chunkStatistic) {
-    return null;
-  }
-
-  @Override
-  public Void visit(ReferenceStatistic referenceStatistic) {
-    return null;
-  }
-
-  @Override
-  public Void visit(IndexStatistic indexStatistic) {
-    return null;
-  }
-
-  @Override
-  public Void visit(DictionaryStatistic dictionaryStatistic) {
-    return null;
-  }
-
   /**
    * Visits all the children of the given {@link IMemoryStatistic}.
    *
@@ -287,5 +227,65 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
             "Unexpected null value for field " + field + " in tuple: " + Arrays.toString(tuple));
       }
     }
+  }
+
+  @Override
+  public Void visit(final IMemoryStatistic memoryStatistic) {
+    System.err.println(
+        "Unexpected type of statistics : "
+            + memoryStatistic
+            + " which is a "
+            + memoryStatistic.getClass().getSimpleName());
+    visitChildren(this, memoryStatistic);
+    return null;
+  }
+
+  @Override
+  public Void visit(DefaultMemoryStatistic stat) {
+    switch (stat.getName()) {
+      case MemoryStatisticConstants.STAT_NAME_DATASTORE:
+      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_STORE:
+      case MemoryStatisticConstants.STAT_NAME_STORE:
+        final DatastoreFeederVisitor visitor =
+            new DatastoreFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
+        visitor.startFrom(stat);
+        break;
+      case MemoryStatisticConstants.STAT_NAME_MANAGER:
+      case MemoryStatisticConstants.STAT_NAME_MULTIVERSION_PIVOT:
+      case MemoryStatisticConstants.STAT_NAME_PIVOT:
+        final PivotFeederVisitor feed =
+            new PivotFeederVisitor(this.storageMetadata, this.transaction, this.dumpName);
+        feed.startFrom(stat);
+        break;
+      default:
+        visitChildren(this, stat);
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visit(ChunkSetStatistic chunkSetStatistic) {
+    return null;
+  }
+
+  @Override
+  public Void visit(ChunkStatistic chunkStatistic) {
+    return null;
+  }
+
+  @Override
+  public Void visit(ReferenceStatistic referenceStatistic) {
+    return null;
+  }
+
+  @Override
+  public Void visit(IndexStatistic indexStatistic) {
+    return null;
+  }
+
+  @Override
+  public Void visit(DictionaryStatistic dictionaryStatistic) {
+    return null;
   }
 }

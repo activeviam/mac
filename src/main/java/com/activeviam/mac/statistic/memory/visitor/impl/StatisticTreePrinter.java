@@ -26,73 +26,6 @@ public class StatisticTreePrinter {
   protected List<Tree> trees = new ArrayList<>();
 
   /**
-   * Adds the statistic and all its childen to the tree.
-   *
-   * @param statistic statistic to add
-   */
-  public void add(IMemoryStatistic statistic) {
-    List<IMemoryStatistic> ascendingTree = getAscendingTree(statistic);
-    IMemoryStatistic root = ascendingTree.get(0);
-
-    Tree t = null;
-    for (Tree tree : trees) {
-      if (areEquals(tree.root.item, root)) {
-        t = tree;
-        break;
-      }
-    }
-
-    if (t == null) {
-      // A tree with this root does not exist yet. We create it
-      Node parent = new Node(ascendingTree.get(0));
-      t = new Tree(parent);
-      for (int i = 1; i < ascendingTree.size(); i++) {
-        IMemoryStatistic next = ascendingTree.get(i);
-        Node n = new Node(next);
-        parent.addChild(n);
-        parent = n;
-      }
-      this.trees.add(t);
-    } else {
-      Node parent = t.root;
-      // Start at index 1 because we already know that the roots are equals
-      for (int i = 1; i < ascendingTree.size(); i++) {
-        IMemoryStatistic next = ascendingTree.get(i);
-        Node c = parent.getChild(next);
-        if (c == null) {
-          c = new Node(next);
-          parent.addChild(c);
-        } else {
-          // next is a child of parent. It means it belongs to the tree.
-        }
-        parent = c;
-      }
-    }
-  }
-
-  /**
-   * returns the memory statistic Trees as a string.
-   *
-   * @return the string displaying the tree
-   */
-  public String getTreesAsString() {
-    StringBuilder sb = new StringBuilder();
-    for (Tree tree : trees) {
-      Node root = tree.root;
-      sb.append(root.item.toString());
-      sb.append(System.lineSeparator());
-
-      print(sb, 0, root);
-    }
-    return sb.toString();
-  }
-
-  /** Prints the tree of {@link IMemoryStatistic}. */
-  public void print() {
-    System.out.println(getTreesAsString());
-  }
-
-  /**
    * Prints the descending tree of {@link IMemoryStatistic memory statistics} from the n {@link
    * Node} and downwards.
    *
@@ -163,6 +96,73 @@ public class StatisticTreePrinter {
     return statistic.getAttributes().get(DebugVisitor.ID_KEY).asLong();
   }
 
+  /**
+   * Adds the statistic and all its childen to the tree.
+   *
+   * @param statistic statistic to add
+   */
+  public void add(IMemoryStatistic statistic) {
+    List<IMemoryStatistic> ascendingTree = getAscendingTree(statistic);
+    IMemoryStatistic root = ascendingTree.get(0);
+
+    Tree t = null;
+    for (Tree tree : this.trees) {
+      if (areEquals(tree.root.item, root)) {
+        t = tree;
+        break;
+      }
+    }
+
+    if (t == null) {
+      // A tree with this root does not exist yet. We create it
+      Node parent = new Node(ascendingTree.get(0));
+      t = new Tree(parent);
+      for (int i = 1; i < ascendingTree.size(); i++) {
+        IMemoryStatistic next = ascendingTree.get(i);
+        Node n = new Node(next);
+        parent.addChild(n);
+        parent = n;
+      }
+      this.trees.add(t);
+    } else {
+      Node parent = t.root;
+      // Start at index 1 because we already know that the roots are equals
+      for (int i = 1; i < ascendingTree.size(); i++) {
+        IMemoryStatistic next = ascendingTree.get(i);
+        Node c = parent.getChild(next);
+        if (c == null) {
+          c = new Node(next);
+          parent.addChild(c);
+        } else {
+          // next is a child of parent. It means it belongs to the tree.
+        }
+        parent = c;
+      }
+    }
+  }
+
+  /**
+   * returns the memory statistic Trees as a string.
+   *
+   * @return the string displaying the tree
+   */
+  public String getTreesAsString() {
+    StringBuilder sb = new StringBuilder();
+    for (Tree tree : this.trees) {
+      Node root = tree.root;
+      sb.append(root.item.toString());
+      sb.append(System.lineSeparator());
+
+      print(sb, 0, root);
+    }
+    return sb.toString();
+  }
+
+  /** Prints the tree of {@link IMemoryStatistic}. */
+  public void print() {
+    System.out.println(getTreesAsString());
+  }
+
   ////////////////////////////////
   // Very basic tree structure  //
   ////////////////////////////////
@@ -186,16 +186,16 @@ public class StatisticTreePrinter {
     }
 
     private Node addChild(final Node node) {
-      return children.put(getId(node.item), node);
+      return this.children.put(getId(node.item), node);
     }
 
     private Node getChild(final IMemoryStatistic key) {
-      return children.get(getId(key));
+      return this.children.get(getId(key));
     }
 
     @Override
     public String toString() {
-      return "Node{" + "childrenCount=" + children.size() + ", item=" + item + '}';
+      return "Node{" + "childrenCount=" + this.children.size() + ", item=" + this.item + '}';
     }
   }
 }

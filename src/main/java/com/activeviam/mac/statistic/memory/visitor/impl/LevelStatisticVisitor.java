@@ -37,14 +37,12 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
 
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
+  private final Long epochId;
+  /** The number of members of the visited level. */
+  protected Integer memberCount;
 
   private ParentType directParentType;
   private String directParentId;
-
-  private final Long epochId;
-
-  /** The number of members of the visited level. */
-  protected Integer memberCount;
 
   /**
    * Constructor.
@@ -124,7 +122,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
       FeedVisitor.setTupleElement(
           tuple, format, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
     }
-    FeedVisitor.writeChunkTupleForFields(stat, transaction, null, format, tuple);
+    FeedVisitor.writeChunkTupleForFields(stat, this.transaction, null, format, tuple);
 
     visitChildren(stat);
 

@@ -43,6 +43,9 @@ class JsonUiToContentServer {
   static final Map<String, List<String>> ROOT_ONLY_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> ROOT_OWNER_PERMISSIONS = new HashMap<>();
   static final Map<String, List<String>> DEFAULT_PERMISSIONS = new HashMap<>();
+  private static final Logger LOGGER = LoggerFactory.getLogger(JsonUiToContentServer.class);
+  private static PathMatchingResourcePatternResolver bookmarkTreeResolver;
+  private static PathMatchingResourcePatternResolver standaloneResolver;
 
   static {
     ROOT_ONLY_PERMISSIONS.put(
@@ -58,11 +61,6 @@ class JsonUiToContentServer {
         ContentServerConstants.Role.READERS,
         Collections.singletonList(ContentServerConstants.Role.ROLE_USER));
   }
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(JsonUiToContentServer.class);
-
-  private static PathMatchingResourcePatternResolver bookmarkTreeResolver;
-  private static PathMatchingResourcePatternResolver standaloneResolver;
 
   /**
    * Generates and loads a tree into a given ContentServiceSnapshotter, from a bookmarks folder.
@@ -427,18 +425,6 @@ class JsonUiToContentServer {
     return metadata;
   }
 
-  /** Metadata for a bookmark. */
-  @Data
-  protected static class BookmarkMetadata {
-
-    /** Description of the bookmark. */
-    private String description;
-    /** List of permissions for the bookmark. */
-    private Map<String, List<String>> permissions;
-    /** Key of the bookmark. */
-    private String key;
-  }
-
   /**
    * Gets the arrays of owners and readers from a pair of JsonNodes.
    *
@@ -535,5 +521,17 @@ class JsonUiToContentServer {
    */
   public static void setStandaloneResolver(PathMatchingResourcePatternResolver toSet) {
     standaloneResolver = toSet;
+  }
+
+  /** Metadata for a bookmark. */
+  @Data
+  protected static class BookmarkMetadata {
+
+    /** Description of the bookmark. */
+    private String description;
+    /** List of permissions for the bookmark. */
+    private Map<String, List<String>> permissions;
+    /** Key of the bookmark. */
+    private String key;
   }
 }

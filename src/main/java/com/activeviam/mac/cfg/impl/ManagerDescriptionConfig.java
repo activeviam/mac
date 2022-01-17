@@ -236,6 +236,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String INTERNAL_FOLDER = "Internal";
   // endregion
 
+  /**
+   * Prefixes a field by another string.
+   *
+   * @param prefix string to prepend
+   * @param field field to be prefixed
+   * @return the prefixed string
+   */
+  private static String prefixField(String prefix, String field) {
+    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
+  }
+
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
@@ -269,17 +280,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
               return result;
             })
         .build();
-  }
-
-  /**
-   * Prefixes a field by another string.
-   *
-   * @param prefix string to prepend
-   * @param field field to be prefixed
-   * @return the prefixed string
-   */
-  private static String prefixField(String prefix, String field) {
-    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
   }
 
   private IActivePivotInstanceDescription memoryCube() {
@@ -425,7 +425,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withComparator(ReverseOrderComparator.type)
         .withHierarchy(BRANCH_HIERARCHY)
-        .slicing()
         .withProperty("description", "The branch of the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
@@ -434,12 +433,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withHierarchy(USED_BY_VERSION_DIMENSION)
         .withProperty(
             "description",
-            "Whether or not the chunk is known to be used by the currently" + " viewed version")
+            "Whether or not the chunk is known to be used by the currently viewed version")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
         .withProperty(
             "description",
-            "Whether or not the chunk is known to be used by the currently" + " viewed version")
+            "Whether or not the chunk is known to be used by the currently viewed version")
         .withDimension(OWNER_DIMENSION)
         .withProperty("description", "The cube(s) or store(s) owning the chunk")
         .withHierarchy(OWNER_HIERARCHY)
@@ -450,16 +449,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDimension(COMPONENT_DIMENSION)
         .withProperty(
             "description",
-            "The owning structure associated with the chunk (dictionary," + " index, ...)")
+            "The owning structure associated with the chunk (dictionary, index, ...)")
         .withHierarchy(COMPONENT_HIERARCHY)
         .withProperty(
             "description",
-            "The owning structure associated with the chunk (dictionary," + " index, ...)")
+            "The owning structure associated with the chunk (dictionary, index, ...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__COMPONENT)
         .withProperty(
             "description",
-            "The owning structure associated with the chunk (dictionary," + " index, ...)")
+            "The owning structure associated with the chunk (dictionary, index, ...)")
         .withDimension(FIELD_DIMENSION)
         .withProperty("description", "The field(s) associated with the chunk, if any")
         .withHierarchy(FIELD_HIERARCHY)

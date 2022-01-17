@@ -37,7 +37,7 @@ public class SnapshotNode {
    */
   public SnapshotNode(String key) {
     this.key = key;
-    children = new ArrayList<>();
+    this.children = new ArrayList<>();
   }
 
   /**
@@ -46,6 +46,6 @@ public class SnapshotNode {
    * @param c node to add
    */
   public void addChild(SnapshotNode c) {
-    children.add(c);
+    this.children.add(c);
   }
 }
