@@ -140,7 +140,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
         .userDetailsService(this.userDetailsConfig.userDetailsService())
         .and()
         // Required to allow JWT
-        .authenticationProvider(jwtConfig.jwtAuthenticationProvider());
+        .authenticationProvider(this.jwtConfig.jwtAuthenticationProvider());
   }
 
   /**
@@ -253,7 +253,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
 
     @Override
     protected final void configure(final HttpSecurity http) throws Exception {
-      final Filter jwtFilter = context.getBean(IJwtConfig.class).jwtFilter();
+      final Filter jwtFilter = this.context.getBean(IJwtConfig.class).jwtFilter();
 
       http
           // As of Spring Security 4.0, CSRF protection is enabled by default.
@@ -264,11 +264,11 @@ public abstract class ASecurityConfig implements ICorsConfig {
           // To allow authentication with JWT (Required for ActiveUI)
           .addFilterAfter(jwtFilter, SecurityContextPersistenceFilter.class);
 
-      if (logout) {
+      if (this.logout) {
         // Configure logout URL
         http.logout()
             .permitAll()
-            .deleteCookies(cookieName)
+            .deleteCookies(this.cookieName)
             .invalidateHttpSession(true)
             .logoutSuccessHandler(new NoRedirectLogoutSuccessHandler());
       }

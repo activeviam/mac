@@ -59,27 +59,30 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    statistics = loadMemoryStatFromFolder(exportPath);
+    this.statistics = loadMemoryStatFromFolder(exportPath);
 
-    initializeMonitoringApplication(statistics);
+    initializeMonitoringApplication(this.statistics);
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   private void initializeApplication() {
-    monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
+    this.monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
     // epoch 1
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     // epoch 2
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
@@ -87,7 +90,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     // epoch 3
     // drop partition from epoch 2
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
@@ -95,7 +98,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     // epoch 4
     // make sure to add a new chunk on the 0-valued partition
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
@@ -104,21 +107,22 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     // epoch 5
     // remaining chunks from epoch 4, but not used by version
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             transactionManager ->
                 transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20)));
 
-    monitoredApp.getRight().getActivePivots().get("Cube").commit(new Epoch(10L));
+    this.monitoredApp.getRight().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     return analysisService.exportApplication("testEpochs");
   }
 
@@ -132,7 +136,7 @@ public class TestEpochs extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(data), "testEpochs");
@@ -140,13 +144,13 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testStatisticConsistency() {
-    ATestMemoryStatistic.assertLoadsCorrectly(statistics.getChildren(), TestEpochs.class);
+    ATestMemoryStatistic.assertLoadsCorrectly(this.statistics.getChildren(), TestEpochs.class);
   }
 
   @Test
@@ -236,7 +240,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Set<Long> retrieveRecordChunks() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -255,7 +259,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   protected Multimap<Long, Long> retrieveChunksPerEpoch(
       final Collection<Long> chunkSet, final ICondition filter) {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -279,7 +283,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Set<Long> retrieveEpochIds() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -296,7 +300,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Multimap<Long, Integer> retrievePartitionsPerEpoch() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -320,7 +324,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Multimap<Long, Long> retrieveDictionariesPerEpoch() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -342,7 +346,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   protected Multimap<Long, Long> retrieveIndicesPerEpoch() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()

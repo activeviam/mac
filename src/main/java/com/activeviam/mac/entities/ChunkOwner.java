@@ -43,7 +43,7 @@ public interface ChunkOwner extends Comparable<ChunkOwner> {
 
     @Override
     public String toString() {
-      return stringRepresentation;
+      return this.stringRepresentation;
     }
   }
 }

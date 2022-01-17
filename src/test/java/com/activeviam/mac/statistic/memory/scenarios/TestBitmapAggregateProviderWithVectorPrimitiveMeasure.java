@@ -45,14 +45,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATestMemoryStatistic {
 
-  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
-
   protected static final Path TEMP_DIRECTORY =
       QfsFileTestUtils.createTempDirectory(
           TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
-
   protected static final int RECORD_COUNT = 100;
-
+  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
   protected IDatastore datastore;
   protected IActivePivotManager manager;
   protected Path statisticsPath;
@@ -68,17 +65,17 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    datastore =
+    this.datastore =
         StartBuilding.datastore()
             .setSchemaDescription(datastoreSchemaDescription)
             .addSchemaDescriptionPostProcessors(
                 ActivePivotDatastorePostProcessor.createFrom(managerDescription))
             .build();
 
-    manager =
+    this.manager =
         StartBuilding.manager()
             .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
+            .setDatastoreAndPermissions(this.datastore)
             .buildAndStart();
 
     fillApplication();
@@ -126,7 +123,7 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
   }
 
   protected void fillApplication() {
-    datastore.edit(
+    this.datastore.edit(
         transactionManager -> {
           for (int i = 0; i < RECORD_COUNT; ++i) {
             transactionManager.add("Store", i, new double[] {i, -i});
@@ -137,22 +134,22 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
   protected void exportApplicationMemoryStatistics() {
     final IMemoryAnalysisService analysisService =
         new MemoryAnalysisService(
-            datastore,
-            manager,
-            datastore.getEpochManager(),
+            this.datastore,
+            this.manager,
+            this.datastore.getEpochManager(),
             TestBitmapAggregateProviderWithVectorPrimitiveMeasure.TEMP_DIRECTORY);
-    statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
+    this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
   @AfterEach
   public void teardown() throws AgentException {
-    manager.stop();
-    datastore.stop();
+    this.manager.stop();
+    this.datastore.stop();
   }
 
   @Test
   public void testLoading() throws IOException {
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
+    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(this.statisticsPath);
 
     final IDatastore analysisDatastore = createAnalysisDatastore();
     Assertions.assertDoesNotThrow(
@@ -163,7 +160,7 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
   protected IDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {

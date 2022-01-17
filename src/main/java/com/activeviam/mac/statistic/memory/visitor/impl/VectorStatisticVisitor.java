@@ -43,11 +43,9 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   /** The partition id of the visited statistic. */
   protected final int partitionId;
 
+  private final UsedByVersion usedByVersion;
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
-
-  private final UsedByVersion usedByVersion;
-
   /** The fields corresponding to the vector block statistic. */
   protected Collection<String> fields;
 
@@ -213,7 +211,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
     }
     // Set the chunk data to be added to the Chunk store
     FeedVisitor.writeChunkTupleForFields(
-        statistic, transaction, this.fields, chunkRecordFormat, tuple);
+        statistic, this.transaction, this.fields, this.chunkRecordFormat, tuple);
 
     visitChildren(statistic);
   }

@@ -54,11 +54,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
-  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
-
   protected static final Path TEMP_DIRECTORY =
       QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
-
+  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
   protected IDatastore monitoredDatastore;
   protected IActivePivotManager monitoredManager;
   protected Path statisticsPath;
@@ -74,27 +72,27 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
     final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
     final IActivePivotManagerDescription managerDescription = new ActivePivotManagerDescription();
 
-    monitoredDatastore =
-        resources.create(
+    this.monitoredDatastore =
+        this.resources.create(
             StartBuilding.datastore()
                     .setSchemaDescription(datastoreSchemaDescription)
                     .addSchemaDescriptionPostProcessors(
                         ActivePivotDatastorePostProcessor.createFrom(managerDescription))
                 ::build);
 
-    monitoredManager =
+    this.monitoredManager =
         StartBuilding.manager()
             .setDescription(managerDescription)
-            .setDatastoreAndPermissions(monitoredDatastore)
+            .setDatastoreAndPermissions(this.monitoredDatastore)
             .buildAndStart();
-    resources.register(monitoredManager::stop);
+    this.resources.register(this.monitoredManager::stop);
 
     fillApplication();
     performGC();
     exportApplicationMemoryStatistics();
 
-    monitoringDatastore = createAnalysisDatastore();
-    loadStatisticsIntoDatastore(loadMemoryStatistic(statisticsPath), monitoringDatastore);
+    this.monitoringDatastore = createAnalysisDatastore();
+    loadStatisticsIntoDatastore(loadMemoryStatistic(this.statisticsPath), this.monitoringDatastore);
   }
 
   protected IDatastoreSchemaDescription datastoreSchema() {
@@ -133,7 +131,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   protected void fillApplication() {
     final String[] currencies = new String[] {"EUR", "GBP", "USD"};
 
-    monitoredDatastore.edit(
+    this.monitoredDatastore.edit(
         transactionManager -> {
           for (final String currency : currencies) {
             transactionManager.add("Currency", currency);
@@ -147,16 +145,16 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   protected void exportApplicationMemoryStatistics() {
     final IMemoryAnalysisService analysisService =
         new MemoryAnalysisService(
-            monitoredDatastore,
-            monitoredManager,
-            monitoredDatastore.getEpochManager(),
+            this.monitoredDatastore,
+            this.monitoredManager,
+            this.monitoredDatastore.getEpochManager(),
             TEMP_DIRECTORY);
-    statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
+    this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
   protected IDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
@@ -179,7 +177,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   @Test
   public void testDictionaryIsShared() {
-    final ISchemaDictionaryProvider dictionaries = monitoredDatastore.getDictionaries();
+    final ISchemaDictionaryProvider dictionaries = this.monitoredDatastore.getDictionaries();
     Assertions.assertThat(dictionaries.getDictionary("Forex", "currency"))
         .isSameAs(dictionaries.getDictionary("Forex", "targetCurrency"));
   }
@@ -187,7 +185,10 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   @Test
   public void testDictionaryHasAtLeastOneChunk() {
     final long dictionaryId =
-        monitoredDatastore.getDictionaries().getDictionary("Forex", "currency").getDictionaryId();
+        this.monitoredDatastore
+            .getDictionaries()
+            .getDictionary("Forex", "currency")
+            .getDictionaryId();
 
     final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
     Assertions.assertThat(chunkIdsForDictionary).isNotEmpty();
@@ -196,7 +197,10 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   @Test
   public void testDictionaryChunkFields() {
     final long dictionaryId =
-        monitoredDatastore.getDictionaries().getDictionary("Forex", "currency").getDictionaryId();
+        this.monitoredDatastore
+            .getDictionaries()
+            .getDictionary("Forex", "currency")
+            .getDictionaryId();
 
     final Set<Long> chunkIdsForDictionary = extractChunkIdsForDictionary(dictionaryId);
     final Map<Long, Multimap<String, String>> ownersAndFieldsPerChunk =
@@ -222,7 +226,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   protected Set<Long> extractChunkIdsForDictionary(final long dictionaryId) {
     final ICursor cursor =
-        monitoringDatastore
+        this.monitoringDatastore
             .getHead()
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)
@@ -240,7 +244,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
       final Collection<Long> chunkIdSubset) {
     final ICursor cursor =
-        monitoringDatastore
+        this.monitoringDatastore
             .getHead()
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)

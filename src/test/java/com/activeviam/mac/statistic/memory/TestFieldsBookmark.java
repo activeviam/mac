@@ -27,12 +27,10 @@ import org.junit.jupiter.api.Test;
 
 public class TestFieldsBookmark extends ATestMemoryStatistic {
 
+  public static final int ADDED_DATA_SIZE = 20;
   Pair<IDatastore, IActivePivotManager> monitoredApp;
   Pair<IDatastore, IActivePivotManager> monitoringApp;
-
   StatisticsSummary summary;
-
-  public static final int ADDED_DATA_SIZE = 20;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -41,9 +39,9 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApp = createMicroApplicationWithSharedVectorField();
+    this.monitoredApp = createMicroApplicationWithSharedVectorField();
 
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             tm ->
@@ -51,16 +49,17 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
                     .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
 
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-    summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    this.summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
@@ -73,26 +72,32 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery storeTotal =
         new MDXQuery(

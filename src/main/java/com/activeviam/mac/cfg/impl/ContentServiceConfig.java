@@ -150,8 +150,8 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
         .with(contentService())
         .withCacheForEntitlements(-1)
         .needInitialization(
-            env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
-            env.getRequiredProperty(KPI_ROLE_PROPERTY))
+            this.env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
+            this.env.getRequiredProperty(KPI_ROLE_PROPERTY))
         .build();
   }
 

@@ -56,24 +56,20 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** The partition id of the visited statistic. */
   protected final int partitionId;
-
+  /** Whether or not to ignore the field attributes of the visited statistics. */
+  protected final boolean ignoreFieldSpecifications;
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
-
   /**
    * Whether or not the currently visited statistics were flagged as used by the current version.
    */
   protected UsedByVersion usedByVersion;
-
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
 
   private Integer chunkSize;
   private Integer freeRows;
   private Integer nonWrittenRows;
-
-  /** Whether or not to ignore the field attributes of the visited statistics. */
-  protected final boolean ignoreFieldSpecifications;
 
   /**
    * Constructor.
@@ -149,7 +145,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       boolean isFieldSpecified =
           memoryStatistic.getAttributes().containsKey(MemoryStatisticConstants.ATTR_NAME_FIELD);
       final Collection<String> oldFields = this.fields;
-      if (isFieldSpecified && !ignoreFieldSpecifications) {
+      if (isFieldSpecified && !this.ignoreFieldSpecifications) {
         final IStatisticAttribute fieldAttribute =
             memoryStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         this.fields = Collections.singleton(fieldAttribute.asText());
@@ -224,7 +220,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
           chunkStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_OF_CHUNKSET);
       Collection<String> oldFields = null;
 
-      if (isFieldSpecified && !ignoreFieldSpecifications) {
+      if (isFieldSpecified && !this.ignoreFieldSpecifications) {
         final IStatisticAttribute fieldAttribute =
             chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELD);
         oldFields = this.fields;
@@ -287,7 +283,8 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }
       // Set the chunk data to be added to the Chunk store
-      FeedVisitor.writeChunkTupleForFields(chunkStatistic, transaction, fields, format, tuple);
+      FeedVisitor.writeChunkTupleForFields(
+          chunkStatistic, this.transaction, this.fields, format, tuple);
 
       visitChildren(chunkStatistic);
 

@@ -72,6 +72,16 @@ public class SecurityConfig extends ASecurityConfig {
   }
 
   /**
+   * Returns a bean initializing the Cookies name in the Servlet Spring context.
+   *
+   * @return the bean initializing the Cookies name in the Servlet Spring context
+   */
+  @Bean
+  public ServletContextInitializer servletContextInitializer() {
+    return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);
+  }
+
+  /**
    * To expose the Pivot services.
    *
    * @author ActiveViam
@@ -120,7 +130,7 @@ public class SecurityConfig extends ASecurityConfig {
           .httpBasic()
           // SwitchUserFilter is the last filter in the chain. See FilterComparator class.
           .and()
-          .addFilterAfter(activePivotConfig.contextValueFilter(), SwitchUserFilter.class);
+          .addFilterAfter(this.activePivotConfig.contextValueFilter(), SwitchUserFilter.class);
     }
 
     @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
@@ -128,15 +138,5 @@ public class SecurityConfig extends ASecurityConfig {
     public AuthenticationManager authenticationManagerBean() throws Exception {
       return super.authenticationManagerBean();
     }
-  }
-
-  /**
-   * Returns a bean initializing the Cookies name in the Servlet Spring context.
-   *
-   * @return the bean initializing the Cookies name in the Servlet Spring context
-   */
-  @Bean
-  public ServletContextInitializer servletContextInitializer() {
-    return servletContext -> servletContext.getSessionCookieConfig().setName(COOKIE_NAME);
   }
 }

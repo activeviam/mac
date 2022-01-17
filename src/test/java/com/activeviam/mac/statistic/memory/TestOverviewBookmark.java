@@ -27,12 +27,10 @@ import org.junit.jupiter.api.Test;
 
 public class TestOverviewBookmark extends ATestMemoryStatistic {
 
+  public static final int ADDED_DATA_SIZE = 20;
   private Pair<IDatastore, IActivePivotManager> monitoredApp;
   private Pair<IDatastore, IActivePivotManager> monitoringApp;
-
   private StatisticsSummary summary;
-
-  public static final int ADDED_DATA_SIZE = 20;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -46,30 +44,34 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final Path exportPath = generateMemoryStatistics();
 
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-    summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    this.summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     initializeMonitoringApplication(stats);
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   private void initializeApplication() {
-    monitoredApp = createMicroApplication();
+    this.monitoredApp = createMicroApplication();
 
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
   }
 
   private Path generateMemoryStatistics() {
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     performGC();
 
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     return analysisService.exportMostRecentVersion("testOverview");
   }
 
@@ -83,21 +85,24 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
   }
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testOverviewGrandTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
         new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
@@ -105,13 +110,16 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     final CellSetDTO totalResult = pivot.execute(totalQuery);
 
     Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
-        .isEqualTo(summary.offHeapMemory);
+        .isEqualTo(this.summary.offHeapMemory);
   }
 
   @Test
   public void testOwnerTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalQuery =
         new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
@@ -147,7 +155,10 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   @Test
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery storeTotalQuery =
         new MDXQuery(
@@ -188,7 +199,10 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   @Test
   public void testCubeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery cubeTotalQuery =
         new MDXQuery(

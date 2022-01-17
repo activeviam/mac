@@ -60,31 +60,31 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     Path exportPath =
         generateMemoryStatistics(
-            monitoredApp.getLeft(),
-            monitoredApp.getRight(),
+            this.monitoredApp.getLeft(),
+            this.monitoredApp.getRight(),
             IMemoryAnalysisService::exportApplication);
-    appStatistics = loadMemoryStatFromFolder(exportPath);
+    this.appStatistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoredApplication();
 
     exportPath =
         generateMemoryStatistics(
-            distributedMonitoredApp.getLeft(),
-            distributedMonitoredApp.getRight(),
+            this.distributedMonitoredApp.getLeft(),
+            this.distributedMonitoredApp.getRight(),
             IMemoryAnalysisService::exportMostRecentVersion);
-    distributedAppStatistics = loadMemoryStatFromFolder(exportPath);
+    this.distributedAppStatistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication();
   }
 
   @Test
   public void testDifferentDumps() {
-    final IDatastore monitoringDatastore = monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(appStatistics), "app");
+        monitoringDatastore, List.of(this.appStatistics), "app");
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(appStatistics), "app2");
+        monitoringDatastore, List.of(this.appStatistics), "app2");
 
     Assertions.assertThat(
             DatastoreQueryHelper.selectDistinct(
@@ -96,10 +96,10 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingChunks() {
-    final IDatastore monitoringDatastore = monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(distributedAppStatistics), "app");
+        monitoringDatastore, List.of(this.distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(
@@ -108,7 +108,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(1L);
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(appStatistics), "app");
+        monitoringDatastore, List.of(this.appStatistics), "app");
 
     epochs =
         collectEpochViewsForOwner(
@@ -122,12 +122,12 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingEpochs() {
-    final IDatastore monitoringDatastore = monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(appStatistics), "app");
+        monitoringDatastore, List.of(this.appStatistics), "app");
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(distributedAppStatistics), "app");
+        monitoringDatastore, List.of(this.distributedAppStatistics), "app");
 
     TLongSet epochs =
         collectEpochViewsForOwner(
@@ -158,12 +158,13 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   }
 
   private void initializeApplication() throws DatastoreTransactionException {
-    monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
+    this.monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
 
-    resources.register(monitoredApp.getRight()::stop);
-    resources.register(monitoredApp.getLeft()::stop);
+    resources.register(this.monitoredApp.getRight()::stop);
+    resources.register(this.monitoredApp.getLeft()::stop);
 
-    final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
+    final ITransactionManager transactionManager =
+        this.monitoredApp.getLeft().getTransactionManager();
     fillMicroApplication(transactionManager);
   }
 
@@ -191,15 +192,16 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoredApplication() {
-    distributedMonitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("analysis-feeder");
-    resources.register(distributedMonitoredApp.getLeft()::stop);
-    resources.register(distributedMonitoredApp.getRight()::stop);
+    this.distributedMonitoredApp =
+        createDistributedApplicationWithKeepAllEpochPolicy("analysis-feeder");
+    resources.register(this.distributedMonitoredApp.getLeft()::stop);
+    resources.register(this.distributedMonitoredApp.getRight()::stop);
     fillDistributedApplication();
   }
 
   private void fillDistributedApplication() {
     // epoch 1
-    distributedMonitoredApp
+    this.distributedMonitoredApp
         .getLeft()
         .edit(
             transactionManager ->
@@ -208,7 +210,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
         ((MultiVersionDistributedActivePivot)
-            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeA"));
+            this.distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeA"));
 
     // produces distributed epochs 1 to 5
     for (int i = 0; i < 5; ++i) {
@@ -217,7 +219,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     MultiVersionDistributedActivePivot queryCubeB =
         ((MultiVersionDistributedActivePivot)
-            distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeB"));
+            this.distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeB"));
 
     // produces distributed epoch 1
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
@@ -247,6 +249,6 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
             .buildAndStart();
     resources.register(manager::stop);
 
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
   }
 }

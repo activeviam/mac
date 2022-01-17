@@ -97,12 +97,11 @@ public abstract class ATestMemoryStatistic {
 
   public static final int MAX_GC_STEPS = 10;
 
-  protected static final String VECTOR_STORE_NAME = "vectorStore";
-
-  public static AtomicInteger operationsBatch = new AtomicInteger();
-
   @RegisterExtension
   public static final ClassResourcesExtension resources = new ClassResourcesExtension();
+
+  protected static final String VECTOR_STORE_NAME = "vectorStore";
+  public static AtomicInteger operationsBatch = new AtomicInteger();
 
   @BeforeAll
   public static void setUpRegistry() {
@@ -1469,19 +1468,6 @@ public abstract class ATestMemoryStatistic {
         .collect(Collectors.toSet());
   }
 
-  protected static class VersionedChunkInfo {
-
-    public long epochId;
-    public long offHeapSize;
-    public String chunkClass;
-
-    public VersionedChunkInfo(long epochId, long offHeapSize, String chunkClass) {
-      this.epochId = epochId;
-      this.offHeapSize = offHeapSize;
-      this.chunkClass = chunkClass;
-    }
-  }
-
   /**
    * Asserts the monitoring datastore contains chunks consistent with what the statistics summary
    * says.
@@ -1601,5 +1587,18 @@ public abstract class ATestMemoryStatistic {
       final Collection<? extends IMemoryStatistic> stats,
       final String dumpName) {
     new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
+  }
+
+  protected static class VersionedChunkInfo {
+
+    public long epochId;
+    public long offHeapSize;
+    public String chunkClass;
+
+    public VersionedChunkInfo(long epochId, long offHeapSize, String chunkClass) {
+      this.epochId = epochId;
+      this.offHeapSize = offHeapSize;
+      this.chunkClass = chunkClass;
+    }
   }
 }

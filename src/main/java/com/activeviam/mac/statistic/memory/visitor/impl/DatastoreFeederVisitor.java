@@ -44,16 +44,14 @@ import java.util.Objects;
  */
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
+  /** The record format of the store that stores the chunks. */
+  protected final IRecordFormat chunkRecordFormat;
   /**
    * A boolean that if true tells us that the currently visited component is responsible for storing
    * versioning data.
    */
   // FIXME find a cleaner way to do that. (specific stat for instance).
   protected boolean isVersionColumn = false;
-
-  /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
-
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
   /** The epoch id we are currently reading statistics for. */
@@ -74,12 +72,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   protected String directParentId;
   /** The partition id of the visited statistic. */
   protected Integer partitionId = null;
-
-  /** Type of the currently visited index. */
-  private IndexType indexType = null;
-
   /** Printer displaying the tree of a given statistic. */
   protected StatisticTreePrinter printer;
+  /** Type of the currently visited index. */
+  private IndexType indexType = null;
 
   /**
    * Constructor.
@@ -98,6 +94,26 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
             .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
             .getStoreFormat()
             .getRecordFormat();
+  }
+
+  private static Object[] buildIndexTupleFrom(
+      final IRecordFormat format, final IndexStatistic stat) {
+    final Object[] tuple = new Object[format.getFieldCount()];
+    tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
+
+    final String[] fieldNames =
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
+    assert fieldNames != null && fieldNames.length > 0
+        : "Cannot find fields in the attributes of " + stat;
+    Arrays.sort(fieldNames);
+    tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =
+        new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
+
+    tuple[format.getFieldIndex(DatastoreConstants.INDEX_CLASS)] =
+        stat.getAttribute(DatastoreConstants.INDEX_CLASS).asText();
+
+    return tuple;
   }
 
   /**
@@ -144,53 +160,53 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     }
 
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(this.chunkRecordFormat, chunkStatistic);
-    if (isVersionColumn) {
+    if (this.isVersionColumn) {
       FeedVisitor.setTupleElement(
           tuple,
-          chunkRecordFormat,
+          this.chunkRecordFormat,
           DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
           chunkStatistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_NOT_WRITTEN_ROWS).asInt());
     }
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
+        tuple, this.chunkRecordFormat, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
+        tuple, this.chunkRecordFormat, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.OWNER__OWNER, this.owner);
+        tuple, this.chunkRecordFormat, DatastoreConstants.OWNER__OWNER, this.owner);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
+        tuple, this.chunkRecordFormat, DatastoreConstants.OWNER__COMPONENT, this.rootComponent);
 
     FeedVisitor.setTupleElement(
         tuple,
-        chunkRecordFormat,
+        this.chunkRecordFormat,
         DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
         this.directParentType);
     FeedVisitor.setTupleElement(
-        tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
+        tuple, this.chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_ID, this.directParentId);
     if (this.referenceId != null) {
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
+          tuple, this.chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_REF_ID, this.referenceId);
     }
     if (this.indexId != null) {
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
+          tuple, this.chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_INDEX_ID, this.indexId);
     }
     final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
     if (dictionaryId != null) {
       FeedVisitor.setTupleElement(
-          tuple, chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
+          tuple, this.chunkRecordFormat, DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId);
     }
-    tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__USED_BY_VERSION)] =
+    tuple[this.chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__USED_BY_VERSION)] =
         this.usedByVersion;
-    tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
+    tuple[this.chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
         this.partitionId;
     if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
-      tuple[chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
+      tuple[this.chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(chunkStatistic);
     }
 
     FeedVisitor.writeChunkTupleForFields(
-        chunkStatistic, transaction, this.fields, chunkRecordFormat, tuple);
+        chunkStatistic, this.transaction, this.fields, this.chunkRecordFormat, tuple);
 
     visitChildren(chunkStatistic);
 
@@ -460,10 +476,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void processRecordVersion(final IMemoryStatistic stat) {
-    isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
+    this.isVersionColumn =
+        MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
 
     visitChildren(stat);
-    isVersionColumn = false;
+    this.isVersionColumn = false;
   }
 
   private void processUniqueIndices(final IMemoryStatistic stat) {
@@ -479,8 +496,8 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void processIndexList(final IMemoryStatistic stat, final IndexType type) {
-    final var oldComponent = rootComponent;
-    final var oldParent = directParentType;
+    final var oldComponent = this.rootComponent;
+    final var oldParent = this.directParentType;
 
     this.indexType = type;
     this.rootComponent = ParentType.INDEX;
@@ -492,9 +509,10 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   }
 
   private void recordStatAndExplore(final DefaultMemoryStatistic stat) {
-    isVersionColumn = MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
+    this.isVersionColumn =
+        MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
     visitChildren(stat);
-    isVersionColumn = false;
+    this.isVersionColumn = false;
   }
 
   private boolean readEpochAndBranchIfAny(final IMemoryStatistic stat) {
@@ -527,26 +545,6 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = List.of(multipleFieldsAttr.asStringArray());
       }
     }
-  }
-
-  private static Object[] buildIndexTupleFrom(
-      final IRecordFormat format, final IndexStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
-
-    final String[] fieldNames =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_FIELDS).asStringArray();
-    assert fieldNames != null && fieldNames.length > 0
-        : "Cannot find fields in the attributes of " + stat;
-    Arrays.sort(fieldNames);
-    tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =
-        new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
-
-    tuple[format.getFieldIndex(DatastoreConstants.INDEX_CLASS)] =
-        stat.getAttribute(DatastoreConstants.INDEX_CLASS).asText();
-
-    return tuple;
   }
 
   /**

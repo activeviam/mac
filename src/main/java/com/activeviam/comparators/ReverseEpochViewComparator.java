@@ -33,6 +33,10 @@ public class ReverseEpochViewComparator implements IComparator<EpochView> {
 
   private static final long serialVersionUID = 7843582714929470073L;
 
+  private static boolean isDistributedEpoch(final EpochView epoch) {
+    return epoch instanceof DistributedEpochView;
+  }
+
   @Override
   public String getType() {
     return PLUGIN_KEY;
@@ -66,9 +70,5 @@ public class ReverseEpochViewComparator implements IComparator<EpochView> {
     }
 
     return Long.compare(rhe.getEpochId(), lhe.getEpochId());
-  }
-
-  private static boolean isDistributedEpoch(final EpochView epoch) {
-    return epoch instanceof DistributedEpochView;
   }
 }

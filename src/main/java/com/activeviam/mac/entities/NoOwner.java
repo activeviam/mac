@@ -12,6 +12,8 @@ public final class NoOwner implements ChunkOwner {
 
   private static final NoOwner INSTANCE = new NoOwner();
 
+  private NoOwner() {}
+
   /**
    * Gets the unique instance of this class.
    *
@@ -20,8 +22,6 @@ public final class NoOwner implements ChunkOwner {
   public static NoOwner getInstance() {
     return INSTANCE;
   }
-
-  private NoOwner() {}
 
   @Override
   public String getName() {

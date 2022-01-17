@@ -54,11 +54,10 @@ import org.springframework.core.env.Environment;
 @Configuration
 public class SourceConfig {
 
-  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
-
   /** The name of the property that holds the path to the statistics folder. */
   public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
 
+  private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
   /** Autowired {@link Datastore} to be fed by this source. */
   @Autowired protected IDatastore datastore;
 
@@ -79,12 +78,12 @@ public class SourceConfig {
   @Bean
   @Lazy
   public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
-    final String statisticFolder = env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
+    final String statisticFolder = this.env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
     if (LOGGER.isLoggable(Level.INFO)) {
       final Path folderPath = Paths.get(statisticFolder);
       LOGGER.info(
           "Using directory `"
-              + folderPath.toAbsolutePath().toString()
+              + folderPath.toAbsolutePath()
               + "` to load data into the application");
     }
 
@@ -202,7 +201,7 @@ public class SourceConfig {
   }
 
   private Path getStatisticFolder() {
-    return resolveDirectory(env.getRequiredProperty("statistic.folder"));
+    return resolveDirectory(this.env.getRequiredProperty("statistic.folder"));
   }
 
   private void loadDumps(final Map<String, List<Path>> dumpFiles) {
@@ -243,7 +242,8 @@ public class SourceConfig {
    */
   public String feedDatastore(
       final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
-    final var info = new AnalysisDatastoreFeeder(dumpName).loadInto(datastore, memoryStatistics);
+    final var info =
+        new AnalysisDatastoreFeeder(dumpName).loadInto(this.datastore, memoryStatistics);
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
     } else {
