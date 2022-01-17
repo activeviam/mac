@@ -3,6 +3,9 @@ server:
   remote:
     uri: localhost:9090
 
+activeui:
+  address: http://localhost:9093
+
 management:
   endpoints:
     web:
