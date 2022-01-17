@@ -47,13 +47,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 /** The scenario this test produces has a cube level {@code id} with a nullable dictionary. */
 public class TestNullableLevelDictionary {
 
-  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
-
   protected static final Path TEMP_DIRECTORY =
       QfsFileTestUtils.createTempDirectory(TestNullableLevelDictionary.class);
-
   protected static final int RECORD_COUNT = 10;
-
+  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
   protected IDatastore datastore;
   protected IActivePivotManager manager;
   protected Path statisticsPath;
@@ -69,12 +66,13 @@ public class TestNullableLevelDictionary {
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    datastore = StartBuilding.datastore().setSchemaDescription(datastoreSchemaDescription).build();
+    this.datastore =
+        StartBuilding.datastore().setSchemaDescription(datastoreSchemaDescription).build();
 
-    manager =
+    this.manager =
         StartBuilding.manager()
             .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
+            .setDatastoreAndPermissions(this.datastore)
             .buildAndStart();
 
     fillApplication();
@@ -110,7 +108,7 @@ public class TestNullableLevelDictionary {
   }
 
   protected void fillApplication() {
-    datastore.edit(
+    this.datastore.edit(
         transactionManager -> {
           for (int i = 0; i < RECORD_COUNT; ++i) {
             transactionManager.add("Store", i);
@@ -120,19 +118,20 @@ public class TestNullableLevelDictionary {
 
   protected void exportApplicationMemoryStatistics() {
     final IMemoryAnalysisService analysisService =
-        new MemoryAnalysisService(datastore, manager, datastore.getEpochManager(), TEMP_DIRECTORY);
-    statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
+        new MemoryAnalysisService(
+            this.datastore, this.manager, this.datastore.getEpochManager(), TEMP_DIRECTORY);
+    this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
   @AfterEach
   public void teardown() throws AgentException {
-    manager.stop();
-    datastore.stop();
+    this.manager.stop();
+    this.datastore.stop();
   }
 
   @Test
   public void testLevelHasNullableDictionary() {
-    final IActivePivotVersion cube = manager.getActivePivots().get("Cube").getHead();
+    final IActivePivotVersion cube = this.manager.getActivePivots().get("Cube").getHead();
     final IHierarchicalMapping mapping = cube.getAggregateProvider().getHierarchicalMapping();
 
     final int hierarchyCoord = mapping.getCoordinate(1, 1);
@@ -145,7 +144,7 @@ public class TestNullableLevelDictionary {
 
   @Test
   public void testStatisticLoading() throws IOException {
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
+    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(this.statisticsPath);
 
     final IDatastore analysisDatastore = createAnalysisDatastore();
     Assertions.assertDoesNotThrow(
@@ -154,7 +153,7 @@ public class TestNullableLevelDictionary {
 
   protected IDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {

@@ -60,19 +60,23 @@ public class TestViewEpochs extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    statistics = loadMemoryStatFromFolder(exportPath);
+    this.statistics = loadMemoryStatFromFolder(exportPath);
 
-    initializeMonitoringApplication(statistics);
+    initializeMonitoringApplication(this.statistics);
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   private void initializeApplication() throws DatastoreTransactionException {
-    monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
+    this.monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
 
-    final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
+    final ITransactionManager transactionManager =
+        this.monitoredApp.getLeft().getTransactionManager();
 
     // epoch 1 -> store A + cube
     transactionManager.startTransaction("A");
@@ -96,11 +100,12 @@ public class TestViewEpochs extends ATestMemoryStatistic {
   }
 
   private Path generateMemoryStatistics() {
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     return analysisService.exportApplication("testEpochs");
   }
 
@@ -114,7 +119,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(data), "testViewEpochs");
@@ -122,13 +127,13 @@ public class TestViewEpochs extends ATestMemoryStatistic {
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testStatisticConsistency() {
-    ATestMemoryStatistic.assertLoadsCorrectly(statistics.getChildren(), TestEpochs.class);
+    ATestMemoryStatistic.assertLoadsCorrectly(this.statistics.getChildren(), TestEpochs.class);
   }
 
   @Test
@@ -206,7 +211,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
 
   protected Multimap<ChunkOwner, Long> retrieveEpochIdsPerOwner() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -226,7 +231,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
 
   protected Map<ChunkOwner, Multimap<Long, Long>> retrieveViewEpochIdsPerOwner() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()

@@ -34,13 +34,11 @@ import org.junit.jupiter.api.Test;
 
 public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
-  Pair<IDatastore, IActivePivotManager> monitoredApp;
-  Pair<IDatastore, IActivePivotManager> monitoringApp;
-
-  StatisticsSummary summary;
-
   public static final int ADDED_DATA_SIZE = 20;
   public static final int FIELD_SHARING_COUNT = 2;
+  Pair<IDatastore, IActivePivotManager> monitoredApp;
+  Pair<IDatastore, IActivePivotManager> monitoringApp;
+  StatisticsSummary summary;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -49,9 +47,9 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApp = createMicroApplicationWithSharedVectorField();
+    this.monitoredApp = createMicroApplicationWithSharedVectorField();
 
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             tm ->
@@ -59,16 +57,17 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                     .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
 
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-    summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    this.summary = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
@@ -81,26 +80,32 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -120,7 +125,10 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   @Test
   public void testVectorBlockConsumption() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery vectorBlockQuery =
         new MDXQuery(
@@ -144,7 +152,10 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   @Test
   public void testVectorBlockLength() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery lengthQuery =
         new MDXQuery(
@@ -164,7 +175,10 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   @Test
   public void testVectorBlockRefCount() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery refCountQuery =
         new MDXQuery(

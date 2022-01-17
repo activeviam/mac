@@ -49,14 +49,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class TestMACMeasures extends ATestMemoryStatistic {
 
-  Pair<IDatastore, IActivePivotManager> monitoredApp;
-
-  Pair<IDatastore, IActivePivotManager> monitoringApp;
-
-  IMemoryStatistic stats;
-  Map<String, Long> appStats;
-  StatisticsSummary statsSumm;
-
   public static final int ADDED_DATA_SIZE = 100;
   public static final int REMOVED_DATA_SIZE = 10;
 
@@ -70,20 +62,44 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @RegisterExtension
   public final LocalResourcesExtension methodResources = new LocalResourcesExtension();
 
+  Pair<IDatastore, IActivePivotManager> monitoredApp;
+  Pair<IDatastore, IActivePivotManager> monitoringApp;
+  IMemoryStatistic stats;
+  Map<String, Long> appStats;
+  StatisticsSummary statsSumm;
+
   @BeforeAll
   public static void init() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
   }
 
+  private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
+    final IMemoryStatistic firstChild = export.getChildren().iterator().next();
+    return QfsArrays.<String, String>mutableMap(
+            ManagerDescriptionConfig.USED_HEAP,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
+            ManagerDescriptionConfig.COMMITTED_HEAP,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY,
+            ManagerDescriptionConfig.USED_DIRECT,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
+            ManagerDescriptionConfig.MAX_DIRECT,
+            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
+        .entrySet().stream()
+        .collect(
+            toMap(
+                Map.Entry::getKey,
+                entry -> firstChild.getAttributes().get(entry.getValue()).asLong()));
+  }
+
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApp = createMicroApplication();
+    this.monitoredApp = createMicroApplication();
     // Add 100 records
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
-    monitoredApp
+    this.monitoredApp
         .getLeft()
         .edit(
             tm ->
@@ -101,16 +117,17 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                         }));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
-    stats = loadMemoryStatFromFolder(exportPath);
-    appStats = extractApplicationStats(stats);
-    statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(stats);
+    this.stats = loadMemoryStatFromFolder(exportPath);
+    this.appStats = extractApplicationStats(this.stats);
+    this.statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(this.stats);
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
@@ -125,13 +142,17 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
     this.methodResources.register(manager::stop);
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        monitoringDatastore, List.of(this.stats), "storeA");
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
@@ -139,7 +160,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testDirectMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -169,14 +193,17 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     // Level
     Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
     // Check that the summed value corresponds to the Exported sum
-    Assertions.assertThat(statsSumm.offHeapMemory).isEqualTo(value);
+    Assertions.assertThat(this.statsSumm.offHeapMemory).isEqualTo(value);
   }
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -217,7 +244,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testChunkSize() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery query =
         new MDXQuery(
@@ -235,7 +265,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testNonWrittenCount() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery query =
         new MDXQuery(
@@ -252,11 +285,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testApplicationMeasures() {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
         assertions ->
-            appStats.forEach(
+            this.appStats.forEach(
                 cast(
                     (measure, value) -> {
                       final MDXQuery query =
@@ -280,11 +316,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testApplicationMeasuresAtAnyPointOfTheCube() {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
         assertions ->
-            appStats.forEach(
+            this.appStats.forEach(
                 cast(
                     (measure, value) -> {
                       final MDXQuery query =
@@ -302,7 +341,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     SoftAssertions.assertSoftly(
         assertions ->
-            appStats.forEach(
+            this.appStats.forEach(
                 cast(
                     (measure, value) -> {
                       final MDXQuery query =
@@ -325,7 +364,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testFreedCount() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery query =
         new MDXQuery(
@@ -343,7 +385,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testNonWrittenRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -381,7 +426,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testDeletedRatio() throws QueryException {
 
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -418,7 +466,10 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testDictionarySize() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -432,29 +483,11 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     CellSetDTO res = pivot.execute(query);
 
     final long expectedDictionarySize =
-        monitoredApp.getLeft().getDictionaries().getDictionary("A", "id").size();
+        this.monitoredApp.getLeft().getDictionaries().getDictionary("A", "id").size();
 
     Assertions.assertThat(res.getCells())
         .isNotEmpty()
         .extracting(CellDTO::getValue)
         .containsOnly(expectedDictionarySize);
-  }
-
-  private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
-    final IMemoryStatistic firstChild = export.getChildren().iterator().next();
-    return QfsArrays.<String, String>mutableMap(
-            ManagerDescriptionConfig.USED_HEAP,
-            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
-            ManagerDescriptionConfig.COMMITTED_HEAP,
-            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_HEAP_MEMORY,
-            ManagerDescriptionConfig.USED_DIRECT,
-            MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
-            ManagerDescriptionConfig.MAX_DIRECT,
-            MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
-        .entrySet().stream()
-        .collect(
-            toMap(
-                Map.Entry::getKey,
-                entry -> firstChild.getAttributes().get(entry.getValue()).asLong()));
   }
 }

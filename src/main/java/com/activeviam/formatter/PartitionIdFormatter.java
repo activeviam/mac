@@ -19,9 +19,10 @@ import com.quartetfs.fwk.format.IFormatter;
 @QuartetExtendedPluginValue(intf = IFormatter.class, key = PartitionIdFormatter.KEY)
 public class PartitionIdFormatter implements IFormatter {
 
-  private static final long serialVersionUID = 1L;
   /** Plugin key. */
   public static final String KEY = "PartitionIdFormatter";
+
+  private static final long serialVersionUID = 1L;
 
   @Override
   public String getType() {

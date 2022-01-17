@@ -20,25 +20,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
 
-  /** Constructor. */
-  public NoWriteDatastoreServiceConfig() {
-    super(Collections.emptyMap(), Collections.emptyMap(), storesSecurityMap, DEFAULT_QUERY_TIMEOUT);
-  }
-
-  /**
-   * A constant for the map which will always return the same store security, also defined as a
-   * constant below.
-   */
-  protected static final Map<String, IStoreSecurity> storesSecurityMap =
-      new HashMap<>() {
-        private static final long serialVersionUID = 5_08_00L;
-
-        @Override
-        public IStoreSecurity get(Object key) {
-          return containsKey(key) ? super.get(key) : defaultStoreSecurity;
-        }
-      };
-
   /**
    * A constant for store security.
    *
@@ -83,4 +64,22 @@ public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
           };
         }
       };
+  /**
+   * A constant for the map which will always return the same store security, also defined as a
+   * constant below.
+   */
+  protected static final Map<String, IStoreSecurity> storesSecurityMap =
+      new HashMap<>() {
+        private static final long serialVersionUID = 5_08_00L;
+
+        @Override
+        public IStoreSecurity get(Object key) {
+          return containsKey(key) ? super.get(key) : defaultStoreSecurity;
+        }
+      };
+
+  /** Constructor. */
+  public NoWriteDatastoreServiceConfig() {
+    super(Collections.emptyMap(), Collections.emptyMap(), storesSecurityMap, DEFAULT_QUERY_TIMEOUT);
+  }
 }

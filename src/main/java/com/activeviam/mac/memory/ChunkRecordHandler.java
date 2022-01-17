@@ -75,33 +75,33 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
         // If component-specific ids are both not the default value and do not match, we throw
         // else we keep the non-default
         if (currentDicId != newDicId) {
-          if (currentDicId != defaultDicId) {
+          if (currentDicId != this.defaultDicId) {
             throw new IllegalStateException(
                 "Cannot merge a chunk record coming from two different "
                     + "dictionaries. Something went wrong");
           }
           final int dicIdIdx =
               storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
-          newRecord.write(dicIdIdx, currentDicId == defaultDicId ? newDicId : currentDicId);
+          newRecord.write(dicIdIdx, currentDicId == this.defaultDicId ? newDicId : currentDicId);
         }
         if (currentRefId != newRefId) {
-          if (currentRefId != defaultRefId && newRefId != defaultRefId) {
+          if (currentRefId != this.defaultRefId && newRefId != this.defaultRefId) {
             throw new IllegalStateException(
                 "Cannot merge a chunk record coming from two different "
                     + "references. Something went wrong");
           }
           final int refIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
-          newRecord.write(refIdIdx, currentRefId == defaultRefId ? newRefId : currentRefId);
+          newRecord.write(refIdIdx, currentRefId == this.defaultRefId ? newRefId : currentRefId);
         }
         if (currentIdxId != newIdxId) {
-          if (currentIdxId != defaultIdxId && newIdxId != defaultIdxId) {
+          if (currentIdxId != this.defaultIdxId && newIdxId != this.defaultIdxId) {
             throw new IllegalStateException(
                 "Cannot merge a chunk record coming from two different "
                     + "indexes. Something went wrong");
           }
           final int IdxIdIdx =
               storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
-          newRecord.write(IdxIdIdx, currentIdxId == defaultIdxId ? newIdxId : currentIdxId);
+          newRecord.write(IdxIdIdx, currentIdxId == this.defaultIdxId ? newIdxId : currentIdxId);
         }
         return newRecord;
       }
@@ -110,38 +110,38 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
   private void init(
       final IStoreMetadata storeMetadata, final IDictionaryProvider dictionaryProvider) {
-    if (sharedPartitionId < 0) {
+    if (this.sharedPartitionId < 0) {
       final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> partitionDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
-      sharedPartitionId =
+      this.sharedPartitionId =
           partitionDictionary.map(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS);
     }
-    if (defaultDicId < 0) {
+    if (this.defaultDicId < 0) {
       final int dicIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> dicIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
-      defaultDicId =
+      this.defaultDicId =
           dicIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
     }
 
-    if (defaultIdxId < 0) {
+    if (this.defaultIdxId < 0) {
       final int idxIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> idxIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(idxIdIdx);
-      defaultIdxId =
+      this.defaultIdxId =
           idxIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
     }
 
-    if (defaultRefId < 0) {
+    if (this.defaultRefId < 0) {
       final int refIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> refIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(refIdIdx);
-      defaultRefId =
+      this.defaultRefId =
           refIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
     }
   }

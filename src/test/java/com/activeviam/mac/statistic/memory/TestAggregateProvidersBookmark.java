@@ -42,17 +42,20 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @BeforeEach
   public void setup() throws AgentException {
-    monitoredApp = createMicroApplicationWithPartialProviders();
+    this.monitoredApp = createMicroApplicationWithPartialProviders();
 
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 20).forEach(i -> tm.add("A", i, i, i, i)));
+    this.monitoredApp
+        .getLeft()
+        .edit(tm -> IntStream.range(0, 20).forEach(i -> tm.add("A", i, i, i, i)));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
 
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     final Path exportPath = analysisService.exportMostRecentVersion("testOverview");
 
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -68,26 +71,32 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
             .setDescription(config.managerDescription())
             .setDatastoreAndPermissions(monitoringDatastore)
             .buildAndStart();
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     // Fill the monitoring datastore
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "storeA");
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   @AfterEach
   public void tearDown() throws AgentException {
-    monitoringApp.getLeft().close();
-    monitoringApp.getRight().stop();
+    this.monitoringApp.getLeft().close();
+    this.monitoringApp.getRight().stop();
   }
 
   @Test
   public void testPresentPartials() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -134,7 +143,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testFullAggregateStoreFields() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -166,7 +178,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testFullAggregateStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -204,7 +219,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testPartialBitmapAggregateStoreFields() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -235,7 +253,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testPartialBitmapAggregateStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -273,7 +294,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testPartialLeafAggregateStoreFields() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -304,7 +328,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testPartialLeafAggregateStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(
@@ -342,7 +369,10 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
   @Test
   public void testCubeLevels() throws QueryException {
     final IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery recordQuery =
         new MDXQuery(

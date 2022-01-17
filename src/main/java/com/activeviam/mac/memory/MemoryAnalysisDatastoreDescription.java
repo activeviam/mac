@@ -55,40 +55,13 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
   /** Partition value for chunks held by multiple partitions. */
   public static final int MANY_PARTITIONS = -2;
 
-  /** Enum listing the types of parent structures that hold the {@link IChunk chunks}. */
-  public enum ParentType {
-    /** Records structure. */
-    RECORDS,
-    /** Vector block structure. */
-    VECTOR_BLOCK,
-    /** Dictionary structure. */
-    DICTIONARY,
-    /** Reference structure. */
-    REFERENCE,
-    /** Index structure. */
-    INDEX,
-    /** Point mapping structure. */
-    POINT_MAPPING,
-    /** Point index structure. */
-    POINT_INDEX,
-    /** Aggregate store structure. */
-    AGGREGATE_STORE,
-    /** Bitmap Matcher structure. */
-    BITMAP_MATCHER,
-    /** Level structure. */
-    LEVEL,
-    /** No owning structure. */
-    NO_COMPONENT
-  }
-
-  /** Characterizes whether or not a chunk is used by the version it appears in. */
-  public enum UsedByVersion {
-    /** Not used by the version. */
-    FALSE,
-    /** Used by the version. */
-    TRUE,
-    /** Cannot tell if the chunk belongs to the version. */
-    UNKNOWN
+  /**
+   * Returns the value with which to do modulo partitioning on the chunk store.
+   *
+   * @return the modulo partitioning value
+   */
+  private static int partitioningModulo() {
+    return QFSPools.getMixedWorkloadThreadCount();
   }
 
   /**
@@ -516,13 +489,40 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
             .build());
   }
 
-  /**
-   * Returns the value with which to do modulo partitioning on the chunk store.
-   *
-   * @return the modulo partitioning value
-   */
-  private static int partitioningModulo() {
-    return QFSPools.getMixedWorkloadThreadCount();
+  /** Enum listing the types of parent structures that hold the {@link IChunk chunks}. */
+  public enum ParentType {
+    /** Records structure. */
+    RECORDS,
+    /** Vector block structure. */
+    VECTOR_BLOCK,
+    /** Dictionary structure. */
+    DICTIONARY,
+    /** Reference structure. */
+    REFERENCE,
+    /** Index structure. */
+    INDEX,
+    /** Point mapping structure. */
+    POINT_MAPPING,
+    /** Point index structure. */
+    POINT_INDEX,
+    /** Aggregate store structure. */
+    AGGREGATE_STORE,
+    /** Bitmap Matcher structure. */
+    BITMAP_MATCHER,
+    /** Level structure. */
+    LEVEL,
+    /** No owning structure. */
+    NO_COMPONENT
+  }
+
+  /** Characterizes whether or not a chunk is used by the version it appears in. */
+  public enum UsedByVersion {
+    /** Not used by the version. */
+    FALSE,
+    /** Used by the version. */
+    TRUE,
+    /** Cannot tell if the chunk belongs to the version. */
+    UNKNOWN
   }
 
   /**
@@ -548,7 +548,7 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
     public int hashCode() {
       final int prime = 31;
       int result = 1;
-      result = prime * result + Arrays.hashCode(fieldNames);
+      result = prime * result + Arrays.hashCode(this.fieldNames);
       return result;
     }
 
@@ -564,12 +564,12 @@ public class MemoryAnalysisDatastoreDescription implements IDatastoreSchemaDescr
         return false;
       }
       StringArrayObject other = (StringArrayObject) obj;
-      return Arrays.equals(fieldNames, other.fieldNames);
+      return Arrays.equals(this.fieldNames, other.fieldNames);
     }
 
     @Override
     public String toString() {
-      return QfsArrays.join(", ", fieldNames).toString();
+      return QfsArrays.join(", ", this.fieldNames).toString();
     }
   }
 }

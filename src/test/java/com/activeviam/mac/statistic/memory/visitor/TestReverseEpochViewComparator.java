@@ -19,6 +19,27 @@ import org.junit.jupiter.api.Test;
 
 public class TestReverseEpochViewComparator {
 
+  private static Condition<EpochView> greaterThan(final EpochView view) {
+    return new Condition<>(
+        (actual) -> new ReverseEpochViewComparator().compare(view, actual) > 0,
+        "greater than %s",
+        view);
+  }
+
+  private static Condition<EpochView> lessThan(final EpochView view) {
+    return new Condition<>(
+        (actual) -> new ReverseEpochViewComparator().compare(view, actual) < 0,
+        "less than %s",
+        view);
+  }
+
+  private static Condition<EpochView> sameAs(final EpochView view) {
+    return new Condition<>(
+        (actual) -> new ReverseEpochViewComparator().compare(view, actual) == 0,
+        "same as %s",
+        view);
+  }
+
   @Test
   public void testEqualRegularEpochs() {
     final EpochView epoch1 = new RegularEpochView(1L);
@@ -93,26 +114,5 @@ public class TestReverseEpochViewComparator {
           assertions.assertThat(epoch1A).is(greaterThan(epoch2));
           assertions.assertThat(epoch2).is(lessThan(epoch1A));
         });
-  }
-
-  private static Condition<EpochView> greaterThan(final EpochView view) {
-    return new Condition<>(
-        (actual) -> new ReverseEpochViewComparator().compare(view, actual) > 0,
-        "greater than %s",
-        view);
-  }
-
-  private static Condition<EpochView> lessThan(final EpochView view) {
-    return new Condition<>(
-        (actual) -> new ReverseEpochViewComparator().compare(view, actual) < 0,
-        "less than %s",
-        view);
-  }
-
-  private static Condition<EpochView> sameAs(final EpochView view) {
-    return new Condition<>(
-        (actual) -> new ReverseEpochViewComparator().compare(view, actual) == 0,
-        "same as %s",
-        view);
   }
 }

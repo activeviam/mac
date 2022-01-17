@@ -108,14 +108,14 @@ public class MacServerConfig {
    */
   @Bean
   public Void startManager() {
-    contentServiceConfig.loadPredefinedBookmarks();
+    this.contentServiceConfig.loadPredefinedBookmarks();
 
     /* *********************************************** */
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
     try {
-      apConfig.activePivotManager().init(null);
-      apConfig.activePivotManager().start();
+      this.apConfig.activePivotManager().init(null);
+      this.apConfig.activePivotManager().start();
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
@@ -131,7 +131,7 @@ public class MacServerConfig {
   @EventListener(ApplicationReadyEvent.class)
   public void afterStart() {
     // Connect the real-time updates
-    sourceConfig.watchStatisticDirectory();
+    this.sourceConfig.watchStatisticDirectory();
   }
 
   /**
@@ -141,7 +141,7 @@ public class MacServerConfig {
    */
   @Bean
   public JMXEnabler jmxMonitoringConnectorEnabler() {
-    return new JMXEnabler("StatisticSource", sourceConfig);
+    return new JMXEnabler("StatisticSource", this.sourceConfig);
   }
 
   /**
@@ -151,7 +151,7 @@ public class MacServerConfig {
    */
   @Bean
   public JMXEnabler jmxDatastoreEnabler() {
-    return new JMXEnabler(datastoreConfig.datastore());
+    return new JMXEnabler(this.datastoreConfig.datastore());
   }
 
   /**
@@ -163,7 +163,7 @@ public class MacServerConfig {
   public JMXEnabler jmxActivePivotEnabler() {
     startManager();
 
-    return new JMXEnabler(apConfig.activePivotManager());
+    return new JMXEnabler(this.apConfig.activePivotManager());
   }
 
   /**
@@ -173,7 +173,7 @@ public class MacServerConfig {
    */
   @Bean
   public JMXEnabler jmxBookmarkEnabler() {
-    return new JMXEnabler("Bookmark", contentServiceConfig);
+    return new JMXEnabler("Bookmark", this.contentServiceConfig);
   }
 
   /**
@@ -186,7 +186,8 @@ public class MacServerConfig {
     // to allow operations from the JMX bean
     return new JMXEnabler(
         new DynamicActivePivotContentServiceMBean(
-            apContentServiceConfig.activePivotContentService(), apConfig.activePivotManager()));
+            this.apContentServiceConfig.activePivotContentService(),
+            this.apConfig.activePivotManager()));
   }
 
   /**

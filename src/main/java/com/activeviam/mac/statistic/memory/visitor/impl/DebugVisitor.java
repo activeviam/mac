@@ -27,24 +27,16 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
-  private static final String DEPTH_KEY = "debug-depth";
+  /** Boolean stating if the debug mode is activated or not. */
+  public static final Boolean DEBUG = false;
   /** key string for the debug-id attribute. */
   protected static final String ID_KEY = "debug-id";
 
+  private static final String DEPTH_KEY = "debug-depth";
   /** Debug Id of the current {@link IMemoryStatistic}. */
   protected final AtomicLong id = new AtomicLong(0);
-
   /** Depth of the current memory statistic in the tree. */
   protected int depth = 0;
-
-  /** Boolean stating if the debug mode is activated or not. */
-  public static final Boolean DEBUG = false;
-
-  @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    enrichStatisticWithDebugAttributes(memoryStatistic);
-    return null;
-  }
 
   /**
    * Created a {@link StatisticTreePrinter printer} of the tree created from the input {@link
@@ -58,6 +50,12 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
     return new StatisticTreePrinter();
   }
 
+  @Override
+  public Void visit(final IMemoryStatistic memoryStatistic) {
+    enrichStatisticWithDebugAttributes(memoryStatistic);
+    return null;
+  }
+
   /**
    * Enriches a statistic and its children with debug attributes.
    *
@@ -69,12 +67,12 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
       return;
     }
 
-    depth++;
+    this.depth++;
     for (IMemoryStatistic child : parent.getChildren()) {
       addDebugAttributes(child);
       child.accept(this);
     }
-    depth--;
+    this.depth--;
   }
 
   /**

@@ -236,6 +236,17 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String INTERNAL_FOLDER = "Internal";
   // endregion
 
+  /**
+   * Prefixes a field by another string.
+   *
+   * @param prefix string to prepend
+   * @param field field to be prefixed
+   * @return the prefixed string
+   */
+  private static String prefixField(String prefix, String field) {
+    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
+  }
+
   @Bean
   @Override
   public IActivePivotManagerDescription userManagerDescription() {
@@ -269,17 +280,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
               return result;
             })
         .build();
-  }
-
-  /**
-   * Prefixes a field by another string.
-   *
-   * @param prefix string to prepend
-   * @param field field to be prefixed
-   * @return the prefixed string
-   */
-  private static String prefixField(String prefix, String field) {
-    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
   }
 
   private IActivePivotInstanceDescription memoryCube() {

@@ -17,6 +17,6 @@ public class RegularEpochView implements EpochView {
 
   @Override
   public String toString() {
-    return String.valueOf(epochId);
+    return String.valueOf(this.epochId);
   }
 }

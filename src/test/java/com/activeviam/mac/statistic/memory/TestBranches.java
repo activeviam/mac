@@ -62,14 +62,18 @@ public class TestBranches extends ATestMemoryStatistic {
     initializeMonitoringApplication(stats);
 
     IMultiVersionActivePivot pivot =
-        monitoringApp.getRight().getActivePivots().get(ManagerDescriptionConfig.MONITORING_CUBE);
+        this.monitoringApp
+            .getRight()
+            .getActivePivots()
+            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
   }
 
   private void initializeApplication() throws DatastoreTransactionException {
-    monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
+    this.monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
-    final ITransactionManager transactionManager = monitoredApp.getLeft().getTransactionManager();
+    final ITransactionManager transactionManager =
+        this.monitoredApp.getLeft().getTransactionManager();
 
     transactionManager.startTransactionOnBranch("branch1", "A");
     IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
@@ -92,7 +96,8 @@ public class TestBranches extends ATestMemoryStatistic {
     performGC();
 
     final MemoryAnalysisService analysisService =
-        (MemoryAnalysisService) createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        (MemoryAnalysisService)
+            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
     return analysisService.exportApplication("testBranches");
   }
 
@@ -109,7 +114,7 @@ public class TestBranches extends ATestMemoryStatistic {
             .buildAndStart();
     resources.register(manager::stop);
 
-    monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(data), "testBranches");
@@ -170,7 +175,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Set<String> retrieveBranches() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -187,7 +192,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Multimap<String, Long> retrieveEpochsPerBranch() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -210,7 +215,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Set<Long> retrieveRecordChunks() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -228,7 +233,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Multimap<String, Long> retrieveChunksPerBranch(final Collection<Long> chunkSet) {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
@@ -252,7 +257,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   protected Map<Long, String> retrieveEpochToBranchMapping() {
     final ICursor cursor =
-        monitoringApp
+        this.monitoringApp
             .getLeft()
             .getHead()
             .getQueryRunner()
