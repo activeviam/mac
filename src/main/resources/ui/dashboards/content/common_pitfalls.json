@@ -1,0 +1,320 @@
+{
+  "pages" : {
+    "p-0" : {
+      "layout" : {
+        "children" : [ {
+          "leafKey" : "1",
+          "size" : 1
+        } ],
+        "direction" : "row"
+      },
+      "name" : "Common pitfalls",
+      "content" : {
+        "1" : {
+          "name" : "Common pitfalls",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This bookmarks presents some common problems that can be exposed using MAC.\n\nEach following page presents one of these problems along with:\n* causes\n* usual symptoms\n* suggestions and links to other more detailed bookmarks for further analysis\n\nThese pages use the statistics that are currently loaded into MAC and will try to suggest a view that exposes best what to look out for when trying to detect the described problems.\n\nThey serve only as a quick indicators for common problems, detailed analysis may still need to be done using more detailed views."
+        }
+      },
+      "filters" : [ ],
+      "queryContext" : [ ]
+    },
+    "p-1" : {
+      "layout" : {
+        "children" : [ {
+          "children" : [ {
+            "size" : 0.710732,
+            "leafKey" : "1"
+          }, {
+            "size" : 0.289268,
+            "leafKey" : "5"
+          } ],
+          "size" : 0.128329,
+          "direction" : "row"
+        }, {
+          "children" : [ {
+            "size" : 0.5,
+            "leafKey" : "2"
+          }, {
+            "size" : 0.5,
+            "leafKey" : "4"
+          } ],
+          "direction" : "row",
+          "size" : 0.658454
+        }, {
+          "size" : 0.2132,
+          "leafKey" : "3"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Large indexes",
+      "filters" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ],
+      "content" : {
+        "1" : {
+          "name" : "Indexes are too large",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "Indexes often constitute the largest direct memory consumer for stores, so reducing their size if possible could reduce the memory footprint of your application.\n\nThe following table shows the most-consuming indexes for the largest stores:"
+        },
+        "2" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Crossjoin(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), Hierarchize(DrilldownLevel([Indices].[Index Type].[ALL].[AllMember])), DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember])), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Indices].[Index Type].[Index Type]", "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Indexes memory footprint",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Owners].[Owner].[Owner]" : 508
+          }
+        },
+        "3" : {
+          "name" : "Recommendations",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "The size of an index depends on the cardinality of the data it indexes. Reducing the number of fields taken into account by an index can reduce its size as a result.\n\nOmitting a field from an index can drastically impact the performance on queries that rely on them, so whether or not this is possible depends on your use case. It may be that some indexes need to be as large as they are to ensure query performance.\n\nLastly, changing the data model can change which indexes need to be created. Improving the data model could result in smaller store sizes overall.\n\n>*Further analysis regarding indexes can be done with the [indexes bookmark](#/dashboard/dictionaries_indexes).*"
+        },
+        "4" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Owners].[Owner].[Owner]" ],
+            "splitBy" : [ "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "name" : "Memory per indexes",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Indices].[Indexed Fields].[Indexed Fields].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "5" : {
+          "mode" : "checkbox",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-2" : {
+      "layout" : {
+        "children" : [ {
+          "children" : [ {
+            "size" : 0.76,
+            "leafKey" : "1"
+          }, {
+            "size" : 0.24,
+            "leafKey" : "5"
+          } ],
+          "size" : 0.22,
+          "direction" : "row"
+        }, {
+          "children" : [ {
+            "size" : 0.37,
+            "leafKey" : "2"
+          }, {
+            "size" : 0.63,
+            "leafKey" : "4"
+          } ],
+          "size" : 0.6084,
+          "direction" : "row"
+        }, {
+          "size" : 0.1716,
+          "leafKey" : "3"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Too many members in bitmaps",
+      "filters" : [ "Crossjoin({[Owners].[Owner Type].[ALL].[AllMember].[Cube], [Owners].[Owner Type].[ALL].[AllMember].[Distributed Cube]}, {Except([Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])}, [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])" ],
+      "content" : {
+        "1" : {
+          "name" : "Too many members in bitmap/leaf aggregate providers",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "The size of the aggregate store of a bitmap or leaf aggregate provider depends on the cardinalities of the hierarchies it handles.\n\nHaving a bitmap provider handle too many members can make it unnecessarily large: it can sometimes be sufficient to have it handle less measures and/or hierarchies depending on the use case.\n\nHere are the largest aggregate store memory footprints in the analyzed application, categorized by owner, aggregate provider id, and measure:"
+        },
+        "2" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(Crossjoin(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderId].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Aggregate Provider].[ProviderId].[ProviderId]", "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Aggregate providers memory footprint",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        },
+        "3" : {
+          "name" : "Recommendations",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "Consider, for each cube, the hierarchies and measures its most memory-consuming providers handle.\n\nDepending on the queries done on each measure, consider whether or not some hierarchies can be cut from the aggregate provider's handled measures.\n\n>*Further analysis regarding aggregate providers can be done with the [aggregate provider bookmark](#/dashboard/aggregate_providers).*"
+        },
+        "4" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ ],
+            "splitBy" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Aggregate Provider].[ProviderId].[ProviderId]", "[Fields].[Field].[Field]" ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "subplotModeEnabled" : true,
+          "name" : "Memory per aggregate providers",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Aggregate Provider].[ProviderId].[ProviderId].Members, [Fields].[Field].[Field].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "5" : {
+          "mode" : "checkbox",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-3" : {
+      "layout" : {
+        "children" : [ {
+          "children" : [ {
+            "size" : 0.76,
+            "leafKey" : "1"
+          }, {
+            "size" : 0.24,
+            "leafKey" : "5"
+          } ],
+          "size" : 0.24939499999999998,
+          "direction" : "row"
+        }, {
+          "children" : [ {
+            "size" : 0.43,
+            "leafKey" : "2"
+          }, {
+            "size" : 0.57,
+            "leafKey" : "4"
+          } ],
+          "direction" : "row",
+          "size" : 0.521489
+        }, {
+          "size" : 0.2291,
+          "leafKey" : "3"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Oversized store chunks",
+      "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Store]", "Except([Fields].[Field].[Field].Members, {[Fields].[Field].[ALL].[AllMember].[N/A]})" ],
+      "content" : {
+        "1" : {
+          "name" : "Store chunks are oversized",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "Store chunk size can be configured on a per-store bases using `.withChunkSize(int)` when building each store's description.\n\nIf not specified, the default chunk size is either retrieved from program arguments (`-DdefaultChunkSize`), or deduced from the amount of available memory otherwise (on-and-off-heap). The default value might not be the most suitable depending on the cardinality of the store. In the case where a store has its chunk size configured to be much higher than its cardinality, it is very likely that its chunks will end up being mostly empty, wasting memory unneededly.\n\nBelow are listed for each store the ratio of *non-written rows* in chunks, grouped by field.\n\nPay attention to the value of the measure `NonWrittenRows.Ratio`. It designates the ratio of wasted space due to chunk allocation size being larger than the data they store."
+        },
+        "2" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[ChunkSize.SUM], [Measures].[NonWrittenRows.Ratio]} ON COLUMNS, NON EMPTY Crossjoin(Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC), Order(Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])), [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[ChunkSize.SUM]", "[Measures].[NonWrittenRows.Ratio]" ]
+          },
+          "name" : "Unused allocated memory",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Owners].[Owner].[Owner]" : 232,
+            "[Measures].[DirectMemory.SUM]" : 139,
+            "[Measures].[NonWrittenRows.Ratio]" : 152,
+            "[Measures].[ChunkSize.SUM]" : 110
+          }
+        },
+        "3" : {
+          "name" : "Recommendations",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "If the most compact column of a store proves to have a lot of unused allocated space, this can mean that either:\n* the store chunk size is oversized compared to the data holds, and it can be safely reduced with minor drawback\n* the store partitioning scheme is suboptimal and some partitions (and their chunks as a consequence) have much less data in them\n\nReducing store chunk size more than is needed is also detrimental since this will cause the number of chunks to increase,\nincreasing overhead when doing operations on the store.\n\n>*Further analysis regarding store memory consumption can be done with the [field analysis bookmark](#/dashboard/fields), adding the `NonWrittenRows.Ratio` measure to the relevant pages, or on the [overview bookmark](#/dashboard/overview).*"
+        },
+        "4" : {
+          "mapping" : {
+            "xValues" : [ "[Measures].[DirectMemory.SUM]" ],
+            "yValues" : [ "[Measures].[NonWrittenRows.Ratio]" ],
+            "size" : [ ],
+            "color" : [ "[Owners].[Owner].[Owner]" ],
+            "splitBy" : [ "[Fields].[Field].[Field]" ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "subplotModeEnabled" : false,
+          "style" : {
+            "isTextVisible" : false
+          },
+          "name" : "",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Crossjoin(Order([Owners].[Owner].[Owner].Members, [Measures].[DirectMemory.SUM], DESC), Order([Fields].[Field].[Field].Members, [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS, NON EMPTY {[Measures].[NonWrittenRows.Ratio], [Measures].[DirectMemory.SUM]} ON COLUMNS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-scatter-plot"
+        },
+        "5" : {
+          "mode" : "checkbox",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        }
+      },
+      "queryContext" : [ ]
+    }
+  },
+  "pagesOrder" : [ "p-0", "p-1", "p-2", "p-3" ],
+  "filters" : [ ],
+  "queryContext" : [ ]
+}

@@ -25,6 +25,7 @@ public class ContentServerConstants {
 
 		public static final String UI = "ui";
 		public static final String DASHBOARDS = UI + SEPARATOR + Tree.DASHBOARDS;
+		public static final String WIDGETS = UI + SEPARATOR + Tree.WIDGETS;
 		public static final String CONTENT = SEPARATOR + Tree.CONTENT;
 		public static final String STRUCTURE = SEPARATOR + Tree.STRUCTURE;
 		public static final String THUMBNAILS = SEPARATOR + Tree.THUMBNAILS;

@@ -17,9 +17,7 @@ import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.content.snapshot.impl.SnapshotContentTree;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,26 +69,26 @@ public class JsonUiToContentServer {
 		PERMISSIONS.putAll(defaultPermissions != null ? defaultPermissions : DEFAULT_PERMISSIONS);
 		snapshotter.eraseAndImport(ContentServerConstants.Paths.UI, Paths.INITIAL_CONTENT);
 		snapshotter.eraseAndImport(folderName + Paths.SEPARATOR + Tree.DASHBOARDS,
-				loadDashboards(Paths.DASHBOARDS));
+				loadDashboards());
+		snapshotter.eraseAndImport(folderName + Paths.SEPARATOR + Tree.WIDGETS,
+				loadWidgets());
 	}
 
 	/**
-	 * Generates a SnapshotContentTree representing the subtree containing the dashboards, from a
-	 * given folder.
+	 * Generates a SnapshotContentTree representing the subtree containing the dashboards.
 	 *
-	 * @param dashboardFolder the dashboard folder.
 	 * @return the SnapshotContentTree.
 	 */
-	static SnapshotContentTree loadDashboards(
-			final String dashboardFolder) {
-		if (getSubDirectory(dashboardFolder) == null) {
+	static SnapshotContentTree loadDashboards() {
+		if (getSubDirectory(Paths.DASHBOARDS) == null) {
+			LOGGER.info("No dashboards to load");
 			return null;
 		}
-		final File contentDirectory = getSubDirectory(dashboardFolder + Paths.CONTENT);
+		final File contentDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.CONTENT);
 		final SnapshotContentTree contentTree = createOneLevelDirectoryTree(contentDirectory);
-		final File structureDirectory = getSubDirectory(dashboardFolder + Paths.STRUCTURE);
+		final File structureDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.STRUCTURE);
 		final SnapshotContentTree structureTree = createTwoLevelsDirectoryTree(structureDirectory);
-		final File thumbnailsDirectory = getSubDirectory(dashboardFolder + Paths.THUMBNAILS);
+		final File thumbnailsDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.THUMBNAILS);
 		final SnapshotContentTree thumbnailsTree = createOneLevelDirectoryTree(thumbnailsDirectory);
 
 		final SnapshotContentTree dashboardsTree =
@@ -104,6 +102,20 @@ public class JsonUiToContentServer {
 		dashboardsTree.putChild(ContentServerConstants.Tree.STRUCTURE, structureTree, true);
 		dashboardsTree.putChild(ContentServerConstants.Tree.THUMBNAILS, thumbnailsTree, true);
 		return dashboardsTree;
+	}
+
+	/**
+	 * Generates a SnapshotContentTree representing the subtree containing the widgets.
+	 *
+	 * @return the SnapshotContentTree.
+	 */
+	static SnapshotContentTree loadWidgets() {
+		if (getSubDirectory(Paths.WIDGETS) == null) {
+			LOGGER.info("No widgets to load");
+			return null;
+		}
+		final File structureDirectory = getSubDirectory(Paths.WIDGETS);
+		return createTwoLevelsDirectoryTree(structureDirectory);
 	}
 
 	private static File getSubDirectory(final String folderName) {

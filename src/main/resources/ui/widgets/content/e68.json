@@ -1,0 +1,10 @@
+{
+  "mode" : "radio",
+  "levelCoordinates" : {
+    "dimensionName" : "Partitions",
+    "hierarchyName" : "Partition",
+    "levelName" : "Partition"
+  },
+  "cubeName" : "MemoryCube",
+  "serverKey" : "MAC"
+}
