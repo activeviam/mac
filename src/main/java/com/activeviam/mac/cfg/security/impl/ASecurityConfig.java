@@ -82,9 +82,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
   /** Name of the ContentService Root Role. */
   public static final String ROLE_CS_ROOT = IContentService.ROLE_ROOT;
 
-  /**
-   * The address the UI is exposed to.
-   */
+  /** The address the UI is exposed to. */
   public static final String ACTIVEUI_ADDRESS = "activeui.address";
   /** The User Configuration. */
   @Autowired protected UserConfig userDetailsConfig;

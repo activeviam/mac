@@ -36,7 +36,7 @@ public class ActiveUiSecurityConfigurer extends AWebSecurityConfigurer {
         .permitAll()
         .regexMatchers(HttpMethod.GET, activeUiUrl)
         .permitAll();
-    //this allows pre-flight cross-origin requests
+    // this allows pre-flight cross-origin requests
     http.cors();
     // Authorizing pages to be embedded in iframes to have ActiveUI in ActiveMonitor UI
     http.headers().frameOptions().disable();

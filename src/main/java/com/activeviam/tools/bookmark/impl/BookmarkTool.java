@@ -19,37 +19,35 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  */
 public class BookmarkTool {
 
-	/**
-	 * Imports content server bookmarks from a directory structure representing the required UI
-	 * bookmark structure.
-	 *
-	 * @param snapshotter        The content service snapshotter to use for the import.
-	 * @param folderName         The folder from which to import the bookmarks.
-	 * @param defaultPermissions The permissions to use when not explicitly defining permissions for
-	 *                           any bookmark path.
-	 */
-	public static void importBookmarks(
-			ContentServiceSnapshotter snapshotter,
-			String folderName,
-			Map<String, List<String>> defaultPermissions) {
-		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-		JsonUiToContentServer.setDashboardTreeResolver(resolver);
-		JsonUiToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
-	}
+  /**
+   * Imports content server bookmarks from a directory structure representing the required UI
+   * bookmark structure.
+   *
+   * @param snapshotter The content service snapshotter to use for the import.
+   * @param folderName The folder from which to import the bookmarks.
+   * @param defaultPermissions The permissions to use when not explicitly defining permissions for
+   *     any bookmark path.
+   */
+  public static void importBookmarks(
+      ContentServiceSnapshotter snapshotter,
+      String folderName,
+      Map<String, List<String>> defaultPermissions) {
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    JsonUiToContentServer.setDashboardTreeResolver(resolver);
+    JsonUiToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
+  }
 
-	/**
-	 * Exports content server bookmarks into a directory structure representing the UI bookmark
-	 * structure.
-	 *
-	 * @param snapshotter The content service snapshotter to use for the export.
-	 * @param folderName  The folder into which the bookmarks should be exported.
-	 */
-	public static void exportBookmarks(
-			ContentServiceSnapshotter snapshotter,
-			String folderName) {
-		ObjectMapper mapper = new ObjectMapper();
-		ContentServerToJsonUi.setMapper(mapper);
-		ContentServerToJsonUi.setWriter(mapper.writer(new DefaultPrettyPrinter()));
-		ContentServerToJsonUi.export(snapshotter, folderName);
-	}
+  /**
+   * Exports content server bookmarks into a directory structure representing the UI bookmark
+   * structure.
+   *
+   * @param snapshotter The content service snapshotter to use for the export.
+   * @param folderName The folder into which the bookmarks should be exported.
+   */
+  public static void exportBookmarks(ContentServiceSnapshotter snapshotter, String folderName) {
+    ObjectMapper mapper = new ObjectMapper();
+    ContentServerToJsonUi.setMapper(mapper);
+    ContentServerToJsonUi.setWriter(mapper.writer(new DefaultPrettyPrinter()));
+    ContentServerToJsonUi.export(snapshotter, folderName);
+  }
 }
