@@ -26,7 +26,6 @@
     <jdk.version>11</jdk.version>
 
     <activepivot.version>5.10.1</activepivot.version>
-    <activeui.version>5.0.0-rc3</activeui.version>
     <content-server-ui.version>2.0.1</content-server-ui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
@@ -106,11 +105,6 @@
     </dependency>
 
     <!-- ActiveUI dependency -->
-    <dependency>
-      <groupId>com.activeviam.activeui</groupId>
-      <artifactId>activeui</artifactId>
-      <version>${activeui.version}</version>
-    </dependency>
     <dependency>
       <groupId>com.activeviam.tech</groupId>
       <artifactId>content-server-ui</artifactId>

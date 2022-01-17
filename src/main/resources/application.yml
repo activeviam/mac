@@ -3,9 +3,6 @@ server:
   remote:
     uri: localhost:9090
 
-activeui:
-  address: http://localhost:9093
-
 management:
   endpoints:
     web:
@@ -18,6 +15,9 @@ contentServer:
     kpiRole: ROLE_USER
     cache:
       entitlementsTTL: 3600
+bookmarks:
+  folder: ui
+  reloadOnStartup: true
 
   # The RSA key pair encoded in Base64
 qfs:
