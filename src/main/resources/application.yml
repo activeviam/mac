@@ -18,6 +18,7 @@ contentServer:
     kpiRole: ROLE_USER
     cache:
       entitlementsTTL: 3600
+
 bookmarks:
   folder: ui
 
