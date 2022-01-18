@@ -11,10 +11,10 @@
       "name" : "Common pitfalls",
       "content" : {
         "1" : {
-          "name" : "Common pitfalls",
+          "name" : "Common Pitfalls",
           "widgetKey" : "text-editor",
           "displayMode" : "view",
-          "text" : "This bookmarks presents some common problems that can be exposed using MAC.\n\nEach following page presents one of these problems along with:\n* causes\n* usual symptoms\n* suggestions and links to other more detailed bookmarks for further analysis\n\nThese pages use the statistics that are currently loaded into MAC and will try to suggest a view that exposes best what to look out for when trying to detect the described problems.\n\nThey serve only as a quick indicators for common problems, detailed analysis may still need to be done using more detailed views."
+          "text" : "This bookmark presents some common problems that can be exposed using MAC.\n\nEach following page presents one of these problems along with:\n* causes\n* usual symptoms\n* suggestions and links to other more detailed bookmarks for further analysis\n\nThese pages use the statistics that are currently loaded into MAC and will try to suggest a view that exposes best what to look out for when trying to detect the described problems.\n\nThey serve only as a quick indicators for common problems, detailed analysis may still need to be done using more detailed views."
         }
       },
       "filters" : [ ],
@@ -24,13 +24,13 @@
       "layout" : {
         "children" : [ {
           "children" : [ {
-            "size" : 0.710732,
+            "size" : 0.76,
             "leafKey" : "1"
           }, {
-            "size" : 0.289268,
+            "size" : 0.24,
             "leafKey" : "5"
           } ],
-          "size" : 0.128329,
+          "size" : 0.18,
           "direction" : "row"
         }, {
           "children" : [ {
@@ -41,7 +41,7 @@
             "leafKey" : "4"
           } ],
           "direction" : "row",
-          "size" : 0.658454
+          "size" : 0.6068
         }, {
           "size" : 0.2132,
           "leafKey" : "3"
@@ -69,7 +69,7 @@
             "columns" : [ "ALL_MEASURES" ],
             "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
           },
-          "name" : "Indexes memory footprint",
+          "name" : "Direct memory per indexes",
           "serverKey" : "MAC",
           "widgetKey" : "tree-table",
           "columnWidths" : {
@@ -84,13 +84,14 @@
         },
         "4" : {
           "mapping" : {
+            "xAxis" : [ "[Owners].[Owner].[Owner]", "[Indices].[Indexed Fields].[Indexed Fields]" ],
             "values" : [ "[Measures].[DirectMemory.SUM]" ],
-            "groupBy" : [ "[Owners].[Owner].[Owner]" ],
-            "splitBy" : [ "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "splitBy" : [ ],
             "horizontalSubplots" : [ ],
             "verticalSubplots" : [ ]
           },
-          "name" : "Memory per indexes",
+          "switchedTo" : "plotly-tree-map",
+          "name" : "Largest indexes",
           "query" : {
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Indices].[Indexed Fields].[Indexed Fields].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
@@ -98,7 +99,7 @@
           "filters" : [ ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
-          "widgetKey" : "plotly-tree-map"
+          "widgetKey" : "plotly-line-chart"
         },
         "5" : {
           "mode" : "checkbox",
@@ -164,7 +165,7 @@
             "columns" : [ "ALL_MEASURES" ],
             "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
           },
-          "name" : "Aggregate providers memory footprint",
+          "name" : "Direct memory per aggregate providers",
           "serverKey" : "MAC",
           "widgetKey" : "tree-table",
           "columnWidths" : { }
@@ -184,7 +185,7 @@
             "verticalSubplots" : [ ]
           },
           "subplotModeEnabled" : true,
-          "name" : "Memory per aggregate providers",
+          "name" : "Largest aggregate providers",
           "query" : {
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent(Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Aggregate Provider].[ProviderId].[ProviderId].Members, [Fields].[Field].[Field].Members), 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
@@ -219,7 +220,7 @@
             "size" : 0.24,
             "leafKey" : "5"
           } ],
-          "size" : 0.24939499999999998,
+          "size" : 0.21,
           "direction" : "row"
         }, {
           "children" : [ {
@@ -230,7 +231,7 @@
             "leafKey" : "4"
           } ],
           "direction" : "row",
-          "size" : 0.521489
+          "size" : 0.5609
         }, {
           "size" : 0.2291,
           "leafKey" : "3"
@@ -258,7 +259,7 @@
             "columns" : [ "ALL_MEASURES" ],
             "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[ChunkSize.SUM]", "[Measures].[NonWrittenRows.Ratio]" ]
           },
-          "name" : "Unused allocated memory",
+          "name" : "Unused memory per chunks",
           "serverKey" : "MAC",
           "widgetKey" : "tree-table",
           "columnWidths" : {
@@ -288,7 +289,7 @@
           "style" : {
             "isTextVisible" : false
           },
-          "name" : "",
+          "name" : "Unused memory per field",
           "query" : {
             "mdx" : "SELECT NON EMPTY Crossjoin(Order([Owners].[Owner].[Owner].Members, [Measures].[DirectMemory.SUM], DESC), Order([Fields].[Field].[Field].Members, [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS, NON EMPTY {[Measures].[NonWrittenRows.Ratio], [Measures].[DirectMemory.SUM]} ON COLUMNS FROM [MemoryCube]",
             "updateMode" : "once"

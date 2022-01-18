@@ -10,6 +10,7 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
 import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
+import com.qfs.content.cfg.impl.ContentServerResourceServerConfig;
 import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.server.cfg.IActivePivotConfig;
@@ -76,6 +77,7 @@ import org.springframework.core.env.Environment;
       // Content server
       ContentServiceConfig.class,
       LocalI18nConfig.class,
+      ContentServerResourceServerConfig.class,
       // Specific to monitoring server
       SecurityConfig.class,
       UserConfig.class,

@@ -3,6 +3,7 @@
   "version": "5.11.0",
   "description": "MAC",
   "homepage": ".",
+  "license": "Apache-2.0",
   "author": "ActiveViam",
   "files": [
     "build"

@@ -77,7 +77,7 @@
           "widgetKey" : "plotly-line-chart"
         },
         "4" : {
-          "name" : "",
+          "name" : "Overview",
           "widgetKey" : "text-editor",
           "displayMode" : "view",
           "text" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the pivots of the application, starting with a general overview\nof memory consumption per cube in this page.\n"
@@ -163,7 +163,7 @@
           "widgetKey" : "plotly-tree-map"
         },
         "4" : {
-          "name" : "",
+          "name" : "Overview",
           "widgetKey" : "text-editor",
           "displayMode" : "view",
           "text" : "A view focused on aggregate providers. Each cube has its memory consumption\ndetailed according to its aggregate providers.\n\nJIT aggregate providers typically will not consume any direct memory, contrary\nto bitmap and leaf aggregate providers, which will have chunks for their\naggregate store and point index."
@@ -248,7 +248,7 @@
           "widgetKey" : "plotly-tree-map"
         },
         "3" : {
-          "name" : "",
+          "name" : "Overview",
           "widgetKey" : "text-editor",
           "displayMode" : "view",
           "text" : "A view focused on aggregate stores for leaf and bitmap aggregate providers.\n\nFor each provider type, memory consumption of chunks is categorized according to\nthe measure in the aggregate store it corresponds to.\n"
@@ -335,7 +335,7 @@
           "widgetKey" : "plotly-tree-map"
         },
         "3" : {
-          "name" : "",
+          "name" : "Overview",
           "widgetKey" : "text-editor",
           "displayMode" : "view",
           "text" : "A view that exposes memory consumption of cubes associated with the dictionaries\nused to store level information."

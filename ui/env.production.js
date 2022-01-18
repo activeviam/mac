@@ -2,11 +2,11 @@ var baseUrl = "http://localhost:9092";
 
 window.env = {
   contentServerUrl: baseUrl,
-  contentServerVersion: "5.10.5",
+  contentServerVersion: "5.10.0",
   activePivotServers: {
     "MAC": {
       url: baseUrl,
-      version: "5.11.0",
+      version: "5.10.0",
     },
   },
 };

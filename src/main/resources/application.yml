@@ -21,6 +21,7 @@ contentServer:
 
 bookmarks:
   folder: ui
+  reloadOnStartup: true
 
   # The RSA key pair encoded in Base64
 qfs:

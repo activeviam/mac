@@ -68,52 +68,25 @@ public class JsonUiToContentServer {
       Map<String, List<String>> defaultPermissions) {
     PERMISSIONS.putAll(defaultPermissions != null ? defaultPermissions : DEFAULT_PERMISSIONS);
     snapshotter.eraseAndImport(ContentServerConstants.Paths.UI, Paths.INITIAL_CONTENT);
-    snapshotter.eraseAndImport(folderName + Paths.SEPARATOR + Tree.DASHBOARDS, loadDashboards());
-    snapshotter.eraseAndImport(folderName + Paths.SEPARATOR + Tree.WIDGETS, loadWidgets());
+    snapshotter.eraseAndImport(
+        folderName + Paths.SEPARATOR + Tree.DASHBOARDS, loadDirectory(Paths.DASHBOARDS));
+    snapshotter.eraseAndImport(
+        folderName + Paths.SEPARATOR + Tree.WIDGETS, loadDirectory(Paths.WIDGETS));
   }
 
   /**
-   * Generates a SnapshotContentTree representing the subtree containing the dashboards.
+   * Generates a SnapshotContentTree from a directory.
    *
    * @return the SnapshotContentTree.
    */
-  static SnapshotContentTree loadDashboards() {
-    if (getSubDirectory(Paths.DASHBOARDS) == null) {
-      LOGGER.info("No dashboards to load");
+  static SnapshotContentTree loadDirectory(String path) {
+    File directory = getSubDirectory(path);
+    if (directory == null) {
+      LOGGER.info("Nothing to load");
       return null;
     }
-    final File contentDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.CONTENT);
-    final SnapshotContentTree contentTree = createOneLevelDirectoryTree(contentDirectory);
-    final File structureDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.STRUCTURE);
-    final SnapshotContentTree structureTree = createTwoLevelsDirectoryTree(structureDirectory);
-    final File thumbnailsDirectory = getSubDirectory(Paths.DASHBOARDS + Paths.THUMBNAILS);
-    final SnapshotContentTree thumbnailsTree = createOneLevelDirectoryTree(thumbnailsDirectory);
 
-    final SnapshotContentTree dashboardsTree =
-        new SnapshotContentTree(
-            null,
-            true,
-            DEFAULT_PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-            DEFAULT_PERMISSIONS.get(ContentServerConstants.Role.READERS),
-            new HashMap<>());
-    dashboardsTree.putChild(ContentServerConstants.Tree.CONTENT, contentTree, true);
-    dashboardsTree.putChild(ContentServerConstants.Tree.STRUCTURE, structureTree, true);
-    dashboardsTree.putChild(ContentServerConstants.Tree.THUMBNAILS, thumbnailsTree, true);
-    return dashboardsTree;
-  }
-
-  /**
-   * Generates a SnapshotContentTree representing the subtree containing the widgets.
-   *
-   * @return the SnapshotContentTree.
-   */
-  static SnapshotContentTree loadWidgets() {
-    if (getSubDirectory(Paths.WIDGETS) == null) {
-      LOGGER.info("No widgets to load");
-      return null;
-    }
-    final File structureDirectory = getSubDirectory(Paths.WIDGETS);
-    return createTwoLevelsDirectoryTree(structureDirectory);
+    return createDirectoryTree(directory, createEmptyDirectoryNode());
   }
 
   private static File getSubDirectory(final String folderName) {
@@ -127,39 +100,6 @@ public class JsonUiToContentServer {
   }
 
   /**
-   * Creates a {@link SnapshotContentTree} from the files of a directory. For each file, we add a
-   * leaf to the root {@link SnapshotContentTree}. The key of the leaf is the name of the file
-   * without the json extension. The content of the leaf is a leaf {@link SnapshotContentTree}
-   * containing the content of the file.
-   *
-   * @param root The current directory to add to the structureTree.
-   */
-  private static SnapshotContentTree createOneLevelDirectoryTree(File root) {
-    final File[] files = root.listFiles(File::isFile);
-    if (files == null) {
-      return null;
-    }
-    Map<String, SnapshotContentTree> nodes = new HashMap<>();
-    for (File file : files) {
-      final JsonNode jsonNodeContent = loadFileIntoNode(file);
-      final SnapshotContentTree contentNode =
-          new SnapshotContentTree(
-              jsonNodeContent.toString(),
-              false,
-              PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-              PERMISSIONS.get(ContentServerConstants.Role.READERS),
-              new HashMap<>());
-      nodes.put(file.getName().replace(Paths.JSON, ""), contentNode);
-    }
-    return new SnapshotContentTree(
-        null,
-        true,
-        PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-        PERMISSIONS.get(ContentServerConstants.Role.READERS),
-        nodes);
-  }
-
-  /**
    * Creates a {@link SnapshotContentTree} from the content of a directory assuming that the
    * directory contains only subdirectories with one json file each. For each subdirectory, we add a
    * leaf to the root {@link SnapshotContentTree}. The key of the leaf is the name of the
@@ -169,41 +109,29 @@ public class JsonUiToContentServer {
    *
    * @param root the current directory to add to the structureTree.
    */
-  private static SnapshotContentTree createTwoLevelsDirectoryTree(File root) {
-    final File[] subdirectories = root.listFiles();
-    if (subdirectories == null) {
+  private static SnapshotContentTree createDirectoryTree(File root, SnapshotContentTree parent) {
+    if (root == null) {
+      LOGGER.info("Nothing to load");
       return null;
     }
-    Map<String, SnapshotContentTree> structureNodes = new HashMap<>();
-    for (File file : subdirectories) {
-      final File[] files = file.listFiles();
-      if (files != null && files.length >= 1) {
-        final JsonNode jsonNodeContent = loadFileIntoNode(files[0]);
-        final SnapshotContentTree metadataNode =
+    for (File child : root.listFiles()) {
+      if (child.isFile()) {
+        final JsonNode jsonNodeContent = loadFileIntoNode(child);
+        final SnapshotContentTree node =
             new SnapshotContentTree(
                 jsonNodeContent.toString(),
                 false,
                 PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
                 PERMISSIONS.get(ContentServerConstants.Role.READERS),
                 new HashMap<>());
-        Map<String, SnapshotContentTree> metadataNodes = new HashMap<>();
-        metadataNodes.put(file.getName() + Paths.METADATA, metadataNode);
-        final SnapshotContentTree structureNode =
-            new SnapshotContentTree(
-                null,
-                true,
-                PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-                PERMISSIONS.get(ContentServerConstants.Role.READERS),
-                metadataNodes);
-        structureNodes.put(file.getName(), structureNode);
+        parent.putChild(child.getName().replace(Paths.JSON, ""), node, true);
+      } else {
+        final SnapshotContentTree childNode = createEmptyDirectoryNode();
+        SnapshotContentTree childTree = createDirectoryTree(child, childNode);
+        parent.putChild(child.getName(), childTree, true);
       }
     }
-    return new SnapshotContentTree(
-        null,
-        true,
-        PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-        PERMISSIONS.get(ContentServerConstants.Role.READERS),
-        structureNodes);
+    return parent;
   }
 
   /**
@@ -221,5 +149,14 @@ public class JsonUiToContentServer {
       LOGGER.warn("Unable to find file " + file.getName());
     }
     return loadedFile;
+  }
+
+  private static SnapshotContentTree createEmptyDirectoryNode() {
+    return new SnapshotContentTree(
+        null,
+        true,
+        PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
+        PERMISSIONS.get(ContentServerConstants.Role.READERS),
+        new HashMap<>());
   }
 }

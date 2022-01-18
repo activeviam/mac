@@ -7,10 +7,10 @@
           "leafKey" : "0"
         }, {
           "children" : [ {
-            "size" : 0.193705,
+            "size" : 0.16,
             "leafKey" : "2"
           }, {
-            "size" : 0.806295,
+            "size" : 0.84,
             "leafKey" : "1"
           } ],
           "size" : 0.51,
@@ -79,10 +79,10 @@
             "leafKey" : "0"
           }, {
             "children" : [ {
-              "size" : 0.170491,
+              "size" : 0.16,
               "leafKey" : "4"
             }, {
-              "size" : 0.82951,
+              "size" : 0.84,
               "leafKey" : "3"
             } ],
             "size" : 0.51,
