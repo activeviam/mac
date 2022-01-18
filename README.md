@@ -5,7 +5,7 @@ the necessary tools to explore and analyze the data consumption from any other
 ActivePivot application, starting from ActivePivot 5.8 onward.
 
 The project is built as a standalone Spring Boot jar file available on `localhost:9092` by default.
-The ActiveUI application is available in the folder ui. Enter `yarn start` to start ActiveUI on `localhost:9093`.
+The ActiveUI application is available in the folder ui. Enter `yarn`then `yarn start` to start ActiveUI on `localhost:9093`.
 This version is compatible with ActivePivot 5.11. To use this project with other versions, pick the right branch.
 
 ## Main Features
