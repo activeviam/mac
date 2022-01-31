@@ -25,8 +25,8 @@
   <properties>
     <jdk.version>11</jdk.version>
 
-    <activepivot.version>5.10.1</activepivot.version>
-    <content-server-ui.version>2.0.1</content-server-ui.version>
+    <activepivot.version>5.11.1</activepivot.version>
+    <activeui.version>5.0.7</activeui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.18</lombok.version>
@@ -106,9 +106,9 @@
 
     <!-- ActiveUI dependency -->
     <dependency>
-      <groupId>com.activeviam.tech</groupId>
-      <artifactId>content-server-ui</artifactId>
-      <version>${content-server-ui.version}</version>
+      <groupId>com.activeviam.activeui</groupId>
+      <artifactId>activeui</artifactId>
+      <version>${activeui.version}</version>
       <scope>runtime</scope>
     </dependency>
 
@@ -169,6 +169,13 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>31.0.1-jre</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

@@ -4,7 +4,7 @@ server:
     uri: localhost:9090
 
 activeui:
-  address: http://localhost:9093
+  address: http://localhost:9092/ui
 
 management:
   endpoints:
@@ -21,6 +21,7 @@ contentServer:
 
 bookmarks:
   folder: ui
+  reloadOnStartup: true
 
   # The RSA key pair encoded in Base64
 qfs:

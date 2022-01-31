@@ -76,6 +76,7 @@ import org.springframework.core.env.Environment;
       // Content server
       ContentServiceConfig.class,
       LocalI18nConfig.class,
+      ActiveUiResourceServerConfig.class,
 
       // Specific to monitoring server
       SecurityConfig.class,
