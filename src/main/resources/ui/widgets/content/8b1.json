@@ -1,0 +1,17 @@
+{
+  "query" : {
+    "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Except([Fields].[Field].[Field].Members, [Fields].[Field].[Field].[N/A]), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+    "updateMode" : "once"
+  },
+  "filters" : [ ],
+  "queryContext" : [ ],
+  "mapping" : {
+    "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]", "[Components].[Component].[Component]" ],
+    "columns" : [ "ALL_MEASURES" ],
+    "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+  },
+  "serverKey" : "MAC",
+  "columnWidths" : {
+    "[Measures].[DirectMemory.SUM]" : 153
+  }
+}
