@@ -1,0 +1,294 @@
+{
+  "pages" : {
+    "p-0" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.095,
+          "leafKey" : "4"
+        }, {
+          "size" : 0.095,
+          "leafKey" : "3"
+        }, {
+          "children" : [ {
+            "size" : 0.39,
+            "leafKey" : "1"
+          }, {
+            "children" : [ {
+              "size" : 0.32,
+              "leafKey" : "5"
+            }, {
+              "size" : 0.68,
+              "leafKey" : "2"
+            } ],
+            "direction" : "column",
+            "size" : 0.61
+          } ],
+          "direction" : "row",
+          "size" : 0.81
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Top Dictionaries",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order([Fields].[Field].[Field].Members, [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[DICTIONARY]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Top Dictionaries across Owners",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        },
+        "2" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Fields].[Field].[Field]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "subplotModeEnabled" : true,
+          "name" : "Most Consuming Dictionaries",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY TopPercent([Fields].[Field].[Field].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[DICTIONARY]" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "3" : {
+          "mode" : "radio",
+          "name" : "Partition filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Partitions",
+            "hierarchyName" : "Partition",
+            "levelName" : "Partition"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "4" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "5" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the various dictionaries and indices of the application.\n\nThis view presents the most memory-consuming dictionaries, categorized per field\nname, across all owners.\n\nSome dictionaries may be shared across multiple fields of different stores.\n\nThis page intended to potentially draw attention to where the largest\ndictionaries may be, enabling a more detailed analysis using the other\npage of this bookmark.\n\n> In case of a field name conflict between two stores, their dictionaries will\n> both be taken into account even if there is not a reference linking these two\n> fields.\n"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-1" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.095,
+          "leafKey" : "4"
+        }, {
+          "size" : 0.095,
+          "leafKey" : "3"
+        }, {
+          "children" : [ {
+            "size" : 0.42,
+            "leafKey" : "1"
+          }, {
+            "children" : [ {
+              "size" : 0.3,
+              "leafKey" : "5"
+            }, {
+              "size" : 0.7,
+              "leafKey" : "2"
+            } ],
+            "direction" : "column",
+            "size" : 0.58
+          } ],
+          "direction" : "row",
+          "size" : 0.81
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Top Indices",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order([Indices].[Indexed Fields].[Indexed Fields].Members, [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Top Indices across Owners",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Indices].[Indexed Fields].[Indexed Fields]" : 353
+          }
+        },
+        "2" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "subplotModeEnabled" : true,
+          "name" : "Most Consuming Indices",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Indices].[Indexed Fields].[Indexed Fields].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "3" : {
+          "mode" : "radio",
+          "name" : "Partition filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Partitions",
+            "hierarchyName" : "Partition",
+            "levelName" : "Partition"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "4" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "5" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This view presents the most memory-consuming indices, categorized per field\nname, across all owners.\n\nThis page intended to potentially draw attention to where the largest indices\nmay be, enabling a more detailed analysis using the last page of this bookmark.\n\n> In case of a field name conflict between two stores, their indices will\n> both be taken into account even if there is not reference between these two\n> fields.\n> \n> An index that indexes several fields will contribute its memory consumption to\n> all fields."
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-2" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.095,
+          "leafKey" : "3"
+        }, {
+          "size" : 0.095,
+          "leafKey" : "4"
+        }, {
+          "children" : [ {
+            "leafKey" : "1"
+          }, {
+            "leafKey" : "2"
+          } ],
+          "direction" : "row",
+          "size" : 0.81
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Dictionary and Index per Store",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[DictionarySize.SUM]} ON COLUMNS, NON EMPTY Order(Hierarchize(Crossjoin([Owners].[Owner].[Owner].Members, Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[DICTIONARY]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]", "[Measures].[DictionarySize.SUM]" ]
+          },
+          "name" : "Dictionary analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        },
+        "2" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Indices].[Indexed Fields].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Indices].[Indexed Fields].[Indexed Fields]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Index analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Measures].[DirectMemory.SUM]" : 166
+          }
+        },
+        "3" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "4" : {
+          "mode" : "radio",
+          "name" : "Partition filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Partitions",
+            "hierarchyName" : "Partition",
+            "levelName" : "Partition"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        }
+      },
+      "queryContext" : [ ]
+    }
+  },
+  "pagesOrder" : [ "p-0", "p-1", "p-2" ],
+  "filters" : [ ],
+  "queryContext" : [ ]
+}

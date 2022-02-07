@@ -613,13 +613,12 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     perChunkAggregation(DatastoreConstants.CHUNK__FREE_ROWS)
         .sum()
+        .mapToDouble(a -> a.readDouble(0))
         .withFormatter(NUMBER_FORMATTER)
         .as(DELETED_ROWS_COUNT)
         .withinFolder(CHUNK_FOLDER)
         .withDescription("the number of freed rows within the chunks")
         .publish(context)
-        .withType(ILiteralType.DOUBLE)
-        .as("-") // FIXME: workaround PIVOT-4458
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
         .as(DELETED_ROWS_RATIO)
@@ -628,8 +627,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     nonWrittenRowsCount
-        .withType(ILiteralType.DOUBLE)
-        .as("0") // FIXME: workaround
+        .mapToDouble(a -> a.readDouble(0))
         .divide(chunkSize)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
@@ -640,7 +638,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     chunkSize
         .minus(nonWrittenRowsCount)
         .withFormatter(NUMBER_FORMATTER)
-        .withType(ILiteralType.DOUBLE) // Overflow happens if we don't cast it to double
         .as(COMMITTED_ROWS_COUNT)
         .withinFolder(CHUNK_FOLDER)
         .withDescription("the number of committed (i.e. used) rows inside the chunks")
@@ -674,8 +671,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     directMemory
-        .withType(ILiteralType.DOUBLE)
-        .as("1") // FIXME: workaround
         .divide(directMemory.grandTotal())
         .withFormatter(PERCENT_FORMATTER)
         .as(DIRECT_MEMORY_RATIO)
@@ -686,8 +681,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     directMemory
-        .withType(ILiteralType.DOUBLE)
-        .as("2") // FIXME: workaround
         .divide(Copper.measure(USED_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as(USED_MEMORY_RATIO)
@@ -698,8 +691,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     directMemory
-        .withType(ILiteralType.DOUBLE)
-        .as("3") // FIXME: workaround
         .divide(Copper.measure(MAX_DIRECT))
         .withFormatter(PERCENT_FORMATTER)
         .as(MAX_MEMORY_RATIO)

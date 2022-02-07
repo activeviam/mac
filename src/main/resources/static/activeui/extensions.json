@@ -1,0 +1,4 @@
+{
+  "@activeviam/starter": "extensions/@activeviam/starter/@activeviam/starter.js",
+  "text-editor-extension": "extensions/text-editor-extension/text-editor-extension.js"
+}

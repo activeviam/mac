@@ -10,6 +10,8 @@ package com.activeviam.tools.bookmark.constant.impl;
 // CHECKSTYLE.OFF: JavadocVariable (Internal constants)
 // CHECKSTYLE.OFF: JavadocType (Internal constants)
 
+import java.nio.file.Path;
+
 /**
  * Constants to use to export bookmarks from the Content Server.
  *
@@ -17,52 +19,21 @@ package com.activeviam.tools.bookmark.constant.impl;
  */
 public class ContentServerConstants {
 
-  /**
-   * Gets the type of a bookmark from its name.
-   *
-   * @param contentType name of the type
-   * @return exported type
-   */
-  public static String getBookmarkType(String contentType) {
-    if (Content.FILTER.equals(contentType)) {
-      return Content.MDX;
-    }
-    return Content.CONTAINER;
-  }
-
   public static class Paths {
 
     public static final String SEPARATOR = "/";
 
     public static final String UI = "ui";
-    public static final String I18N_TOKEN = "i18n";
-    public static final String SETTINGS_TOKEN = "settings";
-    public static final String I18N = UI + SEPARATOR + Tree.BOOKMARKS + SEPARATOR + I18N_TOKEN;
-    public static final String SETTINGS = UI + SEPARATOR + SETTINGS_TOKEN;
-
-    public static final String BOOKMARK_LISTING = "bookmarks-listing";
-
+    public static final String DASHBOARDS = UI + SEPARATOR + Tree.DASHBOARDS;
+    public static final String WIDGETS = UI + SEPARATOR + Tree.WIDGETS;
     public static final String JSON = ".json";
-    public static final String I18N_JSON = SEPARATOR + I18N_TOKEN + JSON;
-    public static final String SETTINGS_JSON = SEPARATOR + SETTINGS_TOKEN + JSON;
-
-    public static final String METADATA = "_metadata";
-    public static final String METADATA_FILE = METADATA + JSON;
-    public static final String FOLDER_TEMPLATE_FILE = "folder_template.json";
-    public static final String BOOKMARK_TEMPLATE_FILE = "bookmark_template.json";
+    public static final Path INITIAL_CONTENT = Path.of("target", "classes", "initial_content.json");
   }
 
   public static class Tree {
 
-    public static final String CONTENT = "content";
-    public static final String STRUCTURE = "structure";
-    public static final String BOOKMARKS = "bookmarks";
-    public static final String ENTRY = "entry";
-    public static final String NAME = "name";
-    public static final String VALUE = "value";
-    public static final String TYPE = "type";
-    public static final String DESCRIPTION = "description";
-    public static final String KEY = "key";
+    public static final String DASHBOARDS = "dashboards";
+    public static final String WIDGETS = "widgets";
   }
 
   public static class Role {
@@ -71,14 +42,6 @@ public class ContentServerConstants {
     public static final String READERS = "readers";
     public static final String ROLE_CS_ROOT = "ROLE_CS_ROOT";
     public static final String ROLE_USER = "ROLE_USER";
-  }
-
-  public static class Content {
-
-    public static final String FILTER = "filter";
-    public static final String CONTAINER = "container";
-    public static final String MDX = "mdx";
-    public static final String FOLDER = "folder";
   }
 }
 
