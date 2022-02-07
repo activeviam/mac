@@ -9,21 +9,19 @@ package com.activeviam.tools.bookmark.impl;
 
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
-import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Tree;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.content.snapshot.impl.SnapshotContentTree;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
@@ -51,7 +49,7 @@ public class JsonUiToContentServer {
    *
    * @param toSet The resource resolver to set.
    */
-  static void setDashboardTreeResolver(PathMatchingResourcePatternResolver toSet) {
+  static void setResourcePatternResolver(PathMatchingResourcePatternResolver toSet) {
     dashboardTreeResolver = toSet;
   }
 
@@ -59,19 +57,20 @@ public class JsonUiToContentServer {
    * Generates and loads a tree into a given ContentServiceSnapshotter, from an ui folder.
    *
    * @param snapshotter The ContentServiceSnapshotter.
-   * @param folderName The ui folder name.
    * @param defaultPermissions The default permissions to use when no parent permissions are found.
    */
   static void importIntoContentServer(
-      ContentServiceSnapshotter snapshotter,
-      String folderName,
-      Map<String, List<String>> defaultPermissions) {
+      ContentServiceSnapshotter snapshotter, Map<String, List<String>> defaultPermissions) {
     PERMISSIONS.putAll(defaultPermissions != null ? defaultPermissions : DEFAULT_PERMISSIONS);
-    snapshotter.eraseAndImport(ContentServerConstants.Paths.UI, Paths.INITIAL_CONTENT);
-    snapshotter.eraseAndImport(
-        folderName + Paths.SEPARATOR + Tree.DASHBOARDS, loadDirectory(Paths.DASHBOARDS));
-    snapshotter.eraseAndImport(
-        folderName + Paths.SEPARATOR + Tree.WIDGETS, loadDirectory(Paths.WIDGETS));
+    try {
+      InputStream res =
+          dashboardTreeResolver.getClassLoader().getResourceAsStream(Paths.INITIAL_CONTENT);
+      snapshotter.eraseAndImport(ContentServerConstants.Paths.UI, res);
+    } catch (Exception e) {
+      LOGGER.error("Cannot load the initial content file");
+    }
+    snapshotter.eraseAndImport(Paths.DASHBOARDS, loadDirectory(Paths.DASHBOARDS));
+    snapshotter.eraseAndImport(Paths.WIDGETS, loadDirectory(Paths.WIDGETS));
   }
 
   /**
@@ -80,23 +79,7 @@ public class JsonUiToContentServer {
    * @return the SnapshotContentTree.
    */
   static SnapshotContentTree loadDirectory(String path) {
-    File directory = getSubDirectory(path);
-    if (directory == null) {
-      LOGGER.info("Nothing to load");
-      return null;
-    }
-
-    return createDirectoryTree(directory, createEmptyDirectoryNode());
-  }
-
-  private static File getSubDirectory(final String folderName) {
-    try {
-      return dashboardTreeResolver.getResource(folderName).getFile();
-    } catch (IOException ioe) {
-      LOGGER.error(
-          "Unable to retrieve directory {} from resources. The import will fail.", folderName);
-      return null;
-    }
+    return createDirectoryTree(path, createEmptyDirectoryNode());
   }
 
   /**
@@ -109,44 +92,49 @@ public class JsonUiToContentServer {
    *
    * @param root the current directory to add to the structureTree.
    */
-  private static SnapshotContentTree createDirectoryTree(File root, SnapshotContentTree parent) {
-    if (root == null) {
-      LOGGER.info("Nothing to load");
+  private static SnapshotContentTree createDirectoryTree(String root, SnapshotContentTree parent) {
+    try {
+      Resource[] rootFile = dashboardTreeResolver.getResources("classpath*:/**/" + root + "/*");
+      for (Resource child : rootFile) {
+        String[] path = child.getURL().toString().split(Paths.SEPARATOR);
+        String childName = path[path.length - 1];
+        if (childName.endsWith(Paths.JSON)) {
+          final JsonNode jsonNodeContent = loadFileIntoNode(child.getInputStream());
+          final SnapshotContentTree node =
+              new SnapshotContentTree(
+                  jsonNodeContent.toString(),
+                  false,
+                  PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
+                  PERMISSIONS.get(ContentServerConstants.Role.READERS),
+                  new HashMap<>());
+          parent.putChild(childName.replace(Paths.JSON, ""), node, true);
+        } else {
+          final SnapshotContentTree childNode = createEmptyDirectoryNode();
+          SnapshotContentTree childTree =
+              createDirectoryTree(root + Paths.SEPARATOR + childName, childNode);
+          parent.putChild(childName, childTree, true);
+        }
+      }
+      return parent;
+    } catch (Exception ioe) {
+      LOGGER.error("Unable to retrieve directory {} from resources. The import will fail.", root);
       return null;
     }
-    for (File child : root.listFiles()) {
-      if (child.isFile()) {
-        final JsonNode jsonNodeContent = loadFileIntoNode(child);
-        final SnapshotContentTree node =
-            new SnapshotContentTree(
-                jsonNodeContent.toString(),
-                false,
-                PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-                PERMISSIONS.get(ContentServerConstants.Role.READERS),
-                new HashMap<>());
-        parent.putChild(child.getName().replace(Paths.JSON, ""), node, true);
-      } else {
-        final SnapshotContentTree childNode = createEmptyDirectoryNode();
-        SnapshotContentTree childTree = createDirectoryTree(child, childNode);
-        parent.putChild(child.getName(), childTree, true);
-      }
-    }
-    return parent;
   }
 
   /**
-   * Loads the contents of a file into a JsonNode.
+   * Loads the contents of an inputStream into a JsonNode.
    *
-   * @param file The file to load.
-   * @return The contents of the file, as a JsonNode.
+   * @param inputStream The inputStream to load.
+   * @return The contents of the inputStream, as a JsonNode.
    */
-  private static JsonNode loadFileIntoNode(File file) {
+  private static JsonNode loadFileIntoNode(InputStream inputStream) {
     JsonNode loadedFile = JsonNodeFactory.instance.objectNode();
     try {
       final ObjectMapper mapper = new ObjectMapper();
-      loadedFile = mapper.readTree(new FileInputStream(file));
+      loadedFile = mapper.readTree(inputStream);
     } catch (Exception e) {
-      LOGGER.warn("Unable to find file " + file.getName());
+      LOGGER.warn("Unable to read the json file");
     }
     return loadedFile;
   }
