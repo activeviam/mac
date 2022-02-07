@@ -1,0 +1,21 @@
+{
+  "query" : {
+    "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+    "updateMode" : "once"
+  },
+  "filters" : [ ],
+  "queryContext" : [ {
+    "key" : "mdx.hiddengrandtotals",
+    "value" : ""
+  } ],
+  "mapping" : {
+    "rows" : [ "[Owners].[Owner].[Owner]", "[Components].[Component].[Component]" ],
+    "columns" : [ "ALL_MEASURES" ],
+    "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+  },
+  "serverKey" : "MAC",
+  "columnWidths" : {
+    "[Measures].[DirectMemory.SUM]" : 154,
+    "[Measures].[DirectMemory.Ratio]" : 159
+  }
+}

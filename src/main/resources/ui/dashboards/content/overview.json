@@ -1,0 +1,255 @@
+{
+  "pages" : {
+    "p-0" : {
+      "layout" : {
+        "children" : [ {
+          "children" : [ {
+            "size" : 0.22,
+            "leafKey" : "3"
+          }, {
+            "size" : 0.78,
+            "leafKey" : "1"
+          } ],
+          "size" : 0.74,
+          "direction" : "column"
+        }, {
+          "size" : 0.26,
+          "leafKey" : "2"
+        } ],
+        "direction" : "row"
+      },
+      "name" : "Charts",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "mapping" : {
+            "xAxis" : [ "[Owners].[Owner].[Owner]" ],
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "switchedTo" : "plotly-pie-chart",
+          "style" : {
+            "isTextVisible" : false
+          },
+          "name" : "Owner Memory Usage",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Owners].[Owner].[Owner].Members ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-line-chart"
+        },
+        "2" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "sliceBy" : [ "[Components].[Component].[Component]" ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+          },
+          "subplotModeEnabled" : true,
+          "style" : {
+            "isTextVisible" : false
+          },
+          "name" : "Component Memory Usage for Top Owners",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Crossjoin(Order(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), [Measures].[DirectMemory.SUM], DESC), [Components].[Component].[Component].Members) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-pie-chart"
+        },
+        "3" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This bookmark provides several general views summarizing where the application\nconsumes the most direct memory.\n\nTwo axes of analysis are explored:\n- Owners (cubes and stores)\n- Components (indexes, dictionaries, records, ...)\n\nThe next pages offer more details in tabular fashion about memory consumption per owner and component.\n"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-1" : {
+      "layout" : {
+        "children" : [ {
+          "leafKey" : "1",
+          "size" : 1
+        } ],
+        "direction" : "row"
+      },
+      "name" : "Owners",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Top Owner Memory Usage",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-2" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.10400000000000001,
+          "leafKey" : "4"
+        }, {
+          "size" : 0.096,
+          "leafKey" : "3"
+        }, {
+          "size" : 0.8,
+          "leafKey" : "0"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Components",
+      "filters" : [ ],
+      "content" : {
+        "0" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES BACK_COLOR, FONT_FLAGS, FORE_COLOR, FORMATTED_VALUE, VALUE",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ {
+            "key" : "mdx.hiddengrandtotals",
+            "value" : ""
+          } ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Components].[Component].[Component]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Component Memory Usage",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Measures].[DirectMemory.SUM]" : 154,
+            "[Measures].[DirectMemory.Ratio]" : 159
+          }
+        },
+        "3" : {
+          "mode" : "radio",
+          "name" : "Partition filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Partitions",
+            "hierarchyName" : "Partition",
+            "levelName" : "Partition"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "4" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-3" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.10079999999999999,
+          "leafKey" : "5"
+        }, {
+          "size" : 0.1092,
+          "leafKey" : "4"
+        }, {
+          "children" : [ {
+            "size" : 0.65,
+            "leafKey" : "1"
+          }, {
+            "size" : 0.35,
+            "leafKey" : "6"
+          } ],
+          "size" : 0.79,
+          "direction" : "row"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Detailed",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[Chunks.COUNT], [Measures].[ChunkSize.SUM]} ON COLUMNS, NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Type].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Chunks].[Class].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Components].[Component].[Component]", "[Chunks].[Type].[Type]", "[Chunks].[Class].[Class]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]", "[Measures].[Chunks.COUNT]", "[Measures].[ChunkSize.SUM]" ]
+          },
+          "name" : "Direct memory usage detailed overview",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Measures].[DirectMemory.SUM]" : 149,
+            "[Measures].[DirectMemory.Ratio]" : 137
+          }
+        },
+        "4" : {
+          "mode" : "radio",
+          "name" : "Partition filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Partitions",
+            "hierarchyName" : "Partition",
+            "levelName" : "Partition"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "5" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "6" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This page offers similar information as the *Components* page, with the added information of which chunk implementations are used, with their respective memory consumption.\n\nFor example, this can be useful to check whether or not chunk compression is used by looking for classes using some sort of compression on their data. A non-exhaustive list of these classes would include:\n* `DirectChunkBits`\n* `DirectChunkHexa`\n* `DirectChunkQuad`\n* `ChunkSingleInteger`\n* `DirectChunkPositiveInteger`\n* `FrequentTChunk`\n* ...\n"
+        }
+      },
+      "queryContext" : [ ]
+    }
+  },
+  "pagesOrder" : [ "p-0", "p-1", "p-2", "p-3" ],
+  "filters" : [ ],
+  "queryContext" : [ ]
+}

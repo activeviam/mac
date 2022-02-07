@@ -33,6 +33,17 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
     super.registerRedirections(registry);
     // Redirect from the root to ActiveUI
     registry.redirectTo(NAMESPACE + "/index.html", "/");
+    // Redirect the calls to env*.js to the AP ones rather than the default of the ActiveUI apps
+    registry.serve("/content/ui/env*.js").addResourceLocations("classpath:/static/content/");
+    registry.serve("/ui/env*.js").addResourceLocations("classpath:/static/activeui/");
+    registerExtensions(registry);
+  }
+
+  protected void registerExtensions(final ResourceRegistry registry) {
+    registry.serve("/ui/extensions*.json").addResourceLocations("classpath:/static/activeui/");
+    registry
+        .serve("/ui/extensions/text-editor-extension/**/*.js")
+        .addResourceLocations("classpath:/static/activeui/extensions/text-editor-extension/");
   }
 
   /**

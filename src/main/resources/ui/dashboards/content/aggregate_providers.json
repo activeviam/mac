@@ -1,0 +1,350 @@
+{
+  "pages" : {
+    "p-0" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.09,
+          "leafKey" : "2"
+        }, {
+          "children" : [ {
+            "size" : 0.35,
+            "leafKey" : "1"
+          }, {
+            "children" : [ {
+              "size" : 0.1,
+              "leafKey" : "4"
+            }, {
+              "size" : 0.9,
+              "leafKey" : "3"
+            } ],
+            "size" : 0.65,
+            "direction" : "column"
+          } ],
+          "size" : 0.91,
+          "direction" : "row"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Cubes",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Cube Analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        },
+        "2" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "3" : {
+          "mapping" : {
+            "xAxis" : [ "[Owners].[Owner].[Owner]" ],
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "switchedTo" : "plotly-pie-chart",
+          "name" : "Cube Analysis",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Owners].[Owner].[Owner].Members ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-line-chart"
+        },
+        "4" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "This bookmark provides specialized views for analyzing the direct memory\nconsumption of the pivots of the application, starting with a general overview\nof memory consumption per cube in this page.\n"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-1" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.1,
+          "leafKey" : "2"
+        }, {
+          "children" : [ {
+            "size" : 0.44,
+            "leafKey" : "1"
+          }, {
+            "children" : [ {
+              "size" : 0.15,
+              "leafKey" : "4"
+            }, {
+              "size" : 0.85,
+              "leafKey" : "3"
+            } ],
+            "size" : 0.56,
+            "direction" : "column"
+          } ],
+          "size" : 0.9,
+          "direction" : "row"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Aggregate Providers",
+      "filters" : [ ],
+      "content" : {
+        "1" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderCategory].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderCategory].[ProviderCategory]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Components].[Component].[Component]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Aggregate Provider Analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Owners].[Owner].[Owner]" : 449
+          }
+        },
+        "2" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "3" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Owners].[Owner].[Owner]" ],
+            "splitBy" : [ "[Aggregate Provider].[ProviderType].[ProviderType]", "[Components].[Component].[Component]" ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ ]
+          },
+          "name" : "Aggregate Provider Analysis",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Components].[Component].[Component].Members) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "4" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "A view focused on aggregate providers. Each cube has its memory consumption\ndetailed according to its aggregate providers.\n\nJIT aggregate providers typically will not consume any direct memory, contrary\nto bitmap and leaf aggregate providers, which will have chunks for their\naggregate store and point index."
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-2" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.1,
+          "leafKey" : "1"
+        }, {
+          "children" : [ {
+            "size" : 0.37,
+            "leafKey" : "0"
+          }, {
+            "children" : [ {
+              "size" : 0.1,
+              "leafKey" : "3"
+            }, {
+              "size" : 0.9,
+              "leafKey" : "2"
+            } ],
+            "size" : 0.63,
+            "direction" : "column"
+          } ],
+          "size" : 0.9,
+          "direction" : "row"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Aggregate Stores",
+      "filters" : [ ],
+      "content" : {
+        "0" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(Except(DrilldownLevel([Aggregate Provider].[ProviderCategory].[ALL].[AllMember]), [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]", "[Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderCategory].[ProviderCategory]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Aggregate Store Analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : { }
+        },
+        "1" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "2" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Fields].[Field].[Field]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ "[Aggregate Provider].[ProviderType].[ProviderType]" ],
+            "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+          },
+          "subplotModeEnabled" : true,
+          "name" : "Aggregate Store Analysis",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]", "[Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE]" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "3" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "A view focused on aggregate stores for leaf and bitmap aggregate providers.\n\nFor each provider type, memory consumption of chunks is categorized according to\nthe measure in the aggregate store it corresponds to.\n"
+        }
+      },
+      "queryContext" : [ ]
+    },
+    "p-3" : {
+      "layout" : {
+        "children" : [ {
+          "size" : 0.1,
+          "leafKey" : "1"
+        }, {
+          "children" : [ {
+            "size" : 0.47,
+            "leafKey" : "0"
+          }, {
+            "children" : [ {
+              "size" : 0.06,
+              "leafKey" : "3"
+            }, {
+              "size" : 0.94,
+              "leafKey" : "2"
+            } ],
+            "size" : 0.53,
+            "direction" : "column"
+          } ],
+          "size" : 0.9,
+          "direction" : "row"
+        } ],
+        "direction" : "column"
+      },
+      "name" : "Levels",
+      "filters" : [ ],
+      "content" : {
+        "0" : {
+          "query" : {
+            "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[LEVEL]" ],
+          "queryContext" : [ ],
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[DirectMemory.Ratio]" ]
+          },
+          "name" : "Level Analysis",
+          "serverKey" : "MAC",
+          "widgetKey" : "tree-table",
+          "columnWidths" : {
+            "[Owners].[Owner].[Owner]" : 491
+          }
+        },
+        "1" : {
+          "mode" : "radio",
+          "name" : "Owner filter",
+          "levelCoordinates" : {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner",
+            "levelName" : "Owner"
+          },
+          "cubeName" : "MemoryCube",
+          "serverKey" : "MAC",
+          "widgetKey" : "quick-filter"
+        },
+        "2" : {
+          "mapping" : {
+            "values" : [ "[Measures].[DirectMemory.SUM]" ],
+            "groupBy" : [ "[Fields].[Field].[Field]" ],
+            "splitBy" : [ ],
+            "horizontalSubplots" : [ ],
+            "verticalSubplots" : [ "[Owners].[Owner].[Owner]" ]
+          },
+          "subplotModeEnabled" : true,
+          "name" : "Level Analysis",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube]",
+            "updateMode" : "once"
+          },
+          "filters" : [ "[Components].[Component].[ALL].[AllMember].[LEVEL]" ],
+          "queryContext" : [ ],
+          "serverKey" : "MAC",
+          "widgetKey" : "plotly-tree-map"
+        },
+        "3" : {
+          "name" : "Overview",
+          "widgetKey" : "text-editor",
+          "displayMode" : "view",
+          "text" : "A view that exposes memory consumption of cubes associated with the dictionaries\nused to store level information."
+        }
+      },
+      "queryContext" : [ ]
+    }
+  },
+  "pagesOrder" : [ "p-0", "p-1", "p-2", "p-3" ],
+  "filters" : [ ],
+  "queryContext" : [ ]
+}
