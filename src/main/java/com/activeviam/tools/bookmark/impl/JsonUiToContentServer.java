@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.content.snapshot.impl.SnapshotContentTree;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
@@ -116,7 +117,7 @@ public class JsonUiToContentServer {
         }
       }
       return parent;
-    } catch (Exception ioe) {
+    } catch (IOException ioe) {
       LOGGER.error("Unable to retrieve directory {} from resources. The import will fail.", root);
       return null;
     }
