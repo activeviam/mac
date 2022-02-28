@@ -135,7 +135,7 @@ public class JsonUiToContentServer {
       final ObjectMapper mapper = new ObjectMapper();
       loadedFile = mapper.readTree(inputStream);
     } catch (Exception e) {
-      LOGGER.warn("Unable to read the json file");
+      LOGGER.warn("Unable to map read the input stream as Json");
     }
     return loadedFile;
   }
