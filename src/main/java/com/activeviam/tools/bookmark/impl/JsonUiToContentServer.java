@@ -11,7 +11,6 @@ import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.content.snapshot.impl.SnapshotContentTree;
 import java.io.IOException;
@@ -96,7 +95,7 @@ public class JsonUiToContentServer {
   private static SnapshotContentTree createDirectoryTree(String root, SnapshotContentTree parent) {
     try {
       Resource[] rootFiles = dashboardTreeResolver.getResources("classpath*:/**/" + root + "/*");
-      for (Resource child : rootFile) {
+      for (Resource child : rootFiles) {
         String[] path = child.getURL().toString().split(Paths.SEPARATOR);
         String childName = path[path.length - 1];
         if (childName.endsWith(Paths.JSON)) {
@@ -129,15 +128,9 @@ public class JsonUiToContentServer {
    * @param inputStream The inputStream to load.
    * @return The contents of the inputStream, as a JsonNode.
    */
-  private static JsonNode loadFileIntoNode(InputStream inputStream) {
-    JsonNode loadedFile = JsonNodeFactory.instance.objectNode();
-    try {
-      final ObjectMapper mapper = new ObjectMapper();
-      loadedFile = mapper.readTree(inputStream);
-    } catch (Exception e) {
-      LOGGER.warn("Unable to map read the input stream as Json");
-    }
-    return loadedFile;
+  private static JsonNode loadFileIntoNode(InputStream inputStream) throws IOException {
+    final ObjectMapper mapper = new ObjectMapper();
+    return mapper.readTree(inputStream);
   }
 
   private static SnapshotContentTree createEmptyDirectoryNode() {
