@@ -95,7 +95,7 @@ public class JsonUiToContentServer {
    */
   private static SnapshotContentTree createDirectoryTree(String root, SnapshotContentTree parent) {
     try {
-      Resource[] rootFile = dashboardTreeResolver.getResources("classpath*:/**/" + root + "/*");
+      Resource[] rootFiles = dashboardTreeResolver.getResources("classpath*:/**/" + root + "/*");
       for (Resource child : rootFile) {
         String[] path = child.getURL().toString().split(Paths.SEPARATOR);
         String childName = path[path.length - 1];
