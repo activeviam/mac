@@ -24,17 +24,14 @@ public class BookmarkTool {
    * bookmark structure.
    *
    * @param snapshotter The content service snapshotter to use for the import.
-   * @param folderName The folder from which to import the bookmarks.
    * @param defaultPermissions The permissions to use when not explicitly defining permissions for
    *     any bookmark path.
    */
   public static void importBookmarks(
-      ContentServiceSnapshotter snapshotter,
-      String folderName,
-      Map<String, List<String>> defaultPermissions) {
+      ContentServiceSnapshotter snapshotter, Map<String, List<String>> defaultPermissions) {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-    JsonUiToContentServer.setDashboardTreeResolver(resolver);
-    JsonUiToContentServer.importIntoContentServer(snapshotter, folderName, defaultPermissions);
+    JsonUiToContentServer.setResourcePatternResolver(resolver);
+    JsonUiToContentServer.importIntoContentServer(snapshotter, defaultPermissions);
   }
 
   /**

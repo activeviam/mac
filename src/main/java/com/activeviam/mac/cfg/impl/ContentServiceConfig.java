@@ -180,9 +180,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     final var service = contentService().withRootPrivileges();
     if (!service.exists("/" + Paths.UI) || shouldReloadBookmarks()) {
       BookmarkTool.importBookmarks(
-          new ContentServiceSnapshotter(service),
-          env.getRequiredProperty(UI_FOLDER_PROPERTY),
-          defaultBookmarkPermissions());
+          new ContentServiceSnapshotter(service), defaultBookmarkPermissions());
     }
   }
 
