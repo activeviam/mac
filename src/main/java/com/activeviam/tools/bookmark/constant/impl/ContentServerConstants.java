@@ -10,8 +10,6 @@ package com.activeviam.tools.bookmark.constant.impl;
 // CHECKSTYLE.OFF: JavadocVariable (Internal constants)
 // CHECKSTYLE.OFF: JavadocType (Internal constants)
 
-import java.nio.file.Path;
-
 /**
  * Constants to use to export bookmarks from the Content Server.
  *
@@ -27,7 +25,7 @@ public class ContentServerConstants {
     public static final String DASHBOARDS = UI + SEPARATOR + Tree.DASHBOARDS;
     public static final String WIDGETS = UI + SEPARATOR + Tree.WIDGETS;
     public static final String JSON = ".json";
-    public static final Path INITIAL_CONTENT = Path.of("target", "classes", "initial_content.json");
+    public static final String INITIAL_CONTENT = "initial_content.json";
   }
 
   public static class Tree {
