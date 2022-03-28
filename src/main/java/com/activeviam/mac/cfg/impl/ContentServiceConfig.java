@@ -8,6 +8,7 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
+import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
 import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
@@ -65,6 +66,9 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    * bookmarks even if they were already loaded previously.
    */
   public static final String FORCE_BOOKMARK_RELOAD_PROPERTY = "bookmarks.reloadOnStartup";
+
+  /** The name of the property that precise the name of the folder the bookmarks are in. */
+  public static final String UI_FOLDER_PROPERTY = "bookmarks.folder";
 
   /** Instance of the Spring context environment. */
   @Autowired public Environment env;
@@ -143,21 +147,20 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   @JmxOperation(
       name = "exportBookMarks",
       desc = "Export the current bookmark structure",
-      params = {})
-  @SuppressWarnings("unused")
-  public void exportBookMarks() {
+      params = {"destination"})
+  public void exportBookMarks(String destination) {
     BookmarkTool.exportBookmarks(
-        new ContentServiceSnapshotter(contentService().withRootPrivileges()),
-        "bookmark-export",
-        defaultBookmarkPermissions());
+        new ContentServiceSnapshotter(contentService().withRootPrivileges()), destination);
   }
 
   /** Loads the bookmarks packaged with the application. */
   public void loadPredefinedBookmarks() {
     final var service = contentService().withRootPrivileges();
-    if (!service.exists("/ui/bookmarks") || shouldReloadBookmarks()) {
+    if (!service.exists("/" + Paths.UI) || shouldReloadBookmarks()) {
       BookmarkTool.importBookmarks(
-          new ContentServiceSnapshotter(service), "bookmarks", defaultBookmarkPermissions());
+          new ContentServiceSnapshotter(service),
+          env.getRequiredProperty(UI_FOLDER_PROPERTY),
+          defaultBookmarkPermissions());
     }
   }
 

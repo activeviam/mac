@@ -1,6 +1,0 @@
-{
-  "key" : "filter",
-  "description": "Predefined filters on common hierarchies",
-  "owners" : [ "admin" ],
-  "readers" : [ "admin" ]
-}
