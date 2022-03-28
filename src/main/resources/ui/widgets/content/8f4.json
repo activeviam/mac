@@ -1,0 +1,10 @@
+{
+  "mode" : "checkbox",
+  "levelCoordinates" : {
+    "dimensionName" : "Versions",
+    "hierarchyName" : "Epoch Id",
+    "levelName" : "Epoch Id"
+  },
+  "cubeName" : "MemoryCube",
+  "serverKey" : "MAC"
+}

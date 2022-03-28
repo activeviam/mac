@@ -8,26 +8,23 @@
 package com.activeviam.tools.bookmark.impl;
 
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
-import com.activeviam.tools.bookmark.node.impl.SnapshotNode;
+import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.qfs.content.service.IContentTree;
 import com.qfs.content.snapshot.impl.BasicJsonContentEntry;
 import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import com.qfs.content.snapshot.impl.SnapshotContentTree;
-import com.quartetfs.fwk.IPair;
-import com.quartetfs.fwk.impl.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +39,11 @@ class ContentServerToJsonUi {
   private static final String WINDOWS_OS = "Windows";
   private static final String UNIX_OS = "Unix/BSD";
   private static final String CUSTOM = "Custom";
-
+  private static final String DEFAULT_ENCODING_CHAR = "_";
+  private static final Map<String, List<String>> FILESYSTEM_RESTRICTED_CHARACTERS = new HashMap<>();
   private static ObjectMapper mapper;
   private static ObjectWriter writer;
-
-  private static final String DEFAULT_ENCODING_CHAR = "_";
   private static String encodingChar = DEFAULT_ENCODING_CHAR;
-  private static final Map<String, List<String>> FILESYSTEM_RESTRICTED_CHARACTERS = new HashMap<>();
 
   static {
     FILESYSTEM_RESTRICTED_CHARACTERS.put(
@@ -58,298 +53,50 @@ class ContentServerToJsonUi {
   }
 
   /**
-   * Generates the full bookmarks directory, including the i18n and settings files. Alongside the
-   * bookmark files and folders, it generates meta files where required.
+   * Generates the full ui directory.
    *
    * @param snapshotter The content service snapshotter.
    * @param exportDirectory The name of the export directory.
-   * @param defaultPermissions The default permissions for the content server.
    */
-  static void export(
-      ContentServiceSnapshotter snapshotter,
-      String exportDirectory,
-      Map<String, List<String>> defaultPermissions) {
-    final SnapshotContentTree bookmarks =
-        snapshotter
-            .export(
-                ContentServerConstants.Paths.UI
-                    + ContentServerConstants.Paths.SEPARATOR
-                    + ContentServerConstants.Tree.BOOKMARKS)
-            .get();
-    exportToDirectory(bookmarks, exportDirectory, defaultPermissions);
-    snapshotter.export(
-        ContentServerConstants.Paths.SETTINGS,
-        Paths.get(
-            System.getProperty("user.dir"),
-            exportDirectory,
-            ContentServerConstants.Paths.SETTINGS_JSON));
-    snapshotter.export(
-        ContentServerConstants.Paths.I18N,
-        Paths.get(
-            System.getProperty("user.dir"),
-            exportDirectory,
-            ContentServerConstants.Paths.I18N_JSON));
+  static void export(ContentServiceSnapshotter snapshotter, String exportDirectory) {
+    final SnapshotContentTree ui = snapshotter.export(Paths.UI).get();
+    writeSubTree(ui, Path.of(System.getProperty("user.dir"), exportDirectory));
   }
 
-  /**
-   * Generates the full bookmarks directory from a SnapshotContentTree object.
-   *
-   * @param bookmarks The SnapshotContentTree bookmarks object.
-   * @param folderName The generated folder name.
-   * @param defaultPermissions The configured default permissions to use for the bookmarks.
-   */
-  static void exportToDirectory(
-      SnapshotContentTree bookmarks,
-      String folderName,
-      Map<String, List<String>> defaultPermissions) {
-    final SnapshotContentTree structure =
-        (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.STRUCTURE);
-    final SnapshotContentTree content =
-        (SnapshotContentTree) bookmarks.getChildren().get(ContentServerConstants.Tree.CONTENT);
-
-    generateTree(folderName, structure, content, defaultPermissions);
-  }
-
-  /**
-   * Generates the full /ui hierarchy as files and folders.
-   *
-   * @param exportDirectory The directory to which the bookmark should be exported.
-   * @param structureTree The structure SnapshotContentTree.
-   * @param contentTree The content SnapshotContentTree.
-   * @param defaultPermissions The default permissions.
-   */
-  private static void generateTree(
-      String exportDirectory,
-      SnapshotContentTree structureTree,
-      SnapshotContentTree contentTree,
-      Map<String, List<String>> defaultPermissions) {
-    SnapshotNode structure = new SnapshotNode(ContentServerConstants.Paths.BOOKMARK_LISTING);
-
-    final Map<String, BasicJsonContentEntry> folderEntries = new HashMap<>();
-    structure = parseTree(structureTree, structure, folderEntries);
-    folderEntries.put(structure.getKey(), structure.getEntry());
-
-    final Map<String, List<String>> permissions = new HashMap<>();
-    permissions.put(ContentServerConstants.Role.OWNERS, structure.getEntry().getOwners());
-    permissions.put(ContentServerConstants.Role.READERS, structure.getEntry().getReaders());
-    final IPair<JsonNode, JsonNode> rootPermissions =
-        BookmarkTool.transformPermissionsMapToPair(permissions);
-
-    generateJsonFiles(
-        structure,
-        contentTree,
-        exportDirectory,
-        folderEntries,
-        rootPermissions,
-        defaultPermissions,
-        false);
-  }
-
-  /**
-   * Recurses through the SnapshotContentTree, creating a simplified internal representation which
-   * is used to generate the directory hierarchy.
-   *
-   * @param nodeContentTree SnapshotContentTree object to parse.
-   * @param nodeInternalTree Internal representation of the SnapshotContentTree object.
-   * @param folderEntries Map used to detect if we have a empty folder to skip during generation.
-   * @return An internal representation of the SnapshotContentTree object.
-   */
-  private static SnapshotNode parseTree(
-      SnapshotContentTree nodeContentTree,
-      SnapshotNode nodeInternalTree,
-      Map<String, BasicJsonContentEntry> folderEntries) {
-    nodeInternalTree.setEntry(nodeContentTree.getEntry());
-
-    @SuppressWarnings("unchecked")
-    final Map<String, SnapshotContentTree> children =
-        (Map<String, SnapshotContentTree>) nodeContentTree.getChildren();
-
-    for (Map.Entry<String, SnapshotContentTree> child : children.entrySet()) {
-      final SnapshotNode childNode = new SnapshotNode(child.getKey());
-      childNode.setPath(
-          nodeInternalTree.getPath()
-              + ContentServerConstants.Paths.SEPARATOR
-              + nodeInternalTree.getKey());
-      nodeInternalTree.addChild(childNode);
-      if (!child.getValue().getChildren().isEmpty()) {
-        folderEntries.put(child.getKey(), child.getValue().getEntry());
-        parseTree(child.getValue(), childNode, folderEntries);
+  static void writeSubTree(SnapshotContentTree node, Path currentPath) {
+    for (Entry<String, ? extends IContentTree<BasicJsonContentEntry>> entry :
+        node.getChildren().entrySet()) {
+      String nodeName = entry.getKey();
+      SnapshotContentTree childNode = (SnapshotContentTree) entry.getValue();
+      if (childNode.getChildren() == null) {
+        writeNode(nodeName, childNode, currentPath);
+      } else {
+        createDirectory(currentPath.resolve(encodeForFilesystems(nodeName)));
+        writeSubTree(childNode, currentPath.resolve(nodeName));
       }
     }
-    return nodeInternalTree;
   }
 
-  /**
-   * Traverses the structure and content trees in order to generate the JSON files.
-   *
-   * @param structure The structure internal representation.
-   * @param content The content SnapshotContentTree.
-   * @param exportDirectory The directory to which the bookmark should be exported.
-   * @param folderEntries The node entries that represent folders.
-   * @param parentPermissions The permissions of the parent folder.
-   * @param defaultPermissions The default permissions.
-   * @param isTopLevel Whether or not the current entry is at the top level of the bookmarks
-   *     hierarchy.
-   */
-  private static void generateJsonFiles(
-      SnapshotNode structure,
-      SnapshotContentTree content,
-      String exportDirectory,
-      Map<String, BasicJsonContentEntry> folderEntries,
-      IPair<JsonNode, JsonNode> parentPermissions,
-      Map<String, List<String>> defaultPermissions,
-      boolean isTopLevel) {
-    final IPair<JsonNode, JsonNode> currentOwnerAndReader = new Pair<>();
-    createJson(
-        structure,
-        content,
-        exportDirectory,
-        folderEntries,
-        currentOwnerAndReader,
-        parentPermissions,
-        defaultPermissions,
-        isTopLevel);
-    for (SnapshotNode node : structure.getChildren()) {
-      boolean topLevel = structure.getKey().equals(ContentServerConstants.Paths.BOOKMARK_LISTING);
-      generateJsonFiles(
-          node,
-          content,
-          exportDirectory,
-          folderEntries,
-          currentOwnerAndReader,
-          defaultPermissions,
-          topLevel);
+  static void createDirectory(Path path) {
+    final File bookmarkFolder = path.toFile();
+    if (!bookmarkFolder.exists()) {
+      boolean createdDirectories = bookmarkFolder.mkdirs();
+      if (!createdDirectories) {
+        LOGGER.error("Could not create export directories. Check path: " + path.getFileName());
+      }
     }
   }
 
-  /**
-   * Generates a json file for each bookmark, alongside a meta file where required.
-   *
-   * @param node The internal representation of the node to create a JSON file for.
-   * @param content The content SnapshotContentTree.
-   * @param exportDirectory The directory to which the bookmark should be exported.
-   * @param folderEntries The node entries that represent folders.
-   * @param currentPermissions The permissions of the current entry.
-   * @param parentPermissions The permissions of the parent folder.
-   * @param defaultPermissions The default permissions.
-   * @param isTopLevel Whether or not the current entry is at the top level of the bookmarks
-   *     hierarchy.
-   */
-  private static void createJson(
-      SnapshotNode node,
-      SnapshotContentTree content,
-      String exportDirectory,
-      Map<String, BasicJsonContentEntry> folderEntries,
-      IPair<JsonNode, JsonNode> currentPermissions,
-      IPair<JsonNode, JsonNode> parentPermissions,
-      Map<String, List<String>> defaultPermissions,
-      Boolean isTopLevel) {
-    final String key = node.getKey();
-    final SnapshotContentTree folderContentTree =
-        (SnapshotContentTree) content.getChildren().get(key);
-    final boolean invalidFolder = folderContentTree == null || folderContentTree.getEntry() == null;
-    if (invalidFolder) {
-      return;
-    }
-
-    final Map<String, List<String>> permissionsMap = new HashMap<>();
-    permissionsMap.put(
-        ContentServerConstants.Role.OWNERS, folderContentTree.getEntry().getOwners());
-    permissionsMap.put(
-        ContentServerConstants.Role.READERS, folderContentTree.getEntry().getReaders());
-    currentPermissions.setLeft(
-        BookmarkTool.transformPermissionsMapToPair(permissionsMap).getLeft());
-    currentPermissions.setRight(
-        BookmarkTool.transformPermissionsMapToPair(permissionsMap).getRight());
-    final IPair<JsonNode, JsonNode> defaultPermissionsPair =
-        BookmarkTool.transformPermissionsMapToPair(defaultPermissions);
-
-    final boolean omitPermissions =
-        currentPermissions.equals(parentPermissions)
-            || isTopLevel && currentPermissions.equals(defaultPermissionsPair);
-
+  static void writeNode(String key, SnapshotContentTree node, Path folderName) {
+    final JsonNode entryNode;
     try {
-      /*
-       * Generates a json file containing the content alongside a meta file containg
-       * the owner and reader values for the given node
-       */
-      final String name =
-          encodeForFilesystems(
-              retrievePropertyFromContent(content, key, ContentServerConstants.Tree.NAME));
-
-      final Path exportFolder = Path.of(System.getProperty("user.dir"), exportDirectory);
-      final Path folderName =
-          Stream.of(node.getPath().split(ContentServerConstants.Paths.SEPARATOR))
-              .filter(part -> !part.isEmpty())
-              .reduce(
-                  exportFolder,
-                  Path::resolve,
-                  (a, b) -> {
-                    throw new UnsupportedOperationException();
-                  });
-
-      final File bookmarkFolder = folderName.toFile();
-      if (!bookmarkFolder.exists()) {
-        boolean createdDirectories = bookmarkFolder.mkdirs();
-        if (!createdDirectories) {
-          throw new IOException(
-              "Could not create export directories. Check path: " + folderName.toString());
-        }
-      }
-
-      final JsonNode entryNode =
-          mapper.readTree(content.getChildren().get(key).getEntry().getContent());
-      final JsonNode descriptionJsonNode = entryNode.path(ContentServerConstants.Tree.DESCRIPTION);
-      if (!folderEntries.containsKey(key)
-          && !entryNode
-              .path(ContentServerConstants.Tree.TYPE)
-              .toString()
-              .contains(ContentServerConstants.Content.FOLDER)) {
-        final Path fileName = folderName.resolve(name + ContentServerConstants.Paths.JSON);
-        writer.writeValue(fileName.toFile(), entryNode.path(ContentServerConstants.Tree.VALUE));
-      }
-
-      final ObjectNode meta = mapper.createObjectNode();
-      meta.put(ContentServerConstants.Tree.KEY, key);
-      if (descriptionJsonNode != null && !descriptionJsonNode.toString().isEmpty()) {
-        meta.set(ContentServerConstants.Tree.DESCRIPTION, descriptionJsonNode);
-      }
-      if (!omitPermissions) {
-        meta.set(ContentServerConstants.Role.OWNERS, currentPermissions.getLeft());
-        meta.set(ContentServerConstants.Role.READERS, currentPermissions.getRight());
-      }
-      if (meta.size() > 0) {
-        final Path metaFileName =
-            folderName.resolve(name + ContentServerConstants.Paths.METADATA_FILE);
-        writer.writeValue(metaFileName.toFile(), meta);
-      }
+      entryNode = mapper.readTree(node.getEntry().getContent());
+      final Path fileName =
+          folderName.resolve(encodeForFilesystems(key) + ContentServerConstants.Paths.JSON);
+      writer.writeValue(fileName.toFile(), entryNode);
     } catch (IOException e) {
-      LOGGER.warn(e.toString());
+      LOGGER.error("Could not write the node " + key + ": " + e.getMessage());
     }
-  }
-
-  /**
-   * Read the content SnapshotContentTree and retrieve a property of the bookmark content for a
-   * given id.
-   *
-   * @param content The content SnapshotContentTree.
-   * @param id The bookmark id.
-   * @param property The property to be retrieved.
-   * @return The text of the bookmark content property.
-   */
-  private static String retrievePropertyFromContent(
-      SnapshotContentTree content, String id, String property) {
-    SnapshotContentTree currentEntry = (SnapshotContentTree) content.getChildren().get(id);
-    if (currentEntry == null) {
-      return id;
-    }
-    String value = "";
-    try {
-      value = mapper.readTree(currentEntry.getEntry().getContent()).get(property).asText();
-    } catch (Exception e) {
-      LOGGER.warn("Could not extract property " + property + " from node " + id + ".");
-    }
-    return value;
   }
 
   /**
@@ -365,35 +112,6 @@ class ContentServerToJsonUi {
       }
     }
     return fileName;
-  }
-
-  /**
-   * Sets the character to be used in the {@link #encodeForFilesystems(String)} method.
-   *
-   * @param character The encoding character.
-   */
-  static void setEncodingChar(String character) {
-    encodingChar = character;
-  }
-
-  /**
-   * Adds the parameters to the list of characters replaced by the encoding character when creating
-   * a bookmark file.
-   *
-   * @param characters The list of characters to be replaced.
-   */
-  static void setCustomCharsToEncode(List<String> characters) {
-    FILESYSTEM_RESTRICTED_CHARACTERS.get(CUSTOM).addAll(characters);
-  }
-
-  /** Resets the encoding character to the default value. */
-  static void resetEncodingChar() {
-    encodingChar = DEFAULT_ENCODING_CHAR;
-  }
-
-  /** Resets the list of custom filename forbidden characters to empty. */
-  static void resetCustomCharsToEncode() {
-    FILESYSTEM_RESTRICTED_CHARACTERS.replace(CUSTOM, new ArrayList<>());
   }
 
   /**

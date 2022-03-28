@@ -1,0 +1,10 @@
+{
+  "mode" : "radio",
+  "levelCoordinates" : {
+    "dimensionName" : "Owners",
+    "hierarchyName" : "Owner",
+    "levelName" : "Owner"
+  },
+  "cubeName" : "MemoryCube",
+  "serverKey" : "MAC"
+}
