@@ -125,7 +125,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       try {
         stat.accept(this);
       } catch (Exception e) {
-        this.printer.print();
+        if (DEBUG) {
+          this.printer.print();
+        }
         throw e;
       }
     } else {
