@@ -230,7 +230,7 @@ public class SourceConfig {
       }
       return read;
     } catch (final IOException ioe) {
-      throw new RuntimeException("Cannot read statistics from " + file);
+      throw new RuntimeException("Cannot read statistics from " + file, ioe);
     }
   }
 

@@ -25,7 +25,7 @@
   <properties>
     <jdk.version>11</jdk.version>
 
-    <activepivot.version>5.10.7</activepivot.version>
+    <activepivot.version>5.10.10</activepivot.version>
     <activeui.version>5.0.7</activeui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
