@@ -23,7 +23,7 @@ import com.qfs.store.record.impl.IDictionaryProvider;
  */
 public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
-  private int sharedPartitionId = MemoryAnalysisDatastoreDescription.MANY_PARTITIONS;
+  private int sharedPartitionId = MemoryAnalysisDatastoreDescriptionConfig.MANY_PARTITIONS;
   private int defaultDicId = -1;
   private int defaultRefId = -1;
   private int defaultIdxId = -1;
@@ -66,8 +66,8 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       } else {
         final IWritableRecord newRecord = copyRecord(duplicateRecord);
 
-        assert newPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
-        assert currentPartition != MemoryAnalysisDatastoreDescription.NO_PARTITION;
+        assert newPartition != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION;
+        assert currentPartition != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION;
         final int partitionIdx =
             storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
         newRecord.writeInt(partitionIdx, this.sharedPartitionId);
@@ -116,7 +116,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       final IWritableDictionary<Object> partitionDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
       this.sharedPartitionId =
-          partitionDictionary.map(MemoryAnalysisDatastoreDescription.MANY_PARTITIONS);
+          partitionDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.MANY_PARTITIONS);
     }
     if (this.defaultDicId < 0) {
       final int dicIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
@@ -124,7 +124,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       final IWritableDictionary<Object> dicIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
       this.defaultDicId =
-          dicIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
+          dicIdDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.DEFAULT_COMPONENT_ID_VALUE);
     }
 
     if (this.defaultIdxId < 0) {
@@ -133,7 +133,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       final IWritableDictionary<Object> idxIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(idxIdIdx);
       this.defaultIdxId =
-          idxIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
+          idxIdDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.DEFAULT_COMPONENT_ID_VALUE);
     }
 
     if (this.defaultRefId < 0) {
@@ -142,7 +142,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       final IWritableDictionary<Object> refIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(refIdIdx);
       this.defaultRefId =
-          refIdDictionary.map(MemoryAnalysisDatastoreDescription.DEFAULT_COMPONENT_ID_VALUE);
+          refIdDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.DEFAULT_COMPONENT_ID_VALUE);
     }
   }
 

@@ -7,13 +7,18 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
+import com.activeviam.builders.StartBuilding;
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
@@ -31,7 +36,6 @@ import com.qfs.store.record.IRecordReader;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
@@ -72,20 +76,19 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
     final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
     final IActivePivotManagerDescription managerDescription = new ActivePivotManagerDescription();
 
-    this.monitoredDatastore =
-        this.resources.create(
-            StartBuilding.datastore()
-                    .setSchemaDescription(datastoreSchemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                ::build);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(datastoreSchemaDescription)
+            .withManager(managerDescription)
+            .build();
 
-    this.monitoredManager =
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(this.monitoredDatastore)
-            .buildAndStart();
+    this.monitoredDatastore = application.getDatabase();
+
+    this.monitoredManager = application.getManager();
+
+    application.start();
     this.resources.register(this.monitoredManager::stop);
+    this.resources.register(this.monitoredDatastore);
 
     fillApplication();
     performGC();
@@ -144,17 +147,17 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   protected void exportApplicationMemoryStatistics() {
     final IMemoryAnalysisService analysisService =
-        new MemoryAnalysisService(
-            this.monitoredDatastore,
-            this.monitoredManager,
-            this.monitoredDatastore.getEpochManager(),
-            TEMP_DIRECTORY);
+        new MemoryAnalysisService(this.monitoredDatastore, this.monitoredManager, TEMP_DIRECTORY);
     this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
   protected IDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    final IDatastoreSchemaDescription desc =
+        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
+    final IActivePivotManagerDescription manager =
+        new ManagerDescriptionConfig().managerDescription();
+    return (IDatastore)
+        ApplicationInTests.builder().withDatastore(desc).withManager(manager).build().getDatabase();
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
@@ -177,7 +180,8 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   @Test
   public void testDictionaryIsShared() {
-    final ISchemaDictionaryProvider dictionaries = this.monitoredDatastore.getDictionaries();
+    final ISchemaDictionaryProvider dictionaries =
+        this.monitoredDatastore.getQueryMetadata().getDictionaries();
     Assertions.assertThat(dictionaries.getDictionary("Forex", "currency"))
         .isSameAs(dictionaries.getDictionary("Forex", "targetCurrency"));
   }
@@ -186,6 +190,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   public void testDictionaryHasAtLeastOneChunk() {
     final long dictionaryId =
         this.monitoredDatastore
+            .getQueryMetadata()
             .getDictionaries()
             .getDictionary("Forex", "currency")
             .getDictionaryId();
@@ -198,6 +203,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   public void testDictionaryChunkFields() {
     final long dictionaryId =
         this.monitoredDatastore
+            .getQueryMetadata()
             .getDictionaries()
             .getDictionary("Forex", "currency")
             .getDictionaryId();
@@ -225,50 +231,56 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   }
 
   protected Set<Long> extractChunkIdsForDictionary(final long dictionaryId) {
-    final ICursor cursor =
+    final ListQuery query =
         this.monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(DatastoreConstants.CHUNK__PARENT_DICO_ID, dictionaryId))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__PARENT_DICO_ID), dictionaryId))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> reader.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> reader.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   protected Map<Long, Multimap<String, String>> extractOwnersAndFieldsPerChunkId(
       final Collection<Long> chunkIdSubset) {
-    final ICursor cursor =
+    final ListQuery query =
         this.monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.And(
-                    BaseConditions.Equal(
-                        DatastoreConstants.OWNER__COMPONENT, ParentType.DICTIONARY),
-                    BaseConditions.In(DatastoreConstants.OWNER__CHUNK_ID, chunkIdSubset.toArray())))
-            .selecting(
-                DatastoreConstants.OWNER__CHUNK_ID,
-                DatastoreConstants.OWNER__OWNER,
-                DatastoreConstants.OWNER__FIELD)
-            .onCurrentThread()
-            .run();
+                BaseConditions.and(
+                    BaseConditions.equal(
+                        FieldPath.of(DatastoreConstants.OWNER__COMPONENT), ParentType.DICTIONARY),
+                    BaseConditions.in(
+                        FieldPath.of(DatastoreConstants.OWNER__CHUNK_ID), chunkIdSubset.toArray())))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.OWNER__CHUNK_ID),
+                AliasedField.fromFieldName(DatastoreConstants.OWNER__OWNER),
+                AliasedField.fromFieldName(DatastoreConstants.OWNER__FIELD))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-    final Map<Long, Multimap<String, String>> fieldsPerChunk = new HashMap<>();
-    for (final IRecordReader reader : cursor) {
-      final long chunkId = reader.readLong(0);
-      fieldsPerChunk.putIfAbsent(chunkId, HashMultimap.create());
-      fieldsPerChunk
-          .get(chunkId)
-          .put(((ChunkOwner) reader.read(1)).getName(), (String) reader.read(2));
+      final Map<Long, Multimap<String, String>> fieldsPerChunk = new HashMap<>();
+      for (final IRecordReader reader : cursor) {
+        final long chunkId = reader.readLong(0);
+        fieldsPerChunk.putIfAbsent(chunkId, HashMultimap.create());
+        fieldsPerChunk
+            .get(chunkId)
+            .put(((ChunkOwner) reader.read(1)).getName(), (String) reader.read(2));
+      }
+
+      return fieldsPerChunk;
     }
-
-    return fieldsPerChunk;
   }
 }

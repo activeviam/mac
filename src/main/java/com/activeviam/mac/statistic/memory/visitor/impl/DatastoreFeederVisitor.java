@@ -11,9 +11,9 @@ import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBU
 
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
@@ -38,7 +38,7 @@ import java.util.Objects;
  * This visitor is not reusable.
  *
  * <p>This visits memory statistics and commits them into the given datastore. The datastore must
- * have the schema defined by {@link MemoryAnalysisDatastoreDescription}.
+ * have the schema defined by {@link MemoryAnalysisDatastoreDescriptionConfig}.
  *
  * @author ActiveViam
  */
@@ -108,7 +108,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         : "Cannot find fields in the attributes of " + stat;
     Arrays.sort(fieldNames);
     tuple[format.getFieldIndex(DatastoreConstants.INDEX__FIELDS)] =
-        new MemoryAnalysisDatastoreDescription.StringArrayObject(fieldNames);
+        new MemoryAnalysisDatastoreDescriptionConfig.StringArrayObject(fieldNames);
 
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_CLASS)] =
         stat.getAttribute(DatastoreConstants.INDEX_CLASS).asText();
@@ -200,7 +200,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
         this.usedByVersion;
     tuple[this.chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID)] =
         this.partitionId;
-    if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+    if (MemoryAnalysisDatastoreDescriptionConfig.ADD_DEBUG_TREE) {
       tuple[this.chunkRecordFormat.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(chunkStatistic);
     }

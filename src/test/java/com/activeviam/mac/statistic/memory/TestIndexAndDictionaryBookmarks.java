@@ -8,12 +8,13 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.record.impl.IDictionaryProvider;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.AxisDTO;
 import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
@@ -23,14 +24,12 @@ import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,8 +37,8 @@ import org.junit.jupiter.api.Test;
 public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 20;
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -58,7 +57,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -68,7 +67,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
     this.monitoredApp = createMicroApplicationWithIndexedFields();
 
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             tm ->
                 IntStream.range(0, ADDED_DATA_SIZE)
@@ -76,42 +75,37 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
   }
 
   private Path generateMemoryStatistics() {
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     performGC();
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportMostRecentVersion("testOverview");
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
 
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
-  }
+    resources.register(this.monitoringApp).start();
 
-  @AfterEach
-  public void tearDown() throws AgentException {
-    this.monitoringApp.getLeft().close();
-    this.monitoringApp.getRight().stop();
+    ATestMemoryStatistic.feedMonitoringApplication(
+        this.monitoringApp.getDatabase(), List.of(data), "storeA");
   }
 
   @Test
   public void testIndexedFieldsForStoreA() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -138,7 +132,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
   public void testDictionarizedFieldsForStoreB() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -172,7 +166,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
   public void testDictionarySizeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -207,7 +201,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
   public void testDictionarySizesPerField() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -228,7 +222,11 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
     final CellSetDTO result = pivot.execute(totalQuery);
 
     final IDictionaryProvider dictionaryProvider =
-        this.monitoredApp.getLeft().getDictionaries().getStoreDictionaries("A");
+        this.monitoredApp
+            .getDatabase()
+            .getQueryMetadata()
+            .getDictionaries()
+            .getStoreDictionaries("A");
 
     SoftAssertions.assertSoftly(
         assertions -> {
@@ -241,8 +239,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 dictionaryProvider
                     .getDictionary(
                         this.monitoredApp
-                            .getLeft()
-                            .getSchemaMetadata()
+                            .getDatabase()
+                            .getQueryMetadata()
+                            .getMetadata()
                             .getFieldIndex("A", fieldName))
                     .size();
 

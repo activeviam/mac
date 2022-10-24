@@ -4,11 +4,15 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.qfs.assertj.QfsConditions;
@@ -24,14 +28,11 @@ import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.ICursor;
-import com.qfs.store.query.IDictionaryCursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
 import com.qfs.vector.direct.impl.DirectLongVectorBlock;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +57,6 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
    */
   @Test
   public void testDatastoreMonitoringValues() {
-
     createMinimalApplication(
         (monitoredDatastore, monitoredManager) -> {
           fillApplicationMinimal(monitoredDatastore);
@@ -72,7 +72,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
 
           IDictionary<Object> dic =
-              monitoredDatastore.getDictionaries().getDictionary("Sales", "id");
+              monitoredDatastore.getQueryMetadata().getDictionaries().getDictionary("Sales", "id");
 
           final long[] chunkIds = new long[2];
           final long[] chunkSizes = new long[2];
@@ -115,17 +115,22 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           ATestMemoryStatistic.feedMonitoringApplication(
               monitoringDatastore, List.of(fullStats), "test");
           for (int i = 0; i < chunkIds.length; i++) {
-            final ICursor records =
+            ListQuery query =
                 monitoringDatastore
-                    .getHead()
-                    .getQueryRunner()
-                    .forStore(DatastoreConstants.CHUNK_STORE)
-                    .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK_ID, chunkIds[i]))
-                    .selecting(DatastoreConstants.CHUNK__SIZE)
-                    .onCurrentThread()
-                    .run();
+                    .getQueryManager()
+                    .listQuery()
+                    .forTable(DatastoreConstants.CHUNK_STORE)
+                    .withCondition(
+                        BaseConditions.equal(
+                            FieldPath.of(DatastoreConstants.CHUNK_ID), chunkIds[i]))
+                    .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK__SIZE))
+                    .toQuery();
+
+            final ICursor records =
+                monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run();
 
             monitoredChunkSizes[i] = records.iterator().next().readLong(0);
+            records.close();
           }
           // Now we verify the monitored chunks and the chunk in the Datastore of the Monitoring
           // Cube are identical
@@ -135,16 +140,16 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithSingleRecord() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
 
     // Add a single record
-    monitoredApp.getLeft().edit(tm -> tm.add("A", 0));
+    monitoredApp.getDatabase().edit(tm -> tm.add("A", 0));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
@@ -155,52 +160,57 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
-    // Query record chunks data :
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
-                    MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
-            .selecting(
-                DatastoreConstants.CHUNK__FREE_ROWS,
-                DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
-                DatastoreConstants.CHUNK__SIZE,
-                DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(record -> list.add(record.toTuple()));
-    // Expect 3 Chunks :
-    // - 1 Chunk for versions : directChunkLong
-    // - 2 Chunks for the actual records
-    //         * 1 Wrapper chunk (DirectChunkPositiveInteger) -> Verify that the offHeap size equal
-    // to Zero
-    //         * 1 Content Chunk (DirectChunkBits) -> "0" is stored as the dictionary value 1,
-    // the underlying chunk is promoted to DirectChunkBits (order = 1), which allocates
-    // 32B of off-heap memory
-    Assertions.assertThat(list)
-        .containsExactly(
-            new Object[] {0L, 255L, 256L, 0L},
-            new Object[] {0L, 255L, 256L, 32L},
-            new Object[] {0L, 255L, 256L, 2048L});
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                    MemoryAnalysisDatastoreDescriptionConfig.ParentType.RECORDS))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__SIZE),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
+            .toQuery();
+
+    // Query record chunks data :
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(record -> list.add(record.toTuple()));
+      // Expect 3 Chunks :
+      // - 1 Chunk for versions : directChunkLong
+      // - 2 Chunks for the actual records
+      // * 1 Wrapper chunk (DirectChunkPositiveInteger) -> Verify that the offHeap size equal
+      // to Zero
+      // * 1 Content Chunk (DirectChunkBits) -> "0" is stored as the dictionary value 1,
+      // the underlying chunk is promoted to DirectChunkBits (order = 1), which allocates
+      // 32B of off-heap memory
+      Assertions.assertThat(list)
+          .containsExactly(
+              new Object[] {0L, 255L, 256L, 0L},
+              new Object[] {0L, 255L, 256L, 32L},
+              new Object[] {0L, 255L, 256L, 2048L});
+    }
   }
 
   @Test
   public void testChunkStructureFieldsWithFullChunk() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
 
     // Add a full chunk
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 256).forEach(i -> tm.add("A", i * i * i)));
+    monitoredApp
+        .getDatabase()
+        .edit(tm -> IntStream.range(0, 256).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
@@ -212,52 +222,57 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     // Query record chunks data :
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
-                    MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
-            .selecting(
-                DatastoreConstants.CHUNK__FREE_ROWS,
-                DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
-                DatastoreConstants.CHUNK__SIZE,
-                DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
-        });
-    // Expect 3 Chunks :
-    // - 1 Chunk for versions : directChunkLong
-    // - 1 ChunkOffset for the records -> verify it does not consume off-heap memory
-    // - 1 Chunk for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored
-    // off-heap
-    Assertions.assertThat(list)
-        .containsExactlyInAnyOrder(
-            new Object[] {0L, 0L, 256L, 256L},
-            new Object[] {0L, 0L, 256L, 0L},
-            new Object[] {0L, 0L, 256L, 2048L});
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                    MemoryAnalysisDatastoreDescriptionConfig.ParentType.RECORDS))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__SIZE),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
+            .toQuery();
+
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list.add(data);
+          });
+      // Expect 3 Chunks :
+      // - 1 Chunk for versions : directChunkLong
+      // - 1 ChunkOffset for the records -> verify it does not consume off-heap memory
+      // - 1 Chunk for the actual records (ChunkShorts) -> Verify that 256 bytes of data is stored
+      // off-heap
+      Assertions.assertThat(list)
+          .containsExactlyInAnyOrder(
+              new Object[] {0L, 0L, 256L, 256L},
+              new Object[] {0L, 0L, 256L, 0L},
+              new Object[] {0L, 0L, 256L, 2048L});
+    }
   }
 
   @Test
   public void testChunkStructureFieldsWithTwoChunks() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
 
     // Add a full chunk + 10 records on the second chunk
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 266).forEach(i -> tm.add("A", i * i * i)));
+    monitoredApp
+        .getDatabase()
+        .edit(tm -> IntStream.range(0, 266).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
@@ -268,57 +283,60 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
-    // Query record chunks data :
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
-                    MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
-            .selecting(
-                DatastoreConstants.CHUNK__FREE_ROWS,
-                DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
-                DatastoreConstants.CHUNK__SIZE,
-                DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
-        });
-    // Expect 6 Chunks :
-    // - 2 Chunk for versions : directChunkLong
-    // - 4 Chunks for the actual records
-    //         * 2 Wrapping chunk
-    //         * 2 Content Chunk
-    Assertions.assertThat(list)
-        .containsExactlyInAnyOrder(
-            // Version chunks
-            new Object[] {0L, 0L, 256L, 2048L},
-            new Object[] {0L, 246L, 256L, 2048L},
-            // Content chunks
-            // Chunk full (wrapper+data)
-            new Object[] {0L, 0L, 256L, 0L},
-            new Object[] {0L, 0L, 256L, 256L},
-            // Partially full chunk (wrapper+data)
-            new Object[] {0L, 246L, 256L, 0L},
-            new Object[] {0L, 246L, 256L, 512L});
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                    MemoryAnalysisDatastoreDescriptionConfig.ParentType.RECORDS))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__SIZE),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
+            .toQuery();
+
+    // Query record chunks data :
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list.add(data);
+          });
+      // Expect 6 Chunks :
+      // - 2 Chunk for versions : directChunkLong
+      // - 4 Chunks for the actual records
+      // * 2 Wrapping chunk
+      // * 2 Content Chunk
+      Assertions.assertThat(list)
+          .containsExactlyInAnyOrder(
+              // Version chunks
+              new Object[] {0L, 0L, 256L, 2048L},
+              new Object[] {0L, 246L, 256L, 2048L},
+              // Content chunks
+              // Chunk full (wrapper+data)
+              new Object[] {0L, 0L, 256L, 0L},
+              new Object[] {0L, 0L, 256L, 256L},
+              // Partially full chunk (wrapper+data)
+              new Object[] {0L, 246L, 256L, 0L},
+              new Object[] {0L, 246L, 256L, 512L});
+    }
   }
 
   @Test
   public void testChunkStructureFieldsWithFreedRows() {
 
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
     // Add 100 records
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
+    monitoredApp.getDatabase().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
     monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             tm ->
                 IntStream.range(50, 50 + 20)
@@ -334,10 +352,10 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                           }
                         }));
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
     final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
@@ -346,56 +364,60 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     // Query record chunks data :
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(
-                    DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
-                    MemoryAnalysisDatastoreDescription.ParentType.RECORDS))
-            .selecting(
-                DatastoreConstants.CHUNK__FREE_ROWS,
-                DatastoreConstants.CHUNK__NON_WRITTEN_ROWS,
-                DatastoreConstants.CHUNK__SIZE,
-                DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
-        });
-    // Expect 3 Chunks :
-    // - 1 Chunk for versions : directChunkLong
-    // - 2 Chunks for the actual records
-    //		   * 1 Wrapping chunk
-    //         * 1 Content Chunk
-    Assertions.assertThat(list)
-        .containsExactlyInAnyOrder(
-            // Version chunks
-            new Object[] {0L, 156L, 256L, 2048L},
-            // Content chunks
-            // Partially full chunk (wrapper+data)
-            new Object[] {20L, 156L, 256L, 0L},
-            new Object[] {20L, 156L, 256L, 256L});
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                    MemoryAnalysisDatastoreDescriptionConfig.ParentType.RECORDS))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__SIZE),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__OFF_HEAP_SIZE))
+            .toQuery();
+
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list.add(data);
+          });
+      // Expect 3 Chunks :
+      // - 1 Chunk for versions : directChunkLong
+      // - 2 Chunks for the actual records
+      // * 1 Wrapping chunk
+      // * 1 Content Chunk
+      Assertions.assertThat(list)
+          .containsExactlyInAnyOrder(
+              // Version chunks
+              new Object[] {0L, 156L, 256L, 2048L},
+              // Content chunks
+              // Partially full chunk (wrapper+data)
+              new Object[] {20L, 156L, 256L, 0L},
+              new Object[] {20L, 156L, 256L, 256L});
+    }
   }
 
   @Test
   public void testLevelStoreContent() {
 
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<?> monitoredApp = createMicroApplication();
 
+    final IDatastore datastore = (IDatastore) monitoredApp.getDatabase();
     // Add 10 records
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i * i)));
+    datastore.edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i * i)));
 
     // Force to discard all versions
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    datastore.getEpochManager().forceDiscardEpochs(__ -> true);
 
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(datastore, monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
 
@@ -407,32 +429,37 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, pivotStats, "Cube");
 
     // Query record of level data :
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
             .withCondition(BaseConditions.TRUE)
-            .selecting(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
-        });
-    Assertions.assertThat(list).hasSize(1);
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID))
+            .toQuery();
+
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list.add(data);
+          });
+      Assertions.assertThat(list).hasSize(1);
+    }
   }
 
   @Test
   public void testMappingFromChunkToFields() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<?> monitoredApp = createMicroApplication();
+    final IDatastore datastore = (IDatastore) monitoredApp.getDatabase();
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(datastore, monitoredApp.getManager());
 
     // Add 100 records
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i)));
+    datastore.edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
@@ -464,6 +491,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .accept(
                 new AMemoryStatisticWithPredicate<Set<IMemoryStatistic>>(
                     ChunkStatistic.class::isInstance) {
+
                   final Set<IMemoryStatistic> collected = new HashSet<>();
 
                   @Override
@@ -482,58 +510,63 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
             .map(stat -> stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_CHUNK_ID).asLong())
             .collect(toList());
 
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.CHUNK_ID, DatastoreConstants.CHUNK__PARENT_DICO_ID)
-            .onCurrentThread()
-            .run();
-    cursor.forEach(
-        (record) -> {
-          final var chunkId = record.readLong(0);
-          final var dictionaryId = record.readLong(1);
-          if (chunkIds.contains(chunkId)) {
-            Assertions.assertThat(dictionaryId).as("Dic for #" + chunkId).isEqualTo(dicForFieldId);
-          } else {
-            Assertions.assertThat(dictionaryId)
-                .as("Dic for #" + chunkId)
-                .isNotEqualTo(dicForFieldId);
-          }
-        });
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__PARENT_DICO_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      cursor.forEach(
+          (record) -> {
+            final var chunkId = record.readLong(0);
+            final var dictionaryId = record.readLong(1);
+            if (chunkIds.contains(chunkId)) {
+              Assertions.assertThat(dictionaryId)
+                  .as("Dic for #" + chunkId)
+                  .isEqualTo(dicForFieldId);
+            } else {
+              Assertions.assertThat(dictionaryId)
+                  .as("Dic for #" + chunkId)
+                  .isNotEqualTo(dicForFieldId);
+            }
+          });
+    }
   }
 
   @Test
   public void testCompareDumpsOfDifferentEpochs() {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<?> monitoredApp = createMicroApplication();
+    final IDatastore datastore = (IDatastore) monitoredApp.getDatabase();
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(datastore, monitoredApp.getManager());
 
     // Add 100 records
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
+    datastore.edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     // Delete 10 records
-    monitoredApp
-        .getLeft()
-        .edit(
-            tm ->
-                IntStream.range(50, 50 + 10)
-                    .forEach(
-                        i -> {
-                          try {
-                            tm.remove("A", i * i);
-                          } catch (NoTransactionException
-                              | DatastoreTransactionException
-                              | IllegalArgumentException
-                              | NullPointerException e) {
-                            throw new ActiveViamRuntimeException(e);
-                          }
-                        }));
-    monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    datastore.edit(
+        tm ->
+            IntStream.range(50, 50 + 10)
+                .forEach(
+                    i -> {
+                      try {
+                        tm.remove("A", i * i);
+                      } catch (NoTransactionException
+                          | DatastoreTransactionException
+                          | IllegalArgumentException
+                          | NullPointerException e) {
+                        throw new ActiveViamRuntimeException(e);
+                      }
+                    }));
+    datastore.getEpochManager().forceDiscardEpochs(__ -> true);
 
     exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic statsEpoch2 = loadMemoryStatFromFolder(exportPath);
@@ -546,77 +579,91 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         });
 
     // Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice
-    final IDictionaryCursor cursor =
+    ListQuery firstQuery =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(BaseConditions.TRUE)
-            .selecting(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__DUMP_NAME),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(firstQuery).run()) {
 
-    final SetMultimap<String, Long> chunksPerDump = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      chunksPerDump.put((String) reader.read(0), reader.readLong(1));
+      final SetMultimap<String, Long> chunksPerDump = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        chunksPerDump.put((String) reader.read(0), reader.readLong(1));
+      }
+
+      Assertions.assertThat(chunksPerDump.get("appAEpoch2"))
+          .containsExactlyInAnyOrderElementsOf(chunksPerDump.get("appAInit"));
     }
 
-    Assertions.assertThat(chunksPerDump.get("appAEpoch2"))
-        .containsExactlyInAnyOrderElementsOf(chunksPerDump.get("appAInit"));
-
     // Verify that the changes between dumps have been registered
-    final IDictionaryCursor cursor2 =
+    ListQuery secondQuery =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "appAInit"))
-            .selecting(DatastoreConstants.CHUNK__FREE_ROWS)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list2 = new ArrayList<>();
-    cursor2.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list2.add(data);
-        });
-    Assertions.assertThat(list2).containsOnly(new Object[] {0L});
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.equal(FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), "appAInit"))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS))
+            .toQuery();
 
-    final IDictionaryCursor cursor3 =
+    try (final ICursor cursor2 =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(secondQuery).run()) {
+      final List<Object[]> list2 = new ArrayList<>();
+      cursor2.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list2.add(data);
+          });
+      Assertions.assertThat(list2).containsOnly(new Object[] {0L});
+    }
+
+    ListQuery thirdQuery =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "appAEpoch2"))
-            .selecting(DatastoreConstants.CHUNK__FREE_ROWS)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list3 = new ArrayList<>();
-    cursor3.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list3.add(data);
-        });
-    Assertions.assertThat(list3).contains(new Object[] {10L});
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), "appAEpoch2"))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK__FREE_ROWS))
+            .toQuery();
+
+    try (final ICursor cursor3 =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(thirdQuery).run()) {
+      final List<Object[]> list3 = new ArrayList<>();
+      cursor3.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list3.add(data);
+          });
+      Assertions.assertThat(list3).contains(new Object[] {10L});
+    }
   }
 
   @Test
   public void testCompareDumpsOfDifferentApps() throws AgentException {
     // Create First App
-    final Pair<IDatastore, IActivePivotManager> monitoredApp = createMicroApplication();
+    final ApplicationInTests<?> monitoredApp = createMicroApplication();
+    IDatastore datastore = (IDatastore) monitoredApp.getDatabase();
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
-    monitoredApp.getLeft().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
+        createService(datastore, monitoredApp.getManager());
+    datastore.edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Export first app
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
     final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     // Create second app
-    final Pair<IDatastore, IActivePivotManager> monitoredAppWithBitmap =
+    final ApplicationInTests<IDatastore> monitoredAppWithBitmap =
         createMicroApplicationWithLeafBitmap();
     final IMemoryAnalysisService analysisServiceWithBitmap =
-        createService(monitoredAppWithBitmap.getLeft(), monitoredAppWithBitmap.getRight());
+        createService(monitoredAppWithBitmap.getDatabase(), monitoredAppWithBitmap.getManager());
     monitoredAppWithBitmap
-        .getLeft()
+        .getDatabase()
         .edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Export second app
     exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
@@ -630,19 +677,22 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               .loadWithTransaction(tm, Stream.of(statsWithBitmap));
         });
 
-    final IDictionaryCursor cursor =
+    ListQuery firstQuery =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.And(
-                    BaseConditions.Equal(
-                        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.AGGREGATE_STORE),
-                    BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "App")))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.and(
+                    BaseConditions.equal(
+                        FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                        ParentType.AGGREGATE_STORE),
+                    BaseConditions.equal(FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), "App")))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+
+    final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(firstQuery).run();
     final List<Object[]> list = new ArrayList<>();
     cursor.forEach(
         (record) -> {
@@ -650,19 +700,24 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           list.add(data);
         });
     Assertions.assertThat(list).isEmpty();
-    final IDictionaryCursor cursor2 =
+    cursor.close();
+    ListQuery secondQuery =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.And(
-                    BaseConditions.Equal(
-                        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE, ParentType.AGGREGATE_STORE),
-                    BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, "AppWithBitmap")))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.and(
+                    BaseConditions.equal(
+                        FieldPath.of(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE),
+                        ParentType.AGGREGATE_STORE),
+                    BaseConditions.equal(
+                        FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), "AppWithBitmap")))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+
+    final ICursor cursor2 =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(secondQuery).run();
     final List<Object[]> list2 = new ArrayList<>();
     cursor2.forEach(
         (record) -> {
@@ -670,17 +725,17 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           list2.add(data);
         });
     Assertions.assertThat(list2).isNotEmpty();
+    cursor2.close();
   }
 
   @Test
   public void testChunkToReferencesDatastoreContentWithReference() throws AgentException {
-    final Pair<IDatastore, IActivePivotManager> monitoredApp =
-        createMicroApplicationWithReference();
+    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplicationWithReference();
     final IMemoryAnalysisService analysisService =
-        createService(monitoredApp.getLeft(), monitoredApp.getRight());
+        createService(monitoredApp.getDatabase(), monitoredApp.getManager());
 
     monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             tm ->
                 IntStream.range(0, 100)
@@ -695,22 +750,25 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "App");
 
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.REFERENCE_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.REFERENCE_STORE)
             .withCondition(BaseConditions.TRUE)
-            .selecting(DatastoreConstants.REFERENCE_ID)
-            .onCurrentThread()
-            .run();
-    final List<Object[]> list = new ArrayList<>();
-    cursor.forEach(
-        (record) -> {
-          Object[] data = record.toTuple();
-          list.add(data);
-        });
-    Assertions.assertThat(list).isNotEmpty();
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.REFERENCE_ID))
+            .toQuery();
+
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      final List<Object[]> list = new ArrayList<>();
+      cursor.forEach(
+          (record) -> {
+            Object[] data = record.toTuple();
+            list.add(data);
+          });
+      Assertions.assertThat(list).isNotEmpty();
+    }
   }
 
   @Test
@@ -760,36 +818,43 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   }
 
   private Set<Long> retrieveChunksOfType(final IDatastore datastore, final ParentType component) {
-    final IDictionaryCursor cursor =
+    ListQuery query =
         datastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.equal(FieldPath.of(DatastoreConstants.OWNER__COMPONENT), component))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        datastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> reader.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> reader.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   private Set<String> retrieveClassesOfChunks(
       final IDatastore datastore, final Collection<Long> chunks) {
-    final IDictionaryCursor cursor =
+    ListQuery query =
         datastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
-            .withCondition(BaseConditions.In(DatastoreConstants.CHUNK_ID, chunks.toArray()))
-            .selecting(DatastoreConstants.CHUNK__CLASS)
-            .onCurrentThread()
-            .run();
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
+            .withCondition(
+                BaseConditions.in(FieldPath.of(DatastoreConstants.CHUNK_ID), chunks.toArray()))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK__CLASS))
+            .toQuery();
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> (String) reader.read(0))
-        .collect(Collectors.toSet());
+    try (final ICursor cursor =
+        datastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> (String) reader.read(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   // TODO Test content of all stores similarly

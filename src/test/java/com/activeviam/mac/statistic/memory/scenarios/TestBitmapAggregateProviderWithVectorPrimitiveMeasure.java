@@ -7,10 +7,11 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
+import com.activeviam.builders.StartBuilding;
 import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.literal.ILiteralType;
@@ -20,11 +21,10 @@ import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
+import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.util.impl.QfsFileTestUtils;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
-import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import com.quartetfs.fwk.AgentException;
 import java.io.IOException;
@@ -32,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,18 +64,15 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    this.datastore =
-        StartBuilding.datastore()
-            .setSchemaDescription(datastoreSchemaDescription)
-            .addSchemaDescriptionPostProcessors(
-                ActivePivotDatastorePostProcessor.createFrom(managerDescription))
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(datastoreSchemaDescription)
+            .withManager(managerDescription)
             .build();
 
-    this.manager =
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(this.datastore)
-            .buildAndStart();
+    this.resources.register(application).start();
+    this.datastore = application.getDatabase();
+    this.manager = application.getManager();
 
     fillApplication();
     performGC();
@@ -99,27 +95,22 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
   protected IActivePivotManagerDescription managerDescription(
       final IDatastoreSchemaDescription datastoreSchema) {
-    final IActivePivotManagerDescription managerDescription =
-        StartBuilding.managerDescription()
-            .withSchema()
-            .withSelection(
-                StartBuilding.selection(datastoreSchema)
-                    .fromBaseStore("Store")
-                    .withAllFields()
-                    .build())
-            .withCube(
-                StartBuilding.cube("Cube")
-                    .withContributorsCount()
-                    .withAggregatedMeasure()
-                    .sum("vectorMeasure")
-                    .withSingleLevelDimension("id")
-                    .withPropertyName("id")
-                    .withAggregateProvider()
-                    .bitmap()
-                    .build())
-            .build();
 
-    return ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchema);
+    return StartBuilding.managerDescription()
+        .withSchema()
+        .withSelection(
+            StartBuilding.selection(datastoreSchema).fromBaseStore("Store").withAllFields().build())
+        .withCube(
+            StartBuilding.cube("Cube")
+                .withContributorsCount()
+                .withAggregatedMeasure()
+                .sum("vectorMeasure")
+                .withSingleLevelDimension("id")
+                .withPropertyName("id")
+                .withAggregateProvider()
+                .bitmap()
+                .build())
+        .build();
   }
 
   protected void fillApplication() {
@@ -136,15 +127,8 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
         new MemoryAnalysisService(
             this.datastore,
             this.manager,
-            this.datastore.getEpochManager(),
             TestBitmapAggregateProviderWithVectorPrimitiveMeasure.TEMP_DIRECTORY);
     this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
-  }
-
-  @AfterEach
-  public void teardown() throws AgentException {
-    this.manager.stop();
-    this.datastore.stop();
   }
 
   @Test
@@ -159,8 +143,11 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
   }
 
   protected IDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    final IDatastoreSchemaDescription desc =
+        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
+    final IDatastore datastore = new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    this.resources.register(datastore);
+    return datastore;
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {

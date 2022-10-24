@@ -15,8 +15,8 @@ import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.qfs.distribution.IMultiVersionDistributedActivePivot;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -106,7 +106,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     final Object[] tuple = new Object[format.getFieldCount()];
 
     final IStatisticAttribute indexAttr =
-        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_INDEX);
+        stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_NAME);
     if (indexAttr != null) {
       tuple[format.getFieldIndex(DatastoreConstants.PROVIDER__INDEX)] = indexAttr.asText();
     }

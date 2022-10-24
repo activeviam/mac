@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.assertj.core.api.Assertions;
 
 public class CellSetUtils {
+
   public static Long extractValueFromSingleCellDTO(CellSetDTO data) {
     Assertions.assertThat(data.getCells()).hasSize(1);
 

@@ -13,10 +13,6 @@ import static com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig.LICENSIN
 import static com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig.LONG_POLLING_REMOTING_SERVICE;
 import static com.qfs.server.cfg.impl.ActivePivotRestServicesConfig.PING_SUFFIX;
 import static com.qfs.server.cfg.impl.ActivePivotRestServicesConfig.REST_API_URL_PREFIX;
-import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.ID_GENERATOR_SERVICE;
-import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LICENSING_SERVICE;
-import static com.qfs.server.cfg.impl.ActivePivotServicesConfig.LONG_POLLING_SERVICE;
-import static com.qfs.server.cfg.impl.CxfServletConfig.CXF_WEB_SERVICES;
 
 import com.qfs.server.cfg.IActivePivotConfig;
 import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
@@ -103,13 +99,6 @@ public class SecurityConfig extends ASecurityConfig {
           // The order of the matchers matters
           .antMatchers(HttpMethod.OPTIONS, REST_API_URL_PREFIX + "/**")
           .permitAll()
-          // Web services used by AP live 3.4
-          .antMatchers(CXF_WEB_SERVICES + '/' + ID_GENERATOR_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(CXF_WEB_SERVICES + '/' + LONG_POLLING_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(CXF_WEB_SERVICES + '/' + LICENSING_SERVICE + "/**")
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
           // Spring remoting services used by AP live 3.4
           .antMatchers(url(ID_GENERATOR_REMOTING_SERVICE, "**"))
           .hasAnyAuthority(ROLE_USER, ROLE_TECH)

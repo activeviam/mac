@@ -7,8 +7,11 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
@@ -71,36 +74,43 @@ public class TestMemoryStatisticLoadingWithReverseOrder extends ATestMemoryStati
 
   protected void assertVectorBlockAttributesArePresent(
       final IDatastore monitoringDatastore, final Collection<Long> chunkIdSubset) {
-    final ICursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.And(
-                    BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkIdSubset.toArray()),
-                    BaseConditions.Equal(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH, null)))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.and(
+                    BaseConditions.in(
+                        FieldPath.of(DatastoreConstants.CHUNK_ID), chunkIdSubset.toArray()),
+                    BaseConditions.equal(
+                        FieldPath.of(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH), null)))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
 
-    Assertions.assertThat(StreamSupport.stream(cursor.spliterator(), false).count()).isZero();
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      Assertions.assertThat(StreamSupport.stream(cursor.spliterator(), false).count()).isZero();
+    }
   }
 
   protected Set<Long> extractVectorBlocks(final IDatastore monitoringDatastore) {
-    final ICursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.VECTOR_BLOCK))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.OWNER__COMPONENT), ParentType.VECTOR_BLOCK))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> reader.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> reader.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 }

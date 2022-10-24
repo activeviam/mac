@@ -23,7 +23,7 @@ bookmarks:
   folder: ui
 
   # The RSA key pair encoded in Base64
-qfs:
+activeviam:
   jwt:
     key:
       public: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkirRjoq1RSB+Z4TZ7ZK+D4If2qYWdUX6wt3K1AQYk2kfeyv2v\

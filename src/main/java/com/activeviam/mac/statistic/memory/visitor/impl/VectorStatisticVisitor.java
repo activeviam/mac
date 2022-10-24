@@ -9,9 +9,9 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -205,7 +205,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
         statistic.getAttribute(MemoryStatisticConstants.ATTR_NAME_BLOCK_REFERENCE_COUNT).asLong());
 
     // Debug
-    if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+    if (MemoryAnalysisDatastoreDescriptionConfig.ADD_DEBUG_TREE) {
       tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
           StatisticTreePrinter.getTreeAsString(statistic);
     }

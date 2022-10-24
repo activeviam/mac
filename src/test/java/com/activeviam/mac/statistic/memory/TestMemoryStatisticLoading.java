@@ -8,15 +8,18 @@ package com.activeviam.mac.statistic.memory;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
-import com.qfs.store.query.IDictionaryCursor;
+import com.qfs.store.query.ICursor;
 import com.quartetfs.fwk.util.impl.TruePredicate;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -76,6 +79,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
               stat ->
                   stat.accept(
                       new AMemoryStatisticWithPredicate<Void>(TruePredicate.get()) {
+
                         @Override
                         protected Void getResult() {
                           return null;
@@ -99,19 +103,22 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
   }
 
   private Set<Long> retrieveChunksOfType(final IDatastore datastore, final ParentType component) {
-    final IDictionaryCursor cursor =
+    ListQuery query =
         datastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, component))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.equal(FieldPath.of(DatastoreConstants.OWNER__COMPONENT), component))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        datastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> reader.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> reader.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   @Test

@@ -7,12 +7,15 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.ICondition;
@@ -20,15 +23,14 @@ import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.multiversion.impl.Epoch;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -37,15 +39,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class TestEpochs extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
   private IMemoryStatistic statistics;
 
   @BeforeAll
@@ -65,7 +66,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -76,14 +77,14 @@ public class TestEpochs extends ATestMemoryStatistic {
 
     // epoch 1
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     // epoch 2
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
                 IntStream.range(10, 20).forEach(i -> transactionManager.add("A", i, 1.)));
@@ -91,15 +92,16 @@ public class TestEpochs extends ATestMemoryStatistic {
     // epoch 3
     // drop partition from epoch 2
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
-                transactionManager.removeWhere("A", BaseConditions.Equal("value", 1.)));
+                transactionManager.removeWhere(
+                    "A", BaseConditions.equal(FieldPath.of("value"), 1.)));
 
     // epoch 4
     // make sure to add a new chunk on the 0-valued partition
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
                 IntStream.range(20, 20 + MICROAPP_CHUNK_SIZE)
@@ -108,44 +110,39 @@ public class TestEpochs extends ATestMemoryStatistic {
     // epoch 5
     // remaining chunks from epoch 4, but not used by version
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
-                transactionManager.removeWhere("A", BaseConditions.GreaterOrEqual("id", 20)));
+                transactionManager.removeWhere(
+                    "A", BaseConditions.greaterOrEqual(FieldPath.of("id"), 20)));
 
-    this.monitoredApp.getRight().getActivePivots().get("Cube").commit(new Epoch(10L));
+    this.monitoredApp.getManager().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportApplication("testEpochs");
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
+
+    resources.register(this.monitoringApp).start();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(data), "testEpochs");
-  }
-
-  @AfterEach
-  public void tearDown() throws AgentException {
-    this.monitoringApp.getLeft().close();
-    this.monitoringApp.getRight().stop();
+        monitoringApp.getDatabase(), List.of(data), "testEpochs");
   }
 
   @Test
@@ -184,7 +181,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   public void testChunkInclusions() {
     final Set<Long> recordChunks = retrieveRecordChunks();
     final Multimap<Long, Long> chunksPerEpoch =
-        retrieveChunksPerEpoch(recordChunks, BaseConditions.True());
+        retrieveChunksPerEpoch(recordChunks, BaseConditions.TRUE);
 
     Assertions.assertThat(chunksPerEpoch.get(2L))
         .containsAll(chunksPerEpoch.get(1L))
@@ -205,10 +202,11 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Multimap<Long, Long> chunksPerEpochUsedByVersion =
         retrieveChunksPerEpoch(
             recordChunks,
-            BaseConditions.Equal(DatastoreConstants.CHUNK__USED_BY_VERSION, UsedByVersion.TRUE));
+            BaseConditions.equal(
+                FieldPath.of(DatastoreConstants.CHUNK__USED_BY_VERSION), UsedByVersion.TRUE));
 
     final Multimap<Long, Long> chunksPerEpochNoFilter =
-        retrieveChunksPerEpoch(recordChunks, BaseConditions.True());
+        retrieveChunksPerEpoch(recordChunks, BaseConditions.TRUE);
 
     Assertions.assertThat(chunksPerEpochNoFilter.get(4L)).isEqualTo(chunksPerEpochNoFilter.get(5L));
 
@@ -239,130 +237,183 @@ public class TestEpochs extends ATestMemoryStatistic {
   }
 
   protected Set<Long> retrieveRecordChunks() {
-    final ICursor cursor =
-        this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+    ListQuery query =
+        monitoringApp
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.OWNER__COMPONENT), ParentType.RECORDS))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> c.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(c -> c.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   protected Multimap<Long, Long> retrieveChunksPerEpoch(
       final Collection<Long> chunkSet, final ICondition filter) {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.And(
-                    BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()), filter))
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.and(
+                    BaseConditions.in(
+                        FieldPath.of(DatastoreConstants.CHUNK_ID), chunkSet.toArray()),
+                    filter))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Multimap<Long, Long> chunksPerEpoch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final long epochId = reader.readLong(0);
-      final long chunkId = reader.readLong(1);
-      chunksPerEpoch.put(epochId, chunkId);
+      final Multimap<Long, Long> chunksPerEpoch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final long epochId = reader.readLong(0);
+        final long chunkId = reader.readLong(1);
+        chunksPerEpoch.put(epochId, chunkId);
+      }
+
+      return chunksPerEpoch;
     }
-
-    return chunksPerEpoch;
   }
 
   protected Set<Long> retrieveEpochIds() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> c.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(c -> c.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   protected Multimap<Long, Integer> retrievePartitionsPerEpoch() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK__PARTITION_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK__PARTITION_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Multimap<Long, Integer> partitionsPerEpoch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final long epochId = reader.readLong(0);
-      final int partitionId = reader.readInt(1);
-      if (partitionId != MemoryAnalysisDatastoreDescription.NO_PARTITION) {
-        partitionsPerEpoch.put(epochId, partitionId);
+      final Multimap<Long, Integer> partitionsPerEpoch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final long epochId = reader.readLong(0);
+        final int partitionId = reader.readInt(1);
+        if (partitionId != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION) {
+          partitionsPerEpoch.put(epochId, partitionId);
+        }
       }
-    }
 
-    return partitionsPerEpoch;
+      return partitionsPerEpoch;
+    }
   }
 
   protected Multimap<Long, Long> retrieveDictionariesPerEpoch() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.DICTIONARY_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.DICTIONARY_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.DICTIONARY_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.DICTIONARY_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Multimap<Long, Long> dictionariesPerEpoch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final long epochId = reader.readLong(0);
-      final long dictionaryId = reader.readLong(1);
-      dictionariesPerEpoch.put(epochId, dictionaryId);
+      final Multimap<Long, Long> dictionariesPerEpoch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final long epochId = reader.readLong(0);
+        final long dictionaryId = reader.readLong(1);
+        dictionariesPerEpoch.put(epochId, dictionaryId);
+      }
+
+      return dictionariesPerEpoch;
     }
-
-    return dictionariesPerEpoch;
   }
 
   protected Multimap<Long, Long> retrieveIndicesPerEpoch() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.INDEX_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.INDEX_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.INDEX_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.INDEX_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Multimap<Long, Long> indicesPerEpoch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final long epochId = reader.readLong(0);
-      final long indexId = reader.readLong(1);
-      indicesPerEpoch.put(epochId, indexId);
+      final Multimap<Long, Long> indicesPerEpoch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final long epochId = reader.readLong(0);
+        final long indexId = reader.readLong(1);
+        indicesPerEpoch.put(epochId, indexId);
+      }
+
+      return indicesPerEpoch;
     }
-
-    return indicesPerEpoch;
   }
 }

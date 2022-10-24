@@ -7,15 +7,20 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.impl.MultiVersionDistributedActivePivot;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
 import com.qfs.store.IDatastoreVersion;
@@ -28,7 +33,6 @@ import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
@@ -43,9 +47,9 @@ import org.junit.jupiter.api.Test;
 
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
-  private Pair<IDatastore, IActivePivotManager> distributedMonitoredApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IDatastore> distributedMonitoredApp;
   private IMemoryStatistic appStatistics;
   private IMemoryStatistic distributedAppStatistics;
 
@@ -60,8 +64,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     Path exportPath =
         generateMemoryStatistics(
-            this.monitoredApp.getLeft(),
-            this.monitoredApp.getRight(),
+            this.monitoredApp.getDatabase(),
+            this.monitoredApp.getManager(),
             IMemoryAnalysisService::exportApplication);
     this.appStatistics = loadMemoryStatFromFolder(exportPath);
 
@@ -69,8 +73,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     exportPath =
         generateMemoryStatistics(
-            this.distributedMonitoredApp.getLeft(),
-            this.distributedMonitoredApp.getRight(),
+            this.distributedMonitoredApp.getDatabase(),
+            this.distributedMonitoredApp.getManager(),
             IMemoryAnalysisService::exportMostRecentVersion);
     this.distributedAppStatistics = loadMemoryStatFromFolder(exportPath);
 
@@ -79,7 +83,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testDifferentDumps() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -96,7 +100,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingChunks() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.distributedAppStatistics), "app");
@@ -122,7 +126,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingEpochs() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getLeft();
+    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -140,14 +144,17 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   private TLongSet collectEpochViewsForOwner(
       final IDatastoreVersion monitoringDatastore, final ChunkOwner owner) {
-    final ICursor queryResult =
+    final ListQuery query =
         monitoringDatastore
-            .getQueryRunner()
-            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.EPOCH_VIEW__OWNER, owner))
-            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.EPOCH_VIEW_STORE)
+            .withCondition(
+                BaseConditions.equal(FieldPath.of(DatastoreConstants.EPOCH_VIEW__OWNER), owner))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
+            .toQuery();
+    final ICursor queryResult = monitoringDatastore.getQueryRunner().listQuery(query).run();
 
     final TLongSet epochs = new TLongHashSet();
     for (final IRecordReader recordReader : queryResult) {
@@ -160,11 +167,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   private void initializeApplication() throws DatastoreTransactionException {
     this.monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
 
-    resources.register(this.monitoredApp.getRight()::stop);
-    resources.register(this.monitoredApp.getLeft()::stop);
-
     final ITransactionManager transactionManager =
-        this.monitoredApp.getLeft().getTransactionManager();
+        this.monitoredApp.getDatabase().getTransactionManager();
     fillMicroApplication(transactionManager);
   }
 
@@ -194,15 +198,13 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   private void initializeMonitoredApplication() {
     this.distributedMonitoredApp =
         createDistributedApplicationWithKeepAllEpochPolicy("analysis-feeder");
-    resources.register(this.distributedMonitoredApp.getLeft()::stop);
-    resources.register(this.distributedMonitoredApp.getRight()::stop);
     fillDistributedApplication();
   }
 
   private void fillDistributedApplication() {
     // epoch 1
     this.distributedMonitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
@@ -210,7 +212,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     MultiVersionDistributedActivePivot queryCubeA =
         ((MultiVersionDistributedActivePivot)
-            this.distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeA"));
+            this.distributedMonitoredApp.getManager().getActivePivots().get("QueryCubeA"));
 
     // produces distributed epochs 1 to 5
     for (int i = 0; i < 5; ++i) {
@@ -219,7 +221,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
     MultiVersionDistributedActivePivot queryCubeB =
         ((MultiVersionDistributedActivePivot)
-            this.distributedMonitoredApp.getRight().getActivePivots().get("QueryCubeB"));
+            this.distributedMonitoredApp.getManager().getActivePivots().get("QueryCubeB"));
 
     // produces distributed epoch 1
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
@@ -236,19 +238,17 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     return exportMethod.apply(analysisService, "testEpochs");
   }
 
-  private void initializeMonitoringApplication() throws AgentException {
+  private void initializeMonitoringApplication() {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        resources.create(
-            StartBuilding.datastore().setSchemaDescription(config.schemaDescription())::build);
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    resources.register(manager::stop);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withManager(config.managerDescription())
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .build();
 
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = application;
   }
 }

@@ -16,15 +16,15 @@ import com.qfs.server.cfg.IActivePivotConfig;
 import com.qfs.server.cfg.IDatastoreConfig;
 import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
 import com.qfs.server.cfg.i18n.impl.LocalI18nConfig;
-import com.qfs.server.cfg.impl.ActivePivotConfig;
 import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
+import com.qfs.server.cfg.impl.ActivePivotWithDatastoreConfig;
 import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
 import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
 import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
-import com.qfs.server.cfg.impl.DatastoreConfig;
 import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
 import com.qfs.server.cfg.impl.JwtConfig;
 import com.qfs.server.cfg.impl.JwtRestServiceConfig;
+import com.quartetfs.biz.pivot.monitoring.impl.DynamicActivePivotManagerMBean;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
 import java.nio.file.Paths;
@@ -64,8 +64,7 @@ import org.springframework.core.env.Environment;
       ManagerDescriptionConfig.class,
 
       // Pivot
-      ActivePivotConfig.class,
-      DatastoreConfig.class,
+      ActivePivotWithDatastoreConfig.class,
       NoWriteDatastoreServiceConfig.class,
       FullAccessBranchPermissionsManagerConfig.class,
       ActivePivotServicesConfig.class,
@@ -151,7 +150,7 @@ public class MacServerConfig {
    */
   @Bean
   public JMXEnabler jmxDatastoreEnabler() {
-    return new JMXEnabler(this.datastoreConfig.datastore());
+    return new JMXEnabler(this.datastoreConfig.database());
   }
 
   /**
@@ -163,7 +162,7 @@ public class MacServerConfig {
   public JMXEnabler jmxActivePivotEnabler() {
     startManager();
 
-    return new JMXEnabler(this.apConfig.activePivotManager());
+    return new JMXEnabler(new DynamicActivePivotManagerMBean(apConfig.activePivotManager()));
   }
 
   /**
@@ -199,9 +198,8 @@ public class MacServerConfig {
   public JMXEnabler jmxMemoryMonitoringServiceEnabler() {
     return new JMXEnabler(
         new MemoryAnalysisService(
-            this.datastoreConfig.datastore(),
+            this.datastoreConfig.database(),
             this.apConfig.activePivotManager(),
-            this.datastoreConfig.datastore().getEpochManager(),
             Paths.get(System.getProperty("java.io.tmpdir"))));
   }
 }

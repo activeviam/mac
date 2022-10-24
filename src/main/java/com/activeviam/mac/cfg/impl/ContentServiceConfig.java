@@ -157,8 +157,10 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
 
   private Map<String, List<String>> defaultBookmarkPermissions() {
     return Map.of(
-        Role.OWNERS, List.of(SecurityConfig.ROLE_CS_ROOT),
-        Role.READERS, List.of(SecurityConfig.ROLE_CS_ROOT));
+        Role.OWNERS,
+        List.of(SecurityConfig.ROLE_CS_ROOT),
+        Role.READERS,
+        List.of(SecurityConfig.ROLE_CS_ROOT));
   }
 
   /**

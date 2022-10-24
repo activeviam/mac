@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.memory;
 
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
@@ -142,7 +143,9 @@ public class AnalysisDatastoreFeeder {
         transaction
             .getQueryRunner()
             .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.Equal(DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName))
+            .withCondition(
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), this.dumpName))
             .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
             .run();
 

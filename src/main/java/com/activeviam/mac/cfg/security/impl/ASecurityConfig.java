@@ -91,6 +91,7 @@ public abstract class ASecurityConfig implements ICorsConfig {
   @Autowired protected IJwtConfig jwtConfig;
   /** The name of the Environment to use. */
   @Autowired protected Environment env;
+
   /**
    * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
    * the input password will be encoded and compared with the stored encoded password. To determine

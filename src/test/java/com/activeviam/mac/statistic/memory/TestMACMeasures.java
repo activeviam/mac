@@ -5,7 +5,8 @@ import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.activeviam.properties.impl.ActiveViamProperty;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension;
 import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
@@ -15,11 +16,11 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.util.impl.QfsArrays;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellDTO;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
@@ -27,7 +28,6 @@ import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.List;
@@ -62,8 +62,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @RegisterExtension
   public final LocalResourcesExtension methodResources = new LocalResourcesExtension();
 
-  Pair<IDatastore, IActivePivotManager> monitoredApp;
-  Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
   IMemoryStatistic stats;
   Map<String, Long> appStats;
   StatisticsSummary statsSumm;
@@ -96,11 +96,11 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     this.monitoredApp = createMicroApplication();
     // Add 100 records
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             tm ->
                 IntStream.range(50, 50 + REMOVED_DATA_SIZE)
@@ -117,12 +117,12 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                         }));
 
     // Force to discard all versions
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
     // perform GCs before exporting the store data
     performGC();
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
     this.stats = loadMemoryStatFromFolder(exportPath);
@@ -131,26 +131,22 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        this.methodResources.create(
-            () ->
-                StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
-    // Start a monitoring cube
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    this.methodResources.register(manager::stop);
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
+    resources.register(this.monitoringApp).start();
 
     // Fill the monitoring datastore
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(this.stats), "storeA");
+        this.monitoringApp.getDatabase(), List.of(this.stats), "storeA");
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -158,10 +154,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDirectMemorySum() throws QueryException {
-
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -198,10 +193,9 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
-
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -234,8 +228,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     Assertions.assertThat(CellSetUtils.sumValuesFromCellSetDTO(res3)).isEqualTo(value);
 
     /*
-     * On-heap memory usage by chunks is not consistent with application on-heap
-     * usage since on-heap data is not necessarily held by chunks
+     * On-heap memory usage by chunks is not consistent with application on-heap usage since on-heap data is
+     * not necessarily held by chunks
      */
     // Assertions.assertThat(statsSumm.onHeapMemory).isEqualTo(value);
   }
@@ -245,7 +239,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -266,7 +260,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -286,7 +280,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testApplicationMeasures() {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -317,7 +311,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testApplicationMeasuresAtAnyPointOfTheCube() {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -365,7 +359,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -386,7 +380,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -427,7 +421,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -467,7 +461,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   public void testDictionarySize() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
@@ -483,7 +477,12 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     CellSetDTO res = pivot.execute(query);
 
     final long expectedDictionarySize =
-        this.monitoredApp.getLeft().getDictionaries().getDictionary("A", "id").size();
+        this.monitoredApp
+            .getDatabase()
+            .getQueryMetadata()
+            .getDictionaries()
+            .getDictionary("A", "id")
+            .size();
 
     Assertions.assertThat(res.getCells())
         .isNotEmpty()

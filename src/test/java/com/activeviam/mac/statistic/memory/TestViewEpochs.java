@@ -7,28 +7,30 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.ITransactionManager;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,8 +47,8 @@ import org.junit.jupiter.api.Test;
 
 public class TestViewEpochs extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
   private IMemoryStatistic statistics;
 
   @BeforeAll
@@ -66,7 +68,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -76,7 +78,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
     this.monitoredApp = createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy();
 
     final ITransactionManager transactionManager =
-        this.monitoredApp.getLeft().getTransactionManager();
+        this.monitoredApp.getDatabase().getTransactionManager();
 
     // epoch 1 -> store A + cube
     transactionManager.startTransaction("A");
@@ -100,35 +102,33 @@ public class TestViewEpochs extends ATestMemoryStatistic {
   }
 
   private Path generateMemoryStatistics() {
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportApplication("testEpochs");
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(data), "testViewEpochs");
+        monitoringApp.getDatabase(), List.of(data), "testViewEpochs");
   }
 
   @AfterEach
-  public void tearDown() throws AgentException {
-    this.monitoringApp.getLeft().close();
-    this.monitoringApp.getRight().stop();
+  public void tearDown() {
+    this.monitoringApp.close();
   }
 
   @Test
@@ -186,63 +186,73 @@ public class TestViewEpochs extends ATestMemoryStatistic {
               .as("store A epochs")
               .containsExactlyInAnyOrderEntriesOf(
                   Map.of(
-                      1L, Collections.singleton(1L),
-                      2L, Collections.singleton(2L),
-                      3L, Collections.singleton(3L),
-                      4L, Collections.singleton(4L)));
+                      1L,
+                      Collections.singleton(1L),
+                      2L,
+                      Collections.singleton(2L),
+                      3L,
+                      Collections.singleton(3L),
+                      4L,
+                      Collections.singleton(4L)));
           assertions
               .assertThat(viewEpochs.get(storeB).asMap())
               .as("store B epochs")
               .containsExactlyInAnyOrderEntriesOf(
                   Map.of(
-                      1L, Collections.singleton(1L),
-                      2L, Collections.singleton(2L),
-                      3L, Collections.singleton(3L),
-                      4L, Collections.singleton(4L)));
+                      1L,
+                      Collections.singleton(1L),
+                      2L,
+                      Collections.singleton(2L),
+                      3L,
+                      Collections.singleton(3L),
+                      4L,
+                      Collections.singleton(4L)));
           assertions
               .assertThat(viewEpochs.get(cube).asMap())
               .as("cube epochs")
-              .containsExactlyInAnyOrderEntriesOf(
-                  Map.of(
-                      1L, Set.of(1L, 2L),
-                      3L, Set.of(3L, 4L)));
+              .containsExactlyInAnyOrderEntriesOf(Map.of(1L, Set.of(1L, 2L), 3L, Set.of(3L, 4L)));
         });
   }
 
   protected Multimap<ChunkOwner, Long> retrieveEpochIdsPerOwner() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.OWNER__OWNER),
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID))
+            .toQuery();
+    final ICursor cursor =
+        this.monitoringApp.getDatabase().getHead("master").getQueryRunner().listQuery(query).run();
 
     final Multimap<ChunkOwner, Long> epochs = HashMultimap.create();
     for (final IRecordReader record : cursor) {
       epochs.put((ChunkOwner) record.read(0), record.readLong(1));
     }
 
+    cursor.close();
     return epochs;
   }
 
   protected Map<ChunkOwner, Multimap<Long, Long>> retrieveViewEpochIdsPerOwner() {
-    final ICursor cursor =
+    final ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.EPOCH_VIEW_STORE)
             .withoutCondition()
-            .selecting(
-                DatastoreConstants.EPOCH_VIEW__OWNER,
-                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-                DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.EPOCH_VIEW__OWNER),
+                AliasedField.fromFieldName(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
+            .toQuery();
+    final ICursor cursor =
+        this.monitoringApp.getDatabase().getHead("master").getQueryRunner().listQuery(query).run();
 
     final Map<ChunkOwner, Multimap<Long, Long>> epochs = new HashMap<>();
     for (final IRecordReader record : cursor) {
@@ -251,6 +261,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
           .put(record.readLong(1), ((EpochView) record.read(2)).getEpochId());
     }
 
+    cursor.close();
     return epochs;
   }
 }

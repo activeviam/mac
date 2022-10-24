@@ -16,14 +16,18 @@ import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 
+import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.HierarchyIdentifier;
 import com.activeviam.copper.api.Copper;
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.ICondition;
@@ -38,7 +42,6 @@ import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
 import com.qfs.multiversion.impl.KeepAllEpochPolicy;
-import com.qfs.multiversion.impl.KeepLastEpochPolicy;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
@@ -47,7 +50,7 @@ import com.qfs.store.NoTransactionException;
 import com.qfs.store.TypeValues;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
 import com.qfs.store.impl.Datastore;
-import com.qfs.store.query.IDictionaryCursor;
+import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.ITransactionManager;
@@ -56,12 +59,8 @@ import com.qfs.util.impl.ThrowingLambda;
 import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
 import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotDatastorePostProcessor;
 import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.impl.Pair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,8 +112,7 @@ public abstract class ATestMemoryStatistic {
     DatastoreTestUtils.resetAllThreadsVectorAllocator();
 
     /*
-     * Note. We can't rely on calling MemUtils.runGC()
-     * because on some servers (alto), it seems not enough.
+     * Note. We can't rely on calling MemUtils.runGC() because on some servers (alto), it seems not enough.
      * Plus, MemUtils relies on on heap memory....
      */
     for (int i = 0; i < MAX_GC_STEPS; i++) {
@@ -325,31 +323,14 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
+    final ApplicationInTests<Datastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(datastoreSchema)
+            .withManager(userManagerDescription)
+            .build();
+    resources.register(application).start();
 
-    final Datastore datastore =
-        (Datastore)
-            resources.create(
-                () ->
-                    StartBuilding.datastore()
-                        .setSchemaDescription(datastoreSchema)
-                        .addSchemaDescriptionPostProcessors(
-                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                        .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot create manager", e);
-    }
-    resources.register(manager::stop);
-
-    actions.accept(datastore, manager);
+    actions.accept(application.getDatabase(), application.getManager());
   }
 
   static void createMinimalApplication(
@@ -402,32 +383,15 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, datastoreSchema);
 
-    final Datastore datastore =
-        (Datastore)
-            resources.create(
-                () ->
-                    StartBuilding.datastore()
-                        .setSchemaDescription(datastoreSchema)
-                        .setEpochManagementPolicy(new KeepAllEpochPolicy())
-                        .addSchemaDescriptionPostProcessors(
-                            ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                        .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot create manager", e);
-    }
-    resources.register(manager::stop);
+    final ApplicationInTests<Datastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(datastoreSchema)
+            .withManager(userManagerDescription)
+            .build();
+    resources.register(application).start();
 
-    actions.accept(datastore, manager);
+    actions.accept(application.getDatabase(), application.getManager());
   }
 
   /**
@@ -613,14 +577,16 @@ public abstract class ATestMemoryStatistic {
       final IDatastore datastore, final IActivePivotManager manager) {
     final Path dumpDirectory =
         QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
-    return new MemoryAnalysisService(
-        datastore, manager, datastore.getEpochManager(), dumpDirectory);
+    return new MemoryAnalysisService(datastore, manager, dumpDirectory);
   }
 
   static IDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
+    final IDatastoreSchemaDescription desc =
+        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
 
-    return resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    final IDatastore datastore = new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    resources.register(datastore);
+    return datastore;
   }
 
   /**
@@ -676,29 +642,16 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
-    final IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start the manager", e);
-    }
+    final ApplicationInTests<?> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
 
-    actions.accept(datastore, manager);
+    resources.register(application).start();
+
+    actions.accept((IDatastore) application.getDatabase(), application.getManager());
   }
 
   static void commitDataInDatastoreWithVectors(
@@ -728,18 +681,22 @@ public abstract class ATestMemoryStatistic {
     // If commitDuplicatedVectors, take already registered vector and re-commit it in a different
     // field
     if (commitDuplicatedVectors) {
-      IDictionaryCursor cursor =
+      ListQuery query =
           monitoredDatastore
-              .getHead()
               .getQueryManager()
-              .forStore(VECTOR_STORE_NAME)
+              .listQuery()
+              .forTable(VECTOR_STORE_NAME)
               .withoutCondition()
-              .selecting("vectorInt1")
-              .run();
+              .withAliasedFields(AliasedField.fromFieldName("vectorInt1"))
+              .toQuery();
 
-      final Object vec = cursor.next() ? cursor.getRecord().read("vectorInt1") : null;
+      try (ICursor cursor =
+          monitoredDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-      monitoredDatastore.edit(tm -> tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2));
+        final Object vec = cursor.next() ? cursor.getRecord().read("vectorInt1") : null;
+
+        monitoredDatastore.edit(tm -> tm.add(VECTOR_STORE_NAME, 0, v1, vec, v2));
+      }
     }
   }
 
@@ -747,8 +704,7 @@ public abstract class ATestMemoryStatistic {
    * Builds a minimal application with one field <i>id</i> in the store <i>A</i>, loaded into a cube
    * <i>Cube</i> with a single hierarchy <i>id</i>.
    */
-  static Pair<IDatastore, IActivePivotManager> createMicroApplication() {
-
+  static ApplicationInTests<IDatastore> createMicroApplication() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -776,31 +732,18 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithIndexedFields() {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithIndexedFields() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -834,31 +777,19 @@ public abstract class ATestMemoryStatistic {
     final IActivePivotManagerDescription userManagerDescription =
         new ActivePivotManagerDescription();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withEpochPolicy(new KeepAllEpochPolicy())
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithKeepAllEpochPolicy() {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithKeepAllEpochPolicy() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -890,31 +821,19 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withEpochPolicy(new KeepAllEpochPolicy())
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager>
+  static ApplicationInTests<IDatastore>
       createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -956,28 +875,15 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withEpochPolicy(new KeepAllEpochPolicy())
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+    return application;
   }
 
   /**
@@ -986,7 +892,7 @@ public abstract class ATestMemoryStatistic {
    * <p>To avoid mixing tests together, this requires a cluster name that should better be specific
    * to each test.
    */
-  static Pair<IDatastore, IActivePivotManager> createDistributedApplicationWithKeepAllEpochPolicy(
+  static ApplicationInTests<IDatastore> createDistributedApplicationWithKeepAllEpochPolicy(
       final String clusterName) {
 
     final IDatastoreSchemaDescription schemaDescription =
@@ -1061,31 +967,18 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepAllEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithSharedVectorField() {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithSharedVectorField() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1105,32 +998,18 @@ public abstract class ATestMemoryStatistic {
     final IActivePivotManagerDescription userManagerDescription =
         new ActivePivotManagerDescription();
 
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    final IActivePivotManager manager;
-    try {
-      manager =
-          StartBuilding.manager()
-              .setDescription(managerDescription)
-              .setDatastoreAndPermissions(datastore)
-              .buildAndStart();
-    } catch (AgentException e) {
-      throw new RuntimeException("Cannot start manager", e);
-    }
-    return new Pair<>(datastore, manager);
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReference()
-      throws AgentException {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithReference() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1173,28 +1052,19 @@ public abstract class ATestMemoryStatistic {
                     .asDefaultHierarchy()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    return new Pair<>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithReferenceAndSameFieldName()
-      throws AgentException {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithReferenceAndSameFieldName() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1238,28 +1108,19 @@ public abstract class ATestMemoryStatistic {
                     .asDefaultHierarchy()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
 
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    return new Pair<>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithLeafBitmap()
-      throws AgentException {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithLeafBitmap() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1288,27 +1149,19 @@ public abstract class ATestMemoryStatistic {
                     .leaf()
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    return new Pair<>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
-  static Pair<IDatastore, IActivePivotManager> createMicroApplicationWithPartialProviders()
-      throws AgentException {
+  static ApplicationInTests<IDatastore> createMicroApplicationWithPartialProviders() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1355,23 +1208,16 @@ public abstract class ATestMemoryStatistic {
                     .includingOnlyMeasures("contributors.COUNT")
                     .build())
             .build();
-    final IActivePivotManagerDescription managerDescription =
-        ActivePivotManagerBuilder.postProcess(userManagerDescription, schemaDescription);
-    IDatastore datastore =
-        resources.create(
-            () ->
-                new UnitTestDatastoreBuilder()
-                    .setSchemaDescription(schemaDescription)
-                    .addSchemaDescriptionPostProcessors(
-                        ActivePivotDatastorePostProcessor.createFrom(managerDescription))
-                    .setEpochManagementPolicy(new KeepLastEpochPolicy())
-                    .build());
-    return new Pair<>(
-        datastore,
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(datastore)
-            .buildAndStart());
+
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaDescription)
+            .withManager(userManagerDescription)
+            .build();
+
+    resources.register(application).start();
+
+    return application;
   }
 
   static IDatastore assertLoadsCorrectly(
@@ -1401,27 +1247,35 @@ public abstract class ATestMemoryStatistic {
 
   static void checkForUnclassifiedChunks(IDatastore monitoringDatastore) {
     // Check that all chunks have a parent type/id
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withCondition(
-                BaseConditions.Or(
-                    BaseConditions.Equal(
-                        CHUNK__CLOSEST_PARENT_TYPE, TypeValues.GLOBAL_DEFAULT_STRING),
-                    BaseConditions.Equal(CHUNK__PARENT_ID, TypeValues.GLOBAL_DEFAULT_STRING)))
-            .selecting(CHUNK_ID, CHUNK__CLASS, CHUNK__CLOSEST_PARENT_TYPE, CHUNK__PARENT_ID)
-            .onCurrentThread()
-            .run();
-    if (cursor.hasNext()) {
-      int count = 0;
-      while (cursor.hasNext()) {
-        cursor.next();
-        count += 1;
-        System.out.println("Error for " + cursor.getRawRecord());
+                BaseConditions.or(
+                    BaseConditions.equal(
+                        FieldPath.of(CHUNK__CLOSEST_PARENT_TYPE), TypeValues.GLOBAL_DEFAULT_STRING),
+                    BaseConditions.equal(
+                        FieldPath.of(CHUNK__PARENT_ID), TypeValues.GLOBAL_DEFAULT_STRING)))
+            .withAliasedFields(
+                AliasedField.fromFieldName(CHUNK_ID),
+                AliasedField.fromFieldName(CHUNK__CLASS),
+                AliasedField.fromFieldName(CHUNK__CLOSEST_PARENT_TYPE),
+                AliasedField.fromFieldName(CHUNK__PARENT_ID))
+            .toQuery();
+
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+      if (cursor.hasNext()) {
+        int count = 0;
+        while (cursor.hasNext()) {
+          cursor.next();
+          count += 1;
+          System.out.println("Error for " + cursor.getRecord());
+        }
+        throw new AssertionError(count + " chunks without parent type/id");
       }
-      throw new AssertionError(count + " chunks without parent type/id");
     }
   }
 
@@ -1435,13 +1289,15 @@ public abstract class ATestMemoryStatistic {
             monitoringDatastore,
             CHUNK_STORE,
             CHUNK_ID,
-            BaseConditions.Not(BaseConditions.Equal(OWNER__OWNER, NoOwner.getInstance())));
+            BaseConditions.not(
+                BaseConditions.equal(FieldPath.of(OWNER__OWNER), NoOwner.getInstance())));
     final Set<Long> componentStoreChunks =
         retrieveAllChunkIds(
             monitoringDatastore,
             CHUNK_STORE,
             CHUNK_ID,
-            BaseConditions.Not(BaseConditions.Equal(OWNER__COMPONENT, ParentType.NO_COMPONENT)));
+            BaseConditions.not(
+                BaseConditions.equal(FieldPath.of(OWNER__COMPONENT), ParentType.NO_COMPONENT)));
 
     Assertions.assertThat(ownerStoreChunks).containsExactlyInAnyOrderElementsOf(chunkStoreChunks);
     Assertions.assertThat(componentStoreChunks)
@@ -1453,19 +1309,22 @@ public abstract class ATestMemoryStatistic {
       final String storeName,
       final String chunkIdFieldName,
       final ICondition condition) {
-    final IDictionaryCursor cursor =
+    ListQuery query =
         monitoringDatastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(storeName)
+            .getQueryManager()
+            .listQuery()
+            .forTable(storeName)
             .withCondition(condition)
-            .selecting(chunkIdFieldName)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(AliasedField.fromFieldName(chunkIdFieldName))
+            .toQuery();
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(reader -> reader.readLong(0))
-        .collect(Collectors.toSet());
+    try (final ICursor cursor =
+        monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
+
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(reader -> reader.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   /**
@@ -1505,30 +1364,38 @@ public abstract class ATestMemoryStatistic {
   }
 
   static Map<Long, VersionedChunkInfo> extractLatestChunkInfos(final IDatastore datastore) {
-    final IDictionaryCursor cursor =
+    ListQuery query =
         datastore
-            .getHead()
-            .getQueryRunner()
-            .forStore(CHUNK_STORE)
+            .getHead("master")
+            .getQueryManager()
+            .listQuery()
+            .forTable(CHUNK_STORE)
             .withoutCondition()
-            .selecting(CHUNK_ID, VERSION__EPOCH_ID, CHUNK__OFF_HEAP_SIZE, CHUNK__CLASS)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(CHUNK_ID),
+                AliasedField.fromFieldName(VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(CHUNK__OFF_HEAP_SIZE),
+                AliasedField.fromFieldName(CHUNK__CLASS))
+            .toQuery();
 
-    final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
-    for (final IRecordReader reader : cursor) {
-      final long chunkId = reader.readLong(0);
-      final long epochId = reader.readLong(1);
+    try (final ICursor cursor =
+        datastore.getHead("master").getQueryRunner().listQuery(query).run()) {
 
-      final VersionedChunkInfo chunkInfo = latestChunkInfos.get(chunkId);
-      if (chunkInfo == null || chunkInfo.epochId < epochId) {
-        final long offHeapSize = reader.readLong(2);
-        final String chunkClass = (String) reader.read(3);
-        latestChunkInfos.put(chunkId, new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
+      final Map<Long, VersionedChunkInfo> latestChunkInfos = new HashMap<>();
+      for (final IRecordReader reader : cursor) {
+        final long chunkId = reader.readLong(0);
+        final long epochId = reader.readLong(1);
+
+        final VersionedChunkInfo chunkInfo = latestChunkInfos.get(chunkId);
+        if (chunkInfo == null || chunkInfo.epochId < epochId) {
+          final long offHeapSize = reader.readLong(2);
+          final String chunkClass = (String) reader.read(3);
+          latestChunkInfos.put(chunkId, new VersionedChunkInfo(epochId, offHeapSize, chunkClass));
+        }
       }
-    }
 
-    return latestChunkInfos;
+      return latestChunkInfos;
+    }
   }
 
   static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {

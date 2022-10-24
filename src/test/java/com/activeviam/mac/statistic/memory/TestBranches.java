@@ -7,26 +7,29 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
 import com.qfs.store.transaction.ITransactionManager;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,8 +46,8 @@ import org.junit.jupiter.api.Test;
 
 public class TestBranches extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -63,7 +66,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -73,7 +76,7 @@ public class TestBranches extends ATestMemoryStatistic {
     this.monitoredApp = createMicroApplicationWithKeepAllEpochPolicy();
 
     final ITransactionManager transactionManager =
-        this.monitoredApp.getLeft().getTransactionManager();
+        this.monitoredApp.getDatabase().getTransactionManager();
 
     transactionManager.startTransactionOnBranch("branch1", "A");
     IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.));
@@ -97,27 +100,26 @@ public class TestBranches extends ATestMemoryStatistic {
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportApplication("testBranches");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final IMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        resources.create(
-            StartBuilding.datastore().setSchemaDescription(config.schemaDescription())::build);
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    resources.register(manager::stop);
+    ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
+    resources.register(application).start();
 
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp = application;
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(data), "testBranches");
+        application.getDatabase(), List.of(data), "testBranches");
   }
 
   @Test
@@ -174,107 +176,149 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   protected Set<String> retrieveBranches() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.VERSION_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.VERSION_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.VERSION__BRANCH_NAME)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.VERSION__BRANCH_NAME))
+            .toQuery();
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> (String) c.read(0))
-        .collect(Collectors.toSet());
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
+
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(c -> (String) c.read(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   protected Multimap<String, Long> retrieveEpochsPerBranch() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.VERSION_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.VERSION_STORE)
             .withoutCondition()
-            .selecting(
-                DatastoreConstants.VERSION__BRANCH_NAME, DatastoreConstants.VERSION__EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__BRANCH_NAME),
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Multimap<String, Long> epochsPerBranch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final String branch = (String) reader.read(0);
-      final long epochId = reader.readLong(1);
-      epochsPerBranch.put(branch, epochId);
+      final Multimap<String, Long> epochsPerBranch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final String branch = (String) reader.read(0);
+        final long epochId = reader.readLong(1);
+        epochsPerBranch.put(branch, epochId);
+      }
+
+      return epochsPerBranch;
     }
-
-    return epochsPerBranch;
   }
 
   protected Set<Long> retrieveRecordChunks() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
-                BaseConditions.Equal(DatastoreConstants.OWNER__COMPONENT, ParentType.RECORDS))
-            .selecting(DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.OWNER__COMPONENT), ParentType.RECORDS))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> c.readLong(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(c -> c.readLong(0))
+          .collect(Collectors.toSet());
+    }
   }
 
   protected Multimap<String, Long> retrieveChunksPerBranch(final Collection<Long> chunkSet) {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.in(FieldPath.of(DatastoreConstants.CHUNK_ID), chunkSet.toArray()))
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID),
+                AliasedField.fromFieldName(DatastoreConstants.CHUNK_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
             .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
-            .withCondition(BaseConditions.In(DatastoreConstants.CHUNK_ID, chunkSet.toArray()))
-            .selecting(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.CHUNK_ID)
-            .onCurrentThread()
-            .run();
+            .listQuery(query)
+            .run()) {
 
-    final Map<Long, String> epochToBranch = retrieveEpochToBranchMapping();
+      final Map<Long, String> epochToBranch = retrieveEpochToBranchMapping();
 
-    final Multimap<String, Long> chunksPerEpoch = HashMultimap.create();
-    for (final IRecordReader reader : cursor) {
-      final String branch = epochToBranch.get(reader.readLong(0));
-      final long chunkId = reader.readLong(1);
-      chunksPerEpoch.put(branch, chunkId);
+      final Multimap<String, Long> chunksPerEpoch = HashMultimap.create();
+      for (final IRecordReader reader : cursor) {
+        final String branch = epochToBranch.get(reader.readLong(0));
+        final long chunkId = reader.readLong(1);
+        chunksPerEpoch.put(branch, chunkId);
+      }
+
+      return chunksPerEpoch;
     }
-
-    return chunksPerEpoch;
   }
 
   protected Map<Long, String> retrieveEpochToBranchMapping() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.VERSION_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.VERSION_STORE)
             .withoutCondition()
-            .selecting(
-                DatastoreConstants.VERSION__BRANCH_NAME, DatastoreConstants.VERSION__EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__BRANCH_NAME),
+                AliasedField.fromFieldName(DatastoreConstants.VERSION__EPOCH_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    final Map<Long, String> epochToBranch = new HashMap<>();
-    for (final IRecordReader reader : cursor) {
-      final long epochId = reader.readLong(1);
-      final String branch = (String) reader.read(0);
-      epochToBranch.put(epochId, branch);
+      final Map<Long, String> epochToBranch = new HashMap<>();
+      for (final IRecordReader reader : cursor) {
+        final long epochId = reader.readLong(1);
+        final String branch = (String) reader.read(0);
+        epochToBranch.put(epochId, branch);
+      }
+
+      return epochToBranch;
     }
-
-    return epochToBranch;
   }
 }

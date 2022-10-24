@@ -207,7 +207,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    */
   protected static void setTupleElement(
       Object[] tuple, IRecordFormat format, String field, final Object value) {
-    if (value == null && format.isPrimitive(format.getFieldIndex(field))) {
+    if (value == null) {
       throw new RuntimeException("Expected a non-null value for field " + field);
     }
     tuple[format.getFieldIndex(field)] = value;
