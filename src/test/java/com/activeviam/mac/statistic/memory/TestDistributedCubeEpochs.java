@@ -127,7 +127,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
     assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
-            new RegularEpochView(2L),
+            new RegularEpochView(3L),
             new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
             new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
   }
