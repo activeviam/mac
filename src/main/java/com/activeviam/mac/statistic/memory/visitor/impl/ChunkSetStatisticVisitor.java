@@ -172,7 +172,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       this.freeRows = previousFree;
       this.nonWrittenRows = previousNonWritten;
     } else if (memoryStatistic.getName().contains("VectorHistory")
-        || memoryStatistic.getName().matches(".*Array.*Vector")) {
+        || MemoryStatisticConstants.STAT_NAME_VECTOR.equals(memoryStatistic.getName())) {
       FeedVisitor.visitChildren(this, memoryStatistic);
     } else {
       handleUnknownDefaultStatistic(memoryStatistic);
