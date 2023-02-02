@@ -15,6 +15,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
+import static com.qfs.chunk.impl.MemoryTestUtils.resetAllThreadsVectorAllocator;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.HierarchyIdentifier;
@@ -82,7 +83,6 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import test.util.impl.DatastoreTestUtils;
 
 public abstract class ATestMemoryStatistic {
 
@@ -108,7 +108,7 @@ public abstract class ATestMemoryStatistic {
 
   public static void performGC() {
     // Make sure that no thread holds stale blocks.
-    DatastoreTestUtils.resetAllThreadsVectorAllocator();
+    resetAllThreadsVectorAllocator();
 
     /*
      * Note. We can't rely on calling MemUtils.runGC() because on some servers (alto), it seems not enough.
