@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import static com.qfs.distribution.impl.DistributionUtil.stopDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.activeviam.database.api.query.AliasedField;
@@ -35,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +68,12 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     assertThat(pivot).isNotNull();
   }
 
+  @AfterEach
+  public void tearDown() {
+    monitoringApp.close();
+    stopDistribution(monitoredApp.getManager());
+  }
+
   private void initializeApplication() {
     // In JUnit5, we can also use TestInfo to complete the cluster name with the test name
     this.monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
@@ -76,7 +84,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     final var queryCubeB =
         ((MultiVersionDistributedActivePivot)
             this.monitoredApp.getManager().getActivePivots().get("QueryCubeB"));
-
+    final var dataCube = this.monitoredApp.getManager().getActivePivots().get("Data");
     // epoch 1
     this.monitoredApp
         .getDatabase()
@@ -84,14 +92,22 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
             transactionManager ->
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i)));
 
+    dataCube.awaitNotifications();
+    queryCubeA.awaitNotifications();
+    queryCubeB.awaitNotifications();
+
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     // produces 5 distributed epochs
     for (int i = 0; i < 5; ++i) {
       queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
+      queryCubeA.awaitNotifications();
+      dataCube.awaitNotifications();
     }
 
     // produces 1 distributed epoch
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
+    queryCubeB.awaitNotifications();
+    dataCube.awaitNotifications();
   }
 
   private Path generateMemoryStatistics() {
@@ -127,16 +143,16 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
     assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
-            new RegularEpochView(2L),
+            new RegularEpochView(getHeadEpochId("Data")),
             new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
             new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
   }
 
-  private long getHeadEpochId(String queryCubeA) {
+  private long getHeadEpochId(String queryCube) {
     return this.monitoredApp
         .getManager()
         .getActivePivots()
-        .get(queryCubeA)
+        .get(queryCube)
         .getMostRecentVersion()
         .getEpochId();
   }

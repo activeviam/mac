@@ -737,20 +737,21 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void vectorMeasures(ICopperContext context) {
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
         .sum()
-        .per(Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY))
-        .doNotAggregateAbove()
         .as(VECTOR_BLOCK_REFCOUNT)
         .withinFolder(VECTOR_FOLDER)
-        .withDescription("the length of the vector block, when relevant")
+        .withDescription(
+            "The amount of references held towards the vectors contained in the vector block of the chunks, when relevant")
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
-        .sum()
+        .custom(SingleValueFunction.PLUGIN_KEY)
+        // The underlying vector block length should be the same for all the chunks of an
+        // application
         .per(Copper.level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
         .as(VECTOR_BLOCK_SIZE)
         .withinFolder(VECTOR_FOLDER)
-        .withDescription("the number of references to the vector block, when relevant")
+        .withDescription("the length of the Block holding the vector data, when relevant")
         .publish(context);
   }
 

@@ -15,6 +15,7 @@ import static com.activeviam.mac.memory.DatastoreConstants.CHUNK__PARENT_ID;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__COMPONENT;
 import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
+import static com.qfs.chunk.impl.MemoryTestUtils.resetAllThreadsVectorAllocator;
 
 import com.activeviam.builders.StartBuilding;
 import com.activeviam.copper.HierarchyIdentifier;
@@ -33,7 +34,7 @@ import com.google.common.collect.Multimap;
 import com.qfs.condition.ICondition;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.junit.ClassResourcesExtension;
+import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.literal.ILiteralType;
 import com.qfs.messenger.impl.LocalMessenger;
 import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
@@ -82,7 +83,6 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import test.util.impl.DatastoreTestUtils;
 
 public abstract class ATestMemoryStatistic {
 
@@ -96,11 +96,9 @@ public abstract class ATestMemoryStatistic {
 
   public static final int MAX_GC_STEPS = 10;
 
-  @RegisterExtension
-  public static final ClassResourcesExtension resources = new ClassResourcesExtension();
+  @RegisterExtension public final LocalResourcesExtension resources = new LocalResourcesExtension();
 
   protected static final String VECTOR_STORE_NAME = "vectorStore";
-  public static AtomicInteger operationsBatch = new AtomicInteger();
 
   @BeforeAll
   public static void setUpRegistry() {
@@ -109,7 +107,7 @@ public abstract class ATestMemoryStatistic {
 
   public static void performGC() {
     // Make sure that no thread holds stale blocks.
-    DatastoreTestUtils.resetAllThreadsVectorAllocator();
+    resetAllThreadsVectorAllocator();
 
     /*
      * Note. We can't rely on calling MemUtils.runGC() because on some servers (alto), it seems not enough.
@@ -135,7 +133,7 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
-  static void createApplication(
+  void createApplication(
       final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) {
     final IDatastoreSchemaDescription datastoreSchema =
         StartBuilding.datastoreSchema()
@@ -333,7 +331,7 @@ public abstract class ATestMemoryStatistic {
     actions.accept(application.getDatabase(), application.getManager());
   }
 
-  static void createMinimalApplication(
+  void createMinimalApplication(
       final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) {
 
     final IDatastoreSchemaDescription datastoreSchema =
@@ -400,12 +398,13 @@ public abstract class ATestMemoryStatistic {
    * @param datastore datastore to fill
    */
   static void fillApplicationMinimal(final Datastore datastore) {
+    AtomicInteger operationsBatch = new AtomicInteger();
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
           final int productCount = STORE_PRODUCT_COUNT;
-
           final Random r = new Random(47605);
+
           IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
               .forEach(
                   i -> {
@@ -445,7 +444,7 @@ public abstract class ATestMemoryStatistic {
                           "Corp" + (i + 1 % 3)));
           final int productCount = STORE_PRODUCT_COUNT;
           LongStream.range(0, productCount).forEach(i -> tm.add("Products", i, "p" + i));
-
+          AtomicInteger operationsBatch = new AtomicInteger();
           final Random r = new Random(47605);
           IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
               .forEach(
@@ -472,6 +471,8 @@ public abstract class ATestMemoryStatistic {
    * @param datastore datastore to fill
    */
   static void fillApplicationMinimalWithSingleValue(final Datastore datastore) {
+    AtomicInteger operationsBatch = new AtomicInteger();
+
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
@@ -540,6 +541,7 @@ public abstract class ATestMemoryStatistic {
     } else {
       fillApplication(datastore);
     }
+    AtomicInteger operationsBatch = new AtomicInteger();
     branches.forEach(
         br_string -> {
           ITransactionManager tm = datastore.getTransactionManager();
@@ -580,7 +582,7 @@ public abstract class ATestMemoryStatistic {
     return new MemoryAnalysisService(datastore, manager, dumpDirectory);
   }
 
-  static IDatastore createAnalysisDatastore() {
+  IDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc =
         new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
 
@@ -595,7 +597,7 @@ public abstract class ATestMemoryStatistic {
    * (blocks of 20 entries) - vectorLong - long[] (blocks of 30 entries) The store has chunks of 10
    * rows.
    */
-  static void createApplicationWithVector(
+  void createApplicationWithVector(
       final boolean useVectorsAsMeasures,
       final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
     final IDatastoreSchemaDescription schemaDescription =
@@ -704,7 +706,7 @@ public abstract class ATestMemoryStatistic {
    * Builds a minimal application with one field <i>id</i> in the store <i>A</i>, loaded into a cube
    * <i>Cube</i> with a single hierarchy <i>id</i>.
    */
-  static ApplicationInTests<IDatastore> createMicroApplication() {
+  ApplicationInTests<IDatastore> createMicroApplication() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -743,7 +745,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithIndexedFields() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithIndexedFields() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -789,7 +791,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithKeepAllEpochPolicy() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithKeepAllEpochPolicy() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -833,8 +835,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore>
-      createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithIsolatedStoreAndKeepAllEpochPolicy() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -892,7 +893,7 @@ public abstract class ATestMemoryStatistic {
    * <p>To avoid mixing tests together, this requires a cluster name that should better be specific
    * to each test.
    */
-  static ApplicationInTests<IDatastore> createDistributedApplicationWithKeepAllEpochPolicy(
+  ApplicationInTests<IDatastore> createDistributedApplicationWithKeepAllEpochPolicy(
       final String clusterName) {
 
     final IDatastoreSchemaDescription schemaDescription =
@@ -978,7 +979,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithSharedVectorField() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithSharedVectorField() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1009,7 +1010,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithReference() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithReference() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1064,7 +1065,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithReferenceAndSameFieldName() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithReferenceAndSameFieldName() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1120,7 +1121,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithLeafBitmap() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithLeafBitmap() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1161,7 +1162,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static ApplicationInTests<IDatastore> createMicroApplicationWithPartialProviders() {
+  ApplicationInTests<IDatastore> createMicroApplicationWithPartialProviders() {
 
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
@@ -1220,7 +1221,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  static IDatastore assertLoadsCorrectly(
+  IDatastore assertLoadsCorrectly(
       final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
     final IDatastore monitoringDatastore = createAnalysisDatastore();
 

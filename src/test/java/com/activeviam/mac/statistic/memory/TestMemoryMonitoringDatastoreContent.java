@@ -63,13 +63,11 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
           performGC();
 
           final IMemoryAnalysisService analysisService =
-              TestMemoryStatisticLoading.createService(monitoredDatastore, monitoredManager);
+              createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportApplication("testLoadComplete");
 
-          final IMemoryStatistic fullStats =
-              TestMemoryStatisticLoading.loadMemoryStatFromFolder(exportPath);
-          final Datastore monitoringDatastore =
-              (Datastore) TestMemoryStatisticLoading.createAnalysisDatastore();
+          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+          final Datastore monitoringDatastore = (Datastore) createAnalysisDatastore();
 
           IDictionary<Object> dic =
               monitoredDatastore.getQueryMetadata().getDictionaries().getDictionary("Sales", "id");

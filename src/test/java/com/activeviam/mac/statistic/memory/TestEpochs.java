@@ -147,7 +147,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   @Test
   public void testStatisticConsistency() {
-    ATestMemoryStatistic.assertLoadsCorrectly(this.statistics.getChildren(), TestEpochs.class);
+    assertLoadsCorrectly(this.statistics.getChildren(), TestEpochs.class);
   }
 
   @Test
