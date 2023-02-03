@@ -99,7 +99,6 @@ public abstract class ATestMemoryStatistic {
   @RegisterExtension public final LocalResourcesExtension resources = new LocalResourcesExtension();
 
   protected static final String VECTOR_STORE_NAME = "vectorStore";
-  public static AtomicInteger operationsBatch = new AtomicInteger();
 
   @BeforeAll
   public static void setUpRegistry() {
@@ -399,12 +398,13 @@ public abstract class ATestMemoryStatistic {
    * @param datastore datastore to fill
    */
   static void fillApplicationMinimal(final Datastore datastore) {
+    AtomicInteger operationsBatch = new AtomicInteger();
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
           final int productCount = STORE_PRODUCT_COUNT;
-
           final Random r = new Random(47605);
+
           IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
               .forEach(
                   i -> {
@@ -444,7 +444,7 @@ public abstract class ATestMemoryStatistic {
                           "Corp" + (i + 1 % 3)));
           final int productCount = STORE_PRODUCT_COUNT;
           LongStream.range(0, productCount).forEach(i -> tm.add("Products", i, "p" + i));
-
+          AtomicInteger operationsBatch = new AtomicInteger();
           final Random r = new Random(47605);
           IntStream.range(operationsBatch.getAndIncrement(), 1000 * operationsBatch.get())
               .forEach(
@@ -471,6 +471,8 @@ public abstract class ATestMemoryStatistic {
    * @param datastore datastore to fill
    */
   static void fillApplicationMinimalWithSingleValue(final Datastore datastore) {
+    AtomicInteger operationsBatch = new AtomicInteger();
+
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
@@ -539,6 +541,7 @@ public abstract class ATestMemoryStatistic {
     } else {
       fillApplication(datastore);
     }
+    AtomicInteger operationsBatch = new AtomicInteger();
     branches.forEach(
         br_string -> {
           ITransactionManager tm = datastore.getTransactionManager();

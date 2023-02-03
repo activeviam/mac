@@ -297,7 +297,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                   + "] ON COLUMNS"
                                   + "  FROM [MemoryCube]");
                       final CellSetDTO result = pivot.execute(query);
-                      System.out.println(measure);
                       final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                       assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                     })));
