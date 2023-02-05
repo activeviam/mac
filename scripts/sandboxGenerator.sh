@@ -106,8 +106,6 @@ echo "Downloaded the jmxterm uber-jar..."
 echo
 
 # Generate a script file with correct vmid for rmid connection
-rm ${BASEDIR}/jmxtermCommands.txt
-
 touch ${BASEDIR}/jmxtermCommands.txt
 
 echo open ${VMID_SANDBOX} >> ${BASEDIR}/jmxtermCommands.txt
@@ -125,10 +123,22 @@ echo
 java -jar jmxterm-${JMXTERM_VERSION}-uber.jar -n -o logs/jmxterm.log < ${BASEDIR}/jmxtermCommands.txt
 
 echo "Ran the export MBean..."
-echo
+
+# Ensure the MBean succeeded
+if [ -z "$(cat logs/jmxterm.log)" ]; then
+     echo "No output in the export MBean execution, something went wrong."
+     # Do the cleanup to make sure we don't leave open processes
+     kill -n 15 ${PID_SANDBOX}
+     kill -n 15 ${PID_MAC}
+     rm jmxterm-${JMXTERM_VERSION}-uber.jar
+     rm ${BASEDIR}/jmxtermCommands.txt
+     exit 1
+fi
 
 # 5- Load files in MAC
 cp -r $(cat logs/jmxterm.log) ./target/exported_statistics
+
+
 echo "Pause the script for 10 seconds for the MAC data to be loaded ..."
 echo
 sleep 10
