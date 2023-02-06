@@ -14,6 +14,7 @@
 # Maven 3+
 # ActiveViam artifacts access
 # Valid ActivePivot License
+# jq
 
 # INPUT : 
 # - $1 String : AP version
@@ -22,6 +23,37 @@
 # - File : Query & server logs
 
 # 0- Log execution path & script location path
+
+# Define functions to avoid command duplication
+# Make sure the variables used are defined before calling these
+cleanup(){
+	kill -n 15 ${PID_SANDBOX}
+	kill -n 15 ${PID_MAC}
+	rm jmxterm-${JMXTERM_VERSION}-uber.jar
+	rm ${BASEDIR}/jmxtermCommands.txt
+	rm -rdf ./scripts/queries/output
+}
+
+check_query(){
+	if [ -z "$1" ];	then
+		echo "No argument supplied to the query function"
+		exit 1
+    else
+    	curl -X POST -u admin:admin -H "Content-Type:application/json" \
+    		-d @./scripts/queries/input/$1.json \
+    		http://localhost:9092/activeviam/pivot/rest/v8/cube/query/mdx \
+    		| jq .cells[].value > ./scripts/queries/output/$1.txt
+    fi
+
+    if [ -z $(diff --strip-trailing-cr --ignore-all-space ./scripts/queries/output/$1.txt ./scripts/queries/ref/$1.txt) ]; then
+    	echo $1"... OK"
+    else
+    	echo "Error when comparing expected query output to query result. Aborting."
+	     # Do the cleanup to make sure we don't leave open processes
+	    cleanup
+	    exit 1
+	fi
+}
 
 # Prepare strings
 MAC_VERSION=3.0.0-SNAPSHOT
@@ -35,8 +67,7 @@ JMXTERM_VERSION=1.0.4
 JMX_REPO_PATH=https://github.com/jiaqi/jmxterm/releases/download/
 JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber.jar
 
-if [ -z "$1" ]
-  then
+if [ -z "$1" ]; then
     echo "No argument supplied : unable to assess the ActivePivot version to use. Aborting."
     exit 1
 fi
@@ -118,7 +149,6 @@ echo
 sleep 60
 echo "Resumed the script..."
 echo
-
 # run jmxterm in non-interactive mode with the script file
 java -jar jmxterm-${JMXTERM_VERSION}-uber.jar -n -o logs/jmxterm.log < ${BASEDIR}/jmxtermCommands.txt
 
@@ -126,12 +156,9 @@ echo "Ran the export MBean..."
 
 # Ensure the MBean succeeded
 if [ -z "$(cat logs/jmxterm.log)" ]; then
-     echo "No output in the export MBean execution, something went wrong."
+     echo "No output in the export MBean execution, something went wrong. Aborting."
      # Do the cleanup to make sure we don't leave open processes
-     kill -n 15 ${PID_SANDBOX}
-     kill -n 15 ${PID_MAC}
-     rm jmxterm-${JMXTERM_VERSION}-uber.jar
-     rm ${BASEDIR}/jmxtermCommands.txt
+     cleanup
      exit 1
 fi
 
@@ -145,14 +172,11 @@ sleep 10
 echo "Resumed the script..."
 echo
 
-# 6- Run queries on MAC
-# TODO
+# 6- Run queries on MAC & verify content
+mkdir ./scripts/queries/output
+#Query 1 : COUNT Grand Total
+check_query "query1"
 
 # 7- Cleanup
 # Use the apps' PIDs to kill them
 echo "Killing the java processes and removing temporary files..."
-kill -n 15 ${PID_SANDBOX}
-kill -n 15 ${PID_MAC}
-
-rm jmxterm-${JMXTERM_VERSION}-uber.jar
-rm ${BASEDIR}/jmxtermCommands.txt
