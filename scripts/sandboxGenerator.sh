@@ -180,3 +180,4 @@ check_query "query1"
 # 7- Cleanup
 # Use the apps' PIDs to kill them
 echo "Killing the java processes and removing temporary files..."
+cleanup
