@@ -60,6 +60,9 @@ jobs:
     executor: vm
     resource_class: large
     working_directory: ~/mac
+    parameters:
+      ap-version:
+        type: string
     steps:
       - checkout
       - restore_cache:
@@ -69,7 +72,8 @@ jobs:
             - mac-java-
       - run:
           name: "Run matrix checks"
-          command: echo zob
+          command: |
+            echo << parameters.ap-version >> && bash ./scripts/sandboxGenerator.sh << parameters.ap-version >>
 
   sonar_analysis:
     executor: jdk11-docker
@@ -97,6 +101,9 @@ workflows:
       - build_and_test:
           context: rnd-server
       - execute_compatibility_checks:
+          matrix:
+            parameters:
+              ap-version: ["6.0.0","5.11.5"]
           context: rnd-server
       - sonar_analysis:
           context: rnd-server
