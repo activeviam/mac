@@ -1,0 +1,105 @@
+name: Pull Request Steps Checker
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+# Note : Rather that using a single parsing script and multiple actions
+# we have one parsing script per sub-action for easier scalability
+# Note : A failing step will cancel further steps
+jobs:
+  Checker-steps:
+    runs-on: ubuntu-latest
+    name: Verifies the execution of the steps (debouncer & skip check)
+    env:
+      PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+    steps:
+        # WAIT FOR ANOTHER TRIGGER STEP : In order to avoid triggering multiple pipelines, we have a 10 sec
+        # grace period for another
+        # trigger of this action on the same branch/PR until we proceed.
+        # If another action was triggered during the period, the current action is canceled
+        # At the end of the wait : re-pull the PR body in order to get the latest version rather than the snapshot one
+      - name: Action debouncer (10 sec period)
+        run: |
+          echo Wait 10 seconds \
+          && sleep 10 \
+          && latest_body=$(curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ github.token }}" \
+          https://api.github.com/repos/activeviam/mac/pulls/${{ github.event.pull_request.number }} \
+          | jq '.body') \
+          && latest_body="${latest_body:1}" \
+          && latest_body="${latest_body::-1}" \
+          && echo 'PR_BODY<<EOF' >> "$GITHUB_ENV" \
+          && echo -e "${latest_body}" >> "$GITHUB_ENV" \
+          && echo 'EOF' >> "$GITHUB_ENV" \
+          && max_run_id=$(curl \
+          -G -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ github.token }}" \
+          -d "branch=${{ env.PR_BRANCH }}" \
+          https://api.github.com/repos/activeviam/mac/actions/runs \
+          | jq --compact-output '.workflow_runs|.[]|{id,name}' \
+          | grep "Pull Request Steps Checker" - \
+          | jq '.id' | sort -n | tail -1) \
+          && echo max_run_id="${max_run_id}" >> "$GITHUB_ENV" \
+          && echo MAX : "$max_run_id" \
+          && echo RUN : ${{ github.run_id }}
+      - if: ${{ env.max_run_id > github.run_id }}
+        name: Exit (CI-SKIP) flag if we're no longer the latest action on this branch
+        run: echo "ci_skip=true" >> "$GITHUB_ENV"
+        # CHECK FOR [CI-SKIP] STEP :
+      - if: ${{ env.ci_skip != 'true' }}
+        name: Read commit title to ensure the CI is not skipped
+        run: |
+          commit_msg=$(curl \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ github.token }}" \
+          https://api.github.com/repos/activeviam/mac/commits/${{ github.event.pull_request.head.sha }} \
+          | jq '.commit.message') \
+          && echo Latest commit message=$commit_msg \
+          && skip_count=$(echo ${commit_msg} | tr [:lower:] [:upper:] \
+          | grep -E ".*\[((SKIP)(-|\s)(CI)|(CI)(-|\s)(SKIP))\].*" -c \
+          | while read line; do echo $line; done) \
+          && echo Skip count match=skip_count \
+          && echo skip_count="${skip_count}" >> "$GITHUB_ENV"
+      - if: ${{ env.skip_count > 0 && env.ci_skip != 'true' }}
+        name: Set (CI-SKIP) flag if user-requested
+        run: echo "ci_skip=true" >> "$GITHUB_ENV"
+    outputs:
+      ci_skip: ${{ env.ci_skip }}
+      pr_body: ${{ env.PR_BODY }}
+
+  Runner-steps:
+    name: Run all checked steps
+    needs: Checker-steps
+    runs-on: ubuntu-latest
+    if: ${{ !needs.Checker-steps.outputs.ci_skip }}
+    env:
+      PR_BODY: ${{ needs.Checker-steps.outputs.pr_body }}
+    steps:
+      # CHECKOUT STEP
+      - name: Checkout Repository to run local actions
+        uses: actions/checkout@v2.3.4 # Necessary to access local actions & files
+
+      - name: parse the PR description for the Test execution
+        run: . ./.github/actions/parser.bash && parsePR compatibility-check
+
+        # SETUP SONAR STEP
+      - name: parse the PR description for the sonar execution
+        run: . ./.github/actions/parser.bash && parsePR run-sonar
+
+      # LAUNCH CIRCLECI MAIN WORKFLOW
+      # Reuse the existing "check" workflow of CircleCI but add the parameters to the payload
+      - name: start Checks CI Pipeline
+        uses: ./.github/actions/circle-ci
+        with:
+          ci_token: ${{ secrets.CIRCLECI_GITHUB_ACTION_TOKEN }}
+
+        # RUN BLOCKER STEP
+      - name: Parse the PR description for all mandatory steps
+        run: echo "Run blocker parser"
+      - if: ${{ contains(fromJson('["main"]'), github.event.pull_request.base.ref)
+          && !( env.jira-check-exec == 'true' &&  env.pr-size-exec == 'true') }}
+        # Failing step
+        name: Block merge due to missing mandatory steps
+        run: exit 1
+        shell: bash
+

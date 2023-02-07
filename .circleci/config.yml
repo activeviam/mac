@@ -1,5 +1,18 @@
 version: 2.1
 
+parameters:
+  head_ref:
+    type: string
+    default: NONE
+  base_ref:
+    type: string
+    default: NONE
+  run_sonar:
+    type: boolean
+    default: false
+  run_compatibility:
+    type: boolean
+    default: false
 executors:
   jdk11-docker:
     docker:
@@ -43,6 +56,21 @@ jobs:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
 
+  execute_compatibility_checks:
+    executor: vm
+    resource_class: large
+    working_directory: ~/mac
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - mac-java-{{ .Branch }}-
+            - mac-java-
+      - run:
+          name: "Run matrix checks"
+          command: echo zob
+
   sonar_analysis:
     executor: jdk11-docker
     # A large machine is needed to perform the whole analysis, as it requires a lot of memory
@@ -67,8 +95,9 @@ workflows:
     triggers:
     jobs:
       - build_and_test:
-          filters:
-            branches:
-              ignore:
-                - /5.\d+/
           context: rnd-server
+      - execute_compatibility_checks:
+          context: rnd-server
+      - sonar_analysis:
+          context: rnd-server
+
