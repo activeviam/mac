@@ -92,7 +92,6 @@ jobs:
           command: |
             mvn -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN sonar:sonar
 
-
 workflows:
   version: 2
   check:
@@ -105,6 +104,10 @@ workflows:
             parameters:
               ap-version: ["6.0.0","5.11.5"]
           context: rnd-server
+          requires:
+            - build_and_test
       - sonar_analysis:
           context: rnd-server
+          requires:
+            - build_and_test
 
