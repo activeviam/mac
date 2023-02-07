@@ -95,19 +95,23 @@ jobs:
 workflows:
   version: 2
   check:
-    triggers:
     jobs:
       - build_and_test:
           context: rnd-server
+  backward_compatibility:
+    when:
+      and:
+        - << pipeline.parameters.run_compatibility >>
+    jobs:
       - execute_compatibility_checks:
           matrix:
             parameters:
               ap-version: ["6.0.0","5.11.5"]
           context: rnd-server
-          requires:
-            - build_and_test
+  sonar:
+    when:
+      and:
+        - << pipeline.parameters.run_sonar >>
+    jobs:
       - sonar_analysis:
           context: rnd-server
-          requires:
-            - build_and_test
-
