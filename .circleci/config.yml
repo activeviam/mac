@@ -91,7 +91,8 @@ jobs:
           command: |
             bash ./scripts/sandboxGenerator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
         # TODO : Provide the url as a secret
-
+      - store_artifacts:
+          path: ./logs
   sonar_analysis:
     executor: jdk11-docker
     # A large machine is needed to perform the whole analysis, as it requires a lot of memory
