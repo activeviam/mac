@@ -89,7 +89,8 @@ jobs:
       - run:
           name: "Run matrix checks"
           command: |
-            echo << parameters.ap-version >> && bash ./scripts/sandboxGenerator.sh << parameters.ap-version >>
+            bash ./scripts/sandboxGenerator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
+        # TODO : Provide the url as a secret
 
   sonar_analysis:
     executor: jdk11-docker
