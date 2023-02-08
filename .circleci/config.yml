@@ -89,6 +89,7 @@ jobs:
       - run:
           name: "Run matrix checks"
           command: |
+            sudo sysctl -w vm.overcommit_memory=1
             bash ./scripts/sandboxGenerator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
         # TODO : Provide the url as a secret
       - store_artifacts:
