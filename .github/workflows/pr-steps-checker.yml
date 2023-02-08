@@ -91,7 +91,7 @@ jobs:
       - name: start Checks CI Pipeline
         uses: ./.github/actions/circle-ci
         with:
-          ci_token: ${{ secrets.CIRCLECI_GITHUB_ACTION_TOKEN }}
+          ci_token: ${{ secrets.CIRCLE_CI_API_TOKEN }}
 
         # RUN BLOCKER STEP
       - name: Parse the PR description for all mandatory steps

@@ -23,6 +23,8 @@ but the dependency versions can be changed in the project's POM.
 
 ## Building & launching the application
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/activeviam/mac/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/activeviam/mac/tree/main)
+
 ### Build steps
 The requirements for building the MAC application are the following : 
   - Maven 3.0 +

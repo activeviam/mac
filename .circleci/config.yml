@@ -56,6 +56,16 @@ jobs:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
 
+  launch_compatibility_checks:
+    executor: vm
+    resource_class: medium
+    steps:
+      - unless:
+          condition: <<pipeline.parameters.run_compatibility>>
+          steps:
+             - run:
+                name: Fail if no compatibility enabled
+                command: exit 1
   execute_compatibility_checks:
     executor: vm
     resource_class: large
@@ -98,20 +108,19 @@ workflows:
     jobs:
       - build_and_test:
           context: rnd-server
-  backward_compatibility:
-    when:
-      and:
-        - << pipeline.parameters.run_compatibility >>
-    jobs:
+      - launch_compatibility_checks:
+          context: rnd-server
+          requires:
+            - build_and_test
       - execute_compatibility_checks:
           matrix:
             parameters:
               ap-version: ["6.0.0","5.11.5"]
           context: rnd-server
-  sonar:
-    when:
-      and:
-        - << pipeline.parameters.run_sonar >>
-    jobs:
+          requires:
+            - launch_compatibility_checks
       - sonar_analysis:
           context: rnd-server
+          requires:
+            - build_and_test
+
