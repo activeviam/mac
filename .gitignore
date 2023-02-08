@@ -5,7 +5,7 @@
 /input_statistics/*
 !/input_statistics/README.txt
 target
-
+logs
 # misc. IDE config files
 .project
 .settings/

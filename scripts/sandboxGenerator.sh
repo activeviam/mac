@@ -12,7 +12,7 @@
 # This script EXPECTS to be executed from the ROOT of a buildable mac project	
 
 # REQUIREMENTS :
-# Java Developement Kit 11+ (JRE is not enough as we use the jps command)
+# Java Development Kit 11+ (JRE is not enough as we use the jps command)
 # Maven
 # ActiveViam artifacts access
 # Valid ActivePivot License
@@ -95,8 +95,9 @@ check_query(){
 ###################
 # MAIN SCRIPT START
 
-check_root
 check_requirements
+MAC_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+check_root
 
 if [ -z "$1" ]; then
     echo "No first argument supplied. Script usage : $0 sandbox_version repository_url "
@@ -107,7 +108,6 @@ elif [ -z "$2" ]; then
 fi
 
 MAC_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-MAC_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
 
 AP_VERSION=$1
 AP_ARTIFACTORY_URL=$2
