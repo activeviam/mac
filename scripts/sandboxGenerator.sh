@@ -20,7 +20,8 @@
 # jq
 
 # INPUT : 
-# - $1 String : AP version used by the sandbox app
+# - 1 String : AP version used by the sandbox app
+# - 2 String : URL of the Artifactory Sandbox repository
 
 # OUTPUT : 
 # - File : Server logs
@@ -32,7 +33,7 @@
 # Make sure any variable used are defined before calling these
 check_root(){
 	#Just making sure the execution path is at the Root of a mac project
-	if [[ -z $(cat pom.xml) || -z $(cat pom.xml | grep "<artifactId>mac</artifactId>") ]]; then
+	if [[ -z $(cat pom.xml) || -z $(cat pom.xml | grep "<artifactId>${MAC_ARTIFACTID}</artifactId>") ]]; then
 		echo "The execution directory of the script ${PWD} is not the root of a buildable mac project."
 	exit 1
 	fi	
@@ -60,11 +61,13 @@ check_requirements(){
 }
 
 cleanup(){
+	echo "Killing the java processes and removing temporary files..."
 	kill -n 15 ${PID_SANDBOX}
 	kill -n 15 ${PID_MAC}
 	rm jmxterm-${JMXTERM_VERSION}-uber.jar
 	rm ${BASE_DIR}/jmxtermCommands.txt
-	rm -rdf ./scripts/queries/output
+	rm -rdf ${BASE_DIR}/queries/output
+	rm -rdf ${SANDBOX_DATA_DIR}
 }
 
 check_query(){
@@ -96,15 +99,19 @@ check_root
 check_requirements
 
 if [ -z "$1" ]; then
-    echo "No argument supplied : unable to assess the ActivePivot version to use. Aborting."
+    echo "No first argument supplied. Script usage : $0 sandbox_version repository_url "
+    exit 1
+elif [ -z "$2" ]; then
+    echo "No second argument supplied. Script usage : $0 sandbox_version repository_url "
     exit 1
 fi
 
 MAC_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-
-AP_ARTIFACTORY_URL=https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
+MAC_ARTIFACTID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
 
 AP_VERSION=$1
+AP_ARTIFACTORY_URL=$2
+
 AP_REPO_PATH=/com/activeviam/sandbox/sandbox-activepivot/
 
 JMXTERM_VERSION=1.0.4
@@ -120,6 +127,7 @@ LOG_DIR=${PWD}/logs
 mkdir -p ${LOG_DIR}
 echo "Output logs folder location: ${LOG_DIR}"
 BUILD_DIR=${PWD}/target
+SANDBOX_DATA_DIR=${PWD}/sandbox_data
 
 # 1- Execute the install goal to generate the MAC springBoot jar in the state of the repository
 mvn clean install -DskipTests=true > ${LOG_DIR}/maven.log
@@ -136,13 +144,12 @@ mvn org.apache.maven.plugins:maven-dependency-plugin:2.1:get \
 echo "Downloaded the ${AP_VERSION} sandbox jar in the m2 repo..."
 echo
 
-# extract the csv files in ./data
-rm -rdf ./data
-unzip -q -j ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" 'BOOT-INF/classes/data/*' -d ./data/
+# extract the csv files in SANDBOX_DATA_DIR
+unzip -q -j ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" 'BOOT-INF/classes/data/*' -d ${SANDBOX_DATA_DIR}/
 
 # 3- Run both apps
 
-java -jar ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" --csvSource.dataset=./data --tradeSource.timerDelay=1000000000 --ratings.random=false --risks.random=false>logs/sandbox.log&
+java -jar ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" --csvSource.dataset=${SANDBOX_DATA_DIR} --tradeSource.timerDelay=1000000000 --ratings.random=false --risks.random=false>logs/sandbox.log&
 
 echo "Extracted CSV files and launched the sandbox jar..."
 echo
@@ -150,14 +157,14 @@ echo
 cd ${BUILD_DIR}
 mkdir -p ./exported_statistics
 
-java -jar ./mac-${MAC_VERSION}.jar --statistic.folder=exported_statistics> ${LOG_DIR}/mac.log&
+java -jar ./${MAC_ARTIFACTID}-${MAC_VERSION}.jar --statistic.folder=exported_statistics> ${LOG_DIR}/mac.log&
 cd ${PWD}
 echo "Launched the MAC jar..."
 echo
 
 # Use jps to find the vmid matching the exact jar
 VMID_SANDBOX=$(jps -l | grep sandbox-activepivot-${AP_VERSION}.jar | cut -d ' ' -f 1)
-VMID_MAC=$(jps -l | grep mac-${MAC_VERSION}.jar | cut -d ' ' -f 1)
+VMID_MAC=$(jps -l | grep ${MAC_ARTIFACTID}-${MAC_VERSION}.jar | cut -d ' ' -f 1)
 
 # Use ps to find the PID
 PID_SANDBOX=$(ps S | grep ${VMID_SANDBOX} | xargs | cut -d ' ' -f 1)
@@ -205,5 +212,4 @@ check_query "query1"
 
 # 7- Cleanup
 # Use the apps' PIDs to kill them
-echo "Killing the java processes and removing temporary files..."
 cleanup
