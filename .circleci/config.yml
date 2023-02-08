@@ -66,6 +66,12 @@ jobs:
              - run:
                 name: Fail if no compatibility enabled
                 command: exit 1
+      - when:
+          condition: <<pipeline.parameters.run_compatibility>>
+          steps:
+            - run:
+                name: Succeed if compatibility enabled
+                command: exit 0
   execute_compatibility_checks:
     executor: vm
     resource_class: large
