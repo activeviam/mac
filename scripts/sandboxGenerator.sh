@@ -20,8 +20,9 @@
 # jq
 
 # INPUT : 
-# - 1 String : AP version used by the sandbox app
+# - 1 String : ActivePivot version used by the sandbox app
 # - 2 String : URL of the Artifactory Sandbox repository
+# - 3 Optional String : Path to the maven settings file, this file is expected to grant read access to ActiveViam artifacs
 
 # OUTPUT : 
 # - File : Server logs
@@ -96,12 +97,19 @@ check_query(){
 # MAIN SCRIPT START
 
 if [ -z "$1" ]; then
-    echo "No first argument supplied. Script usage : $0 sandbox_version repository_url "
+    echo "No first argument supplied. Script usage : $0 sandbox_version repository_url [maven_settings_path] "
     exit 1
 elif [ -z "$2" ]; then
-    echo "No second argument supplied. Script usage : $0 sandbox_version repository_url "
+    echo "No second argument supplied. Script usage : $0 sandbox_version repository_url [maven_settings_path]"
     exit 1
 fi
+
+if [ ! -z "$3" ]; then
+	MAVEN_SETTINGS=$3
+else
+	MAVEN_SETTINGS=${PWD}/.circleci/circleci-settings.xml
+fi
+
 AP_VERSION=$1
 AP_ARTIFACTORY_URL=$2
 
@@ -109,7 +117,7 @@ AP_REPO_PATH=/com/activeviam/sandbox/sandbox-activepivot/
 
 echo "Script executed from: ${PWD} for ActivePivot version ${AP_VERSION}"
 BASE_DIR=${PWD}/scripts
-M2_PATH=$(mvn -s ${PWD}/.circleci/circleci-settings.xml help:evaluate -Dexpression=settings.localRepository -q -DforceStdout)
+M2_PATH=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=settings.localRepository -q -DforceStdout)
 M2_UNIX=/$(echo "${M2_PATH}" | sed -e 's/\\/\//g' -e 's/://')
 echo "Maven repository location: ${M2_UNIX}"
 LOG_DIR=${PWD}/logs
@@ -121,8 +129,8 @@ SANDBOX_DATA_DIR=${PWD}/sandbox_data
 
 check_requirements
 
-MAC_ARTIFACTID=$(mvn -s ${PWD}/.circleci/circleci-settings.xml help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-MAC_VERSION=$(mvn -s ${PWD}/.circleci/circleci-settings.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+MAC_ARTIFACTID=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+MAC_VERSION=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 check_root
 
@@ -132,14 +140,14 @@ JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber
 
 # 1- Execute the install goal to generate the MAC springBoot jar in the state of the repository
 
-mvn -s ${PWD}/.circleci/circleci-settings.xml clean install -DskipTests=true > ${LOG_DIR}/maven.log
+mvn -s ${MAVEN_SETTINGS} clean install -DskipTests=true > ${LOG_DIR}/maven.log
 echo "Built the MAC app springboot JAR to ${BUILD_DIR}..."
 echo
 
 # 2- Obtain a sandbox jar 
 # Since the current environment already has java and some maven dependencies, a docker container sounds overkill
 # For now just get sandbox-activepivot-X.Y.Z.jar from activepivot-mvn-nightly repository in the .m2 repo
-mvn -s ${PWD}/.circleci/circleci-settings.xml org.apache.maven.plugins:maven-dependency-plugin:2.1:get \
+mvn -s ${MAVEN_SETTINGS} org.apache.maven.plugins:maven-dependency-plugin:2.1:get \
     -DrepoUrl=${AP_ARTIFACTORY_URL} \
     -Dartifact=com.activeviam.sandbox:sandbox-activepivot:${AP_VERSION} >> ${LOG_DIR}/maven.log
 
