@@ -94,23 +94,6 @@ jobs:
         # TODO : Provide the url as a secret
       - store_artifacts:
           path: ./logs
-  sonar_analysis:
-    executor: jdk11-docker
-    # A large machine is needed to perform the whole analysis, as it requires a lot of memory
-    resource_class: large
-    working_directory: ~/activepivot
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - mac-java-{{ .Branch }}-
-            - mac-java-
-      - run:
-          name: Analyze project
-          command: |
-            mvn --settings .circleci/circleci-settings.xml -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN sonar:sonar
-
 workflows:
   version: 2
   check:
@@ -128,8 +111,3 @@ workflows:
           context: rnd-server
           requires:
             - launch_compatibility_checks
-      - sonar_analysis:
-          context: rnd-server
-          requires:
-            - build_and_test
-
