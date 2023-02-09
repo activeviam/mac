@@ -7,9 +7,6 @@ parameters:
   base_ref:
     type: string
     default: NONE
-  run_sonar:
-    type: boolean
-    default: false
   run_compatibility:
     type: boolean
     default: false

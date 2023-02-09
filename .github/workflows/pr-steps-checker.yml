@@ -82,10 +82,6 @@ jobs:
       - name: parse the PR description for the Test execution
         run: . ./.github/actions/parser.bash && parsePR compatibility-check
 
-        # SETUP SONAR STEP
-      - name: parse the PR description for the sonar execution
-        run: . ./.github/actions/parser.bash && parsePR run-sonar
-
       # LAUNCH CIRCLECI MAIN WORKFLOW
       # Reuse the existing "check" workflow of CircleCI but add the parameters to the payload
       - name: start Checks CI Pipeline
