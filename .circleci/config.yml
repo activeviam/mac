@@ -83,7 +83,7 @@ jobs:
             - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
             - mac-java-{{ .Branch }}-
             - mac-java-
-            - mac-export-{{ << parameters.ap-version >> }}
+            - mac-export-<< parameters.ap-version >>
       - run:
           name: "Run matrix checks"
           command: |
@@ -94,7 +94,7 @@ jobs:
           path: ./logs
       - save_cache:
           paths: [ ~/mac/target/exported_statistics ]
-          key: mac-export-{{ << parameters.ap-version >> }}
+          key: mac-export-<< parameters.ap-version >>
 workflows:
   version: 2
   check:
