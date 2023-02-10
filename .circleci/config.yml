@@ -88,7 +88,7 @@ jobs:
           name: "Run matrix checks"
           command: |
             sudo sysctl -w vm.overcommit_memory=1
-            bash scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly | tee >(tail -1 | ./scripts/mac_export_load.sh )
+            bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly | tee >(tail -1 | bash ./scripts/mac_export_load.sh )
         # TODO : use cached exports if present
       - store_artifacts:
           path: ./logs
