@@ -83,14 +83,18 @@ jobs:
             - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
             - mac-java-{{ .Branch }}-
             - mac-java-
+            - mac-export-{{ << parameters.ap-version >> }}
       - run:
           name: "Run matrix checks"
           command: |
             sudo sysctl -w vm.overcommit_memory=1
-            bash ./scripts/sandboxGenerator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
-        # TODO : Provide the url as a secret
+            bash scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly | tee >(tail -1 | ./scripts/mac_export_load.sh )
+        # TODO : use cached exports if present
       - store_artifacts:
           path: ./logs
+      - save_cache:
+          paths: [ ~/mac/target/exported_statistics ]
+          key: mac-export-{{ << parameters.ap-version >> }}
 workflows:
   version: 2
   check:
