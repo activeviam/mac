@@ -23,7 +23,6 @@ executors:
       LC_ALL: C.UTF-8
     machine:
       image: ubuntu-2004:202201-02
-      docker_layer_caching: true
 
 jobs:
   build_and_test:
@@ -87,10 +86,10 @@ jobs:
       - run:
           name: "Run matrix checks"
           command: |
-            sudo sysctl -w vm.overcommit_memory=1 \
+            sudo sysctl -w vm.overcommit_memory=1
             # using cached exports if available
-            if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then    
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly \
+            if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
             fi
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
