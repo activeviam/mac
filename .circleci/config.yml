@@ -68,8 +68,9 @@ jobs:
             - run:
                 name: Compatibility enabled, fetch all sandbox-activepivot releases with the Artifactory REST API
                 command: |
-                  curl -u ARTIFACTORY_USER:ARTIFACTORY_PASSWORD -X POST -k https://activeviam.jfrog.io/artifactory/api/search/aql -d\
-                  "items.find({\"type\" : \"file\",\"\$or\":[{\"repo\" : {\"\$match\" : \"activepivot*\"}, \"repo\" : {\"\$match\" : \"activeviam*\"} }]}).include(\"name\",\"repo\",\"path\",\"size\").sort({\"\$desc\": [\"size\"]})"
+                  curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -X POST -k -H 'Content-Type:text/plain' https://activeviam.jfrog.io/artifactory/api/search/aql \
+                  --data 'items.find({ "repo": "activepivot-mvn-nightly"},  {"path": {"$match": "com/activeviam/sandbox/sandbox-activepivot/*"}},  {"name": {"$match": "*.jar"}},   {"$or": [{"@version": {"$match": "?.?.?"}}, {"@version": {"$match": "?.??.?"}}, {"@version": {"$match": "?.?.??"}}, {"@version": {"$match": "?.??.??"}}]}).include("@version")'\
+                  | jq -r .results[].properties[].value && echo "Cant dynamically affect the matrix configuration yet."
   execute_compatibility_checks:
     executor: vm
     resource_class: large
