@@ -158,4 +158,3 @@ if [ -z "$(cat ${LOG_DIR}/jmxterm.log)" ]; then
      exit 1
 fi
 cleanup
-cat ${LOG_DIR}/jmxterm.log
