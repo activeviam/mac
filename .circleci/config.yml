@@ -113,7 +113,7 @@ workflows:
       - execute_compatibility_checks:
           matrix:
             parameters:
-              ap-version: ["6.0.0","5.11.5"]
+              ap-version: ["5.10.12","5.10.13","5.11.5","6.0.0","6.0.2"]
           context: rnd-server
           requires:
             - launch_compatibility_checks
