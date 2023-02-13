@@ -68,8 +68,8 @@ jobs:
             - run:
                 name: Compatibility enabled, fetch all sandbox-activepivot releases with the Artifactory REST API
                 command: |
-                curl -u ARTIFACTORY_USER:ARTIFACTORY_PASSWORD -X POST -k https://activeviam.jfrog.io/artifactory/api/search/aql -d\
-                "items.find({\"type\" : \"file\",\"\$or\":[{\"repo\" : {\"\$match\" : \"activepivot*\"}, \"repo\" : {\"\$match\" : \"activeviam*\"} }]}).include(\"name\",\"repo\",\"path\",\"size\").sort({\"\$desc\": [\"size\"]})"
+                  curl -u ARTIFACTORY_USER:ARTIFACTORY_PASSWORD -X POST -k https://activeviam.jfrog.io/artifactory/api/search/aql -d\
+                  "items.find({\"type\" : \"file\",\"\$or\":[{\"repo\" : {\"\$match\" : \"activepivot*\"}, \"repo\" : {\"\$match\" : \"activeviam*\"} }]}).include(\"name\",\"repo\",\"path\",\"size\").sort({\"\$desc\": [\"size\"]})"
   execute_compatibility_checks:
     executor: vm
     resource_class: large
