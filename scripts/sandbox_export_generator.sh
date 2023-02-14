@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Script Exporting the Memory Analysis Service output of a released ActivePivot sandbox 
+# Script Exporting the Memory Analysis Service output of a released ActivePivot sandbox
 
 # 1- Executes a maven goal that builds a customized (no real time) Sandbox springboot jar for a given version of Activepivot
 # 2- Run the sandbox
@@ -62,6 +62,17 @@ cleanup(){
 	rm -rdf ${SANDBOX_DATA_DIR}
 }
 
+print_bean_name(){
+AP_HUMAN=$(echo ${AP_VERSION} | cut -f1 -d.)
+AP_MINOR=$(echo ${AP_VERSION} | cut -f2 -d.)
+AP_BUGFIX=$(echo ${AP_VERSION} | cut -f3 -d.)
+# For now assume that versions prior to 5.11 use the old bean name
+if [[ ${AP_HUMAN} -le 5 && ${AP_MINOR} -le 10  ]]; then
+	echo com.quartetfs:node0=MemoryAnalysisService
+else
+	echo com.activeviam:node0=MemoryAnalysisService
+fi
+}
 ###################
 # MAIN SCRIPT START
 
@@ -80,6 +91,7 @@ else
 fi
 
 AP_VERSION=$1
+
 AP_ARTIFACTORY_URL=$2
 
 AP_REPO_PATH=/com/activeviam/sandbox/sandbox-activepivot/
@@ -94,8 +106,7 @@ mkdir -p ${LOG_DIR}
 echo "Output logs folder location: ${LOG_DIR}"
 BUILD_DIR=${PWD}/target
 SANDBOX_DATA_DIR=${PWD}/sandbox_data
-
-
+BEAN_NAME=$(print_bean_name)
 check_requirements
 
 MAC_ARTIFACTID=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
@@ -139,7 +150,7 @@ curl -s -OL ${JMX_JAR_PATH} > ${LOG_DIR}/curl.log
 touch ${BASE_DIR}/jmxtermCommands.txt
 # Use jxmterm to access the mbean
 echo open ${VMID_SANDBOX} >> ${BASE_DIR}/jmxtermCommands.txt
-echo bean com.activeviam:node0=MemoryAnalysisService >>  ${BASE_DIR}/jmxtermCommands.txt
+echo bean ${BEAN_NAME} >>  ${BASE_DIR}/jmxtermCommands.txt
 echo run Dump\\ memory\\ statistics folder >>  ${BASE_DIR}/jmxtermCommands.txt
 echo exit >>  ${BASE_DIR}/jmxtermCommands.txt
 	echo "Pause the script for 60 seconds for the Sandbox App to be ready to export stats ..."
@@ -158,4 +169,3 @@ if [ -z "$(cat ${LOG_DIR}/jmxterm.log)" ]; then
      exit 1
 fi
 cleanup
-cat ${LOG_DIR}/jmxterm.log

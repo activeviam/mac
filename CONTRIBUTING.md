@@ -4,8 +4,7 @@
 
 * **Check if the issue was not already reported** in the
  [issues](https://github.com/activeviam/mac/issues) of the repository
-* Assign the appropriate labels to the issue: `bug`, `enhancement`, `help wanted`, `question`,
-`5.x`...
+* Assign the appropriate labels to the issue: `bug`, `enhancement`, `help wanted`, `question`...
 
 ## Creating and merging pull requests
 
@@ -19,6 +18,7 @@ In order to merge a Pull Request inside the `main` branch of the repository, the
  - Compiling code in Java 11
  - Passing test battery
  - Passing legacy compatibility check
+ - Passing Sonar quality gate
  - Passing checkstyle check
 
 #### Formatting and Checkstyle

@@ -1,5 +1,15 @@
 version: 2.1
 
+parameters:
+  head_ref:
+    type: string
+    default: NONE
+  base_ref:
+    type: string
+    default: NONE
+  run_compatibility:
+    type: boolean
+    default: false
 executors:
   jdk11-docker:
     docker:
@@ -13,7 +23,6 @@ executors:
       LC_ALL: C.UTF-8
     machine:
       image: ubuntu-2004:202201-02
-      docker_layer_caching: true
 
 jobs:
   build_and_test:
@@ -43,11 +52,32 @@ jobs:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
 
-  sonar_analysis:
-    executor: jdk11-docker
-    # A large machine is needed to perform the whole analysis, as it requires a lot of memory
+  launch_compatibility_checks:
+    executor: vm
+    resource_class: medium
+    steps:
+      - unless:
+          condition: <<pipeline.parameters.run_compatibility>>
+          steps:
+             - run:
+                name: Fail if no compatibility enabled
+                command: exit 1
+      - when:
+          condition: <<pipeline.parameters.run_compatibility>>
+          steps:
+            - run:
+                name: Compatibility enabled, fetch all sandbox-activepivot releases with the Artifactory REST API
+                command: |
+                  curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -X POST -k -H 'Content-Type:text/plain' https://activeviam.jfrog.io/artifactory/api/search/aql \
+                  --data 'items.find({ "repo": "activepivot-mvn-nightly"},  {"path": {"$match": "com/activeviam/sandbox/sandbox-activepivot/*"}},  {"name": {"$match": "*.jar"}},   {"$or": [{"@version": {"$match": "?.?.?"}}, {"@version": {"$match": "?.??.?"}}, {"@version": {"$match": "?.?.??"}}, {"@version": {"$match": "?.??.??"}}]}).include("@version")'\
+                  | jq -r .results[].properties[].value && echo "Cant dynamically affect the matrix configuration yet."
+  execute_compatibility_checks:
+    executor: vm
     resource_class: large
-    working_directory: ~/activepivot
+    working_directory: ~/mac
+    parameters:
+      ap-version:
+        type: string
     steps:
       - checkout
       - restore_cache:
@@ -55,20 +85,35 @@ jobs:
             - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
             - mac-java-{{ .Branch }}-
             - mac-java-
+            - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
-          name: Analyze project
+          name: "Run matrix checks"
           command: |
-            mvn -Dsonar.host.url=$SONAR_URL -Dsonar.login=$SONAR_TOKEN sonar:sonar
-
-
+            sudo sysctl -w vm.overcommit_memory=1
+            # using cached exports if available
+            if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> https://activeviam.jfrog.io/artifactory/activepivot-mvn-nightly
+            fi
+            bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
+      - store_artifacts:
+          path: ./logs
+      - save_cache:
+          paths: [ target/exported_statistics ]
+          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
 workflows:
   version: 2
   check:
-    triggers:
     jobs:
       - build_and_test:
-          filters:
-            branches:
-              ignore:
-                - /5.\d+/
           context: rnd-server
+      - launch_compatibility_checks:
+          context: rnd-server
+          requires:
+            - build_and_test
+      - execute_compatibility_checks:
+          matrix:
+            parameters:
+              ap-version: ["5.10.12","5.10.13","5.11.5","6.0.0","6.0.2"]
+          context: rnd-server
+          requires:
+            - launch_compatibility_checks

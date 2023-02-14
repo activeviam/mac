@@ -18,8 +18,8 @@
 # jq
 
 # INPUT : 
-# - String : piped string containing the exported folder string
-# - 1 Optional String : Path to the maven settings file, this file is expected to grant read access to ActiveViam artifacs
+# - 1 String : string containing the exported folder string
+# - 2 Optional String : Path to the maven settings file, this file is expected to grant read access to ActiveViam artifacs
 
 # OUTPUT : 
 # - File : Server logs
@@ -93,18 +93,15 @@ check_query(){
 ###################
 # MAIN SCRIPT START
 
-read -r EXPORTED_FOLDER
-EXPORTED_FOLDER_UNIX=/$(echo "${EXPORTED_FOLDER}" | sed -e 's/\\/\//g' -e 's/://')
-
-if [ -z "${EXPORTED_FOLDER}" ]; then
-    echo "No input in stdin. Script usage : exported_folder | $0 [maven_settings_path] "
+if [ -z "$1" ]; then
+    echo "No first argument supplied. Script usage : $0 export_folder [maven_settings_path]"
     exit 1
 fi
 
-echo "Read exported files at : ${EXPORTED_FOLDER_UNIX}"
+echo "Read exported files at : $1"
 
-if [ ! -z "$1" ]; then
-	MAVEN_SETTINGS=$1
+if [ ! -z "$2" ]; then
+	MAVEN_SETTINGS=$2
 else
 	MAVEN_SETTINGS=${PWD}/.circleci/circleci-settings.xml
 fi
@@ -127,7 +124,7 @@ check_root
 
 # 1- Execute the install goal to generate the MAC springBoot jar in the state of the repository
 
-mvn -s ${MAVEN_SETTINGS} clean install -DskipTests=true > ${LOG_DIR}/maven.log
+mvn -s ${MAVEN_SETTINGS} install -DskipTests=true > ${LOG_DIR}/maven.log
 echo "Built the MAC app springboot JAR to ${BUILD_DIR}..."
 echo
 
@@ -146,10 +143,10 @@ VMID_MAC=$(jps -l | grep ${MAC_ARTIFACTID}-${MAC_VERSION}.jar | cut -d ' ' -f 1)
 PID_MAC=$(ps S | grep ${VMID_MAC} | xargs | cut -d ' ' -f 1)
 
 # 2- Load files in MAC
-cp -r ${EXPORTED_FOLDER_UNIX} ${BUILD_DIR}/exported_statistics
-echo "Pause the script for 50 seconds for the MAC data to be loaded ..."
+cp -r $1 ${BUILD_DIR}/exported_statistics
+echo "Pause the script for 20 seconds for the MAC data to be loaded ..."
 echo
-sleep 100
+sleep 20
 echo "Resumed the script..."
 
 # 3- Run queries on MAC & verify content
