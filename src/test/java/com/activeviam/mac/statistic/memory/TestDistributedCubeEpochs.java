@@ -139,7 +139,6 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   @Test
-  @Disabled
   public void testExpectedViewEpochs() {
     final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
 

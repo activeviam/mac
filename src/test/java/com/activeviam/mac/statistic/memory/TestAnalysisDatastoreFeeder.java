@@ -107,7 +107,6 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
    * epochs
    */
   @Test
-  @Disabled // Temp due to flakiness in CI
   public void testEpochReplicationForAlreadyExistingChunks() {
     final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
@@ -167,7 +166,6 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   }
 
   @Test
-  @Disabled // Temp due to flakiness in CI
   public void testEpochReplicationForAlreadyExistingEpochs() {
     final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
