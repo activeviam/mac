@@ -45,7 +45,6 @@ import java.util.stream.LongStream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
