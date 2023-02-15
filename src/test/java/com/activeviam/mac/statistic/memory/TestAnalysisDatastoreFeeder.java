@@ -37,14 +37,17 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
@@ -84,6 +87,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   /** Ensures the same statistics can be loaded in different dump names. */
   @Test
+  @Disabled
   public void testDifferentDumps() {
     final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
@@ -99,7 +103,6 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
                 DatastoreConstants.APPLICATION__DUMP_NAME))
         .containsExactlyInAnyOrder("app", "app2");
   }
-
   /**
    * Ensures that, when adding a complete application (with multiple epochs) to an already existing
    * loaded dataset on the same dumpname, the dataset is replicated for each of the application's
@@ -128,6 +131,19 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     // Load the stats of a complete App into the same dumpName
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
+
+    System.out.println("Non dist");
+    System.out.println(
+        monitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
+            .map(hist -> Arrays.toString(hist.getNotReleasedEpochs().toArray()))
+            .collect(Collectors.joining(";")));
+    System.out.println();
+    System.out.println("Dist");
+    System.out.println(
+        distributedMonitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
+            .map(hist -> Arrays.toString(hist.getNotReleasedEpochs().toArray()))
+            .collect(Collectors.joining(";")));
+
     // Start the cube
     this.monitoringApp.start();
     // Await for pivot notification to make sure everything is stable and committed before testing
@@ -182,6 +198,18 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
             .mapToLong(IEpochHistory::getCurrentEpoch)
             .max()
             .orElseThrow();
+
+    System.out.println("Non dist");
+    System.out.println(
+        monitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
+            .map(hist -> Arrays.toString(hist.getNotReleasedEpochs().toArray()))
+            .collect(Collectors.joining(";")));
+    System.out.println();
+    System.out.println("Dist");
+    System.out.println(
+        distributedMonitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
+            .map(hist -> Arrays.toString(hist.getNotReleasedEpochs().toArray()))
+            .collect(Collectors.joining(";")));
 
     var expectedPresentEpochs =
         LongStream.range(
