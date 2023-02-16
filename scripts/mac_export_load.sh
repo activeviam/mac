@@ -144,9 +144,9 @@ PID_MAC=$(ps S | grep ${VMID_MAC} | xargs | cut -d ' ' -f 1)
 
 # 2- Load files in MAC
 cp -r $1 ${BUILD_DIR}/exported_statistics
-echo "Pause the script for 20 seconds for the MAC data to be loaded ..."
+echo "Pause the script for 30 seconds for the MAC data to be loaded (takes ~20 secs on CI VMs)..."
 echo
-sleep 20
+sleep 30
 echo "Resumed the script..."
 
 # 3- Run queries on MAC & verify content
