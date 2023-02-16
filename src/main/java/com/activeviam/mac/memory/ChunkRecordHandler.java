@@ -157,9 +157,10 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     return record.readLong(idx);
   }
 
-  private String getChunkClass(final IRecordReader record, IDictionaryProvider dictionaryProvider, final IStoreMetadata storeMetadata) {
+  private String getChunkClass(final IRecordReader record, final IDictionaryProvider dictionaryProvider, final IStoreMetadata storeMetadata) {
     final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__CLASS);
     final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
+    @SuppressWarnings("unchecked")
     final IWritableDictionary<Object> refIdDictionary =
         (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
 
