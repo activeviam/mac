@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.memory;
 
+import com.qfs.chunk.impl.TombStoneChunk;
 import com.qfs.desc.IDuplicateKeyHandler;
 import com.qfs.dic.IWritableDictionary;
 import com.qfs.store.IStoreMetadata;
@@ -64,6 +65,11 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
         // Nothing to change
         return duplicateRecord;
       } else {
+        //We ignore TombStoneChunks as they are a singleton that has minimal memory footprint
+        // but don't work with the current MAC data model
+        if (getChunkClass(duplicateRecord, dictionaryProvider, storeMetadata).contains(TombStoneChunk.class.getName())) {
+          return duplicateRecord;
+        }
         final IWritableRecord newRecord = copyRecord(duplicateRecord);
 
         assert newPartition != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION;
@@ -72,36 +78,21 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
             storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
         newRecord.writeInt(partitionIdx, this.sharedPartitionId);
 
-        // If component-specific ids are both not the default value and do not match, we throw
-        // else we keep the non-default
+        // Sanity check in case two Chunks have different parents which should never happen
         if (currentDicId != newDicId) {
-          if (currentDicId != this.defaultDicId) {
-            throw new IllegalStateException(
-                "Cannot merge a chunk record coming from two different "
-                    + "dictionaries. Something went wrong");
-          }
-          final int dicIdIdx =
-              storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
-          newRecord.write(dicIdIdx, currentDicId == this.defaultDicId ? newDicId : currentDicId);
+          throw new IllegalStateException(
+              "Cannot merge a chunk record coming from two different "
+                  + "dictionaries. Something went wrong");
         }
         if (currentRefId != newRefId) {
-          if (currentRefId != this.defaultRefId && newRefId != this.defaultRefId) {
-            throw new IllegalStateException(
-                "Cannot merge a chunk record coming from two different "
-                    + "references. Something went wrong");
-          }
-          final int refIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
-          newRecord.write(refIdIdx, currentRefId == this.defaultRefId ? newRefId : currentRefId);
+          throw new IllegalStateException(
+              "Cannot merge a chunk record coming from two different "
+                  + "references. Something went wrong");
         }
         if (currentIdxId != newIdxId) {
-          if (currentIdxId != this.defaultIdxId && newIdxId != this.defaultIdxId) {
-            throw new IllegalStateException(
-                "Cannot merge a chunk record coming from two different "
-                    + "indexes. Something went wrong");
-          }
-          final int IdxIdIdx =
-              storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
-          newRecord.write(IdxIdIdx, currentIdxId == this.defaultIdxId ? newIdxId : currentIdxId);
+          throw new IllegalStateException(
+              "Cannot merge a chunk record coming from two different "
+                  + "indexes. Something went wrong");
         }
         return newRecord;
       }
@@ -164,6 +155,15 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   private long getRefId(final IRecordReader record) {
     final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
     return record.readLong(idx);
+  }
+
+  private String getChunkClass(final IRecordReader record, IDictionaryProvider dictionaryProvider, final IStoreMetadata storeMetadata) {
+    final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__CLASS);
+    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
+    final IWritableDictionary<Object> refIdDictionary =
+        (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
+
+    return (String) refIdDictionary.read((Integer) record.read(idx));
   }
 
   private IWritableRecord copyRecord(final IRecordReader record) {
