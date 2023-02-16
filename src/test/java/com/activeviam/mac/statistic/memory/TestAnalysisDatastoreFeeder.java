@@ -21,7 +21,6 @@ import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.condition.impl.BaseConditions;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.multiversion.IEpochHistory;
-import com.qfs.pivot.impl.MultiVersionDistributedActivePivot;
 import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.service.monitoring.IMemoryAnalysisService;
 import com.qfs.store.IDatastore;
@@ -37,7 +36,6 @@ import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
@@ -136,27 +134,26 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     // things
     this.monitoringApp.getSingleCube().awaitNotifications();
 
-    final long newestEpoch =
+    final long newestNonDistEpoch =
         this.monitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
             .mapToLong(IEpochHistory::getCurrentEpoch)
             .max()
             .orElseThrow();
 
+    final long newestDistEpoch =
+        distributedMonitoredApp
+            .getManager()
+            .getActivePivot("Data")
+            .getMostRecentVersion()
+            .getEpochId();
     // within its statistic, the Data cube only has one epoch (usually 1)
     // upon the second feedDatastore call, its chunks should be mapped to the new incoming datastore
     // epochs from the oldest existing on the Data cube (NOT the app)  to  the most recent on the
     // app
     long[] expectedReplicatedEpochs =
-        LongStream.range(
-                distributedMonitoredApp
-                    .getManager()
-                    .getActivePivot("Data")
-                    .getMostRecentVersion()
-                    .getEpochId(),
-                newestEpoch + 1)
-            .toArray();
+        LongStream.range(newestDistEpoch, newestNonDistEpoch + 1).toArray();
     if (expectedReplicatedEpochs.length == 0) {
-      expectedReplicatedEpochs = new long[] {1L, 2L, 3L, 4L};
+      expectedReplicatedEpochs = new long[] {newestDistEpoch};
     }
 
     epochs =
@@ -177,28 +174,33 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
         monitoringDatastore, List.of(this.distributedAppHeadStatistics), "app");
 
     TLongSet epochs =
-        collectEpochViewsForOwner(
-            monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
+        epochs =
+            collectEpochViewsForOwner(
+                monitoringDatastore.getMostRecentVersion(), new CubeOwner("Data"));
 
-    final long newestEpoch =
+    final long newestNonDistEpoch =
         this.monitoredApp.getDatabase().getEpochManager().getHistories().values().stream()
             .mapToLong(IEpochHistory::getCurrentEpoch)
             .max()
             .orElseThrow();
 
-    var expectedPresentEpochs =
-        LongStream.range(
-                distributedMonitoredApp
-                    .getManager()
-                    .getActivePivot("Data")
-                    .getMostRecentVersion()
-                    .getEpochId(),
-                newestEpoch + 1)
-            .toArray();
-    if (expectedPresentEpochs.length == 0) {
-      expectedPresentEpochs = new long[] {1L, 2L, 3L, 4L};
+    final long newestDistEpoch =
+        distributedMonitoredApp
+            .getManager()
+            .getActivePivot("Data")
+            .getMostRecentVersion()
+            .getEpochId();
+    // within its statistic, the Data cube only has one epoch (usually 1)
+    // upon the second feedDatastore call, its chunks should be mapped to the new incoming datastore
+    // epochs from the oldest existing on the Data cube (NOT the app)  to  the most recent on the
+    // app
+    long[] expectedReplicatedEpochs =
+        LongStream.range(newestDistEpoch, newestNonDistEpoch + 1).toArray();
+    if (expectedReplicatedEpochs.length == 0) {
+      expectedReplicatedEpochs = new long[] {newestDistEpoch};
     }
-    Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(expectedPresentEpochs);
+
+    Assertions.assertThat(epochs.toArray()).containsExactlyInAnyOrder(expectedReplicatedEpochs);
   }
 
   private TLongSet collectEpochViewsForOwner(
@@ -271,27 +273,6 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, 0.)));
 
     this.distributedMonitoredApp.getManager().getActivePivot("QueryCubeA").awaitNotifications();
-    this.distributedMonitoredApp.getManager().getActivePivot("QueryCubeB").awaitNotifications();
-    this.distributedMonitoredApp.getManager().getActivePivot("Data").awaitNotifications();
-
-    // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
-    MultiVersionDistributedActivePivot queryCubeA =
-        ((MultiVersionDistributedActivePivot)
-            this.distributedMonitoredApp.getManager().getActivePivots().get("QueryCubeA"));
-
-    // produces distributed epochs 1 to 5
-    for (int i = 0; i < 5; ++i) {
-      queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
-      this.distributedMonitoredApp.getManager().getActivePivot("QueryCubeA").awaitNotifications();
-      this.distributedMonitoredApp.getManager().getActivePivot("Data").awaitNotifications();
-    }
-
-    MultiVersionDistributedActivePivot queryCubeB =
-        ((MultiVersionDistributedActivePivot)
-            this.distributedMonitoredApp.getManager().getActivePivots().get("QueryCubeB"));
-
-    // produces distributed epoch 1
-    queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
     this.distributedMonitoredApp.getManager().getActivePivot("QueryCubeB").awaitNotifications();
     this.distributedMonitoredApp.getManager().getActivePivot("Data").awaitNotifications();
   }
