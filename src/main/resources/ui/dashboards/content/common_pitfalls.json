@@ -217,10 +217,10 @@
           "leafKey" : "1"
         }, {
           "children" : [ {
-            "size" : 0.43,
+            "size" : 0.436922,
             "leafKey" : "2"
           }, {
-            "size" : 0.57,
+            "size" : 0.563078,
             "leafKey" : "4"
           } ],
           "direction" : "row",
@@ -241,32 +241,30 @@
           "text" : "Store chunk size can be configured on a per-store bases using `.withChunkSize(int)` when building each store's description.\n\nIf not specified, the default chunk size is either retrieved from program arguments (`-DdefaultChunkSize`), or deduced from the amount of available memory otherwise (on-and-off-heap). The default value might not be the most suitable depending on the cardinality of the store. In the case where a store has its chunk size configured to be much higher than its cardinality, it is very likely that its chunks will end up being mostly empty, wasting memory unneededly.\n\nBelow are listed for each store the ratio of *non-written rows* in chunks, grouped by field.\n\nPay attention to the value of the measure `NonWrittenRows.Ratio`. It designates the ratio of wasted space due to chunk allocation size being larger than the data they store."
         },
         "2" : {
-          "query" : {
-            "mdx" : "SELECT NON EMPTY {[Measures].[StoreUnusedRowsRatio], [Measures].[StoreChunkSize], [Measures].[StoreUsedRows], [Measures].[StoreDeletedRows]} ON COLUMNS, NON EMPTY Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[StoreUnusedRowsRatio], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
-            "updateMode" : "once"
-          },
           "filters" : [ ],
           "queryContext" : [ {
             "value" : "1",
             "key" : "mdx.hiddengrandtotals"
           } ],
-          "mapping" : {
-            "rows" : [ "[Owners].[Owner].[Owner]" ],
-            "columns" : [ "ALL_MEASURES" ],
-            "measures" : [ "[Measures].[StoreUnusedRowsRatio]", "[Measures].[StoreChunkSize]", "[Measures].[StoreUsedRows]", "[Measures].[StoreDeletedRows]" ]
-          },
           "name" : "Unused memory per store partition (averaged)",
           "serverKey" : "MAC",
           "widgetKey" : "tree-table",
+          "query" : {
+            "mdx" : "SELECT NON EMPTY {[Measures].[Unused rows ratio], [Measures].[Chunk size], [Measures].[Unused rows], [Measures].[Used rows], [Measures].[Deleted rows]} ON COLUMNS, NON EMPTY Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[Unused rows ratio], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "updateMode" : "once"
+          },
+          "mapping" : {
+            "rows" : [ "[Owners].[Owner].[Owner]" ],
+            "columns" : [ "ALL_MEASURES" ],
+            "measures" : [ "[Measures].[Unused rows ratio]", "[Measures].[Chunk size]", "[Measures].[Unused rows]", "[Measures].[Used rows]", "[Measures].[Deleted rows]" ]
+          },
           "columnWidths" : {
-            "[Owners].[Owner].[Owner]" : 113.433349609375,
-            "[Measures].[DirectMemory.SUM]" : 139,
-            "[Measures].[NonWrittenRows.Ratio]" : 108,
-            "[Measures].[ChunkSize.SUM]" : 110,
-            "[Measures].[StoreChunkSize]" : 85,
-            "[Measures].[StoreDeletedRows]" : 113,
-            "[Measures].[StoreUsedRows]" : 115,
-            "[Measures].[StoreUnusedRowsRatio]" : 104.566650390625
+            "[Measures].[Chunk size]" : 75.433349609375,
+            "[Measures].[Unused rows]" : 91,
+            "[Measures].[Used rows]" : 68.566650390625,
+            "[Measures].[Deleted rows]" : 83,
+            "[Measures].[Unused rows ratio]" : 134,
+            "[Owners].[Owner].[Owner]" : 106.433349609375
           }
         },
         "3" : {
@@ -278,7 +276,7 @@
         "4" : {
           "mapping" : {
             "yAxis" : [ "[Owners].[Owner].[Owner]" ],
-            "values" : [ "[Measures].[StoreUnusedRows]", "[Measures].[StoreDeletedRows]", "[Measures].[StoreUsedRows]" ],
+            "values" : [ "[Measures].[Unused rows]", "[Measures].[Deleted rows]", "[Measures].[Used rows]" ],
             "stackBy" : [ "ALL_MEASURES" ],
             "horizontalSubplots" : [ ],
             "verticalSubplots" : [ ]
@@ -289,7 +287,7 @@
           },
           "name" : "Unused memory per store partition (averaged)",
           "query" : {
-            "mdx" : "SELECT NON EMPTY Hierarchize(Descendants({[Owners].[Owner].[AllMember]}, 1, SELF_AND_BEFORE)) ON ROWS, NON EMPTY {[Measures].[StoreUnusedRows], [Measures].[StoreDeletedRows], [Measures].[StoreUsedRows]} ON COLUMNS FROM [MemoryCube]",
+            "mdx" : "SELECT NON EMPTY Hierarchize(Descendants({[Owners].[Owner].[AllMember]}, 1, SELF_AND_BEFORE)) ON ROWS, NON EMPTY {[Measures].[Unused rows], [Measures].[Deleted rows], [Measures].[Used rows]} ON COLUMNS FROM [MemoryCube]",
             "updateMode" : "once"
           },
           "filters" : [ ],
