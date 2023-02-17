@@ -1,4 +1,5 @@
 {
   "name" : "Per-field Analysis",
-  "widgetKey" : "tree-table"
+  "widgetKey" : "tree-table",
+  "version" : 1
 }

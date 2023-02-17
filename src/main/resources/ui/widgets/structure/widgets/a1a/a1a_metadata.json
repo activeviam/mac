@@ -1,4 +1,5 @@
 {
   "name" : "Direct memory usage overview",
-  "widgetKey" : "tree-table"
+  "widgetKey" : "tree-table",
+  "version" : 1
 }

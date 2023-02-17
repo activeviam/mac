@@ -26,7 +26,12 @@
             "mdx" : "SELECT NON EMPTY Hierarchize(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].[Owner].Members)) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "VECTOR_BLOCK" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Fields].[Field].[Field]", "[Owners].[Owner].[Owner]" ],
@@ -51,7 +56,12 @@
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY TopPercent([Fields].[Field].[Field].Members, 95, [Measures].[DirectMemory.SUM]) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "VECTOR_BLOCK" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-tree-map"
@@ -101,7 +111,12 @@
             "mdx" : "SELECT NON EMPTY Order(Hierarchize(Crossjoin([Owners].[Owner].[Owner].Members, [Fields].[Field].[Field].Members)), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio], [Measures].[VectorBlock.Length], [Measures].[VectorBlock.RefCount]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "VECTOR_BLOCK" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
@@ -151,7 +166,12 @@
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[VECTOR_BLOCK]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "VECTOR_BLOCK" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-tree-map"
