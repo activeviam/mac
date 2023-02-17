@@ -732,6 +732,59 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withinFolder(DICTIONARY_FOLDER)
         .withDescription("the number of entries in the corresponding dictionary, when relevant")
         .publish(context);
+
+    final CopperMeasure storeUsedRows =
+            Copper.measure(COMMITTED_ROWS_COUNT)
+                    .per(Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY), Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY), Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+                    .max()
+                    .as("StoreUsedRows")
+                    .withFormatter(NUMBER_FORMATTER)
+                    .withinFolder(CHUNK_FOLDER)
+                    .withDescription("the number of rows actually containing data in a chunk in the store")
+                    .publish(context);
+
+    final CopperMeasure storeDeletedRows =
+            Copper.measure(DELETED_ROWS_COUNT)
+                    .per(Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY), Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY), Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+                    .max()
+                    .as("StoreDeletedRows")
+                    .withFormatter(NUMBER_FORMATTER)
+                    .withinFolder(CHUNK_FOLDER)
+                    .withDescription("the number of deleted rows from the store")
+                    .publish(context);
+
+    final CopperMeasure storeUnusedRows =
+            Copper.measure(NON_WRITTEN_ROWS_COUNT)
+                    .per(Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY), Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY), Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+                    .max()
+                    .as("StoreUnusedRows")
+                    .withFormatter(NUMBER_FORMATTER)
+                    .withinFolder(CHUNK_FOLDER)
+                    .withDescription("the number of empty rows in the store")
+                    .publish(context);
+
+    final CopperMeasure storeChunkSize =
+            perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+                    .max()
+                    .per(Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY), Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY), Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
+                            Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
+                    .min()
+                    .as("StoreChunkSize")
+                    .withFormatter(NUMBER_FORMATTER)
+                    .withinFolder(CHUNK_FOLDER)
+                    .withDescription("the size of each chunk for the store")
+                    .publish(context);
+
+    final CopperMeasure storeUnwrittenRowsRatio =
+            Copper.combine(storeChunkSize, storeUnusedRows)
+                    .map((a, resultCell) -> {
+                      resultCell.writeDouble(a.readDouble(1) / a.readDouble(0));
+                    }, ILiteralType.DOUBLE)
+                    .as("StoreUnusedRowsRatio")
+                    .withFormatter(PERCENT_FORMATTER)
+                    .withinFolder(CHUNK_FOLDER)
+                    .withDescription("the ratio of unused rows inside the chunks")
+                    .publish(context);
   }
 
   private void vectorMeasures(ICopperContext context) {

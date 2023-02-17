@@ -213,15 +213,8 @@
     "p-3" : {
       "layout" : {
         "children" : [ {
-          "children" : [ {
-            "size" : 0.76,
-            "leafKey" : "1"
-          }, {
-            "size" : 0.24,
-            "leafKey" : "5"
-          } ],
           "size" : 0.21,
-          "direction" : "row"
+          "leafKey" : "1"
         }, {
           "children" : [ {
             "size" : 0.43,
@@ -231,7 +224,7 @@
             "leafKey" : "4"
           } ],
           "direction" : "row",
-          "size" : 0.5609
+          "size" : 0.5609000000000001
         }, {
           "size" : 0.2291,
           "leafKey" : "3"
@@ -239,7 +232,7 @@
         "direction" : "column"
       },
       "name" : "Oversized store chunks",
-      "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Store]", "Except([Fields].[Field].[Field].Members, {[Fields].[Field].[ALL].[AllMember].[N/A]})" ],
+      "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Store]", "Except([Chunks].[Class].Members, [Chunks].[Class].[AllMember].[com.qfs.chunk.direct.impl.DirectChunkPositiveInteger])", "[Components].[Component].[AllMember].[RECORDS]" ],
       "content" : {
         "1" : {
           "name" : "Store chunks are oversized",
@@ -249,24 +242,31 @@
         },
         "2" : {
           "query" : {
-            "mdx" : "SELECT NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[ChunkSize.SUM], [Measures].[NonWrittenRows.Ratio]} ON COLUMNS, NON EMPTY Crossjoin(Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC), Order(Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember])), [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
+            "mdx" : "SELECT NON EMPTY {[Measures].[StoreUnusedRowsRatio], [Measures].[StoreChunkSize], [Measures].[StoreUsedRows], [Measures].[StoreDeletedRows]} ON COLUMNS, NON EMPTY Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[StoreUnusedRowsRatio], DESC) ON ROWS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
           "filters" : [ ],
-          "queryContext" : [ ],
+          "queryContext" : [ {
+            "value" : "1",
+            "key" : "mdx.hiddengrandtotals"
+          } ],
           "mapping" : {
-            "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
+            "rows" : [ "[Owners].[Owner].[Owner]" ],
             "columns" : [ "ALL_MEASURES" ],
-            "measures" : [ "[Measures].[DirectMemory.SUM]", "[Measures].[ChunkSize.SUM]", "[Measures].[NonWrittenRows.Ratio]" ]
+            "measures" : [ "[Measures].[StoreUnusedRowsRatio]", "[Measures].[StoreChunkSize]", "[Measures].[StoreUsedRows]", "[Measures].[StoreDeletedRows]" ]
           },
-          "name" : "Unused memory per chunks",
+          "name" : "Unused memory per store partition (averaged)",
           "serverKey" : "MAC",
           "widgetKey" : "tree-table",
           "columnWidths" : {
-            "[Owners].[Owner].[Owner]" : 232,
+            "[Owners].[Owner].[Owner]" : 113.433349609375,
             "[Measures].[DirectMemory.SUM]" : 139,
-            "[Measures].[NonWrittenRows.Ratio]" : 152,
-            "[Measures].[ChunkSize.SUM]" : 110
+            "[Measures].[NonWrittenRows.Ratio]" : 108,
+            "[Measures].[ChunkSize.SUM]" : 110,
+            "[Measures].[StoreChunkSize]" : 85,
+            "[Measures].[StoreDeletedRows]" : 113,
+            "[Measures].[StoreUsedRows]" : 115,
+            "[Measures].[StoreUnusedRowsRatio]" : 104.566650390625
           }
         },
         "3" : {
@@ -277,11 +277,9 @@
         },
         "4" : {
           "mapping" : {
-            "xValues" : [ "[Measures].[DirectMemory.SUM]" ],
-            "yValues" : [ "[Measures].[NonWrittenRows.Ratio]" ],
-            "size" : [ ],
-            "color" : [ "[Owners].[Owner].[Owner]" ],
-            "splitBy" : [ "[Fields].[Field].[Field]" ],
+            "yAxis" : [ "[Owners].[Owner].[Owner]" ],
+            "values" : [ "[Measures].[StoreUnusedRows]", "[Measures].[StoreDeletedRows]", "[Measures].[StoreUsedRows]" ],
+            "stackBy" : [ "ALL_MEASURES" ],
             "horizontalSubplots" : [ ],
             "verticalSubplots" : [ ]
           },
@@ -289,27 +287,15 @@
           "style" : {
             "isTextVisible" : false
           },
-          "name" : "Unused memory per field",
+          "name" : "Unused memory per store partition (averaged)",
           "query" : {
-            "mdx" : "SELECT NON EMPTY Crossjoin(Order([Owners].[Owner].[Owner].Members, [Measures].[DirectMemory.SUM], DESC), Order([Fields].[Field].[Field].Members, [Measures].[NonWrittenRows.Ratio], DESC)) ON ROWS, NON EMPTY {[Measures].[NonWrittenRows.Ratio], [Measures].[DirectMemory.SUM]} ON COLUMNS FROM [MemoryCube]",
+            "mdx" : "SELECT NON EMPTY Hierarchize(Descendants({[Owners].[Owner].[AllMember]}, 1, SELF_AND_BEFORE)) ON ROWS, NON EMPTY {[Measures].[StoreUnusedRows], [Measures].[StoreDeletedRows], [Measures].[StoreUsedRows]} ON COLUMNS FROM [MemoryCube]",
             "updateMode" : "once"
           },
           "filters" : [ ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
-          "widgetKey" : "plotly-scatter-plot"
-        },
-        "5" : {
-          "mode" : "checkbox",
-          "name" : "Owner filter",
-          "levelCoordinates" : {
-            "dimensionName" : "Owners",
-            "hierarchyName" : "Owner",
-            "levelName" : "Owner"
-          },
-          "cubeName" : "MemoryCube",
-          "serverKey" : "MAC",
-          "widgetKey" : "quick-filter"
+          "widgetKey" : "plotly-100-stacked-bar-chart"
         }
       },
       "queryContext" : [ ]
