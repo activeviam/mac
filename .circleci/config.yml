@@ -69,7 +69,7 @@ jobs:
             - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
-  execute_compatibility_checks:
+  compatibility_check:
     executor: vm
     resource_class: large
     working_directory: ~/mac
@@ -90,7 +90,7 @@ jobs:
             sudo sysctl -w vm.overcommit_memory=1
             # using cached exports if available
             if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> $ARTIFACTS_USER:$ARTIFACTS
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> ${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}
             fi
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
@@ -108,7 +108,7 @@ workflows:
           context: rnd-server
           requires:
             - build_and_test
-      - execute_compatibility_checks:
+      - compatibility_check:
           matrix:
             parameters:
               ap-version: [
