@@ -85,6 +85,12 @@ jobs:
             - mac-java-
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
+          name: "Test"
+          command: echo ${ARTIFACTS_USER}
+      - run:
+          name: "Test2"
+          command: echo ${ARTIFACTS_PASSWORD}
+      - run:
           name: "Run matrix checks"
           command: |
             sudo sysctl -w vm.overcommit_memory=1
