@@ -7,7 +7,10 @@ ActivePivot application, starting from ActivePivot 5.8 onward.
 The project is built as a standalone Spring Boot jar file with an embedded
 ActiveUI application available on `localhost:9092` by default.
 
-This version is compatible with ActivePivot 5.11. To use this project with other versions, pick the right branch.
+**This version is compatible with exports from ActivePivot 5.8+ servers.**
+
+The MAC server uses the latest released versions of ActivePivot and ActiveUI by default,
+but the dependency versions can be changed in the project's POM.
 
 ## Main Features
 
@@ -17,6 +20,34 @@ This version is compatible with ActivePivot 5.11. To use this project with other
 * Overview of structure-related memory footprint
 * Loading and comparing several ActivePivot applications' exported memory
   dump files
+
+## Building & launching the application
+
+### Build steps
+The requirements for building the MAC application are the following : 
+  - Maven 3.0 +
+  - Java 11 +
+  - ActivePivot artifacts
+  - ActiveUI artifacts
+
+The SpringBoot JAR of the application can be built by running the following command line:
+
+```
+mvn clean install -DskipTests=true
+```
+
+### Launch steps
+
+The requirements for launching the MAC application are the following :
+  - Java 11+
+  - The built MAC .jar file
+  - A valid ActivePivot license
+
+Once the JAR file built on the `./target directory`, the MAC server can be launched by the following command line:
+
+```
+java -jar [path to the MAC .jar file]
+```
 
 ## Prepare your Application for Analysis
 
@@ -38,7 +69,7 @@ important to get familiar with its [data model](docs/data_model.md).
 
 ## Bookmarks
 
-MAC comes with a number of predefined bookmarks that each offer some insights to
+MAC comes with a number of predefined ActiveUI bookmarks that each offer some insights to
 various aspects of the monitored application.
 
 * [Overview](docs/bookmarks/overview.md)

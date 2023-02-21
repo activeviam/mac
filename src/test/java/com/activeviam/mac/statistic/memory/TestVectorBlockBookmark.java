@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 
 public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
-  public static final int ADDED_DATA_SIZE = 20;
+  public static final int ADDED_DATA_SIZE = 40;
   public static final int FIELD_SHARING_COUNT = 2;
   private ApplicationInTests<IDatastore> monitoredApp;
   private ApplicationInTests<IDatastore> monitoringApp;
@@ -131,7 +131,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
-    final MDXQuery vectorBlockQuery =
+    final MDXQuery vectorBlockQueryField1 =
         new MDXQuery(
             "SELECT {"
                 + "   [Components].[Component].[ALL].[AllMember],"
@@ -144,10 +144,39 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector1]"
                 + " )");
 
-    final CellSetDTO result = pivot.execute(vectorBlockQuery);
+    final CellSetDTO result1 = pivot.execute(vectorBlockQueryField1);
 
-    Assertions.assertThat((long) result.getCells().get(1).getValue())
-        .isEqualTo((long) result.getCells().get(0).getValue());
+    // Vector1 and Vector2 data are intertwined in the same blocks, so the direct memory is only
+    // partially used
+    // by the filtered fields, but at least one of the selected blocks belong to the filtered field
+    final var blockCountUsed =
+        ((ADDED_DATA_SIZE * 2 + ADDED_DATA_SIZE) / MICROAPP_VECTOR_BLOCK_SIZE) + 1;
+    final var directMemoryUsedOnVector = blockCountUsed * MICROAPP_VECTOR_BLOCK_SIZE * Double.BYTES;
+
+    Assertions.assertThat((long) result1.getCells().get(1).getValue())
+        .isEqualTo(directMemoryUsedOnVector);
+    Assertions.assertThat((long) result1.getCells().get(1).getValue())
+        .isEqualTo((long) result1.getCells().get(0).getValue());
+
+    final MDXQuery vectorBlockQueryField2 =
+        new MDXQuery(
+            "SELECT {"
+                + "   [Components].[Component].[ALL].[AllMember],"
+                + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
+                + " } ON ROWS,"
+                + " [Measures].[DirectMemory.SUM] ON COLUMNS"
+                + " FROM [MemoryCube]"
+                + " WHERE ("
+                + "   [Owners].[Owner].[Owner].[Store A],"
+                + "   [Fields].[Field].[Field].[vector2]"
+                + " )");
+
+    final CellSetDTO result2 = pivot.execute(vectorBlockQueryField2);
+
+    Assertions.assertThat((long) result2.getCells().get(1).getValue())
+        .isEqualTo(directMemoryUsedOnVector);
+    Assertions.assertThat((long) result2.getCells().get(1).getValue())
+        .isEqualTo((long) result2.getCells().get(0).getValue());
   }
 
   @Test
@@ -192,7 +221,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
     final CellSetDTO refCountResult = pivot.execute(refCountQuery);
 
-    Assertions.assertThat((long) CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
+    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
         .isEqualTo(FIELD_SHARING_COUNT * ADDED_DATA_SIZE);
   }
 }
