@@ -92,18 +92,20 @@ fi
 # MAIN SCRIPT START
 
 if [ -z "$1" ]; then
-    echo "No first argument supplied. Script usage : $0 sandbox_version [maven_settings_path]"
+    echo "No first argument supplied. Script usage : $0 sandbox_version artifacts_credentials(user:password) [maven_settings_path]"
+    exit 1
+elif [ -z "$2" ]; then
+    echo "No second argument supplied. Script usage : $0 sandbox_version artifacts_credentials(user:password) [maven_settings_path]"
     exit 1
 fi
-
-if [ ! -z "$2" ]; then
-	MAVEN_SETTINGS=$2
+if [ ! -z "$3" ]; then
+	MAVEN_SETTINGS=$3
 else
 	MAVEN_SETTINGS=${PWD}/.circleci/circleci-settings.xml
 fi
 
 AP_VERSION=$1
-
+ARTIFACTS_CREDENTIALS=$2
 
 AP_REPO_PATH=/com/activeviam/sandbox/sandbox-activepivot/
 
@@ -136,7 +138,8 @@ JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber
 # 2- Obtain a sandbox jar 
 
 SANDBOX_URL=$(get_sandbox_url)
-curl -u ${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} ${SANDBOX_URL} -o sandbox.zip
+echo $SANDBOX_URL
+curl -u ${ARTIFACTS_CREDENTIALS} ${SANDBOX_URL} -o sandbox.zip
 mkdir ${SANDBOX_BUILD_DIR}
 cd ${SANDBOX_BUILD_DIR}
 unzip -o -q ../sandbox.zip
