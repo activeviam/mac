@@ -66,11 +66,8 @@ jobs:
           condition: <<pipeline.parameters.run_compatibility>>
           steps:
             - run:
-                name: Compatibility enabled, fetch all sandbox-activepivot releases with the Artifactory REST API
-                command: |
-                  curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -X POST -k -H 'Content-Type:text/plain' https://activeviam.jfrog.io/artifactory/api/search/aql \
-                  --data 'items.find({ "repo": "activepivot-mvn-nightly"},  {"path": {"$match": "com/activeviam/sandbox/sandbox-activepivot/*"}},  {"name": {"$match": "*.jar"}},   {"$or": [{"@version": {"$match": "?.?.?"}}, {"@version": {"$match": "?.??.?"}}, {"@version": {"$match": "?.?.??"}}, {"@version": {"$match": "?.??.??"}}]}).include("@version")'\
-                  | jq -r .results[].properties[].value && echo "Cant dynamically affect the matrix configuration yet."
+                name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
+                command: bash ./scripts/get_compatible_ap_releases.sh
   execute_compatibility_checks:
     executor: vm
     resource_class: large
@@ -113,7 +110,50 @@ workflows:
       - execute_compatibility_checks:
           matrix:
             parameters:
-              ap-version: ["5.10.12","5.10.13","5.11.5","6.0.0","6.0.2"]
+              ap-version: [
+                  "5.8.0",
+                  "5.8.1",
+                  "5.8.2",
+                  "5.8.3",
+                  "5.8.4",
+                  "5.8.5",
+                  "5.8.6",
+                  "5.8.7",
+                  "5.8.8",
+                  "5.8.9",
+                  "5.8.10",
+                  "5.8.11",
+                  "5.8.12",
+                  "5.8.13",
+                  "5.8.14",
+                  "5.8.15",
+                  "5.8.16",
+                  "5.8.17",
+                  "5.8.18",
+                  "5.8.19",
+                  "5.8.20",
+                  "5.8.21",
+                  "5.8.22",
+                  "5.8.23",
+                  "5.8.24",
+                  "5.9.0",
+                  "5.9.1",
+                  "5.9.2",
+                  "5.9.3",
+                  "5.9.4",
+                  "5.9.5",
+                  "5.9.6",
+                  "5.9.7",
+                  "5.9.8",
+                  "5.9.9",
+                  "5.9.10",
+                  "5.9.11",
+                  "5.9.12",
+                  "5.9.13",
+                  "6.0.0",
+                  "6.0.1",
+                  "6.0.2"
+              ]
           context: rnd-server
           requires:
             - launch_compatibility_checks
