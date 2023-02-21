@@ -65,9 +65,10 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
         // Nothing to change
         return duplicateRecord;
       } else {
-        //We ignore TombStoneChunks as they are a singleton that has minimal memory footprint
+        // We ignore TombStoneChunks as they are a singleton that has minimal memory footprint
         // but don't work with the current MAC data model
-        if (getChunkClassName(duplicateRecord, dictionaryProvider, storeMetadata).contains(TombStoneChunk.class.getName())) {
+        if (getChunkClassName(duplicateRecord, dictionaryProvider, storeMetadata)
+            .contains(TombStoneChunk.class.getName())) {
           return duplicateRecord;
         }
         final IWritableRecord newRecord = copyRecord(duplicateRecord);
@@ -157,7 +158,10 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     return record.readLong(idx);
   }
 
-  private String getChunkClassName(final IRecordReader record, final IDictionaryProvider dictionaryProvider, final IStoreMetadata storeMetadata) {
+  private String getChunkClassName(
+      final IRecordReader record,
+      final IDictionaryProvider dictionaryProvider,
+      final IStoreMetadata storeMetadata) {
     final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__CLASS);
     final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
     @SuppressWarnings("unchecked")
