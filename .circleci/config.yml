@@ -93,10 +93,12 @@ jobs:
       - run:
           name: "Run matrix checks"
           command: |
-            sudo sysctl -w vm.overcommit_memory=1
+            sudo sysctl -w vm.overcommit_memory=1 && \
+            ARTIFACT_ARG=${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} && \
+            echo $ARTIFACT_ARG && \
             # using cached exports if available
             if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> ${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> ${ARTIFACTS_ARG}
             fi
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
