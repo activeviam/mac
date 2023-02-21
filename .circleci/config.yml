@@ -85,21 +85,14 @@ jobs:
             - mac-java-
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
-          name: "Test"
-          command: echo ${ARTIFACTS_USER}
-      - run:
-          name: "Test2"
-          command: echo ${ARTIFACTS_PASSWORD}
-      - run:
           name: "Run matrix checks"
           command: |
             sudo sysctl -w vm.overcommit_memory=1 && \
             ARTIFACT_ARG=${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} && \
             echo $ARTIFACT_ARG && \
-            echo wazzup && \
             # using cached exports if available
             if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> ${ARTIFACT_ARG}
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> ARTIFACT_ARG
             fi
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
