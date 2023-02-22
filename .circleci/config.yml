@@ -66,9 +66,10 @@ jobs:
           condition: <<pipeline.parameters.run_compatibility>>
           steps:
             - checkout
-            - run:
-                name: Try downloading xmllint
-                command: sudo apt-get install xmllint
+## Somehow fails to dl the lib
+#            - run:
+#                name: Try downloading xmllint
+#                command: sudo apt-get install libxml2-utils
             - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
