@@ -90,11 +90,10 @@ check_query(){
     echo "The reference file did not have the exact version to fetch, trying with implied ranges."
     jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
     echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
-    POSITION_VERSION=$(expr $(cat tmp | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1) - 2)
+    POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1 )-2))
   fi
 
   jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
-
   if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]; then
     	echo ${QUERY}"... OK"
   else
