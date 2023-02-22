@@ -62,6 +62,8 @@ cleanup(){
 	echo "Killing the java processes and removing temporary files..."
 	kill -n 15 ${PID_MAC}
 	rm -rdf ${BASE_DIR}/queries/output
+	rm -rf ${BASE_DIR}/queries/tmp
+	rm -rf ${BASE_DIR}/queries/cur_ref
 }
 
 # Function executing a remote call to the a loaded MAC cube available at localhost:9092
@@ -72,18 +74,32 @@ check_query(){
 	if [ -z "$1" ];	then
 		echo "No argument supplied to the query function"
 		exit 1
-    else
+  else
+    QUERY=$1
     	curl -X POST -u admin:admin -H "Content-Type:application/json" \
-    		-d @${BASE_DIR}/queries/input/$1.json \
+    		-d @${BASE_DIR}/queries/input/${QUERY}.json \
     		http://localhost:9092/activeviam/pivot/rest/v8/cube/query/mdx \
-    		| jq .cells[].value > ${BASE_DIR}/queries/output/$1.txt
-    fi
+    		| jq .cells[].value > ${BASE_DIR}/queries/output/${QUERY}.txt
+  fi
 
-    if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/$1.txt ${BASE_DIR}/queries/ref/$1.txt) ]; then
-    	echo $1"... OK"
-    else
+  # The reference file for the queries is a .json file with the first valid version as key for a given value
+  MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1)
+  if  [[ -n ${MATCH_VERSION} ]]; then
+    POSITION_VERSION=$(expr ${MATCH_VERSION} - 1) #0-indexing in jq vs 1-indexing in grep
+  else
+    echo "The reference file did not have the exact version to fetch, trying with implied ranges."
+    jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
+    echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
+    POSITION_VERSION=$(expr $(cat tmp | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1) - 2)
+  fi
+
+  jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
+
+  if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]; then
+    	echo ${QUERY}"... OK"
+  else
     	echo "Error when comparing expected query output to query result:"
-    	echo $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/$1.txt ${BASE_DIR}/queries/ref/$1.txt)
+    	echo $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref)
 	     # Do the cleanup to make sure we don't leave open processes
 	    cleanup
 	    exit 1
@@ -94,14 +110,19 @@ check_query(){
 # MAIN SCRIPT START
 
 if [ -z "$1" ]; then
-    echo "No first argument supplied. Script usage : $0 export_folder [maven_settings_path]"
+    echo "No first argument supplied. Script usage : $0 export_folder sandbox_version [maven_settings_path]"
+    exit 1
+elif [ -z "$2" ]; then
+    echo "No second argument supplied. Script usage : $0 export_folder sandbox_version [maven_settings_path]"
     exit 1
 fi
 
-echo "Read exported files at : $1"
+FILES_PATH=$1
+SANDBOX_VERSION=$2
+echo "Read exported files at : ${FILES_PATH}"
 
-if [ ! -z "$2" ]; then
-	MAVEN_SETTINGS=$2
+if [ ! -z "$3" ]; then
+	MAVEN_SETTINGS=$3
 else
 	MAVEN_SETTINGS=${PWD}/.circleci/circleci-settings.xml
 fi
@@ -143,7 +164,10 @@ VMID_MAC=$(jps -l | grep ${MAC_ARTIFACTID}-${MAC_VERSION}.jar | cut -d ' ' -f 1)
 PID_MAC=$(ps S | grep ${VMID_MAC} | xargs | cut -d ' ' -f 1)
 
 # 2- Load files in MAC
-cp -r $1 ${BUILD_DIR}/exported_statistics
+
+#Move the exported files to the folder watched by the mac app
+cp -r ${FILES_PATH} ${BUILD_DIR}/exported_statistics
+#Wait for the cube being ready & loaded
 echo "Pause the script for 30 seconds for the MAC data to be loaded (VM & app load takes ~20 sec on CI)..."
 echo
 sleep 30
