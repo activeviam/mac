@@ -67,6 +67,9 @@ jobs:
           steps:
             - checkout
             - run:
+                name: Try downloading xmllint
+                command: sudo apt-get install xmllint
+            - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
   compatibility_check:
@@ -111,9 +114,6 @@ workflows:
       - build_and_test:
           context: rnd-server
       - launch_compatibility_checks:
-          pre-steps:
-            - run:
-                command: sudo apt-get install libxml2-utils
           context: rnd-server
       - compatibility_check:
           matrix:
