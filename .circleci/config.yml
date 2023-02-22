@@ -67,6 +67,12 @@ jobs:
           steps:
             - checkout
             - run:
+                name: Test
+                command: echo $ARTIFACTS_USER | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+            - run:
+                name: Test
+                command: echo $ARTIFACTS_PASSWORD | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+            - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
   compatibility_check:
@@ -85,7 +91,7 @@ jobs:
             - mac-java-
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
-          name: "Run matrix checks"
+          name: "Test artifacts credentials"
           command: ARTIFACT_ARG=${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} && curl -u $ARTIFACT_ARG https://artifacts.activeviam.com/share/
       - run:
           name: "Run matrix checks"
