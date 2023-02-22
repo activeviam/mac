@@ -100,9 +100,10 @@ jobs:
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
           path: ./logs
-      - save_cache:
-          paths: [ target/exported_statistics ]
-          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
+##  Disable caching exports for now
+#      - save_cache:
+#          paths: [ target/exported_statistics ]
+#          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
 workflows:
   version: 2
   check:
@@ -110,6 +111,9 @@ workflows:
       - build_and_test:
           context: rnd-server
       - launch_compatibility_checks:
+          pre-steps:
+            - run:
+                command: sudo apt-get install libxml2-utils
           context: rnd-server
       - compatibility_check:
           matrix:

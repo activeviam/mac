@@ -127,7 +127,6 @@ BEAN_NAME=$(print_bean_name)
 check_requirements
 
 MAC_ARTIFACTID=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
-MAC_VERSION=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 check_root
 
@@ -135,7 +134,7 @@ JMXTERM_VERSION=1.0.4
 JMX_REPO_PATH=https://github.com/jiaqi/jmxterm/releases/download/
 JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber.jar
 
-# 2- Obtain a sandbox jar 
+# 2- Download a sandbox project zip 
 
 SANDBOX_URL=$(get_sandbox_url)
 echo $SANDBOX_URL
@@ -143,16 +142,42 @@ curl -u "${ARTIFACTS_CREDENTIALS}" ${SANDBOX_URL} -o sandbox.zip
 mkdir ${SANDBOX_BUILD_DIR}
 cd ${SANDBOX_BUILD_DIR}
 unzip -o -q ../sandbox.zip
-mvn clean install -DskipTests=true >> ${LOG_DIR}/maven.log
+
+# Make sure there is a pom.xml file at the root of the current folder
+if [ ! -f "${PWD}/pom.xml" ]; then
+    echo "No pom.xml at the root of the un-zipped sandbox folder, something went wrong.  Aborting."
+    cleanup
+    exit 1
+else
+	echo "Dowloaded the ${AP_VERSION} sandbox zip from the shared artifacts."
+fi
+
+#  3 - Build a SpringBoot jar from the sandbox zip
+
+SANDBOX_VERSION=$(mvn -s ${MAVEN_SETTINGS} help:evaluate -Dexpression=project.version -q -DforceStdout)
+if [ ! SANDBOX_VERSION==AP_VERSION ];then
+    echo "The downloaded sandbox version and the expected version do not match, something went wrong.  Aborting."
+    cleanup
+    exit 1
+fi	
+
+mvn clean install -s ${MAVEN_SETTINGS} -DskipTests=true -T1C >> ${LOG_DIR}/maven.log
 cd ../
 
-echo "Built the ${AP_VERSION} sandbox jar in the m2 repo from the released artifact"
+if [ -f ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" ]; then
+	echo "Built the ${AP_VERSION} sandbox jar in the m2 repo from the released artifact"
+else
+	echo "Failed to build the sandbox jar from the released project. Aborting."
+	cleanup
+    exit 1
+fi
 echo
-# extract the csv files in SANDBOX_DATA_DIR
+
+
+# 4- extract the csv files in SANDBOX_DATA_DIR
 unzip -o -q -j ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" 'BOOT-INF/classes/data/*' -d ${SANDBOX_DATA_DIR}/
 
-# 3- Run both apps
-
+# 5- Run the sandbox app without real-time
 java -jar ${M2_PATH}${AP_REPO_PATH}${AP_VERSION}"/sandbox-activepivot-"${AP_VERSION}".jar" --csvSource.dataset=${SANDBOX_DATA_DIR} --tradeSource.timerDelay=1000000000 --ratings.random=false --risks.random=false>logs/sandbox.log&
 
 echo "Extracted CSV files and launched the sandbox jar..."
@@ -163,7 +188,7 @@ VMID_SANDBOX=$(jps -l | grep sandbox-activepivot-${AP_VERSION}.jar | cut -d ' ' 
 # Use ps to find the PID
 PID_SANDBOX=$(ps S | grep ${VMID_SANDBOX} | xargs | cut -d ' ' -f 1)
 
-# 4- Generate the memory statistics file for the Sandbox
+# 6- Generate the memory statistics file for the Sandbox
 
 # Download the jmxterm jar
 curl -s -OL ${JMX_JAR_PATH} > ${LOG_DIR}/curl.log
