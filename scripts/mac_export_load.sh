@@ -66,46 +66,78 @@ cleanup(){
 	rm -rf ${BASE_DIR}/queries/cur_ref
 }
 
+
+
+run_query_mdx(){
+      	curl -X POST -u admin:admin -H "Content-Type:application/json" \
+      		-d @${BASE_DIR}/queries/input/${QUERY}.json \
+      		http://localhost:9092/activeviam/pivot/rest/v8/cube/query/mdx \
+      		| jq .cells[].value > ${BASE_DIR}/queries/output/${QUERY}.txt
+}
+
+run_query_table(){
+      	curl -u admin:admin \
+      		-d @${BASE_DIR}/queries/input/${QUERY}.json \
+      		http://localhost:9092/activeviam/pivot/rest/v8/database/data/tables/$(cat ${BASE_DIR}/queries/input/${QUERY}.txt)/size \
+      		> ${BASE_DIR}/queries/output/${QUERY}.txt
+}
+
+verify_query(){
+    # The reference file for the queries is a .json file with the first valid version as key for a given value
+    # It is assumed that any later version in the document (following the semantic versionining order) supersedes the expected value
+    MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1)
+
+    echo $MATCH_VERSION
+    if  [[ -n ${MATCH_VERSION} ]]; then
+      POSITION_VERSION=$((MATCH_VERSION - 1)) #0-indexing in jq vs 1-indexing in grep
+    else
+      echo "The reference file did not have the exact version to fetch, trying with implied ranges."
+      jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
+      echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
+      POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1 )-2))
+    fi
+
+    jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
+    if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]; then
+      	echo ${QUERY}"... OK"
+    else
+      	echo "Error when comparing expected query output to query result:"
+      	echo $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref)
+  	     # Do the cleanup to make sure we don't leave open processes
+  	    cleanup
+  	    exit 1
+  	fi
+}
+
 # Function executing a remote call to the a loaded MAC cube available at localhost:9092
-# Usage : check_query queryId
+# Usage : check_query_mdx queryId
 # queryId : String , Id of the checked query, its payload is expected to be available at ${BASE_DIR}/queries/input/${queryId}.json
-#           and the values obtained for the cells to match the content of ${BASE_DIR}/queries/ref/${queryId}.txt
-check_query(){
+#           and the values obtained for the cells to match the content of ${BASE_DIR}/queries/ref/${queryId}.json
+check_query_mdx(){
 	if [ -z "$1" ];	then
 		echo "No argument supplied to the query function"
 		exit 1
   else
     QUERY=$1
-    	curl -X POST -u admin:admin -H "Content-Type:application/json" \
-    		-d @${BASE_DIR}/queries/input/${QUERY}.json \
-    		http://localhost:9092/activeviam/pivot/rest/v8/cube/query/mdx \
-    		| jq .cells[].value > ${BASE_DIR}/queries/output/${QUERY}.txt
+    run_query_mdx
   fi
-
-  # The reference file for the queries is a .json file with the first valid version as key for a given value
-  MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1)
-
-  echo $MATCH_VERSION
-  if  [[ -n ${MATCH_VERSION} ]]; then
-    POSITION_VERSION=$((MATCH_VERSION - 1)) #0-indexing in jq vs 1-indexing in grep
-  else
-    echo "The reference file did not have the exact version to fetch, trying with implied ranges."
-    jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
-    echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
-    POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1 )-2))
-  fi
-
-  jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
-  if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]; then
-    	echo ${QUERY}"... OK"
-  else
-    	echo "Error when comparing expected query output to query result:"
-    	echo $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref)
-	     # Do the cleanup to make sure we don't leave open processes
-	    cleanup
-	    exit 1
-	fi
+  verify_query
 }
+
+# Function executing a remote call to the a loaded MAC cube available at localhost:9092
+# Usage : check_query_table queryId
+# queryId : String , Id of the checked query, its table is in ${BASE_DIR}/queries/input/${queryId}.json the values obtained for the cells are expected to match the content of ${BASE_DIR}/queries/ref/${queryId}.json
+check_query_table(){
+	if [ -z "$1" ];	then
+		echo "No argument supplied to the query function"
+		exit 1
+  else
+    QUERY=$1
+    run_query_table
+  fi
+  verify_query
+}
+
 
 ###################
 # MAIN SCRIPT START
@@ -177,7 +209,10 @@ echo "Resumed the script..."
 # 3- Run queries on MAC & verify content
 mkdir -p ${BASE_DIR}/queries/output
 #Query 1 : COUNT Grand Total
-check_query "query1"
+check_query_mdx "query1"
+
+## Query 2 : Table-size checks cannot be done due to PIVOT-6749
+# check_query_table "query2"
 
 # Cleanup
 # Use the apps' PIDs to kill them

@@ -150,8 +150,9 @@ workflows:
                   "5.9.0",
                   "5.9.1",
                   "5.9.2",
-                  "5.9.3",
-                  "5.9.4",
+                # The following two versions have their export broken (NPE on export)
+                # "5.9.3",
+                # "5.9.4",
                   "5.9.5",
                   "5.9.6",
                   "5.9.7",
