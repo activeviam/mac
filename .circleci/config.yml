@@ -89,25 +89,24 @@ jobs:
             - mac-java-
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
-          name: "Test artifacts credentials"
-          command: curl -u "${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}" https://artifacts.activeviam.com/share/
-      - run:
-          name: "Run matrix checks"
+          name: "Run sandbox memory export"
           command: |
             sudo sysctl -w vm.overcommit_memory=1 && \
-            ARTIFACT_ARG=${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} && \
-            echo $ARTIFACT_ARG && \
             # using cached exports if available
-            if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACT_ARG}"
+            if [[ ! -d ${PWD}/target/exported_statistics || -z $(ls -A ${PWD}/target/exported_statistics) ]]; then
+              echo "No available export cache : Run sandbox export script."
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}"
+            else
+              echo "Use available export cache."
             fi
-            bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
+      - run:
+          name: "Run checks on export"
+          command: bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
           path: ./logs
-##  Disable caching exports for now
-#      - save_cache:
-#          paths: [ target/exported_statistics ]
-#          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
+      - save_cache:
+          paths: [ target/exported_statistics ]
+          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
 workflows:
   version: 2
   check:
@@ -116,6 +115,8 @@ workflows:
           context: rnd-server
       - launch_compatibility_checks:
           context: rnd-server
+          requires:
+            - build_and_test
       - compatibility_check:
           matrix:
             parameters:
@@ -175,7 +176,7 @@ workflows:
                   "5.10.11",
                   "5.10.12",
                   "5.10.13",
-                # Early releases of the 5.10 sandbox have a dependency on a now removed ActiveUI snapshot : activeui:jar:5.0.4-20211117104705-da07c29
+                # Early releases of the 5.11 sandbox have a dependency on a now removed ActiveUI snapshot : activeui:jar:5.0.4-20211117104705-da07c29
                 # "5.11.0",
                   "5.11.1",
                   "5.11.2",
