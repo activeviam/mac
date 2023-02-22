@@ -83,14 +83,16 @@ check_query(){
   fi
 
   # The reference file for the queries is a .json file with the first valid version as key for a given value
-  MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1)
+  MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1)
+
+  echo $MATCH_VERSION
   if  [[ -n ${MATCH_VERSION} ]]; then
-    POSITION_VERSION=$(expr ${MATCH_VERSION} - 1) #0-indexing in jq vs 1-indexing in grep
+    POSITION_VERSION=$((MATCH_VERSION - 1)) #0-indexing in jq vs 1-indexing in grep
   else
     echo "The reference file did not have the exact version to fetch, trying with implied ranges."
     jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
     echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
-    POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -n | cut -d ':' -f1 )-2))
+    POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1 )-2))
   fi
 
   jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
