@@ -67,12 +67,6 @@ jobs:
           steps:
             - checkout
             - run:
-                name: Test
-                command: echo $ARTIFACTS_USER | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-            - run:
-                name: Test
-                command: echo $ARTIFACTS_PASSWORD | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-            - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
   compatibility_check:
@@ -92,7 +86,7 @@ jobs:
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
           name: "Test artifacts credentials"
-          command: ARTIFACT_ARG=${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD} && curl -u $ARTIFACT_ARG https://artifacts.activeviam.com/share/
+          command: curl -u "${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}" https://artifacts.activeviam.com/share/
       - run:
           name: "Run matrix checks"
           command: |
@@ -101,7 +95,7 @@ jobs:
             echo $ARTIFACT_ARG && \
             # using cached exports if available
             if [[ ! -d target/exported_statistics || -z $(ls -A target/exported_statistics) ]]; then
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> $ARTIFACT_ARG
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACT_ARG}"
             fi
             bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1)
       - store_artifacts:
@@ -117,8 +111,6 @@ workflows:
           context: rnd-server
       - launch_compatibility_checks:
           context: rnd-server
-          requires:
-            - build_and_test
       - compatibility_check:
           matrix:
             parameters:
