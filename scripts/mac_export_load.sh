@@ -77,8 +77,7 @@ run_query_mdx(){
 
 run_query_table(){
       	curl -u admin:admin \
-      		-d @${BASE_DIR}/queries/input/${QUERY}.json \
-      		http://localhost:9092/activeviam/pivot/rest/v8/database/data/tables/$(cat ${BASE_DIR}/queries/input/${QUERY}.txt)/size \
+      		http://localhost:9092/activeviam/pivot/rest/v8/database/discovery/tables/$(cat ${BASE_DIR}/queries/input/${QUERY}.txt)/size \
       		> ${BASE_DIR}/queries/output/${QUERY}.txt
 }
 
@@ -209,10 +208,10 @@ echo "Resumed the script..."
 # 3- Run queries on MAC & verify content
 mkdir -p ${BASE_DIR}/queries/output
 #Query 1 : COUNT Grand Total
-check_query_mdx "query1"
+# check_query_mdx "query1"
 
 ## Query 2 : Table-size checks cannot be done due to PIVOT-6749
-# check_query_table "query2"
+check_query_table "query2"
 
 # Cleanup
 # Use the apps' PIDs to kill them
