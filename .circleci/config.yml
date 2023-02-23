@@ -66,10 +66,9 @@ jobs:
           condition: <<pipeline.parameters.run_compatibility>>
           steps:
             - checkout
-            ## Somehow fails to dl the lib
-            #            - run:
-            #                name: Try downloading xmllint
-            #                command: sudo apt-get install libxml2-utils
+            - run:
+               name: Try downloading xmllint
+               command: sudo apt-get install libxml2-utils
             - run:
                 name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
                 command: bash ./scripts/get_compatible_ap_releases.sh
@@ -121,32 +120,6 @@ workflows:
           matrix:
             parameters:
               ap-version: [
-                # 5.8.X Sandbox does not ship a SpringBoot jar, disabling checks on that version for now
-                #"5.8.0",
-                #"5.8.1",
-                #"5.8.2",
-                #"5.8.3",
-                #"5.8.4",
-                #"5.8.5",
-                #"5.8.6",
-                #"5.8.7",
-                #"5.8.8",
-                #"5.8.9",
-                #"5.8.10",
-                #"5.8.11",
-                #"5.8.12",
-                #"5.8.13",
-                #"5.8.14",
-                #"5.8.15",
-                #"5.8.16",
-                #"5.8.17",
-                #"5.8.18",
-                #"5.8.19",
-                #"5.8.20",
-                #"5.8.21",
-                #"5.8.22",
-                #"5.8.23",
-                #"5.8.24",
                   "5.9.0",
                   "5.9.1",
                   "5.9.2",

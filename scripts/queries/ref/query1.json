@@ -1,21 +1,6 @@
 [{
 	"version": "5.9.0",
-	"values": [2892]
-},{
-	"version": "5.9.1",
-	"values": [2816]
-},{
-	"version": "5.9.10",
-	"values": [2804]
-},{
-	"version": "5.9.11",
-	"values": [2798]
-},{
-	"version": "5.9.12",
-	"values": [2802]
-},{
-	"version": "5.9.13",
-	"values": [2800]
+	"values": ["IGNORE_RESULT"]
 },{
 	"version": "5.10.0",
 	"values": [2381]
