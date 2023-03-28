@@ -232,7 +232,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to chunks. */
   public static final String CHUNK_FOLDER = "Chunk";
   /** The name of the folder for measures related to datastore-related chunks. */
-  public static final String STORE_CHUNK_FOLDER = "DataStore Chunk";
+  public static final String STORE_CHUNK_FOLDER = "Datastore Chunk";
   /** The name of the folder for measures related to chunk memory usage. */
   public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
   /** The name of the folder for measures related to vectors. */
@@ -677,7 +677,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     Copper.measure(COMMITTED_ROWS_COUNT)
         .multiply(directMemory)
         .divide(chunkSize)
-        //.mapToLong(a -> (long) a.readDouble(0))
         .withFormatter(ByteFormatter.KEY)
         .as(COMMITTED_CHUNK_MEMORY)
         .withinFolder(CHUNK_MEMORY_FOLDER)
