@@ -42,10 +42,11 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
         .edit(
             tm ->
                 IntStream.range(0, ADDED_DATA_SIZE)
-                    .forEach(i -> {
-                      tm.add("A", i, i / 10D);
-                      tm.add("B", i, i / 10D);
-                    }));
+                    .forEach(
+                        i -> {
+                          tm.add("A", i, i / 10D);
+                          tm.add("B", i, i / 10D);
+                        }));
 
     // Force to discard all versions
     this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
@@ -61,7 +62,8 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
         ApplicationInTests.builder()
@@ -92,16 +94,16 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery totalDirectMemory =
-            new MDXQuery(
-                "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-                    + "FROM [MemoryCube]"
-                    + "WHERE [Owners].[Owner].[ALL].[AllMember]");
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember]");
 
     final MDXQuery storeADirectMemory =
-            new MDXQuery(
-                "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
-                    + "FROM [MemoryCube]"
-                    + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final MDXQuery storeADirectMemoryRatio =
         new MDXQuery(
@@ -130,16 +132,16 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     final MDXQuery storeAcommittedRows =
-            new MDXQuery(
-                "SELECT NON EMPTY [Measures].[CommittedRows.COUNT] ON COLUMNS "
-                    + "FROM [MemoryCube]"
-                    + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[CommittedRows.COUNT] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final MDXQuery storeAchunkSize =
-            new MDXQuery(
-                "SELECT NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS "
-                    + "FROM [MemoryCube]"
-                    + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
+        new MDXQuery(
+            "SELECT NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS "
+                + "FROM [MemoryCube]"
+                + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
     final MDXQuery storeAcommittedRowsRatio =
         new MDXQuery(
@@ -158,5 +160,4 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
             CellSetUtils.extractValueFromSingleCellDTO(committedRows)
                 / CellSetUtils.extractValueFromSingleCellDTO(chunkSize).doubleValue());
   }
-
 }
