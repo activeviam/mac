@@ -137,7 +137,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
       try {
         stat.accept(this);
-      } catch (Exception e) {
+      } catch (final Exception e) {
         if (Boolean.TRUE.equals(DEBUG)) {
           final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
           printer.print();
