@@ -137,8 +137,8 @@ JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber
 # 2- Download a sandbox project zip 
 
 SANDBOX_URL=$(get_sandbox_url)
-echo $SANDBOX_URL
-curl -u "${ARTIFACTS_CREDENTIALS}" ${SANDBOX_URL} -o sandbox.zip
+echo "$SANDBOX_URL"
+curl -u "${ARTIFACTS_CREDENTIALS}" "${SANDBOX_URL}" -o sandbox.zip
 mkdir ${SANDBOX_BUILD_DIR}
 cd ${SANDBOX_BUILD_DIR}
 unzip -o -q ../sandbox.zip
