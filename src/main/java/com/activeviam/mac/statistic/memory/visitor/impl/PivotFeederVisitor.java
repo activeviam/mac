@@ -72,9 +72,6 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   /** Whether or not to ignore the field attributes of the visited statistics. */
   protected boolean ignoreFieldSpecifications = false;
 
-  /** Tree Printer. */
-  protected StatisticTreePrinter printer;
-
   /**
    * Constructor.
    *
@@ -153,9 +150,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    *     MemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
   public void startFrom(final IMemoryStatistic stat) {
-    if (DEBUG) {
-      this.printer = DebugVisitor.createDebugPrinter(stat);
-    }
+
     if (this.current == null) {
       final IStatisticAttribute dateAtt =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
@@ -179,8 +174,11 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
       try {
         stat.accept(this);
-      } catch (RuntimeException e) {
-        this.printer.print();
+      } catch (final RuntimeException e) {
+        if (Boolean.TRUE.equals(DEBUG)) {
+          final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
+          printer.print();
+        }
         throw e;
       }
     } else {
