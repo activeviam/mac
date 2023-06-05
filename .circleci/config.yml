@@ -95,7 +95,7 @@ jobs:
             # using cached exports if available
             if [[ ! -d ${PWD}/target/exported_statistics || -z $(ls -A ${PWD}/target/exported_statistics) ]]; then
               echo "No available export cache : Run sandbox export script."
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}"
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_READER}:${ARTIFACTS_PWD}"
             else
               echo "Use available export cache."
             fi
