@@ -72,8 +72,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   protected String directParentId;
   /** The partition id of the visited statistic. */
   protected Integer partitionId = null;
-  /** Printer displaying the tree of a given statistic. */
-  protected StatisticTreePrinter printer;
+
   /** Type of the currently visited index. */
   private IndexType indexType = null;
 
@@ -122,9 +121,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    * @param stat Entry point for the traversal of the memory statistics tree
    */
   public void startFrom(final IMemoryStatistic stat) {
-    if (DEBUG) {
-      this.printer = DebugVisitor.createDebugPrinter(stat);
-    }
+
     if (this.current == null) {
       final IStatisticAttribute dateAtt =
           stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
@@ -140,8 +137,11 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
       try {
         stat.accept(this);
-      } catch (Exception e) {
-        this.printer.print();
+      } catch (final Exception e) {
+        if (Boolean.TRUE.equals(DEBUG)) {
+          final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
+          printer.print();
+        }
         throw e;
       }
     } else {
