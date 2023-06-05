@@ -89,16 +89,13 @@ jobs:
             - mac-java-
             - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
       - run:
-          name: "CircleCI is a bully :("
-          command: echo ${ARTIFACTS_USER}
-      - run:
           name: "Run sandbox memory export"
           command: |
             sudo sysctl -w vm.overcommit_memory=1 && \
             # using cached exports if available
             if [[ ! -d ${PWD}/target/exported_statistics || -z $(ls -A ${PWD}/target/exported_statistics) ]]; then
               echo "No available export cache : Run sandbox export script."
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_USER}:${ARTIFACTS_PASSWORD}"
+              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_READER}:${ARTIFACTS_PWD}"
             else
               echo "Use available export cache."
             fi
