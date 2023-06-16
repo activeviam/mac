@@ -29,126 +29,127 @@ import java.util.Objects;
  */
 public class MemoryStatisticDeserializer extends AStatisticDeserializer<IMemoryStatistic> {
 
-	@Override
-	public IMemoryStatistic deserialize(final JsonParser parser, final DeserializationContext ctx)
-			throws IOException {
-		if (!JsonToken.START_OBJECT.equals(parser.currentToken())) {
-			throw new IllegalArgumentException("Should be called at the start of an object");
-		}
+  @Override
+  public IMemoryStatistic deserialize(final JsonParser parser, final DeserializationContext ctx)
+      throws IOException {
+    if (!JsonToken.START_OBJECT.equals(parser.currentToken())) {
+      throw new IllegalStateException("Should be called at the start of an object");
+    }
 
-		parser.nextToken();
-		final String name;
-		if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.NAME_ATTR)) {
-			readAndCheckFieldName(parser, MemoryStatisticAdapter.NAME_ATTR);
-			name = readStringField(parser);
-			parser.nextToken();
-		} else {
-			name = null;
-		}
+    parser.nextToken();
+    final String name;
+    if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.NAME_ATTR)) {
+      readAndCheckFieldName(parser, MemoryStatisticAdapter.NAME_ATTR);
+      name = readStringField(parser);
+      parser.nextToken();
+    } else {
+      name = null;
+    }
 
-		final long onHeap;
-		if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.ON_HEAP_ATTR)) {
-			onHeap = readLongField(parser);
-			parser.nextToken();
-		} else {
-			onHeap = -1;
-		}
+    final long onHeap;
+    if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.ON_HEAP_ATTR)) {
+      onHeap = readLongField(parser);
+      parser.nextToken();
+    } else {
+      onHeap = -1;
+    }
 
-		final long offHeap;
-		if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.OFF_HEAP_ATTR)) {
-			offHeap = readLongField(parser);
-			parser.nextToken();
-		} else {
-			offHeap = -1;
-		}
+    final long offHeap;
+    if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.OFF_HEAP_ATTR)) {
+      offHeap = readLongField(parser);
+      parser.nextToken();
+    } else {
+      offHeap = -1;
+    }
 
-		checkFieldName(MemoryStatisticAdapter.STATISTIC_CLASS_ATTR, readFieldName(parser));
-		final String klassName = readStringField(parser);
+    checkFieldName(MemoryStatisticAdapter.STATISTIC_CLASS_ATTR, readFieldName(parser));
+    final String klassName = readStringField(parser);
 
-		parser.nextToken();
-		final Map<String, IStatisticAttribute> attributes;
-		if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.ATTRIBUTES_ATTR)) {
-			parser.nextToken();
-			attributes = parseAttributes(parser, ctx);
-		} else {
-			attributes = Collections.emptyMap();
-		}
+    parser.nextToken();
+    final Map<String, IStatisticAttribute> attributes;
+    if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.ATTRIBUTES_ATTR)) {
+      parser.nextToken();
+      attributes = parseAttributes(parser, ctx);
+    } else {
+      attributes = Collections.emptyMap();
+    }
 
-		parser.nextToken();
-		final List<IMemoryStatistic> children;
-		if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.CHILDREN_ATTR)) {
-			parser.nextToken();
-			children = parseChildren(parser, ctx, IMemoryStatistic.class);
-		} else {
-			children = Collections.emptyList();
-		}
+    parser.nextToken();
+    final List<IMemoryStatistic> children;
 
-		handleExcessiveAttributes(parser);
+    if (Objects.equals(readFieldName(parser), MemoryStatisticAdapter.CHILDREN_ATTR)) {
+      parser.nextToken();
+      children = parseChildren(parser, ctx, IMemoryStatistic.class);
+    } else {
+      children = Collections.emptyList();
+    }
 
-		if (!Objects.equals(parser.currentToken(), JsonToken.END_OBJECT)) {
-			throw new IllegalStateException("Unexpected additional tokens. First is " + parser.currentToken());
-		}
+    handleExcessiveAttributes(parser);
 
-		return createDeserialized(klassName, name, onHeap, offHeap, attributes, children);
-	}
+    if (!Objects.equals(parser.currentToken(), JsonToken.END_OBJECT)) {
+      throw new IllegalStateException(
+          "Unexpected additional tokens. First is " + parser.currentToken());
+    }
 
-	/**
-	 * Creates the actual statistic using the parsed attributed.
-	 *
-	 * @param klassName name of the statistic class
-	 * @param name name of the statistic
-	 * @param onHeap value read for the consumed on-heap memory - negative if unset
-	 * @param offHeap value read for the consume off-heap memory - negative if unset
-	 * @param attributes statistic attributes
-	 * @param children child statistics
-	 * @return the created deserialized statistic
-	 */
-	protected IMemoryStatistic createDeserialized(
-			final String klassName,
-			final String name,
-			final long onHeap,
-			final long offHeap,
-			final Map<String, IStatisticAttribute> attributes,
-			final List<IMemoryStatistic> children) {
-		final Class<?> klass;
-		try {
-			klass = Class.forName(klassName);
-		} catch (ClassNotFoundException e) {
-			throw new InternalServiceException("Cannot find statistic class " + klassName, e);
-		}
+    return createDeserialized(klassName, name, onHeap, offHeap, attributes, children);
+  }
 
-		final IMemoryStatistic objDeserialized;
-		try {
-			objDeserialized = (IMemoryStatistic) klass.getDeclaredConstructor().newInstance();
-		} catch (InstantiationException
-				 | IllegalAccessException
-				 | NoSuchMethodException
-				 | InvocationTargetException e) {
-			throw new InternalServiceException("Cannot create instance of " + klassName, e);
-		}
+  /**
+   * Creates the actual statistic using the parsed attributed.
+   *
+   * @param klassName name of the statistic class
+   * @param name name of the statistic
+   * @param onHeap value read for the consumed on-heap memory - negative if unset
+   * @param offHeap value read for the consume off-heap memory - negative if unset
+   * @param attributes statistic attributes
+   * @param children child statistics
+   * @return the created deserialized statistic
+   */
+  protected IMemoryStatistic createDeserialized(
+      final String klassName,
+      final String name,
+      final long onHeap,
+      final long offHeap,
+      final Map<String, IStatisticAttribute> attributes,
+      final List<IMemoryStatistic> children) {
+    final Class<?> klass;
+    try {
+      klass = Class.forName(klassName);
+    } catch (ClassNotFoundException e) {
+      throw new InternalServiceException("Cannot find statistic class " + klassName, e);
+    }
 
-		try {
-			klass.getMethod("setAttributes", Map.class).invoke(objDeserialized, attributes);
-		} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-			throw new InternalServiceException("Cannot set attributes for class " + klassName, e);
-		}
-		try {
-			klass.getMethod("setChildren", Collection.class).invoke(objDeserialized, children);
-		} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-			throw new InternalServiceException("Cannot set children for class " + klassName, e);
-		}
+    final IMemoryStatistic objDeserialized;
+    try {
+      objDeserialized = (IMemoryStatistic) klass.getDeclaredConstructor().newInstance();
+    } catch (InstantiationException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException e) {
+      throw new InternalServiceException("Cannot create instance of " + klassName, e);
+    }
 
-		if (name != null) {
-			objDeserialized.setName(name);
-		}
-		if (onHeap >= 0) {
-			objDeserialized.setShallowOnHeap(onHeap);
-		}
-		if (offHeap >= 0) {
-			objDeserialized.setShallowOffHeap(offHeap);
-		}
+    try {
+      klass.getMethod("setAttributes", Map.class).invoke(objDeserialized, attributes);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new InternalServiceException("Cannot set attributes for class " + klassName, e);
+    }
+    try {
+      klass.getMethod("setChildren", Collection.class).invoke(objDeserialized, children);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new InternalServiceException("Cannot set children for class " + klassName, e);
+    }
 
-		return objDeserialized;
-	}
+    if (name != null) {
+      objDeserialized.setName(name);
+    }
+    if (onHeap >= 0) {
+      objDeserialized.setShallowOnHeap(onHeap);
+    }
+    if (offHeap >= 0) {
+      objDeserialized.setShallowOffHeap(offHeap);
+    }
 
+    return objDeserialized;
+  }
 }
