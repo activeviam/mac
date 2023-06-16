@@ -107,7 +107,7 @@ public class SourceConfig {
    * @param name the path name
    * @return the corresponding path object
    */
-  protected Path resolveDirectory(final String name) {
+  public static Path resolveDirectory(final String name) {
     Path directory = Paths.get(name);
     if (!Files.isDirectory(directory)) {
 
