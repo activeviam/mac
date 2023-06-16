@@ -77,14 +77,14 @@ run_query_mdx(){
 
 run_query_table(){
       	curl -u admin:admin \
-      		-d @${BASE_DIR}/queries/input/${QUERY}.json \
-      		http://localhost:9092/activeviam/pivot/rest/v8/database/data/tables/$(cat ${BASE_DIR}/queries/input/${QUERY}.txt)/size \
+      		http://localhost:9092/activeviam/pivot/rest/v8/database/discovery/tables/$(cat ${BASE_DIR}/queries/input/${QUERY}.txt)/size \
       		> ${BASE_DIR}/queries/output/${QUERY}.txt
 }
 
 verify_query(){
     # The reference file for the queries is a .json file with the first valid version as key for a given value
     # It is assumed that any later version in the document (following the semantic versionining order) supersedes the expected value
+    # When the reference value is "IGNORED_RESULT", all entries are accepted, this avoids flakiness when the export data is not consistent
     MATCH_VERSION=$(jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1)
 
     echo $MATCH_VERSION
@@ -94,12 +94,15 @@ verify_query(){
       echo "The reference file did not have the exact version to fetch, trying with implied ranges."
       jq -r '.[] | .version' < ${BASE_DIR}/queries/ref/${QUERY}.json >  ${BASE_DIR}/queries/tmp
       echo "${SANDBOX_VERSION}" >>  ${BASE_DIR}/queries/tmp
-      POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1 )-2))
+      POSITION_VERSION=$(($(cat ${BASE_DIR}/queries/tmp | sort -V | grep "${SANDBOX_VERSION}" - -wn | cut -d ':' -f1 )-2)) # -1 due doe indexing -1 due to position shift
     fi
 
-    jq ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
-    if [ -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]; then
+    jq -r ".[$POSITION_VERSION].values[]" < ${BASE_DIR}/queries/ref/${QUERY}.json > ${BASE_DIR}/queries/cur_ref
+
+    if [[  -z $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref) ]]; then
       	echo ${QUERY}"... OK"
+    elif [[ $(cat ${BASE_DIR}/queries/cur_ref) == "IGNORE_RESULT" ]]; then
+      	echo ${QUERY}"... IGNORED"
     else
       	echo "Error when comparing expected query output to query result:"
       	echo $(diff --strip-trailing-cr --ignore-all-space ${BASE_DIR}/queries/output/${QUERY}.txt ${BASE_DIR}/queries/cur_ref)
@@ -212,7 +215,7 @@ mkdir -p ${BASE_DIR}/queries/output
 check_query_mdx "query1"
 
 ## Query 2 : Table-size checks cannot be done due to PIVOT-6749
-# check_query_table "query2"
+check_query_table "query2"
 
 # Cleanup
 # Use the apps' PIDs to kill them
