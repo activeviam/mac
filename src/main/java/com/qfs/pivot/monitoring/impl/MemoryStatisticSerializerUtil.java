@@ -49,8 +49,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.Data;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
+import org.xerial.snappy.SnappyFramedInputStream;
+import org.xerial.snappy.SnappyFramedOutputStream;
 
 /**
  * Utility class to serialize/deserialize {@link IMemoryStatistic}s.
@@ -77,21 +77,22 @@ public class MemoryStatisticSerializerUtil {
       MemoryStatisticSerializerUtil.readStatisticFile(filePath.toFile());
       MemoryStatisticSerializerUtil.readStatisticFile(filePathComp.toFile());
     }
+    Runtime.getRuntime().gc();
 
     System.out.println("Warmup done");
     // Do on "real" files now
-    final var filePath = directory.resolve("pivot_EquityDerivativesCube.json").toAbsolutePath();
+    final var filePath = directory.resolve("pivot_StandardisedApproachCube.json").toAbsolutePath();
     final var filePathComp =
-        directory.resolve("pivot_EquityDerivativesCube.json.sz").toAbsolutePath();
+        directory.resolve("pivot_StandardisedApproachCube.json.sz").toAbsolutePath();
 
     long start = System.nanoTime();
     final IMemoryStatistic val = MemoryStatisticSerializerUtil.readStatisticFile(filePath.toFile());
-    System.out.println("Deserialize  : " + (System.nanoTime() - start) / 1000d + "µs");
+    System.out.println("Deserialize  : " + (System.nanoTime() - start) / 1_000_000_000d + "s");
 
     start = System.nanoTime();
     final IMemoryStatistic valComp =
         MemoryStatisticSerializerUtil.readStatisticFile(filePathComp.toFile());
-    System.out.println("Deserialize Snappied : " + (System.nanoTime() - start) / 1000d + "µs");
+    System.out.println("Deserialize Snappied : " + (System.nanoTime() - start) / 1_000_000_000d + "s");
 
     assert valComp.equals(val);
   }
@@ -159,7 +160,10 @@ public class MemoryStatisticSerializerUtil {
   @Data
   public static class MemoryStatisticDeserializerHelper {
 
-    public static final long PARALLEL_THRESHOLD = 10_000L;
+    //public static final long PARALLEL_THRESHOLD = 10_000_000L;
+    public static final long PARALLEL_THRESHOLD = Long.MAX_VALUE;
+    public static final long SUBTASK_MIN_SIZE = 10_000_000L;
+
     protected final Map<Integer, List<Pair<Long, Long>>> rangesPerDepth;
     protected final long fileLength;
   }
@@ -175,19 +179,16 @@ public class MemoryStatisticSerializerUtil {
     // Only run parallel treatment if the file length is below
     // MemoryStatisticDeserializerHelper.PARALLEL_THRESHOLD
     if (helper.fileLength >= MemoryStatisticDeserializerHelper.PARALLEL_THRESHOLD) {
-      final long taskSize =
-          MemoryStatisticDeserializerHelper.PARALLEL_THRESHOLD / forkJoinPool.getParallelism();
-
       try (var readersHandler = generateThreadLocalReaders(file, helper)) {
         // Try to generate deserialization tasks with a length as close to taskSize that will cover
         // the entire file
         DeserializerTask<T> headTask =
-            generateTasks(helper, forkJoinPool, klass, taskSize, readersHandler);
+            generateTasks(helper, forkJoinPool, klass, MemoryStatisticDeserializerHelper.SUBTASK_MIN_SIZE, readersHandler);
         var tasks = new ArrayList<>(headTask.getChildren());
         tasks.add(headTask);
         QfsConcurrency.smartForkAll(tasks.toArray(CancellableCountedCompleter[]::new));
         // Is that too low ? FRTB was taking 20+ minutes without load
-        return headTask.get(10, TimeUnit.MINUTES);
+        return headTask.get(100, TimeUnit.MINUTES);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -196,7 +197,7 @@ public class MemoryStatisticSerializerUtil {
       // Single-Threaded parsing
       InputStream inputStream = new FileInputStream(file);
       if (isCompressedFile) {
-        inputStream = new FramedSnappyCompressorInputStream(inputStream);
+        inputStream = new SnappyFramedInputStream(inputStream);
       }
 
       try (final InputStreamReader reader =
@@ -284,8 +285,6 @@ public class MemoryStatisticSerializerUtil {
       final int length = (int) (endPos - startPos);
       byte[] buffer = new byte[length];
       try {
-        var actuallySkipped = skip(startPos);
-        assert startPos == actuallySkipped;
         inputStream.myFileChannel.position(startPos);
         inputStream.read(buffer, 0, length);
         return new InputStreamReader(new ByteArrayInputStream(buffer), StandardCharsets.UTF_8);
@@ -459,7 +458,11 @@ public class MemoryStatisticSerializerUtil {
     for (int i = maxDepth; i > 0; --i) {
       List<Pair<Long, Long>> objectsList = helper.rangesPerDepth.get(i);
       int finalI = i;
-      objectsList.forEach(
+      // First trim the list to remove the amount of tasks under the tasksize threshold
+      final List<Pair<Long, Long>> trimmedList = objectsList.parallelStream()
+              .filter(range -> range.getRight()-range.getLeft() > taskSize)
+              .collect(Collectors.toList());
+      trimmedList.forEach(
           pair -> {
             long taskLength = pair.getRight() - pair.getLeft();
             assert taskLength > 0;
@@ -515,22 +518,19 @@ public class MemoryStatisticSerializerUtil {
     if (isCompressedFile) {
       // TODO : logger.warn if file is very big : -> unsnappy into parallel load
       // Single-Threaded parsing
-      inputStream = new FramedSnappyCompressorInputStream(inputStream);
+      inputStream = new SnappyFramedInputStream(inputStream);
       try (final InputStreamReader reader =
           new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
         return deserialize(reader, klass);
       }
-    }
-    final MemoryStatisticDeserializerHelper helper;
-    try (final InputStreamReader streamReader =
-        new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-      helper =
-          JacksonSerializer.getObjectMapper()
-              .readerFor(MemoryStatisticDeserializerHelper.class)
-              .readValue(new BufferedReader(streamReader));
-      return doDeserializeAsync(file, klass, helper, forkJoinPool);
-    } catch (IOException e) {
-      throw new ActiveViamRuntimeException(e);
+    } else {
+      final MemoryStatisticDeserializerHelper helper;
+      try (final InputStreamReader streamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+        helper = JacksonSerializer.getObjectMapper().readerFor(MemoryStatisticDeserializerHelper.class).readValue(new BufferedReader(streamReader));
+        return doDeserializeAsync(file, klass, helper, forkJoinPool);
+      } catch (IOException e) {
+        throw new ActiveViamRuntimeException(e);
+      }
     }
   }
 
@@ -552,13 +552,12 @@ public class MemoryStatisticSerializerUtil {
             + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
 
     try (final FileOutputStream fos = new FileOutputStream(directory.resolve(fileName).toFile());
-        final FramedSnappyCompressorOutputStream compressorOS =
-            new FramedSnappyCompressorOutputStream(fos);
+        final SnappyFramedOutputStream compressorOS =
+            new SnappyFramedOutputStream(fos);
         final OutputStreamWriter writer =
             new OutputStreamWriter(compressorOS, StandardCharsets.UTF_8)) {
       MemoryStatisticSerializerUtil.serialize(stat, writer);
       writer.flush();
-      compressorOS.finish();
     }
   }
 
