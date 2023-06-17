@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
+import org.xerial.snappy.SnappyFramedInputStream;
 
 /**
  * Tool class providing CLI methods.
@@ -27,13 +27,11 @@ import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInpu
  */
 public class Tools {
 
-  public static int main(final String[] args) {
+  public static void main(final String[] args) {
     if ("extract".equals(args[0])) {
       extractSnappyFileOrDirectory(args[1]);
-      return 0;
     } else {
       System.err.println("Unsupported command. Got " + Arrays.toString(args));
-      return 1;
     }
   }
 
@@ -93,7 +91,7 @@ public class Tools {
     }
     final InputStream inputStream;
     try {
-      inputStream = new FramedSnappyCompressorInputStream(rawInputStream);
+      inputStream = new SnappyFramedInputStream(rawInputStream);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Cannot read `%s` as a Snappy file", path), e);
     }
