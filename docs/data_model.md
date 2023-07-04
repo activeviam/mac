@@ -243,6 +243,14 @@ but its members designate lower-level structures than the *Component* hierarchy.
 For example, an `INDEX` **component** may have chunks of **type** `INDEX` and
 `DICTIONARY`.
 
+## Duplicate Record Handler
+The current DuplicateKeyHandler, called ChunkRecordHandler, handles 3 use cases :
+- If both records come from the same partition, we do nothing
+- If the previous record is held by multiple partitions, we return the previous record
+- The exported Chunk is a Tombstone Chunk thus we ignore it as Tombstone chunks refer to the same singleton but can have different parents
+
+We have a sanity check in case two records for the same chunk with different parents happens to be exported, which should never happen.
+
 ## Indices
 
 This dimension contains information about indices. It is only relevant and

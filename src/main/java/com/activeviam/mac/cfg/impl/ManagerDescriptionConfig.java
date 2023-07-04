@@ -1,5 +1,5 @@
 /*
- * (C) ActiveViam 2018-2021
+ * (C) ActiveViam 2018-2023
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
@@ -29,11 +29,11 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
-import com.qfs.literal.ILiteralType;
 import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
 import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
+import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesResultLimit;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.dimension.IDimension;
@@ -231,7 +231,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for measures related to chunks. */
   public static final String CHUNK_FOLDER = "Chunk";
   /** The name of the folder for measures related to datastore-related chunks. */
-  public static final String STORE_CHUNK_FOLDER = "DataStore Chunk";
+  public static final String STORE_CHUNK_FOLDER = "Datastore Chunk";
   /** The name of the folder for measures related to chunk memory usage. */
   public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
   /** The name of the folder for measures related to vectors. */
@@ -631,6 +631,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the number of freed rows within the chunks")
         .publish(context)
         .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(DELETED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -638,8 +639,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     nonWrittenRowsCount
-        .mapToDouble(a -> a.readDouble(0))
         .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -655,7 +656,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     Copper.measure(COMMITTED_ROWS_COUNT)
-        .divide(Copper.measure(CHUNK_SIZE_SUM))
+        .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(COMMITTED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -671,10 +673,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withDescription("the off-heap size of the chunks")
             .publish(context);
 
-    Copper.measure(COMMITTED_ROWS_COUNT)
-        .divide(Copper.measure(CHUNK_SIZE_SUM))
-        .multiply(Copper.measure(DIRECT_MEMORY_SUM))
-        .withType(ILiteralType.LONG)
+    Copper.measure(COMMITTED_ROWS_RATIO)
+        .multiply(directMemory)
+        .mapToLong(a -> (long) a.readDouble(0))
         .withFormatter(ByteFormatter.KEY)
         .as(COMMITTED_CHUNK_MEMORY)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -683,6 +684,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(directMemory.grandTotal())
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(DIRECT_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -693,6 +695,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(Copper.measure(USED_DIRECT))
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(USED_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -703,6 +706,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(Copper.measure(MAX_DIRECT))
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(MAX_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
