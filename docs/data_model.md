@@ -1,5 +1,5 @@
 MAC is composed of one cube. Its base store is based on Chunks, which atomically
-contain all the off-heap data used by ActivePivot.
+contain all the off-heap data used by Atoti Server.
 
 Chunks are attributed to various higher level structures, that are represented
 by MAC's hierarchies and dimensions and can be queried upon.
@@ -41,8 +41,8 @@ Since they are application-wide, they have the same value for all locations.
   ```
   > This differs slightly from `DirectMemory.Ratio`, as this includes, along with
   > the direct memory consumed by the chunks:
-  > * ActivePivot's SLAB memory allocator cache
-  > * direct memory used by libraries other than ActivePivot
+  > * Atoti Server's SLAB memory allocator cache
+  > * direct memory used by libraries other than Atoti Server
 * `MaxDirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
   relative to the total application committed direct memory
   <!--
@@ -54,7 +54,7 @@ Since they are application-wide, they have the same value for all locations.
   MaxDirectMemory.Ratio := DirectMemory.SUM / MaxDirectMemory
   ```
 * `HeapMemory.SUM`: an estimate of the on-heap size of the chunks
-  > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
+  > **Warning**: do **NOT** assume total on-heap memory usage by Atoti Server
   > based on this measure.
   >
   > These estimates rely on manual calculations from within the application that
@@ -136,7 +136,7 @@ Since they are application-wide, they have the same value for all locations.
 Chunks are always held by a higher-level structure, which is called the *owner*
 in MAC.
 
-The different owners of an ActivePivot application are stores of the datastore
+The different owners of an Atoti Server application are stores of the datastore
 and the different cubes of the application.
 
 ### Owner

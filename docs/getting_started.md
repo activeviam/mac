@@ -1,11 +1,11 @@
 # Memory Analysis Cube
 
-The Memory Analysis Cube (MAC) is an ActivePivot project that aims to provide
+The Memory Analysis Cube (MAC) is an Atoti project that aims to provide
 the necessary tools to explore and analyze the data consumption from any other
-ActivePivot application, starting from ActivePivot 5.8 onward.
+Atoti Server application, starting from Atoti Server 5.8 onward.
 
 The project is built as a standalone Spring Boot jar file with an embedded
-ActiveUI application available on `localhost:9092` by default.
+Atoti UI application available on `localhost:9092` by default.
 
 ## Main Features
 
@@ -13,12 +13,12 @@ ActiveUI application available on `localhost:9092` by default.
 * Store/Field-related memory footprint
 * Cube-related memory footprint
 * Overview of structure-related memory footprint
-* Loading and comparing several ActivePivot applications' exported memory
+* Loading and comparing several Atoti Server applications' exported memory
   dump files
 
 ## Prepare your Application for Analysis
 
-ActivePivot 5.8+ applications come with a number of ways to export their memory
+Atoti Server 5.8+ applications come with a number of ways to export their memory
 usage in the form of memory report files, that can then be imported and analyzed
 using MAC.
 

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Script loading the result of an ActivePivot SandBox Memory Analysis Service's Export into a mac project 
+# Script loading the result of an Atoti Server SandBox Memory Analysis Service's Export into a mac project
 
 # 1- Build the mac project as a sandbox jar
 # 2- Load data from the input folder
@@ -13,7 +13,7 @@
 # Java Development Kit 11+ (JRE is not enough as we use the jps command)
 # Maven
 # ActiveViam artifacts access
-# Valid ActivePivot License
+# Valid Atoti Server License
 # cURL
 # jq
 

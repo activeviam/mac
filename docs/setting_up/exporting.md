@@ -1,6 +1,6 @@
-# Exporting Data from an ActivePivot Application
+# Exporting Data from an Atoti Server Application
 
-The exporting of an ActivePivot application is done through an
+The exporting of an Atoti Server application is done through an
 `IMemoryAnalysisService`.
 
 This service can be instantiated
