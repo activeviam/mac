@@ -1,15 +1,15 @@
 # Memory Analysis Cube
 
-The Memory Analysis Cube (MAC) is an ActivePivot project that aims to provide
+The Atoti Memory Analysis Cube (MAC) is an Atoti project that aims to provide
 the necessary tools to explore and analyze the data consumption from any other
-ActivePivot application, starting from ActivePivot 5.8 onward.
+Atoti application, starting from Atoti Server 5.8 onward.
 
 The project is built as a standalone Spring Boot jar file with an embedded
-ActiveUI application available on `localhost:9092` by default.
+Atoti UI application available on `localhost:9092` by default.
 
-**This version is compatible with exports from ActivePivot 5.8+ servers.**
+**This version is compatible with exports from Atoti Server 5.8+ servers.**
 
-The MAC server uses the latest released versions of ActivePivot and ActiveUI by default,
+The MAC server uses the latest released versions of Atoti Server and Atoti UI by default,
 but the dependency versions can be changed in the project's POM.
 
 ## Main Features
@@ -18,7 +18,7 @@ but the dependency versions can be changed in the project's POM.
 * Store/Field-related memory footprint
 * Cube-related memory footprint
 * Overview of structure-related memory footprint
-* Loading and comparing several ActivePivot applications' exported memory
+* Loading and comparing several Atoti applications' exported memory
   dump files
 
 ## Building & launching the application
@@ -29,8 +29,8 @@ but the dependency versions can be changed in the project's POM.
 The requirements for building the MAC application are the following : 
   - Maven 3.0 +
   - Java 11 +
-  - ActivePivot artifacts
-  - ActiveUI artifacts
+  - Atoti Server artifacts
+  - Atoti UI artifacts
 
 The SpringBoot JAR of the application can be built by running the following command line:
 
@@ -43,7 +43,7 @@ mvn clean install -DskipTests=true
 The requirements for launching the MAC application are the following :
   - Java 11+
   - The built MAC .jar file
-  - A valid ActivePivot license
+  - A valid Atoti Server license
 
 Once the JAR file built on the `./target directory`, the MAC server can be launched by the following command line:
 
@@ -53,7 +53,7 @@ java -jar [path to the MAC .jar file]
 
 ## Prepare your Application for Analysis
 
-ActivePivot 5.8+ applications come with a number of ways to export their memory
+Atoti Server 5.8+ applications come with a number of ways to export their memory
 usage in the form of memory report files, that can then be imported and analyzed
 using MAC.
 
@@ -71,7 +71,7 @@ important to get familiar with its [data model](docs/data_model.md).
 
 ## Bookmarks
 
-MAC comes with a number of predefined ActiveUI bookmarks that each offer some insights to
+MAC comes with a number of predefined Atoti UI bookmarks that each offer some insights to
 various aspects of the monitored application.
 
 * [Overview](docs/bookmarks/overview.md)
