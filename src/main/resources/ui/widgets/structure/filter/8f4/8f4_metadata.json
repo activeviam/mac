@@ -1,4 +1,5 @@
 {
   "name" : "Epoch filter",
-  "widgetKey" : "quick-filter"
+  "widgetKey" : "quick-filter",
+  "version" : 1
 }

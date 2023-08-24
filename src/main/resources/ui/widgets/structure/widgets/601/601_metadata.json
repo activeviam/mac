@@ -1,4 +1,5 @@
 {
   "name" : "Vector Field Analysis",
-  "widgetKey" : "tree-table"
+  "widgetKey" : "tree-table",
+  "version" : 1
 }

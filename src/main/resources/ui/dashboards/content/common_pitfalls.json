@@ -49,7 +49,12 @@
         "direction" : "column"
       },
       "name" : "Large indexes",
-      "filters" : [ "[Components].[Component].[ALL].[AllMember].[INDEX]" ],
+      "filters" : [ {
+        "dimensionName" : "Components",
+        "hierarchyName" : "Component",
+        "members" : [ [ "AllMember", "INDEX" ] ],
+        "type" : "members"
+      } ],
       "content" : {
         "1" : {
           "name" : "Indexes are too large",
@@ -145,7 +150,12 @@
         "direction" : "column"
       },
       "name" : "Too many members in bitmaps",
-      "filters" : [ "Crossjoin({[Owners].[Owner Type].[ALL].[AllMember].[Cube], [Owners].[Owner Type].[ALL].[AllMember].[Distributed Cube]}, {Except([Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])}, [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])" ],
+      "filters" : [ {
+        "type" : "custom",
+        "mdx" : "Crossjoin({[Owners].[Owner Type].[ALL].[AllMember].[Cube], [Owners].[Owner Type].[ALL].[AllMember].[Distributed Cube]}, {Except([Aggregate Provider].[ProviderCategory].[ALL].[AllMember].Children, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])}, [Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE])",
+        "dimensionName" : "Owners",
+        "hierarchyName" : "Owner Type"
+      } ],
       "content" : {
         "1" : {
           "name" : "Too many members in bitmap/leaf aggregate providers",
@@ -232,7 +242,23 @@
         "direction" : "column"
       },
       "name" : "Oversized store chunks",
-      "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Store]", "Except([Chunks].[Class].Members, [Chunks].[Class].[AllMember].[com.qfs.chunk.direct.impl.DirectChunkPositiveInteger])", "[Components].[Component].[AllMember].[RECORDS]" ],
+      "filters" : [ {
+        "dimensionName" : "Owners",
+        "hierarchyName" : "Owner Type",
+        "members" : [ [ "AllMember", "Store" ] ],
+        "type" : "members"
+      }, {
+        "dimensionName" : "Chunks",
+        "hierarchyName" : "Class",
+        "members" : [ [ "AllMember", "com.qfs.chunk.direct.impl.DirectChunkPositiveInteger" ] ],
+        "type" : "members",
+        "isExclusionFilter" : true
+      }, {
+        "dimensionName" : "Components",
+        "hierarchyName" : "Component",
+        "members" : [ [ "AllMember", "RECORDS" ] ],
+        "type" : "members"
+      } ],
       "content" : {
         "1" : {
           "name" : "Store chunks are oversized",
