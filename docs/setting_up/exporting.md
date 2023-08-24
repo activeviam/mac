@@ -1,6 +1,6 @@
-# Exporting Data from an Atoti Server Application
+# Exporting Data from an Atoti Application
 
-The exporting of an Atoti Server application is done through an
+The exporting of an Atoti application is done through an
 `IMemoryAnalysisService`.
 
 This service can be instantiated
