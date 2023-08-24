@@ -136,7 +136,7 @@ Since they are application-wide, they have the same value for all locations.
 Chunks are always held by a higher-level structure, which is called the *owner*
 in MAC.
 
-The different owners of an Atoti Server application are stores of the datastore
+The different owners of an Atoti application are stores of the Datastore
 and the different cubes of the application.
 
 ### Owner

@@ -2,7 +2,7 @@
 
 The Memory Analysis Cube (MAC) is an Atoti project that aims to provide
 the necessary tools to explore and analyze the data consumption from any other
-Atoti Server application, starting from Atoti Server 5.8 onward.
+Atoti application, starting from Atoti Server 5.8 onward.
 
 The project is built as a standalone Spring Boot jar file with an embedded
 Atoti UI application available on `localhost:9092` by default.
@@ -13,12 +13,12 @@ Atoti UI application available on `localhost:9092` by default.
 * Store/Field-related memory footprint
 * Cube-related memory footprint
 * Overview of structure-related memory footprint
-* Loading and comparing several Atoti Server applications' exported memory
+* Loading and comparing several Atoti applications' exported memory
   dump files
 
 ## Prepare your Application for Analysis
 
-Atoti Server 5.8+ applications come with a number of ways to export their memory
+Applications built using Atoti Server 5.8+ come with a number of ways to export their memory
 usage in the form of memory report files, that can then be imported and analyzed
 using MAC.
 
