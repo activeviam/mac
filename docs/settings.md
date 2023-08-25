@@ -3,7 +3,7 @@
 Some settings can be configured in the `application.yml` file in MAC's
 *resources* folder.
 
-The usual ActivePivot spring application properties can be set in this file. A few
+The usual Atoti Spring application properties can be set in this file. A few
 MAC specific settings can also be set:
 
 * `statistic.folder`: the path to the statistics folder, from which MAC extracts

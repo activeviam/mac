@@ -13,14 +13,14 @@ import java.util.Set;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Spring configuration for ActiveUI web application.
+ * Spring configuration for Atoti UI web application.
  *
  * @author ActiveViam
  */
 @Configuration
 public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
 
-  /** The namespace of the ActiveUI web application. */
+  /** The namespace of the Atoti UI web application. */
   public static final String NAMESPACE = "ui";
 
   /** Constructor. */

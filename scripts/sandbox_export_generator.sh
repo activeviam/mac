@@ -1,8 +1,8 @@
 #! /bin/bash
 
-# Script Exporting the Memory Analysis Service output of a released ActivePivot sandbox
+# Script Exporting the Memory Analysis Service output of a released Atoti Server sandbox
 
-# 1- Executes a maven goal that builds a customized (no real time) Sandbox springboot jar for a given version of Activepivot
+# 1- Executes a maven goal that builds a customized (no real time) Sandbox springboot jar for a given version of Atoti Server
 # 2- Run the sandbox
 # 3- Generate the memory statistics file for the Sandbox
 
@@ -12,11 +12,11 @@
 # Java Development Kit 11+ (JRE is not enough as we use the jps command)
 # Maven
 # ActiveViam artifacts access
-# Valid ActivePivot License
+# Valid Atoti Server License
 # cURL
 
 # INPUT : 
-# - 1 String : ActivePivot version used by the sandbox app
+# - 1 String : Atoti Server version used by the sandbox app
 # - 2 String : URL of the Artifactory Sandbox repository
 # - 3 Optional String : Path to the maven settings file, this file is expected to grant read access to ActiveViam artifacs
 
