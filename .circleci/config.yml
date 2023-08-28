@@ -136,7 +136,7 @@ workflows:
                   "5.9.11",
                   "5.9.12",
                   "5.9.13",
-                # Early releases of the 5.10 sandbox have a dependency on a now removed ActiveUI snapshot : activeui:jar:5.0.0-beta-20210224125715-19abcee
+                # Early releases of the 5.10 sandbox have a dependency on a now removed Atoti UI snapshot : activeui:jar:5.0.0-beta-20210224125715-19abcee
                 # "5.10.0",
                 # "5.10.1",
                 # "5.10.2",
@@ -151,7 +151,7 @@ workflows:
                   "5.10.11",
                   "5.10.12",
                   "5.10.13",
-                # Early releases of the 5.11 sandbox have a dependency on a now removed ActiveUI snapshot : activeui:jar:5.0.4-20211117104705-da07c29
+                # Early releases of the 5.11 sandbox have a dependency on a now removed Atoti UI snapshot : activeui:jar:5.0.4-20211117104705-da07c29
                 # "5.11.0",
                   "5.11.1",
                   "5.11.2",
