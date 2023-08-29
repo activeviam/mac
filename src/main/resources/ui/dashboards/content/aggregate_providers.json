@@ -33,7 +33,12 @@
             "mdx" : "SELECT NON EMPTY Order(DrilldownLevel([Owners].[Owner].[ALL].[AllMember]), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]" ],
+          "filters" : [ {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type",
+            "members" : [ [ "AllMember", "Cube" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Owners].[Owner].[Owner]" ],
@@ -71,7 +76,12 @@
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY [Owners].[Owner].[Owner].Members ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]" ],
+          "filters" : [ {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type",
+            "members" : [ [ "AllMember", "Cube" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-line-chart"
@@ -118,7 +128,12 @@
             "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderCategory].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Components].[Component].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))" ],
+          "filters" : [ {
+            "type" : "custom",
+            "mdx" : "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))",
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderCategory].[ProviderCategory]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Components].[Component].[Component]" ],
@@ -157,7 +172,12 @@
             "mdx" : "SELECT NON EMPTY Crossjoin([Owners].[Owner].[Owner].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Components].[Component].[Component].Members) ON ROWS, NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))" ],
+          "filters" : [ {
+            "type" : "custom",
+            "mdx" : "Crossjoin([Owners].[Owner Type].[ALL].[AllMember].[Cube], Except([Aggregate Provider].[ProviderCategory].[ProviderCategory].Members, [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A]))",
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-tree-map"
@@ -204,7 +224,17 @@
             "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(Except(DrilldownLevel([Aggregate Provider].[ProviderCategory].[ALL].[AllMember]), [Aggregate Provider].[ProviderCategory].[ALL].[AllMember].[N/A])), Hierarchize(DrilldownLevel([Aggregate Provider].[ProviderType].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]", "[Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE]" ],
+          "filters" : [ {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type",
+            "members" : [ [ "AllMember", "Cube" ] ],
+            "type" : "members"
+          }, {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "AGGREGATE_STORE" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Owners].[Owner].[Owner]", "[Aggregate Provider].[ProviderCategory].[ProviderCategory]", "[Aggregate Provider].[ProviderType].[ProviderType]", "[Fields].[Field].[Field]" ],
@@ -242,7 +272,17 @@
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Aggregate Provider].[ProviderType].[ProviderType].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "[Owners].[Owner Type].[ALL].[AllMember].[Cube]", "[Components].[Component].[ALL].[AllMember].[AGGREGATE_STORE]" ],
+          "filters" : [ {
+            "dimensionName" : "Owners",
+            "hierarchyName" : "Owner Type",
+            "members" : [ [ "AllMember", "Cube" ] ],
+            "type" : "members"
+          }, {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "AGGREGATE_STORE" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-tree-map"
@@ -289,7 +329,12 @@
             "mdx" : "SELECT NON EMPTY Order(Crossjoin(Hierarchize(DrilldownLevel([Owners].[Owner].[ALL].[AllMember])), Hierarchize(DrilldownLevel([Fields].[Field].[ALL].[AllMember]))), [Measures].[DirectMemory.SUM], DESC) ON ROWS, NON EMPTY {[Measures].[DirectMemory.SUM], [Measures].[DirectMemory.Ratio]} ON COLUMNS FROM [MemoryCube] CELL PROPERTIES VALUE, FORMATTED_VALUE, BACK_COLOR, FORE_COLOR, FONT_FLAGS",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[LEVEL]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "LEVEL" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "mapping" : {
             "rows" : [ "[Owners].[Owner].[Owner]", "[Fields].[Field].[Field]" ],
@@ -329,7 +374,12 @@
             "mdx" : "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, NON EMPTY Generate(TopCount([Owners].[Owner].[Owner].Members, 6, [Measures].[DirectMemory.SUM]), TopPercent(Crossjoin([Fields].[Field].[Field].Members, [Owners].[Owner].CurrentMember), 95, [Measures].[DirectMemory.SUM])) ON ROWS FROM [MemoryCube]",
             "updateMode" : "once"
           },
-          "filters" : [ "[Components].[Component].[ALL].[AllMember].[LEVEL]" ],
+          "filters" : [ {
+            "dimensionName" : "Components",
+            "hierarchyName" : "Component",
+            "members" : [ [ "AllMember", "LEVEL" ] ],
+            "type" : "members"
+          } ],
           "queryContext" : [ ],
           "serverKey" : "MAC",
           "widgetKey" : "plotly-tree-map"
