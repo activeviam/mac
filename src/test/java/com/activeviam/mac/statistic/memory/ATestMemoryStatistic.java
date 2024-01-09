@@ -50,7 +50,6 @@ import com.qfs.store.IDatastore;
 import com.qfs.store.NoTransactionException;
 import com.qfs.store.TypeValues;
 import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
-import com.qfs.store.impl.Datastore;
 import com.qfs.store.query.ICursor;
 import com.qfs.store.record.IRecordReader;
 import com.qfs.store.transaction.DatastoreTransactionException;
@@ -111,13 +110,13 @@ public abstract class ATestMemoryStatistic {
 
     /*
      * Note. We can't rely on calling MemUtils.runGC() because on some servers (alto), it seems not enough.
-     * Plus, MemUtils relies on on heap memory....
+     * Plus, MemUtils relies on on-heap memory....
      */
     for (int i = 0; i < MAX_GC_STEPS; i++) {
       try {
         System.gc();
 
-        Thread.sleep(1 << i); // give gc some times.
+        Thread.sleep(1 << i); // give gc some time.
 
         // create a soft assertion that allows getting the assertions results of all assertions
         // even if the first assertion is already false.
@@ -134,7 +133,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   void createApplication(
-      final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) {
+      final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
     final IDatastoreSchemaDescription datastoreSchema =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -321,7 +320,7 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .build())
             .build();
-    final ApplicationInTests<Datastore> application =
+    final ApplicationInTests<IDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(datastoreSchema)
             .withManager(userManagerDescription)
@@ -332,7 +331,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   void createMinimalApplication(
-      final ThrowingLambda.ThrowingBiConsumer<Datastore, IActivePivotManager> actions) {
+      final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
 
     final IDatastoreSchemaDescription datastoreSchema =
         StartBuilding.datastoreSchema()
@@ -382,7 +381,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final ApplicationInTests<Datastore> application =
+    final ApplicationInTests<IDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(datastoreSchema)
             .withManager(userManagerDescription)
@@ -397,7 +396,7 @@ public abstract class ATestMemoryStatistic {
    *
    * @param datastore datastore to fill
    */
-  static void fillApplicationMinimal(final Datastore datastore) {
+  static void fillApplicationMinimal(final IDatastore datastore) {
     AtomicInteger operationsBatch = new AtomicInteger();
     datastore.edit(
         tm -> {
@@ -429,7 +428,7 @@ public abstract class ATestMemoryStatistic {
    *
    * @param datastore datastore to fill
    */
-  static void fillApplication(final Datastore datastore) {
+  static void fillApplication(final IDatastore datastore) {
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
@@ -470,7 +469,7 @@ public abstract class ATestMemoryStatistic {
    *
    * @param datastore datastore to fill
    */
-  static void fillApplicationMinimalWithSingleValue(final Datastore datastore) {
+  static void fillApplicationMinimalWithSingleValue(final IDatastore datastore) {
     AtomicInteger operationsBatch = new AtomicInteger();
 
     datastore.edit(
@@ -502,7 +501,7 @@ public abstract class ATestMemoryStatistic {
    *
    * @param datastore datastore to fill
    */
-  static void editApplicationMinimalWithSingleValue(final Datastore datastore) {
+  static void editApplicationMinimalWithSingleValue(final IDatastore datastore) {
     datastore.edit(
         tm -> {
           final int peopleCount = STORE_PEOPLE_COUNT;
@@ -534,7 +533,7 @@ public abstract class ATestMemoryStatistic {
    * @param datastore datastore to fill
    */
   static void fillApplicationWithBranches(
-      final Datastore datastore, Collection<String> branches, boolean minimalFilling)
+      final IDatastore datastore, Collection<String> branches, boolean minimalFilling)
       throws IllegalArgumentException {
     if (minimalFilling) {
       fillApplicationMinimal(datastore);
@@ -940,7 +939,7 @@ public abstract class ATestMemoryStatistic {
                 StartBuilding.cube("QueryCubeA")
                     .withContributorsCount()
                     .withCalculations(
-                        context -> Copper.count().multiply(Copper.constant(2L)).publish(context))
+                        context -> Copper.count().multiply(Copper.constant(2L)).as("Contributors count times 2").publish(context))
                     .asQueryCube()
                     .withClusterDefinition()
                     .withClusterId(clusterName)
