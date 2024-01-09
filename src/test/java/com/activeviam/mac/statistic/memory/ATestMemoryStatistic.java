@@ -939,7 +939,11 @@ public abstract class ATestMemoryStatistic {
                 StartBuilding.cube("QueryCubeA")
                     .withContributorsCount()
                     .withCalculations(
-                        context -> Copper.count().multiply(Copper.constant(2L)).as("Contributors count times 2").publish(context))
+                        context ->
+                            Copper.count()
+                                .multiply(Copper.constant(2L))
+                                .as("Contributors count times 2")
+                                .publish(context))
                     .asQueryCube()
                     .withClusterDefinition()
                     .withClusterId(clusterName)
