@@ -3,7 +3,7 @@
 # Statistic folder to drop exported reports
 # Keep the folder for the README but ignore everything else
 /input_statistics/*
-!/input_statistics/README.txt
+!/input_statistics/README.md
 target
 logs
 # misc. IDE config files
