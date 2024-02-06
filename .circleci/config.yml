@@ -3,7 +3,7 @@ version: 2.1
 executors:
   jdk11-docker:
     docker:
-      - image: circleci/openjdk:11-jdk-node
+      - image: cimg/openjdk:11.0.20-node
     environment:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
@@ -33,7 +33,7 @@ jobs:
             sudo sysctl -w vm.overcommit_memory=1
             mkdir -p "$HOME/.m2/repository"
             docker run --rm --privileged \
-              -e ACTIVEPIVOT_LICENSE -e ARTIFACTORY_USER -e ARTIFACTORY_PASSWORD \
+              -e ACTIVEPIVOT_LICENSE -e ARTIFACTORY_USER -e ARTIFACTORY_TOKEN \
               -v "$HOME/.m2/repository:/tmp/repository" \
               -v "$PWD:/home/circleci/mac" \
               -w /home/circleci/mac -u root \

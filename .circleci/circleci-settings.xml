@@ -18,7 +18,7 @@
         <repository>
           <id>ActiveViamInternalRepository</id>
           <name>ActiveViam Internal Repository</name>
-          <url>https://activeviam.jfrog.io/activeviam/mvn-internal/</url>
+          <url>https://activeviam.jfrog.io/artifactory/mvn-internal/</url>
           <snapshots>
             <enabled>false</enabled>
           </snapshots>
@@ -31,7 +31,7 @@
     <server>
       <id>ActiveViamInternalRepository</id>
       <username>${env.ARTIFACTORY_USER}</username>
-      <password>${env.ARTIFACTORY_PASSWORD}</password>
+      <password>${env.ARTIFACTORY_TOKEN}</password>
     </server>
   </servers>
 </settings>
