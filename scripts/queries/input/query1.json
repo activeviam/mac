@@ -1,0 +1,1 @@
+{"mdx" : "SELECT {[Measures].[contributors.COUNT]} ON COLUMNS FROM [MemoryCube]"}

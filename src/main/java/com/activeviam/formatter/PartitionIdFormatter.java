@@ -7,7 +7,7 @@
 
 package com.activeviam.formatter;
 
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.quartetfs.fwk.QuartetExtendedPluginValue;
 import com.quartetfs.fwk.format.IFormatter;
 
@@ -33,9 +33,9 @@ public class PartitionIdFormatter implements IFormatter {
   public String format(Object object) {
     final int id = (Integer) object;
     switch (id) {
-      case MemoryAnalysisDatastoreDescription.NO_PARTITION:
+      case MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION:
         return "N/A";
-      case MemoryAnalysisDatastoreDescription.MANY_PARTITIONS:
+      case MemoryAnalysisDatastoreDescriptionConfig.MANY_PARTITIONS:
         return "shared";
       default:
         return String.valueOf(id);

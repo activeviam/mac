@@ -9,6 +9,7 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 /** Enum listing all components being part of an Aggregate Provider. */
 public enum ProviderComponentType {
+
   /** Provider Point Index. */
   POINT_INDEX("PointIndex"),
   /** Provider mapping from Points to Aggregated values. */

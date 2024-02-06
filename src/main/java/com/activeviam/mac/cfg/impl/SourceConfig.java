@@ -79,14 +79,19 @@ public class SourceConfig {
   @Lazy
   public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
     final String statisticFolder = this.env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
+    final Path folderPath = Paths.get(statisticFolder);
     if (LOGGER.isLoggable(Level.INFO)) {
-      final Path folderPath = Paths.get(statisticFolder);
       LOGGER.info(
           "Using directory `"
               + folderPath.toAbsolutePath()
               + "` to load data into the application");
     }
-
+    if (!Files.isDirectory(folderPath)) {
+      throw new ActiveViamRuntimeException(
+          "The path to the statistics folder : "
+              + folderPath.toAbsolutePath()
+              + " is not a correct path to a valid directory.");
+    }
     return new DirectoryCSVTopic(
         "StatisticTopic",
         null,

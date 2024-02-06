@@ -1,5 +1,5 @@
 MAC is composed of one cube. Its base store is based on Chunks, which atomically
-contain all the off-heap data used by ActivePivot.
+contain all the off-heap data used by Atoti Server.
 
 Chunks are attributed to various higher level structures, that are represented
 by MAC's hierarchies and dimensions and can be queried upon.
@@ -41,8 +41,8 @@ Since they are application-wide, they have the same value for all locations.
   ```
   > This differs slightly from `DirectMemory.Ratio`, as this includes, along with
   > the direct memory consumed by the chunks:
-  > * ActivePivot's SLAB memory allocator cache
-  > * direct memory used by libraries other than ActivePivot
+  > * Atoti Server's SLAB memory allocator cache
+  > * direct memory used by libraries other than Atoti Server
 * `MaxDirectMemory.Ratio`: the total ratio of off-heap memory consumed by the chunks
   relative to the total application committed direct memory
   <!--
@@ -54,7 +54,7 @@ Since they are application-wide, they have the same value for all locations.
   MaxDirectMemory.Ratio := DirectMemory.SUM / MaxDirectMemory
   ```
 * `HeapMemory.SUM`: an estimate of the on-heap size of the chunks
-  > **Warning**: do **NOT** assume total on-heap memory usage by ActivePivot
+  > **Warning**: do **NOT** assume total on-heap memory usage by Atoti Server
   > based on this measure.
   >
   > These estimates rely on manual calculations from within the application that
@@ -136,7 +136,7 @@ Since they are application-wide, they have the same value for all locations.
 Chunks are always held by a higher-level structure, which is called the *owner*
 in MAC.
 
-The different owners of an ActivePivot application are stores of the datastore
+The different owners of an Atoti application are stores of the Datastore
 and the different cubes of the application.
 
 ### Owner
@@ -242,6 +242,14 @@ This hierarchy categorizes chunks in a way similar to the *Component* hierarchy,
 but its members designate lower-level structures than the *Component* hierarchy.
 For example, an `INDEX` **component** may have chunks of **type** `INDEX` and
 `DICTIONARY`.
+
+## Duplicate Record Handler
+The current DuplicateKeyHandler, called ChunkRecordHandler, handles 3 use cases :
+- If both records come from the same partition, we do nothing
+- If the previous record is held by multiple partitions, we return the previous record
+- The exported Chunk is a Tombstone Chunk thus we ignore it as Tombstone chunks refer to the same singleton but can have different parents
+
+We have a sanity check in case two records for the same chunk with different parents happens to be exported, which should never happen.
 
 ## Indices
 

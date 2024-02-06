@@ -10,9 +10,9 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.UsedByVersion;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.qfs.fwk.services.InternalServiceException;
 import com.qfs.monitoring.statistic.IStatisticAttribute;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
@@ -172,7 +172,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       this.freeRows = previousFree;
       this.nonWrittenRows = previousNonWritten;
     } else if (memoryStatistic.getName().contains("VectorHistory")
-        || memoryStatistic.getName().matches(".*Array.*Vector")) {
+        || MemoryStatisticConstants.STAT_NAME_VECTOR.equals(memoryStatistic.getName())) {
       FeedVisitor.visitChildren(this, memoryStatistic);
     } else {
       handleUnknownDefaultStatistic(memoryStatistic);
@@ -278,7 +278,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       }
 
       // Debug
-      if (MemoryAnalysisDatastoreDescription.ADD_DEBUG_TREE) {
+      if (MemoryAnalysisDatastoreDescriptionConfig.ADD_DEBUG_TREE) {
         tuple[format.getFieldIndex(DatastoreConstants.CHUNK__DEBUG_TREE)] =
             StatisticTreePrinter.getTreeAsString(chunkStatistic);
       }

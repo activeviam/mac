@@ -1,20 +1,20 @@
 package com.activeviam.mac.statistic.memory;
 
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
 import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import com.quartetfs.fwk.query.QueryException;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Test;
 public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 20;
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
   private StatisticsSummary summary;
 
   @BeforeAll
@@ -50,7 +50,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
     IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     Assertions.assertThat(pivot).isNotNull();
@@ -60,47 +60,48 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
     this.monitoredApp = createMicroApplication();
 
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(tm -> IntStream.range(0, ADDED_DATA_SIZE).forEach(i -> tm.add("A", i * i)));
   }
 
   private Path generateMemoryStatistics() {
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
 
     performGC();
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportMostRecentVersion("testOverview");
   }
 
   private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build();
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
 
-    IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    resources.register(this.monitoringApp).start();
 
-    ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(data), "storeA");
+    ATestMemoryStatistic.feedMonitoringApplication(
+        this.monitoringApp.getDatabase(), List.of(data), "storeA");
   }
 
   @AfterEach
   public void tearDown() throws AgentException {
-    this.monitoringApp.getLeft().close();
-    this.monitoringApp.getRight().stop();
+    this.monitoringApp.getDatabase().close();
+    this.monitoringApp.getManager().stop();
   }
 
   @Test
   public void testOverviewGrandTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -117,7 +118,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   public void testOwnerTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -156,7 +157,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   public void testStoreTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
@@ -200,7 +201,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
   public void testCubeTotal() throws QueryException {
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
 

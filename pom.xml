@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.2.5.RELEASE</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <version>2.7.8</version>
+    <relativePath/>
   </parent>
 
   <groupId>com.activeviam.tools</groupId>
   <artifactId>mac</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <name>ActivePivot Memory Analysis Cube</name>
 
   <licenses>
@@ -25,8 +25,8 @@
   <properties>
     <jdk.version>11</jdk.version>
 
-    <activepivot.version>5.11.1</activepivot.version>
-    <activeui.version>5.0.7</activeui.version>
+    <activepivot.version>6.0.6</activepivot.version>
+    <activeui.version>5.1.5</activeui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
     <lombok.version>1.18.18</lombok.version>
@@ -36,9 +36,6 @@
     <!-- CLI args, meant to be overridden by each call -->
     <unsnappy.file>not-a-file.txt</unsnappy.file>
 
-    <!-- Sonar configuration -->
-    <sonar.projectKey>mac</sonar.projectKey>
-    <sonar.projectName>MAC</sonar.projectName>
   </properties>
 
   <dependencyManagement>
@@ -175,7 +172,6 @@
       <version>31.0.1-jre</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
   <build>
@@ -271,6 +267,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
         <executions>
           <execution>
             <goals>
@@ -348,7 +345,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
 </project>

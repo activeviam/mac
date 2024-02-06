@@ -1,4 +1,5 @@
 {
   "name" : "Index analysis",
-  "widgetKey" : "tree-table"
+  "widgetKey" : "tree-table",
+  "version" : 1
 }

@@ -7,43 +7,45 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import static com.quartetfs.fwk.util.TestUtils.waitAndAssert;
+import static com.qfs.distribution.impl.DistributionUtil.stopDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.activeviam.database.api.query.AliasedField;
+import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.impl.MultiVersionDistributedActivePivot;
 import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
 import com.qfs.store.IDatastore;
 import com.qfs.store.query.ICursor;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
 import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.impl.Pair;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
-import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
-  private Pair<IDatastore, IActivePivotManager> monitoredApp;
-  private Pair<IDatastore, IActivePivotManager> monitoringApp;
+  private ApplicationInTests<IDatastore> monitoredApp;
+  private ApplicationInTests<IDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
@@ -61,124 +63,124 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
     final IMultiVersionActivePivot pivot =
         this.monitoringApp
-            .getRight()
+            .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
     assertThat(pivot).isNotNull();
   }
 
+  @AfterEach
+  public void tearDown() {
+    monitoringApp.close();
+    stopDistribution(monitoredApp.getManager());
+  }
+
   private void initializeApplication() {
     // In JUnit5, we can also use TestInfo to complete the cluster name with the test name
     this.monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
-    resources.register(this.monitoredApp.getRight()::stop);
-    resources.register(this.monitoredApp.getLeft()::stop);
 
     final var queryCubeA =
         ((MultiVersionDistributedActivePivot)
-            this.monitoredApp.getRight().getActivePivots().get("QueryCubeA"));
+            this.monitoredApp.getManager().getActivePivots().get("QueryCubeA"));
     final var queryCubeB =
         ((MultiVersionDistributedActivePivot)
-            this.monitoredApp.getRight().getActivePivots().get("QueryCubeB"));
-    awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 2);
-
+            this.monitoredApp.getManager().getActivePivots().get("QueryCubeB"));
+    final var dataCube = this.monitoredApp.getManager().getActivePivots().get("Data");
     // epoch 1
     this.monitoredApp
-        .getLeft()
+        .getDatabase()
         .edit(
             transactionManager ->
                 IntStream.range(0, 10).forEach(i -> transactionManager.add("A", i, (double) i)));
-    awaitEpochOnCubes(List.of(queryCubeA, queryCubeB), 3);
+
+    dataCube.awaitNotifications();
+    queryCubeA.awaitNotifications();
+    queryCubeB.awaitNotifications();
 
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     // produces 5 distributed epochs
     for (int i = 0; i < 5; ++i) {
       queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
+      queryCubeA.awaitNotifications();
+      dataCube.awaitNotifications();
     }
 
     // produces 1 distributed epoch
     queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
-  }
-
-  private void awaitEpochOnCubes(
-      final List<MultiVersionDistributedActivePivot> cubes, long epochId) {
-    waitAndAssert(
-        1,
-        TimeUnit.MINUTES,
-        () ->
-            SoftAssertions.assertSoftly(
-                assertions -> {
-                  for (final var cube : cubes) {
-                    assertions
-                        .assertThat(cube.getHead().getEpochId())
-                        .as(cube.getId())
-                        .isEqualTo(epochId);
-                  }
-                }));
+    queryCubeB.awaitNotifications();
+    dataCube.awaitNotifications();
   }
 
   private Path generateMemoryStatistics() {
-    this.monitoredApp.getLeft().getEpochManager().forceDiscardEpochs(node -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(node -> true);
     performGC();
 
     final MemoryAnalysisService analysisService =
         (MemoryAnalysisService)
-            createService(this.monitoredApp.getLeft(), this.monitoredApp.getRight());
+            createService(this.monitoredApp.getDatabase(), this.monitoredApp.getManager());
     return analysisService.exportApplication("testEpochs");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final IMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastore monitoringDatastore =
-        resources.create(
-            () ->
-                StartBuilding.datastore().setSchemaDescription(config.schemaDescription()).build());
+    final IDatastoreSchemaDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final IActivePivotManager manager =
-        StartBuilding.manager()
-            .setDescription(config.managerDescription())
-            .setDatastoreAndPermissions(monitoringDatastore)
-            .buildAndStart();
-    resources.register(manager::stop);
-    this.monitoringApp = new Pair<>(monitoringDatastore, manager);
+    this.monitoringApp =
+        ApplicationInTests.builder()
+            .withDatastore(schemaConfig.datastoreSchemaDescription())
+            .withManager(config.managerDescription())
+            .build();
+
+    resources.register(monitoringApp).start();
 
     ATestMemoryStatistic.feedMonitoringApplication(
-        monitoringDatastore, List.of(data), "testDistributedCubeEpochs");
+        monitoringApp.getDatabase(), List.of(data), "testDistributedCubeEpochs");
   }
 
+  @Disabled("See https://activeviam.atlassian.net/browse/PIVOT-7689")
   @Test
   public void testExpectedViewEpochs() {
     final Set<EpochView> viewEpochIds = retrieveViewEpochIds();
 
     assertThat(viewEpochIds)
         .containsExactlyInAnyOrder(
-            new RegularEpochView(1L),
+            new RegularEpochView(getHeadEpochId("Data")),
             new DistributedEpochView("QueryCubeA", getHeadEpochId("QueryCubeA")),
             new DistributedEpochView("QueryCubeB", getHeadEpochId("QueryCubeB")));
   }
 
-  private long getHeadEpochId(String queryCubeA) {
+  private long getHeadEpochId(String queryCube) {
     return this.monitoredApp
-        .getRight()
+        .getManager()
         .getActivePivots()
-        .get(queryCubeA)
+        .get(queryCube)
         .getMostRecentVersion()
         .getEpochId();
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {
-    final ICursor cursor =
+    ListQuery query =
         this.monitoringApp
-            .getLeft()
-            .getHead()
-            .getQueryRunner()
-            .forStore(DatastoreConstants.EPOCH_VIEW_STORE)
+            .getDatabase()
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.EPOCH_VIEW_STORE)
             .withoutCondition()
-            .selecting(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
-            .onCurrentThread()
-            .run();
+            .withAliasedFields(
+                AliasedField.fromFieldName(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
+            .toQuery();
+    try (final ICursor cursor =
+        this.monitoringApp
+            .getDatabase()
+            .getHead("master")
+            .getQueryRunner()
+            .listQuery(query)
+            .run()) {
 
-    return StreamSupport.stream(cursor.spliterator(), false)
-        .map(c -> (EpochView) c.read(0))
-        .collect(Collectors.toSet());
+      return StreamSupport.stream(cursor.spliterator(), false)
+          .map(c -> (EpochView) c.read(0))
+          .collect(Collectors.toSet());
+    }
   }
 }

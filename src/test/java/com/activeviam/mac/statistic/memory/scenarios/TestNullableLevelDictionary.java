@@ -9,10 +9,12 @@ package com.activeviam.mac.statistic.memory.scenarios;
 
 import static com.activeviam.mac.statistic.memory.ATestMemoryStatistic.performGC;
 
+import com.activeviam.builders.StartBuilding;
 import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
+import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.pivot.builders.StartBuilding;
+import com.activeviam.pivot.utils.ApplicationInTests;
 import com.qfs.desc.IDatastoreSchemaDescription;
 import com.qfs.dic.IDictionary;
 import com.qfs.dic.impl.NullableDictionary;
@@ -28,8 +30,6 @@ import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.IActivePivotVersion;
 import com.quartetfs.biz.pivot.cube.provider.IHierarchicalMapping;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
-import com.quartetfs.fwk.AgentException;
 import com.quartetfs.fwk.Registry;
 import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import java.io.IOException;
@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,19 +60,21 @@ public class TestNullableLevelDictionary {
   }
 
   @BeforeEach
-  public void setupAndExportApplication() throws AgentException {
+  public void setupAndExportApplication() {
     final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
     final IActivePivotManagerDescription managerDescription =
         managerDescription(datastoreSchemaDescription);
 
-    this.datastore =
-        StartBuilding.datastore().setSchemaDescription(datastoreSchemaDescription).build();
+    final ApplicationInTests<IDatastore> application =
+        ApplicationInTests.builder()
+            .withDatastore(datastoreSchemaDescription)
+            .withManager(managerDescription)
+            .build();
 
-    this.manager =
-        StartBuilding.manager()
-            .setDescription(managerDescription)
-            .setDatastoreAndPermissions(this.datastore)
-            .buildAndStart();
+    this.datastore = application.getDatabase();
+
+    this.manager = application.getManager();
+    resources.register(application).start();
 
     fillApplication();
     performGC();
@@ -104,7 +105,7 @@ public class TestNullableLevelDictionary {
             .withCube(StartBuilding.cube("Cube").withSingleLevelDimension("id").build())
             .build();
 
-    return ActivePivotManagerBuilder.postProcess(managerDescription, datastoreSchema);
+    return managerDescription;
   }
 
   protected void fillApplication() {
@@ -118,15 +119,8 @@ public class TestNullableLevelDictionary {
 
   protected void exportApplicationMemoryStatistics() {
     final IMemoryAnalysisService analysisService =
-        new MemoryAnalysisService(
-            this.datastore, this.manager, this.datastore.getEpochManager(), TEMP_DIRECTORY);
+        new MemoryAnalysisService(this.datastore, this.manager, TEMP_DIRECTORY);
     this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
-  }
-
-  @AfterEach
-  public void teardown() throws AgentException {
-    this.manager.stop();
-    this.datastore.stop();
   }
 
   @Test
@@ -152,8 +146,12 @@ public class TestNullableLevelDictionary {
   }
 
   protected IDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc = new MemoryAnalysisDatastoreDescription();
-    return this.resources.create(StartBuilding.datastore().setSchemaDescription(desc)::build);
+    final IDatastoreSchemaDescription desc =
+        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
+    final IActivePivotManagerDescription manager =
+        new ManagerDescriptionConfig().managerDescription();
+    return (IDatastore)
+        ApplicationInTests.builder().withDatastore(desc).withManager(manager).build().getDatabase();
   }
 
   protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {

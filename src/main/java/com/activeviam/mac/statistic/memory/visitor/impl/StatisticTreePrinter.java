@@ -164,7 +164,7 @@ public class StatisticTreePrinter {
   }
 
   ////////////////////////////////
-  // Very basic tree structure  //
+  // Very basic tree structure //
   ////////////////////////////////
 
   private static class Tree {

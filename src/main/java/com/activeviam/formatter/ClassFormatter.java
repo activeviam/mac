@@ -36,8 +36,8 @@ public class ClassFormatter implements IFormatter {
     // A String is expected has input.
     if (object instanceof String) {
       /*
-       * Input: com.qfs.chunk.impl.ChunkOffsetLong,com.qfs.chunk.direct.impl.DirectChunkBits
-       * Output: ChunkOffsetLong,DirectChunkBits
+       * Input: com.qfs.chunk.impl.ChunkOffsetLong,com.qfs.chunk.direct.impl.DirectChunkBits Output:
+       * ChunkOffsetLong,DirectChunkBits
        */
       String[] classes = ((String) object).split(Pattern.quote(","));
       return Arrays.stream(classes)

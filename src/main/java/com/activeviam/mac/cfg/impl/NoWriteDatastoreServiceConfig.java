@@ -7,9 +7,9 @@
 
 package com.activeviam.mac.cfg.impl;
 
-import com.qfs.desc.IStorePermission;
-import com.qfs.desc.IStoreSecurity;
-import com.qfs.service.store.impl.ADatastoreServiceConfig;
+import com.qfs.desc.ITablePermissions;
+import com.qfs.desc.ITableSecurity;
+import com.qfs.service.store.impl.ADatabaseServiceConfig;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,15 +18,15 @@ import org.springframework.context.annotation.Configuration;
 
 /** Configuration preventing any edition to the datastore from the remote services. */
 @Configuration
-public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
+public class NoWriteDatastoreServiceConfig extends ADatabaseServiceConfig {
 
   /**
    * A constant for store security.
    *
    * <p>This allows to read any fields but forbids all updates.
    */
-  protected static final IStoreSecurity defaultStoreSecurity =
-      new IStoreSecurity() {
+  protected static final ITableSecurity defaultStoreSecurity =
+      new ITableSecurity() {
 
         @Override
         public boolean isDeletingRecordsAllowed() {
@@ -39,16 +39,16 @@ public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
         }
 
         @Override
-        public IStorePermission getStorePermissions() {
-          return new IStorePermission() {
+        public ITablePermissions getTablePermissions() {
+          return new ITablePermissions() {
 
             @Override
-            public Set<String> getStoreWriterRoles() {
+            public Set<String> getTableWriterRoles() {
               return Collections.emptySet();
             }
 
             @Override
-            public Set<String> getStoreReaderRoles() {
+            public Set<String> getTableReaderRoles() {
               return Collections.emptySet();
             }
 
@@ -68,12 +68,13 @@ public class NoWriteDatastoreServiceConfig extends ADatastoreServiceConfig {
    * A constant for the map which will always return the same store security, also defined as a
    * constant below.
    */
-  protected static final Map<String, IStoreSecurity> storesSecurityMap =
+  protected static final Map<String, ITableSecurity> storesSecurityMap =
       new HashMap<>() {
+
         private static final long serialVersionUID = 5_08_00L;
 
         @Override
-        public IStoreSecurity get(Object key) {
+        public ITableSecurity get(Object key) {
           return containsKey(key) ? super.get(key) : defaultStoreSecurity;
         }
       };

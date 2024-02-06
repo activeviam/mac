@@ -9,8 +9,8 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
 import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
@@ -115,7 +115,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
         tuple,
         format,
         DatastoreConstants.CHUNK__PARTITION_ID,
-        MemoryAnalysisDatastoreDescription.NO_PARTITION);
+        MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION);
 
     final Long dictionaryId = this.dictionaryAttributes.getDictionaryId();
     if (dictionaryId != null) {

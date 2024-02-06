@@ -1,5 +1,5 @@
 /*
- * (C) ActiveViam 2018-2021
+ * (C) ActiveViam 2018-2023
  * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
  * property of ActiveViam. Any unauthorized use,
  * reproduction or transfer of this material is strictly prohibited
@@ -14,6 +14,7 @@ import com.activeviam.copper.api.Copper;
 import com.activeviam.copper.api.CopperMeasure;
 import com.activeviam.copper.api.CopperMeasureToAggregateAbove;
 import com.activeviam.copper.api.CopperStore;
+import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.desc.build.ICanBuildCubeDescription;
 import com.activeviam.desc.build.ICanStartBuildingMeasures;
 import com.activeviam.desc.build.IHasAtLeastOneMeasure;
@@ -25,14 +26,14 @@ import com.activeviam.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescription.ParentType;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.qfs.agg.impl.SingleValueFunction;
-import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.literal.ILiteralType;
 import com.qfs.multiversion.IEpoch;
 import com.qfs.pivot.util.impl.MdxNamingUtil;
 import com.qfs.server.cfg.IActivePivotManagerDescriptionConfig;
+import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
+import com.qfs.store.Types;
 import com.quartetfs.biz.pivot.context.impl.QueriesResultLimit;
 import com.quartetfs.biz.pivot.context.impl.QueriesTimeLimit;
 import com.quartetfs.biz.pivot.cube.dimension.IDimension;
@@ -41,7 +42,6 @@ import com.quartetfs.biz.pivot.cube.hierarchy.ILevelInfo;
 import com.quartetfs.biz.pivot.definitions.IActivePivotInstanceDescription;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.definitions.ISelectionDescription;
-import com.quartetfs.biz.pivot.impl.ActivePivotManagerBuilder;
 import com.quartetfs.fwk.format.impl.DateFormatter;
 import com.quartetfs.fwk.format.impl.NumberFormatter;
 import com.quartetfs.fwk.ordering.impl.NaturalOrderComparator;
@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Manager Description Config that defines the manager description which contains the cube
@@ -59,6 +60,7 @@ import org.springframework.context.annotation.Configuration;
  * @author ActiveViam
  */
 @Configuration
+@Import(MemoryAnalysisDatastoreDescriptionConfig.class)
 public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
 
   /** The main monitoring cube name. */
@@ -228,6 +230,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   public static final String DICTIONARY_FOLDER = "Dictionary";
   /** The name of the folder for measures related to chunks. */
   public static final String CHUNK_FOLDER = "Chunk";
+  /** The name of the folder for measures related to datastore-related chunks. */
+  public static final String STORE_CHUNK_FOLDER = "Datastore Chunk";
   /** The name of the folder for measures related to chunk memory usage. */
   public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
   /** The name of the folder for measures related to vectors. */
@@ -235,6 +239,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** The name of the folder for internal measures not intended for regular uses. */
   public static final String INTERNAL_FOLDER = "Internal";
   // endregion
+
+  protected IDatastoreSchemaDescriptionConfig datastoreDescriptionConfig =
+      new MemoryAnalysisDatastoreDescriptionConfig();
 
   /**
    * Prefixes a field by another string.
@@ -249,33 +256,27 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   @Bean
   @Override
-  public IActivePivotManagerDescription userManagerDescription() {
-    return ActivePivotManagerBuilder.postProcess(
-        StartBuilding.managerDescription()
-            .withSchema(MONITORING_SCHEMA)
-            .withSelection(memorySelection())
-            .withCube(memoryCube())
-            .build(),
-        userSchemaDescription());
-  }
-
-  @Override
-  public IDatastoreSchemaDescription userSchemaDescription() {
-    return new MemoryAnalysisDatastoreDescription();
+  public IActivePivotManagerDescription managerDescription() {
+    return StartBuilding.managerDescription()
+        .withSchema(MONITORING_SCHEMA)
+        .withSelection(memorySelection())
+        .withCube(memoryCube())
+        .build();
   }
 
   private ISelectionDescription memorySelection() {
-    return StartBuilding.selection(this.userSchemaDescription())
+    return StartBuilding.selection(
+            datastoreDescriptionConfig.datastoreSchemaDescription().asDatabaseSchema())
         .fromBaseStore(DatastoreConstants.CHUNK_STORE)
         .withAllReachableFields(
             allReachableFields -> {
               allReachableFields.remove(DatastoreConstants.CHUNK__CLASS);
-              final Map<String, String> result =
+              final Map<String, FieldPath> result =
                   ISelectionDescriptionBuilder.FieldsCollisionHandler.CLOSEST.handle(
                       allReachableFields);
               result.put(
                   prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS),
-                  DatastoreConstants.CHUNK__CLASS);
+                  FieldPath.of(DatastoreConstants.CHUNK__CLASS));
 
               return result;
             })
@@ -302,170 +303,180 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
       final ICanStartBuildingDimensions builder) {
     return builder
         .withDimension(CHUNK_DIMENSION)
-        .withProperty("description", "Holds low-level hierarchies for classifying chunks")
         .withHierarchy(CHUNK_ID_HIERARCHY)
-        .withProperty("description", "The ID of the chunk")
+        .withHierarchyProperty("description", "Holds low-level hierarchies for classifying chunks")
         .withLevelOfSameName()
+        .withLevelProperty("description", "The ID of the chunk")
         .withPropertyName(DatastoreConstants.CHUNK_ID)
-        .withProperty("description", "The ID of the chunk")
         .withHierarchy(CHUNK_TYPE_LEVEL)
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "The kind of data the chunk holds"
                 + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "The kind of data the chunk holds"
                 + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
         .withHierarchy(CHUNK_PARENT_ID_LEVEL)
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "The internal ID associated with the parent"
                 + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "The internal ID associated with the parent"
                 + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
         .withHierarchy(CHUNK_DICO_ID_LEVEL)
-        .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
+        .withHierarchyProperty(
+            "description", "The ID of the dictionary the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
-        .withProperty("description", "The ID of the dictionary the chunk is attributed to, if any")
+        .withLevelProperty(
+            "description", "The ID of the dictionary the chunk is attributed to, if any")
         .withHierarchy(CHUNK_INDEX_ID_LEVEL)
-        .withProperty("description", "The ID of the index the chunk is attributed to, if any")
+        .withHierarchyProperty(
+            "description", "The ID of the index the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
-        .withProperty("description", "The ID of the index the chunk is attributed to, if any")
+        .withLevelProperty("description", "The ID of the index the chunk is attributed to, if any")
         .withHierarchy(CHUNK_REF_ID_LEVEL)
-        .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
+        .withHierarchyProperty(
+            "description", "The ID of the reference the chunk is attributed to, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
-        .withProperty("description", "The ID of the reference the chunk is attributed to, if any")
+        .withLevelProperty(
+            "description", "The ID of the reference the chunk is attributed to, if any")
         .withHierarchy(CHUNK_CLASS_LEVEL)
-        .withProperty("description", "The java class of the chunk")
+        .withHierarchyProperty("description", "The java class of the chunk")
         .withLevelOfSameName()
         .withPropertyName(
             prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
         .withFormatter(ClassFormatter.KEY)
-        .withProperty("description", "The java class of the chunk")
+        .withLevelProperty("description", "The java class of the chunk")
         .withDimension(PARTITION_DIMENSION)
-        .withProperty("description", "The ID of the store or cube partition that holds the chunk")
+        .withDimensionProperty(
+            "description", "The ID of the store or cube partition that holds the chunk")
         .withHierarchy(PARTITION_HIERARCHY)
         .withLevelOfSameName()
-        .withProperty("description", "The ID of the store or cube partition that holds the chunk")
+        .withLevelProperty(
+            "description", "The ID of the store or cube partition that holds the chunk")
         .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
         .withFormatter(PartitionIdFormatter.KEY)
-        .withProperty("description", "The ID of the store or cube partition that holds the chunk")
+        .withLevelProperty(
+            "description", "The ID of the store or cube partition that holds the chunk")
         .withDimension(CHUNK_DUMP_NAME_LEVEL)
-        .withProperty(
+        .withDimensionProperty(
             "description",
             "Holds hierarchies with metadata on the statistics from which the chunks were "
                 + "retrieved")
         .withHierarchyOfSameName()
         .slicing()
-        .withProperty(
+        .withHierarchyProperty(
             "description", "The source folder name from which the statistics were retrieved")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
         .withComparator(NaturalOrderComparator.type)
-        .withProperty(
+        .withLevelProperty(
             "description", "The source folder name from which the statistics were retrieved")
         .withHierarchy(DATE_HIERARCHY)
-        .withProperty("description", "Date at which statistics were retrieved")
+        .withHierarchyProperty("description", "Date at which statistics were retrieved")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.APPLICATION__DATE)
         .withType(ILevelInfo.LevelType.TIME)
         .withComparator(ReverseOrderComparator.type)
-        .withProperty("description", "Date at which statistics were retrieved")
+        .withLevelProperty("description", "Date at which statistics were retrieved")
         .withDimension(AGGREGATE_PROVIDER_DIMENSION)
-        .withProperty("description", "Holds hierarchies relative to pivot aggregate providers")
+        .withDimensionProperty(
+            "description", "Holds hierarchies relative to pivot aggregate providers")
         .withHierarchy(MANAGER_HIERARCHY)
-        .withProperty("description", "The id of the manager associated with the chunk, if any")
+        .withHierarchyProperty(
+            "description", "The id of the manager associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
-        .withProperty("description", "The id of the manager associated with the chunk, if any")
+        .withLevelProperty("description", "The id of the manager associated with the chunk, if any")
         .withHierarchy(PROVIDER_TYPE_HIERARCHY)
-        .withProperty(
+        .withHierarchyProperty(
             "description", "The type of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
-        .withProperty(
+        .withLevelProperty(
             "description", "The type of the aggregate provider associated with the chunk, if any")
         .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "The category of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "The category of the aggregate provider associated with the chunk, if any")
         .withHierarchy(PROVIDER_ID_HIERARCHY)
-        .withProperty(
+        .withHierarchyProperty(
             "description", "The ID of the aggregate provider associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
-        .withProperty(
+        .withLevelProperty(
             "description", "The ID of the aggregate provider associated with the chunk, if any")
         .withDimension(VERSION_DIMENSION)
-        .withProperty("description", "Holds hierarchies relative to the versioning of the chunks")
+        .withDimensionProperty(
+            "description", "Holds hierarchies relative to the versioning of the chunks")
         .withHierarchy(INTERNAL_EPOCH_ID_HIERARCHY)
         .hidden()
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
         .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "The internal epoch ID of the chunk (may be less than the epoch to view)")
         .withComparator(ReverseOrderComparator.type)
         .withHierarchy(BRANCH_HIERARCHY)
-        .withProperty("description", "The branch of the chunk")
+        .withHierarchyProperty("description", "The branch of the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
         .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
-        .withProperty("description", "The branch of the chunk")
+        .withLevelProperty("description", "The branch of the chunk")
         .withHierarchy(USED_BY_VERSION_DIMENSION)
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "Whether or not the chunk is known to be used by the currently viewed version")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "Whether or not the chunk is known to be used by the currently viewed version")
         .withDimension(OWNER_DIMENSION)
-        .withProperty("description", "The cube(s) or store(s) owning the chunk")
+        .withDimensionProperty("description", "The cube(s) or store(s) owning the chunk")
         .withHierarchy(OWNER_HIERARCHY)
-        .withProperty("description", "The cube(s) or store(s) owning the chunk")
+        .withHierarchyProperty("description", "The cube(s) or store(s) owning the chunk")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__OWNER)
-        .withProperty("description", "The cube(s) or store(s) owning the chunk")
+        .withLevelProperty("description", "The cube(s) or store(s) owning the chunk")
         .withDimension(COMPONENT_DIMENSION)
-        .withProperty(
+        .withDimensionProperty(
             "description",
             "The owning structure associated with the chunk (dictionary, index, ...)")
         .withHierarchy(COMPONENT_HIERARCHY)
-        .withProperty(
+        .withHierarchyProperty(
             "description",
             "The owning structure associated with the chunk (dictionary, index, ...)")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__COMPONENT)
-        .withProperty(
+        .withLevelProperty(
             "description",
             "The owning structure associated with the chunk (dictionary, index, ...)")
         .withDimension(FIELD_DIMENSION)
-        .withProperty("description", "The field(s) associated with the chunk, if any")
+        .withDimensionProperty("description", "The field(s) associated with the chunk, if any")
         .withHierarchy(FIELD_HIERARCHY)
-        .withProperty("description", "The field(s) associated with the chunk, if any")
+        .withHierarchyProperty("description", "The field(s) associated with the chunk, if any")
         .withLevelOfSameName()
         .withPropertyName(DatastoreConstants.OWNER__FIELD)
-        .withProperty("description", "The field(s) associated with the chunk, if any");
+        .withLevelProperty("description", "The field(s) associated with the chunk, if any");
   }
 
   private IHasAtLeastOneMeasure nativeMeasures(ICanStartBuildingMeasures builder) {
@@ -620,6 +631,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the number of freed rows within the chunks")
         .publish(context)
         .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(DELETED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -627,8 +639,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     nonWrittenRowsCount
-        .mapToDouble(a -> a.readDouble(0))
         .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -644,7 +656,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     Copper.measure(COMMITTED_ROWS_COUNT)
-        .divide(Copper.measure(CHUNK_SIZE_SUM))
+        .divide(chunkSize)
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(COMMITTED_ROWS_RATIO)
         .withinFolder(CHUNK_FOLDER)
@@ -660,10 +673,9 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .withDescription("the off-heap size of the chunks")
             .publish(context);
 
-    Copper.measure(COMMITTED_ROWS_COUNT)
-        .divide(Copper.measure(CHUNK_SIZE_SUM))
-        .multiply(Copper.measure(DIRECT_MEMORY_SUM))
-        .withType(ILiteralType.LONG)
+    Copper.measure(COMMITTED_ROWS_RATIO)
+        .multiply(directMemory)
+        .mapToLong(a -> (long) a.readDouble(0))
         .withFormatter(ByteFormatter.KEY)
         .as(COMMITTED_CHUNK_MEMORY)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -672,6 +684,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(directMemory.grandTotal())
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(DIRECT_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -682,6 +695,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(Copper.measure(USED_DIRECT))
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(USED_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -692,6 +706,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     directMemory
         .divide(Copper.measure(MAX_DIRECT))
+        .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(MAX_MEMORY_RATIO)
         .withinFolder(CHUNK_MEMORY_FOLDER)
@@ -723,25 +738,86 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withinFolder(DICTIONARY_FOLDER)
         .withDescription("the number of entries in the corresponding dictionary, when relevant")
         .publish(context);
+
+    Copper.measure(COMMITTED_ROWS_COUNT)
+        .per(
+            Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+            Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+        .avg()
+        .as("Used rows")
+        .withFormatter(NUMBER_FORMATTER)
+        .withinFolder(STORE_CHUNK_FOLDER)
+        .withDescription("the number of rows actually containing data in a chunk in the store")
+        .publish(context);
+
+    Copper.measure(DELETED_ROWS_COUNT)
+        .per(
+            Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+            Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+        .avg()
+        .as("Deleted rows")
+        .withFormatter(NUMBER_FORMATTER)
+        .withinFolder(STORE_CHUNK_FOLDER)
+        .withDescription("the number of deleted rows from the store")
+        .publish(context);
+
+    final CopperMeasure storeUnusedRows =
+        Copper.measure(NON_WRITTEN_ROWS_COUNT)
+            .per(
+                Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+                Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+                Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
+            .avg()
+            .as("Unused rows")
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(STORE_CHUNK_FOLDER)
+            .withDescription("the number of empty rows in the store")
+            .publish(context);
+
+    final CopperMeasure storeChunkSize =
+        perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+            .max()
+            .per(
+                Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+                Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+                Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
+                Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
+            .min()
+            .as("Chunk size")
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(STORE_CHUNK_FOLDER)
+            .withDescription("the size of each chunk for the store")
+            .publish(context);
+
+    Copper.combine(storeChunkSize, storeUnusedRows)
+        .mapToDouble(a -> a.readDouble(1) / a.readDouble(0))
+        .as("Unused rows ratio")
+        .withFormatter(PERCENT_FORMATTER)
+        .withinFolder(STORE_CHUNK_FOLDER)
+        .withDescription("the ratio of unused rows inside the chunks")
+        .publish(context);
   }
 
   private void vectorMeasures(ICopperContext context) {
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
         .sum()
-        .per(Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY))
-        .doNotAggregateAbove()
         .as(VECTOR_BLOCK_REFCOUNT)
         .withinFolder(VECTOR_FOLDER)
-        .withDescription("the length of the vector block, when relevant")
+        .withDescription(
+            "The amount of references held towards the vectors contained in the vector block of the chunks, when relevant")
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
-        .sum()
+        .custom(SingleValueFunction.PLUGIN_KEY)
+        // The underlying vector block length should be the same for all the chunks of an
+        // application
         .per(Copper.level(FIELD_HIERARCHY))
         .doNotAggregateAbove()
         .as(VECTOR_BLOCK_SIZE)
         .withinFolder(VECTOR_FOLDER)
-        .withDescription("the number of references to the vector block, when relevant")
+        .withDescription("the length of the Block holding the vector data, when relevant")
         .publish(context);
   }
 
