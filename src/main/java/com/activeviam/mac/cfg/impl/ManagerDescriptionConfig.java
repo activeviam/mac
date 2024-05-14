@@ -203,20 +203,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Measure of the chunk size. */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
   /** Measure of the the non-written rows in Chunks. */
-	public static final String NON_WRITTEN_ROWS_COUNT = "Unused rows";
+  public static final String NON_WRITTEN_ROWS_COUNT = "Unused rows";
   /**
    * Measure of the the non-written rows in Chunks, relative to the total non-written rows in the
    * application.
    */
-	public static final String NON_WRITTEN_ROWS_RATIO = "Unused rows ratio";
+  public static final String NON_WRITTEN_ROWS_RATIO = "Unused rows ratio";
   /** Measure of the deleted rows in Chunks. */
-	public static final String DELETED_ROWS_COUNT = "Deleted rows";
+  public static final String DELETED_ROWS_COUNT = "Deleted rows";
   /**
    * Measure of the deleted rows in Chunks, relative to the total deleted rows in the application.
    */
-	public static final String DELETED_ROWS_RATIO = "Deleted rows ratio";
+  public static final String DELETED_ROWS_RATIO = "Deleted rows ratio";
   /** The number of committed rows within chunks. */
-	public static final String COMMITTED_ROWS_COUNT = "Used rows";
+  public static final String COMMITTED_ROWS_COUNT = "Used rows";
   /** The size in bytes of chunk memory used to store effective data. */
   public static final String COMMITTED_CHUNK_MEMORY = "CommittedChunkMemory.SUM";
   /** The ratio of committed rows within chunks. */
@@ -308,7 +308,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withLevelOfSameName()
         .withLevelProperty("description", "The ID of the chunk")
         .withPropertyName(DatastoreConstants.CHUNK_ID)
-
         .withHierarchy(CHUNK_TYPE_LEVEL)
         .withHierarchyProperty(
             "description",
@@ -639,15 +638,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the ratio of freed rows within the chunks")
         .publish(context);
 
-		final CopperMeasure totalRows = Copper.sum(DatastoreConstants.CHUNK__SIZE)
-				.withDescription("the total number of rows in chunks")
-				.as("Physical row count")
-				.withFormatter(NUMBER_FORMATTER)
-				.withinFolder(CHUNK_FOLDER)
-				.publish(context);
+    final CopperMeasure totalRows =
+        Copper.sum(DatastoreConstants.CHUNK__SIZE)
+            .withDescription("the total number of rows in chunks")
+            .as("Physical row count")
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .publish(context);
 
     nonWrittenRowsCount
-				.divide(totalRows)
+        .divide(totalRows)
         .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
@@ -747,19 +747,19 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the number of entries in the corresponding dictionary, when relevant")
         .publish(context);
 
-		perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
-				.max()
-				.per(
-						Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
-						Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-						Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
-						Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
-				.min()
-				.as("Chunk size")
-				.withFormatter(NUMBER_FORMATTER)
-				.withinFolder(STORE_CHUNK_FOLDER)
-				.withDescription("the size of each chunk for the store")
-				.publish(context);
+    perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+        .max()
+        .per(
+            Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+            Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
+            Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
+        .min()
+        .as("Chunk size")
+        .withFormatter(NUMBER_FORMATTER)
+        .withinFolder(STORE_CHUNK_FOLDER)
+        .withDescription("the size of each chunk for the store")
+        .publish(context);
   }
 
   private void vectorMeasures(ICopperContext context) {
