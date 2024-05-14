@@ -268,7 +268,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
+                + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
@@ -366,7 +366,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  [Measures].[DeletedRows.COUNT] ON COLUMNS"
+                + "  [Measures].[Deleted rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res = pivot.execute(query);
 
@@ -394,7 +394,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  NON EMPTY [Measures].[NonWrittenRows.COUNT] ON COLUMNS"
+                + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
 
@@ -402,7 +402,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  NON EMPTY [Measures].[NonWrittenRows.Ratio] ON COLUMNS"
+                + "  NON EMPTY [Measures].[Unused rows ratio] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
@@ -435,7 +435,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  NON EMPTY [Measures].[DeletedRows.COUNT] ON COLUMNS"
+                + "  NON EMPTY [Measures].[Deleted rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = pivot.execute(query2);
 
@@ -443,7 +443,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
-                + "  NON EMPTY [Measures].[DeletedRows.Ratio] ON COLUMNS"
+                + "  NON EMPTY [Measures].[Deleted rows ratio] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res3 = pivot.execute(query3);
 
