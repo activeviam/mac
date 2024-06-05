@@ -27,13 +27,11 @@ import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInpu
  */
 public class Tools {
 
-  public static int main(final String[] args) {
+  public static void main(final String[] args) {
     if ("extract".equals(args[0])) {
       extractSnappyFileOrDirectory(args[1]);
-      return 0;
     } else {
       System.err.println("Unsupported command. Got " + Arrays.toString(args));
-      return 1;
     }
   }
 
