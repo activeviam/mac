@@ -4,7 +4,7 @@
  * property of ActiveViam. Any unauthorized use
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.activeviam.mac;
+package com.activeviam.mac.tools;
 
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import java.io.FileInputStream;
