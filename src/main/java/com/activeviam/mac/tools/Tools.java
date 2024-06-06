@@ -76,11 +76,12 @@ public class Tools {
     final String extension = MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
     boolean isCompressedFile = pathAsString.endsWith("." + extension);
     if (!isCompressedFile) {
-      LOGGER.info(() ->
-          "File "
-              + pathAsString
-              + " was skipped as it did not match the list of compressed extensions: "
-              + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
+      LOGGER.info(
+          () ->
+              "File "
+                  + pathAsString
+                  + " was skipped as it did not match the list of compressed extensions: "
+                  + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
       return;
     }
 
@@ -99,7 +100,8 @@ public class Tools {
       try {
         inputStream = new FramedSnappyCompressorInputStream(rawInputStream);
       } catch (IOException e) {
-        throw new ActiveViamRuntimeException(String.format("Cannot read `%s` as a Snappy file", path), e);
+        throw new ActiveViamRuntimeException(
+            String.format("Cannot read `%s` as a Snappy file", path), e);
       }
       try {
         Files.copy(inputStream, uncompressedPath, StandardCopyOption.REPLACE_EXISTING);
@@ -114,6 +116,6 @@ public class Tools {
         LOGGER.log(Level.SEVERE, "Failed to close the input stream", e);
       }
     }
-    LOGGER.log(Level.INFO, "File `{0}` extracted to `{1}`", new Object[]{path, uncompressedPath});
+    LOGGER.log(Level.INFO, "File `{0}` extracted to `{1}`", new Object[] {path, uncompressedPath});
   }
 }
