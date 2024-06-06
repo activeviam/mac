@@ -203,20 +203,20 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   /** Measure of the chunk size. */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
   /** Measure of the the non-written rows in Chunks. */
-  public static final String NON_WRITTEN_ROWS_COUNT = "NonWrittenRows.COUNT";
+  public static final String NON_WRITTEN_ROWS_COUNT = "Unused rows";
   /**
    * Measure of the the non-written rows in Chunks, relative to the total non-written rows in the
    * application.
    */
-  public static final String NON_WRITTEN_ROWS_RATIO = "NonWrittenRows.Ratio";
+  public static final String NON_WRITTEN_ROWS_RATIO = "Unused rows ratio";
   /** Measure of the deleted rows in Chunks. */
-  public static final String DELETED_ROWS_COUNT = "DeletedRows.COUNT";
+  public static final String DELETED_ROWS_COUNT = "Deleted rows";
   /**
    * Measure of the deleted rows in Chunks, relative to the total deleted rows in the application.
    */
-  public static final String DELETED_ROWS_RATIO = "DeletedRows.Ratio";
+  public static final String DELETED_ROWS_RATIO = "Deleted rows ratio";
   /** The number of committed rows within chunks. */
-  public static final String COMMITTED_ROWS_COUNT = "CommittedRows.COUNT";
+  public static final String COMMITTED_ROWS_COUNT = "Used rows";
   /** The size in bytes of chunk memory used to store effective data. */
   public static final String COMMITTED_CHUNK_MEMORY = "CommittedChunkMemory.SUM";
   /** The ratio of committed rows within chunks. */
@@ -638,8 +638,16 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the ratio of freed rows within the chunks")
         .publish(context);
 
+    final CopperMeasure totalRows =
+        Copper.sum(DatastoreConstants.CHUNK__SIZE)
+            .withDescription("the total number of rows in chunks")
+            .as("Physical row count")
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .publish(context);
+
     nonWrittenRowsCount
-        .divide(chunkSize)
+        .divide(totalRows)
         .withType(Types.TYPE_DOUBLE)
         .withFormatter(PERCENT_FORMATTER)
         .as(NON_WRITTEN_ROWS_RATIO)
@@ -739,64 +747,18 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .withDescription("the number of entries in the corresponding dictionary, when relevant")
         .publish(context);
 
-    Copper.measure(COMMITTED_ROWS_COUNT)
+    perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+        .max()
         .per(
             Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
             Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
-        .avg()
-        .as("Used rows")
+            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
+            Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
+        .min()
+        .as("Chunk size")
         .withFormatter(NUMBER_FORMATTER)
         .withinFolder(STORE_CHUNK_FOLDER)
-        .withDescription("the number of rows actually containing data in a chunk in the store")
-        .publish(context);
-
-    Copper.measure(DELETED_ROWS_COUNT)
-        .per(
-            Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
-            Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-            Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
-        .avg()
-        .as("Deleted rows")
-        .withFormatter(NUMBER_FORMATTER)
-        .withinFolder(STORE_CHUNK_FOLDER)
-        .withDescription("the number of deleted rows from the store")
-        .publish(context);
-
-    final CopperMeasure storeUnusedRows =
-        Copper.measure(NON_WRITTEN_ROWS_COUNT)
-            .per(
-                Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
-                Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-                Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY))
-            .avg()
-            .as("Unused rows")
-            .withFormatter(NUMBER_FORMATTER)
-            .withinFolder(STORE_CHUNK_FOLDER)
-            .withDescription("the number of empty rows in the store")
-            .publish(context);
-
-    final CopperMeasure storeChunkSize =
-        perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
-            .max()
-            .per(
-                Copper.hierarchy(OWNER_HIERARCHY).level(OWNER_HIERARCHY),
-                Copper.hierarchy(FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-                Copper.hierarchy(PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
-                Copper.hierarchy(CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
-            .min()
-            .as("Chunk size")
-            .withFormatter(NUMBER_FORMATTER)
-            .withinFolder(STORE_CHUNK_FOLDER)
-            .withDescription("the size of each chunk for the store")
-            .publish(context);
-
-    Copper.combine(storeChunkSize, storeUnusedRows)
-        .mapToDouble(a -> a.readDouble(1) / a.readDouble(0))
-        .as("Unused rows ratio")
-        .withFormatter(PERCENT_FORMATTER)
-        .withinFolder(STORE_CHUNK_FOLDER)
-        .withDescription("the ratio of unused rows inside the chunks")
+        .withDescription("the size of each chunk for the store")
         .publish(context);
   }
 

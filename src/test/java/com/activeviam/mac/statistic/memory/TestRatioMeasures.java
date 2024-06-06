@@ -133,7 +133,7 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
 
     final MDXQuery storeAcommittedRows =
         new MDXQuery(
-            "SELECT NON EMPTY [Measures].[CommittedRows.COUNT] ON COLUMNS "
+            "SELECT NON EMPTY [Measures].[Used rows] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
