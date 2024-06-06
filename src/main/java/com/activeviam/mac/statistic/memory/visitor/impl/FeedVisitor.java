@@ -42,7 +42,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;
   private final String dumpName;
-  private static final AtomicLong chunkIdGenerator = new AtomicLong(0L)  ;
+  private static final AtomicLong chunkIdGenerator = new AtomicLong(0L);
 
   /**
    * Constructor.
@@ -106,7 +106,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     }
     return stat.getChunkId();
   }
-
 
   /**
    * Writes a record into the {@link DatastoreConstants#CHUNK_STORE} for each given field using the
