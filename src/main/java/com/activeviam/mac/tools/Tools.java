@@ -4,8 +4,9 @@
  * property of ActiveViam. Any unauthorized use
  * reproduction or transfer of this material is strictly prohibited
  */
-package com.activeviam.mac;
+package com.activeviam.mac.tools;
 
+import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,6 +19,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
 
 /**
@@ -27,13 +30,13 @@ import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInpu
  */
 public class Tools {
 
-  public static int main(final String[] args) {
+  private static final Logger LOGGER = Logger.getLogger("mac.tools");
+
+  public static void main(final String[] args) {
     if ("extract".equals(args[0])) {
       extractSnappyFileOrDirectory(args[1]);
-      return 0;
     } else {
-      System.err.println("Unsupported command. Got " + Arrays.toString(args));
-      return 1;
+      LOGGER.severe(() -> "Unsupported command. Got " + Arrays.toString(args));
     }
   }
 
@@ -56,13 +59,13 @@ public class Tools {
 
   protected static void assertFileExists(final Path path) {
     if (!Files.exists(path)) {
-      throw new RuntimeException(path + " does not point to a valid file or directory");
+      throw new IllegalArgumentException(path + " does not point to a valid file or directory");
     }
   }
 
   public static void extractSnappyDirectory(final Path path) {
-    try {
-      Files.list(path).forEach(Tools::extractSnappyFileOrDirectory);
+    try (final var fileStream = Files.list(path)) {
+      fileStream.forEach(Tools::extractSnappyFileOrDirectory);
     } catch (IOException exception) {
       throw new UncheckedIOException(exception);
     }
@@ -73,11 +76,12 @@ public class Tools {
     final String extension = MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION;
     boolean isCompressedFile = pathAsString.endsWith("." + extension);
     if (!isCompressedFile) {
-      System.out.println(
-          "File "
-              + pathAsString
-              + " was skipped as it did not match the list of compressed extensions: "
-              + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
+      LOGGER.info(
+          () ->
+              "File "
+                  + pathAsString
+                  + " was skipped as it did not match the list of compressed extensions: "
+                  + MemoryStatisticSerializerUtil.COMPRESSED_FILE_EXTENSION);
       return;
     }
 
@@ -91,18 +95,27 @@ public class Tools {
     } catch (FileNotFoundException e) {
       throw new IllegalArgumentException(String.format("File `%s` does not exist", path), e);
     }
-    final InputStream inputStream;
     try {
-      inputStream = new FramedSnappyCompressorInputStream(rawInputStream);
-    } catch (IOException e) {
-      throw new RuntimeException(String.format("Cannot read `%s` as a Snappy file", path), e);
+      final InputStream inputStream;
+      try {
+        inputStream = new FramedSnappyCompressorInputStream(rawInputStream);
+      } catch (IOException e) {
+        throw new ActiveViamRuntimeException(
+            String.format("Cannot read `%s` as a Snappy file", path), e);
+      }
+      try {
+        Files.copy(inputStream, uncompressedPath, StandardCopyOption.REPLACE_EXISTING);
+      } catch (IOException e) {
+        throw new ActiveViamRuntimeException(
+            String.format("Failed to extract `%s` to `%s`", path, uncompressedPath), e);
+      }
+    } finally {
+      try {
+        rawInputStream.close();
+      } catch (IOException e) {
+        LOGGER.log(Level.SEVERE, "Failed to close the input stream", e);
+      }
     }
-    try {
-      Files.copy(inputStream, uncompressedPath, StandardCopyOption.REPLACE_EXISTING);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          String.format("Failed to extract `%s` to `%s`", path, uncompressedPath), e);
-    }
-    System.out.printf("File `%s` extracted to `%s`%n", path, uncompressedPath);
+    LOGGER.log(Level.INFO, "File `{0}` extracted to `{1}`", new Object[] {path, uncompressedPath});
   }
 }
