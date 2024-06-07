@@ -283,8 +283,7 @@
             </goals>
             <id>unsnappy</id>
             <configuration>
-              <mainClass>com.activeviam.mac.Tools</mainClass>
-              <classpathScope>test</classpathScope>
+              <mainClass>com.activeviam.mac.tools.Tools</mainClass>
               <arguments>
                 <argument>extract</argument>
                 <argument>${unsnappy.file}</argument>
@@ -330,11 +329,16 @@
                 <licenseMerge>Apache License 2.0|The Apache Software License, Version 2.0</licenseMerge>
                 <licenseMerge>BSD License|BSD</licenseMerge>
                 <licenseMerge>BSD License|The BSD License</licenseMerge>
-                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution License</licenseMerge>
-                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution License (CDDL) v1.0</licenseMerge>
+                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution
+                  License
+                </licenseMerge>
+                <licenseMerge>Common Development and Distribution License 1.0|Common Development and Distribution
+                  License (CDDL) v1.0
+                </licenseMerge>
                 <licenseMerge>Eclipse Public License 1.0|Eclipse Public License - Version 1.0</licenseMerge>
                 <licenseMerge>Eclipse Public License 1.0|Eclipse Public License (EPL), Version 1.0</licenseMerge>
-                <licenseMerge>GPL2 w/ CPE|GNU General Public License, Version 2 with the Classpath Exception</licenseMerge>
+                <licenseMerge>GPL2 w/ CPE|GNU General Public License, Version 2 with the Classpath Exception
+                </licenseMerge>
                 <licenseMerge>LGPL 2.1|LGPL, version 2.1</licenseMerge>
                 <licenseMerge>LGPL 2.1|GNU Lesser General Public License 2.1</licenseMerge>
                 <licenseMerge>MIT License|The MIT License</licenseMerge>
