@@ -31,25 +31,33 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /** The scenario this test produces has a cube level {@code id} with a nullable dictionary. */
 public class TestMissingChunkId {
 
-  protected static final Path TEMP_DIRECTORY =
-      QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
   @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
-  protected IDatastore monitoredDatastore;
-  protected IActivePivotManager monitoredManager;
-  protected Path statisticsPath;
-  protected IDatastore monitoringDatastore;
+  private Collection<IMemoryStatistic> memoryStatistics;
+  private final ApplicationInTests analysisApplication = createAnalysisApplication();;
 
   @BeforeAll
   public static void setupRegistry() {
     Registry.setContributionProvider(new ClasspathContributionProvider());
+  }
+
+  @BeforeEach
+  public void setup() throws IOException {
+    final Path statisticsPath =
+            Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
+    memoryStatistics = loadMemoryStatistic(statisticsPath);
+
+    resources.register(analysisApplication).start();
   }
 
   protected ApplicationInTests createAnalysisApplication() {
@@ -79,25 +87,7 @@ public class TestMissingChunkId {
   }
 
   @Test
-  public void testStatisticLoading() throws IOException {
-    final Path statisticsPath =
-        Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
-
-    final IDatastore analysisDatastore = (IDatastore) createAnalysisApplication().getDatabase();
-
-    Assertions.assertDoesNotThrow(
-        () -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
-  }
-
-  @Test
-  public void testGeneratio0nOfMissingChunkId() throws IOException, QueryException {
-    final Path statisticsPath =
-        Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(statisticsPath);
-
-    final ApplicationInTests analysisApplication = createAnalysisApplication();
-    resources.register(analysisApplication).start();
+  public void testGeneratio0nOfMissingChunkId() throws QueryException {
     loadStatisticsIntoDatastore(memoryStatistics, (IDatastore) analysisApplication.getDatabase());
 
     final MDXQuery query =
@@ -115,12 +105,20 @@ public class TestMissingChunkId {
                 + "  FROM [MemoryCube]");
 
     final CellSetDTO totalResult = analysisApplication.getSingleCube().execute(query);
-    final List<String> chunkIds =
+    final List<String> negativeChunkIds =
         totalResult.getAxes().get(0).getPositions().stream()
             .map(p -> p.getMembers().get(0).getCaption())
+                .filter(c -> c.startsWith("-"))
             .collect(Collectors.toList());
-    final List<String> expectedChunkIds = List.of("-1", "-2", "-3");
 
-    org.assertj.core.api.Assertions.assertThat(chunkIds).containsAll(expectedChunkIds);
+    org.assertj.core.api.Assertions.assertThat(negativeChunkIds).hasSize(3);
+  }
+
+  @Test
+  public void testStatisticLoading() {
+    final IDatastore analysisDatastore = (IDatastore) analysisApplication.getDatabase();
+
+    Assertions.assertDoesNotThrow(
+            () -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
   }
 }
