@@ -27,6 +27,7 @@ import com.qfs.store.transaction.IOpenedTransaction;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 /**
@@ -41,6 +42,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   private final IDatastoreSchemaMetadata storageMetadata;
   private final IOpenedTransaction transaction;
   private final String dumpName;
+  private static final AtomicLong chunkIdGenerator = new AtomicLong(0L);
 
   /**
    * Constructor.
@@ -73,7 +75,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
   static Object[] buildChunkTupleFrom(final IRecordFormat format, final ChunkStatistic stat) {
     final Object[] tuple = new Object[format.getFieldCount()];
-    tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = stat.getChunkId();
+    tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = getChunkId(stat);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
         stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
@@ -89,6 +91,20 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__FREE_ROWS, 0);
 
     return tuple;
+  }
+
+  /**
+   * Extracts the chunk ID from the given {@link ChunkStatistic}.
+   *
+   * @param stat the chunk statistic
+   * @return the chunk ID
+   */
+  public static long getChunkId(final ChunkStatistic stat) {
+    if (stat.getAttribute("chunkId") == null) {
+      LOGGER.warning("Chunk ID is null for chunk: " + stat.getName() + ", generating value.");
+      return chunkIdGenerator.decrementAndGet();
+    }
+    return stat.getChunkId();
   }
 
   /**
