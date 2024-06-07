@@ -17,8 +17,6 @@ import com.qfs.junit.LocalResourcesExtension;
 import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
 import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
 import com.qfs.store.IDatastore;
-import com.qfs.util.impl.QfsFileTestUtils;
-import com.quartetfs.biz.pivot.IActivePivotManager;
 import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
 import com.quartetfs.biz.pivot.dto.CellSetDTO;
 import com.quartetfs.biz.pivot.query.impl.MDXQuery;
@@ -31,8 +29,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +50,7 @@ public class TestMissingChunkId {
   @BeforeEach
   public void setup() throws IOException {
     final Path statisticsPath =
-            Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
+        Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
     memoryStatistics = loadMemoryStatistic(statisticsPath);
 
     resources.register(analysisApplication).start();
@@ -108,7 +104,7 @@ public class TestMissingChunkId {
     final List<String> negativeChunkIds =
         totalResult.getAxes().get(0).getPositions().stream()
             .map(p -> p.getMembers().get(0).getCaption())
-                .filter(c -> c.startsWith("-"))
+            .filter(c -> c.startsWith("-"))
             .collect(Collectors.toList());
 
     org.assertj.core.api.Assertions.assertThat(negativeChunkIds).hasSize(3);
@@ -119,6 +115,6 @@ public class TestMissingChunkId {
     final IDatastore analysisDatastore = (IDatastore) analysisApplication.getDatabase();
 
     Assertions.assertDoesNotThrow(
-            () -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
+        () -> loadStatisticsIntoDatastore(memoryStatistics, analysisDatastore));
   }
 }
