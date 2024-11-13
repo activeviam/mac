@@ -7,9 +7,9 @@
 
 package com.activeviam.mac.cfg.impl;
 
-import com.qfs.desc.ITablePermissions;
-import com.qfs.desc.ITableSecurity;
-import com.qfs.service.store.impl.ADatabaseServiceConfig;
+import com.activeviam.activepivot.server.intf.api.database.config.ITablePermissions;
+import com.activeviam.activepivot.server.intf.api.database.config.ITableSecurity;
+import com.activeviam.activepivot.server.spring.private_.rest.database.ADatabaseServiceConfig;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

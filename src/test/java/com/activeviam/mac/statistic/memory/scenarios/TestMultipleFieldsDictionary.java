@@ -7,39 +7,40 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import com.activeviam.builders.StartBuilding;
+import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
+import com.activeviam.activepivot.core.impl.api.description.impl.ActivePivotManagerDescription;
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
+import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.database.api.types.ILiteralType;
+import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.dictionary.ISchemaDictionaryProvider;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.pivot.utils.ApplicationInTests;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
+import com.activeviam.tech.test.internal.junit.resources.Resources;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
+import com.activeviam.tech.test.internal.util.FileTestUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.dic.ISchemaDictionaryProvider;
-import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.literal.ILiteralType;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.util.impl.QfsFileTestUtils;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,21 +55,22 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith({ResourcesExtension.class})
 public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   protected static final Path TEMP_DIRECTORY =
-      QfsFileTestUtils.createTempDirectory(TestMultipleFieldsDictionary.class);
-  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
-  protected IDatastore monitoredDatastore;
+      FileTestUtil.createTempDirectory(TestMultipleFieldsDictionary.class);
+  @Resources protected ResourcesHolder resources;
+  protected IInternalDatastore monitoredDatastore;
   protected IActivePivotManager monitoredManager;
   protected Path statisticsPath;
-  protected IDatastore monitoringDatastore;
+  protected IInternalDatastore monitoringDatastore;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   @BeforeEach
@@ -76,7 +78,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
     final IDatastoreSchemaDescription datastoreSchemaDescription = datastoreSchema();
     final IActivePivotManagerDescription managerDescription = new ActivePivotManagerDescription();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(datastoreSchemaDescription)
             .withManager(managerDescription)
@@ -151,16 +153,16 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
     this.statisticsPath = analysisService.exportMostRecentVersion("memoryStats");
   }
 
-  protected IDatastore createAnalysisDatastore() {
+  protected IInternalDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc =
         new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
     final IActivePivotManagerDescription manager =
         new ManagerDescriptionConfig().managerDescription();
-    return (IDatastore)
+    return (IInternalDatastore)
         ApplicationInTests.builder().withDatastore(desc).withManager(manager).build().getDatabase();
   }
 
-  protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
+  protected Collection<AMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
     return Files.list(path)
         .map(
             file -> {
@@ -174,7 +176,8 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
   }
 
   protected void loadStatisticsIntoDatastore(
-      final Collection<? extends IMemoryStatistic> statistics, final IDatastore analysisDatastore) {
+      final Collection<? extends AMemoryStatistic> statistics,
+      final IInternalDatastore analysisDatastore) {
     ATestMemoryStatistic.feedMonitoringApplication(analysisDatastore, statistics, "test");
   }
 

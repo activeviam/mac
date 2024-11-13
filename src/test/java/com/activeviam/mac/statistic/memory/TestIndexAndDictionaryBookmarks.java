@@ -7,24 +7,23 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.intf.api.dto.AxisDTO;
+import com.activeviam.activepivot.server.intf.api.dto.AxisPositionDTO;
+import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
+import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
-import com.activeviam.pivot.utils.ApplicationInTests;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.record.impl.IDictionaryProvider;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.dto.AxisDTO;
-import com.quartetfs.biz.pivot.dto.AxisPositionDTO;
-import com.quartetfs.biz.pivot.dto.CellDTO;
-import com.quartetfs.biz.pivot.dto.CellSetDTO;
-import com.quartetfs.biz.pivot.query.impl.MDXQuery;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.query.QueryException;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.query.QueryException;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.dictionaries.api.IDictionaryProvider;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -37,12 +36,12 @@ import org.junit.jupiter.api.Test;
 public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 20;
-  private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IInternalDatastore> monitoredApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   @BeforeEach
@@ -51,7 +50,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication(stats);
 
@@ -85,7 +84,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
     return analysisService.exportMostRecentVersion("testOverview");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
 

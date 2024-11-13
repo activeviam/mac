@@ -7,8 +7,8 @@
 
 package com.activeviam.mac.app;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
 import com.activeviam.mac.cfg.impl.MacServerConfig;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanCreationException;

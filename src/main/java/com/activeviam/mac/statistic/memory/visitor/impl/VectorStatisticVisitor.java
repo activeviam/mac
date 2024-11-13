@@ -7,28 +7,29 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Collection;
 
 /**
- * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
- * class for Vectors.
+ * Implementation of the {@link
+ * com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor} class for Vectors.
  *
  * @author ActiveViam
  */
@@ -117,7 +118,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
    *
    * @param statistic root statistic
    */
-  public void process(final IMemoryStatistic statistic) {
+  public void process(final AMemoryStatistic statistic) {
     statistic.accept(this);
   }
 
@@ -125,6 +126,12 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   public Void visit(DefaultMemoryStatistic memoryStatistic) {
     // TODO we could store the information on that vector in another dedicated store.
     FeedVisitor.visitChildren(this, memoryStatistic);
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
     return null;
   }
 

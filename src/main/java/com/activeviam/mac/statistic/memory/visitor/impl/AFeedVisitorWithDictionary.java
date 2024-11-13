@@ -7,18 +7,18 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
+import com.activeviam.database.datastore.private_.structure.impl.StructureDictionaryManager;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.store.structure.impl.StructureDictionaryManager;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.util.logging.Logger;
 import lombok.AllArgsConstructor;
 import lombok.Data;

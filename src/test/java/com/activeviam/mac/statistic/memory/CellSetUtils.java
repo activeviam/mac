@@ -1,6 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
-import com.quartetfs.biz.pivot.dto.CellSetDTO;
+import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.assertj.core.api.Assertions;

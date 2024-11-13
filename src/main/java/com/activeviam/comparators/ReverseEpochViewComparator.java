@@ -10,8 +10,8 @@ package com.activeviam.comparators;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
-import com.quartetfs.fwk.QuartetExtendedPluginValue;
-import com.quartetfs.fwk.ordering.IComparator;
+import com.activeviam.tech.core.api.ordering.IComparator;
+import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
 
 /**
  * A comparator for epoch views.
@@ -25,7 +25,7 @@ import com.quartetfs.fwk.ordering.IComparator;
  *       cube ids first, and their epoch ids second (more recent epochs are lesser than older ones)
  * </ul>
  */
-@QuartetExtendedPluginValue(intf = IComparator.class, key = ReverseEpochViewComparator.PLUGIN_KEY)
+@AtotiExtendedPluginValue(intf = IComparator.class, key = ReverseEpochViewComparator.PLUGIN_KEY)
 public class ReverseEpochViewComparator implements IComparator<EpochView> {
 
   /** The plugin key of the comparator. */

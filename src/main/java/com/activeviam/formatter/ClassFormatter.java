@@ -7,8 +7,8 @@
 
 package com.activeviam.formatter;
 
-import com.quartetfs.fwk.QuartetExtendedPluginValue;
-import com.quartetfs.fwk.format.IFormatter;
+import com.activeviam.tech.core.api.format.IFormatter;
+import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  *
  * @author ActiveViam
  */
-@QuartetExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
+@AtotiExtendedPluginValue(intf = IFormatter.class, key = ClassFormatter.KEY)
 public class ClassFormatter implements IFormatter {
 
   /** Plugin key. */

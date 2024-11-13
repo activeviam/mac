@@ -7,17 +7,18 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.impl.IntegerStatisticAttribute;
-import com.qfs.monitoring.statistic.impl.LongStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.observability.internal.memory.attributes.IntegerStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.attributes.LongStatisticAttribute;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -45,30 +46,24 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
    * @param root Memory statistic being the root of the printed tree
    * @return the generated TreePrinter
    */
-  public static StatisticTreePrinter createDebugPrinter(IMemoryStatistic root) {
+  public static StatisticTreePrinter createDebugPrinter(AMemoryStatistic root) {
     root.accept(new DebugVisitor());
     return new StatisticTreePrinter();
-  }
-
-  @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    enrichStatisticWithDebugAttributes(memoryStatistic);
-    return null;
   }
 
   /**
    * Enriches a statistic and its children with debug attributes.
    *
-   * @param parent root parent of the {@link IMemoryStatistic} to be enriched
+   * @param parent root parent of the {@link AMemoryStatistic} to be enriched
    */
-  protected void enrichStatisticWithDebugAttributes(IMemoryStatistic parent) {
+  protected void enrichStatisticWithDebugAttributes(AMemoryStatistic parent) {
     addDebugAttributes(parent);
     if (parent.getChildren() == null) {
       return;
     }
 
     this.depth++;
-    for (IMemoryStatistic child : parent.getChildren()) {
+    for (AMemoryStatistic child : parent.getChildren()) {
       addDebugAttributes(child);
       child.accept(this);
     }
@@ -98,6 +93,12 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
   @Override
   public Void visit(DefaultMemoryStatistic memoryStatistic) {
+    enrichStatisticWithDebugAttributes(memoryStatistic);
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
     enrichStatisticWithDebugAttributes(memoryStatistic);
     return null;
   }

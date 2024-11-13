@@ -7,22 +7,23 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.util.logging.Logger;
 
 /**
@@ -77,11 +78,11 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   /**
-   * Initialize the visit of the children {@link IMemoryStatistic}.
+   * Initialize the visit of the children {@link AMemoryStatistic}.
    *
    * @param root parent of the children to ve visited
    */
-  public void analyze(final IMemoryStatistic root) {
+  public void analyze(final AMemoryStatistic root) {
     visitChildren(root);
   }
 
@@ -171,6 +172,12 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
     } else {
       visitChildren(stat);
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
     return null;
   }
 

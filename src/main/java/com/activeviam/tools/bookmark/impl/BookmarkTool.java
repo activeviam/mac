@@ -7,9 +7,9 @@
 
 package com.activeviam.tools.bookmark.impl;
 
+import com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
 import java.util.List;
 import java.util.Map;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;

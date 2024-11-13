@@ -7,7 +7,7 @@
 
 package com.activeviam.mac.cfg.impl;
 
-import com.qfs.server.cfg.impl.ASpringResourceServerConfig;
+import com.activeviam.web.spring.internal.config.ASpringResourceServerConfig;
 import java.util.Collections;
 import java.util.Set;
 import org.springframework.context.annotation.Configuration;

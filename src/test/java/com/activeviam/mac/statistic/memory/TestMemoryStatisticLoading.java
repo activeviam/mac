@@ -8,19 +8,19 @@ package com.activeviam.mac.statistic.memory;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.internal.monitoring.AMemoryStatisticWithPredicate;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.quartetfs.fwk.util.impl.TruePredicate;
+import com.activeviam.tech.core.internal.util.TruePredicate;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.records.api.ICursor;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;

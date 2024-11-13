@@ -7,26 +7,21 @@
 
 package com.activeviam.mac.cfg.impl;
 
+import com.activeviam.activepivot.server.impl.private_.observability.DynamicActivePivotManagerMBean;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.spring.api.config.IActivePivotConfig;
+import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreConfig;
+import com.activeviam.activepivot.server.spring.private_.config.impl.ActivePivotServicesConfig;
+import com.activeviam.activepivot.server.spring.private_.config.impl.ActiveViamRestServicesConfig;
+import com.activeviam.activepivot.server.spring.private_.config.impl.ActiveViamWebSocketServicesConfig;
+import com.activeviam.activepivot.server.spring.private_.pivot.content.impl.DynamicActivePivotContentServiceMBean;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.mac.cfg.security.impl.UserConfig;
-import com.activeviam.properties.cfg.impl.ActiveViamPropertyFromSpringConfig;
-import com.qfs.pivot.content.impl.DynamicActivePivotContentServiceMBean;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IActivePivotConfig;
-import com.qfs.server.cfg.IDatastoreConfig;
-import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
-import com.qfs.server.cfg.i18n.impl.LocalI18nConfig;
-import com.qfs.server.cfg.impl.ActivePivotServicesConfig;
-import com.qfs.server.cfg.impl.ActivePivotWithDatastoreConfig;
-import com.qfs.server.cfg.impl.ActivePivotXmlaServletConfig;
-import com.qfs.server.cfg.impl.ActiveViamRestServicesConfig;
-import com.qfs.server.cfg.impl.ActiveViamWebSocketServicesConfig;
-import com.qfs.server.cfg.impl.FullAccessBranchPermissionsManagerConfig;
-import com.qfs.server.cfg.impl.JwtConfig;
-import com.qfs.server.cfg.impl.JwtRestServiceConfig;
-import com.quartetfs.biz.pivot.monitoring.impl.DynamicActivePivotManagerMBean;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.monitoring.jmx.impl.JMXEnabler;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.web.spring.internal.JMXEnabler;
+import com.activeviam.web.spring.internal.config.JwtConfig;
+import com.activeviam.web.spring.internal.config.JwtRestServiceConfig;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -58,7 +53,6 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Import(
     value = {
-      ActiveViamPropertyFromSpringConfig.class,
       JwtRestServiceConfig.class,
       JwtConfig.class,
       ManagerDescriptionConfig.class,
@@ -66,15 +60,12 @@ import org.springframework.core.env.Environment;
       // Pivot
       ActivePivotWithDatastoreConfig.class,
       NoWriteDatastoreServiceConfig.class,
-      FullAccessBranchPermissionsManagerConfig.class,
       ActivePivotServicesConfig.class,
       ActiveViamRestServicesConfig.class,
       ActiveViamWebSocketServicesConfig.class,
-      ActivePivotXmlaServletConfig.class,
 
       // Content server
       ContentServiceConfig.class,
-      LocalI18nConfig.class,
       ActiveUiResourceServerConfig.class,
 
       // Specific to monitoring server

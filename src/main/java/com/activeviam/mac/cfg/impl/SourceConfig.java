@@ -10,18 +10,19 @@ package com.activeviam.mac.cfg.impl;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.impl.Datastore;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
-import com.qfs.jmx.JmxOperation;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.msg.csv.ICsvDataProvider;
-import com.qfs.msg.csv.IFileEvent;
-import com.qfs.msg.csv.filesystem.impl.DirectoryCSVTopic;
-import com.qfs.msg.impl.WatcherService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.store.IDatastore;
-import com.qfs.store.impl.Datastore;
+import com.activeviam.source.common.api.impl.WatcherService;
+import com.activeviam.source.csv.api.DirectoryCsvTopic;
+import com.activeviam.source.csv.api.ICsvDataProvider;
+import com.activeviam.source.csv.api.IFileEvent;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.core.internal.monitoring.JmxOperation;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -59,13 +60,13 @@ public class SourceConfig {
 
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired protected IDatastore datastore;
+  @Autowired protected IInternalDatastore datastore;
 
   /** Spring environment, automatically wired. */
   @Autowired protected Environment env;
 
   /**
-   * Provides a {@link DirectoryCSVTopic topic}.
+   * Provides a {@link DirectoryCsvTopic topic}.
    *
    * <p>The provided topic is based on the content of the folder defined by the {@code
    * statistic.folder} environment property. By default, the property is defined in the {@code
@@ -77,7 +78,7 @@ public class SourceConfig {
    */
   @Bean
   @Lazy
-  public DirectoryCSVTopic statisticTopic() throws IllegalStateException {
+  public DirectoryCsvTopic statisticTopic() throws IllegalStateException {
     final String statisticFolder = this.env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
     final Path folderPath = Paths.get(statisticFolder);
     if (LOGGER.isLoggable(Level.INFO)) {
@@ -92,7 +93,7 @@ public class SourceConfig {
               + folderPath.toAbsolutePath()
               + " is not a correct path to a valid directory.");
     }
-    return new DirectoryCSVTopic(
+    return new DirectoryCsvTopic(
         "StatisticTopic",
         null,
         statisticFolder,
@@ -213,7 +214,7 @@ public class SourceConfig {
     dumpFiles.forEach(
         (dumpName, entry) -> {
           try {
-            final Stream<IMemoryStatistic> inputs =
+            final Stream<AMemoryStatistic> inputs =
                 entry.stream().parallel().map(this::readStatisticFile);
             final String message = feedDatastore(inputs, dumpName);
             LOGGER.info(message);
@@ -223,12 +224,12 @@ public class SourceConfig {
         });
   }
 
-  private IMemoryStatistic readStatisticFile(final Path file) {
+  private AMemoryStatistic readStatisticFile(final Path file) {
     try {
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Reading statistics from " + file.toAbsolutePath());
       }
-      final IMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
+      final AMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
       if (LOGGER.isLoggable(Level.FINE)) {
         LOGGER.fine("Statistics read from " + file.toAbsolutePath());
       }
@@ -246,9 +247,8 @@ public class SourceConfig {
    * @return message to the user
    */
   public String feedDatastore(
-      final Stream<IMemoryStatistic> memoryStatistics, final String dumpName) {
-    final var info =
-        new AnalysisDatastoreFeeder(dumpName).loadInto(this.datastore, memoryStatistics);
+      final Stream<AMemoryStatistic> memoryStatistics, final String dumpName) {
+    final var info = new AnalysisDatastoreFeeder(dumpName, datastore).loadInto(memoryStatistics);
     if (info.isPresent()) {
       return "Commit successful for dump " + dumpName + " at epoch " + info.get().getId() + ".";
     } else {

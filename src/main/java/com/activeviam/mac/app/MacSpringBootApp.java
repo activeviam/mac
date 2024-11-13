@@ -8,8 +8,7 @@
 package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
+import com.activeviam.tech.core.api.registry.Registry;
 import javax.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.SpringApplication;
@@ -38,7 +37,7 @@ public class MacSpringBootApp {
 
   /* Before anything else we statically initialize the Quartet FS Registry. */
   static {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   /**

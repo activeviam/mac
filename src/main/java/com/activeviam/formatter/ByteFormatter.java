@@ -7,15 +7,15 @@
 
 package com.activeviam.formatter;
 
-import com.quartetfs.fwk.QuartetExtendedPluginValue;
-import com.quartetfs.fwk.format.IFormatter;
+import com.activeviam.tech.core.api.format.IFormatter;
+import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
 
 /**
  * Formatter displaying byte amounts with decimal units.
  *
  * @author ActiveViam
  */
-@QuartetExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
+@AtotiExtendedPluginValue(intf = IFormatter.class, key = ByteFormatter.KEY)
 public class ByteFormatter implements IFormatter {
 
   /** Plugin key. */

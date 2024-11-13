@@ -7,21 +7,22 @@
 
 package com.activeviam.mac.cfg.impl;
 
+import static com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter.create;
+
+import com.activeviam.activepivot.core.intf.api.contextvalues.IContextValue;
+import com.activeviam.activepivot.core.intf.api.description.ICalculatedMemberDescription;
+import com.activeviam.activepivot.core.intf.api.description.IKpiDescription;
+import com.activeviam.activepivot.server.intf.api.entitlements.IActivePivotContentService;
+import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
+import com.activeviam.activepivot.server.spring.api.content.ActivePivotContentServiceBuilder;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
+import com.activeviam.tech.contentserver.spring.internal.config.ContentServerRestServicesConfig;
+import com.activeviam.tech.contentserver.storage.api.IContentService;
+import com.activeviam.tech.contentserver.storage.private_.HibernateContentService;
+import com.activeviam.tech.core.internal.monitoring.JmxOperation;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
-import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
-import com.qfs.content.service.IContentService;
-import com.qfs.content.service.impl.HibernateContentService;
-import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
-import com.qfs.jmx.JmxOperation;
-import com.qfs.pivot.content.IActivePivotContentService;
-import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
-import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
-import com.quartetfs.biz.pivot.context.IContextValue;
-import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
-import com.quartetfs.biz.pivot.definitions.IKpiDescription;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -173,16 +174,14 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       desc = "Export the current bookmark structure",
       params = {"destination"})
   public void exportBookMarks(String destination) {
-    BookmarkTool.exportBookmarks(
-        new ContentServiceSnapshotter(contentService().withRootPrivileges()), destination);
+    BookmarkTool.exportBookmarks(create(contentService().withRootPrivileges()), destination);
   }
 
   /** Loads the bookmarks packaged with the application. */
   public void loadPredefinedBookmarks() {
     final var service = contentService().withRootPrivileges();
     if (!service.exists("/" + Paths.UI) || shouldReloadBookmarks()) {
-      BookmarkTool.importBookmarks(
-          new ContentServiceSnapshotter(service), defaultBookmarkPermissions());
+      BookmarkTool.importBookmarks(create(service), defaultBookmarkPermissions());
     }
   }
 

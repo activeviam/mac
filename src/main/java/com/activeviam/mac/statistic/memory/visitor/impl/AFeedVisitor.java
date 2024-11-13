@@ -7,13 +7,13 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.records.api.IRecordFormat;
 
 /**
  * Abstract class for {@link IMemoryStatisticVisitor memory statistic visitors}.
@@ -118,19 +118,13 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
   }
 
-  @Override
-  public R visit(final IMemoryStatistic memoryStatistic) {
-    visitChildren(memoryStatistic);
-    return null;
-  }
-
   /**
-   * Visits all the children of the given {@link IMemoryStatistic}.
+   * Visits all the children of the given {@link AMemoryStatistic}.
    *
    * @param statistic The statistics whose children to visit.
    */
-  protected void visitChildren(final IMemoryStatistic statistic) {
-    for (final IMemoryStatistic child : statistic.getChildren()) {
+  protected void visitChildren(final AMemoryStatistic statistic) {
+    for (final AMemoryStatistic child : statistic.getChildren()) {
       child.accept(this);
     }
   }

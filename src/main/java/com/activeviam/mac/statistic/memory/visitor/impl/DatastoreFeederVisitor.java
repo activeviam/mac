@@ -9,24 +9,25 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
+import com.activeviam.database.datastore.private_.IStore;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.IStore;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,7 +121,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    *
    * @param stat Entry point for the traversal of the memory statistics tree
    */
-  public void startFrom(final IMemoryStatistic stat) {
+  public void startFrom(final AMemoryStatistic stat) {
 
     if (this.current == null) {
       final IStatisticAttribute dateAtt =
@@ -261,6 +262,12 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.epochId = initialEpoch;
     this.branch = initialBranch;
 
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
     return null;
   }
 
@@ -419,7 +426,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    *
    * @param stat statistic to be processed
    */
-  protected void processDictionaryManager(final IMemoryStatistic stat) {
+  protected void processDictionaryManager(final AMemoryStatistic stat) {
     this.rootComponent = ParentType.DICTIONARY;
     visitChildren(stat);
     this.rootComponent = null;
@@ -430,7 +437,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    *
    * @param stat statistic to be processed
    */
-  protected void processStoreStat(final IMemoryStatistic stat) {
+  protected void processStoreStat(final AMemoryStatistic stat) {
     final IStatisticAttribute nameAttr =
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_STORE_NAME),
@@ -448,7 +455,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    *
    * @param stat statistic to be processed
    */
-  protected void processStorePartition(final IMemoryStatistic stat) {
+  protected void processStorePartition(final AMemoryStatistic stat) {
     final IStatisticAttribute partitionAttr =
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PARTITION_ID),
@@ -460,7 +467,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.partitionId = null;
   }
 
-  private void processRecords(final IMemoryStatistic stat) {
+  private void processRecords(final AMemoryStatistic stat) {
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
 
@@ -475,7 +482,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.rootComponent = null;
   }
 
-  private void processRecordVersion(final IMemoryStatistic stat) {
+  private void processRecordVersion(final AMemoryStatistic stat) {
     this.isVersionColumn =
         MemoryStatisticConstants.STAT_NAME_VERSIONS_COLUMN.equals(stat.getName());
 
@@ -483,19 +490,19 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     this.isVersionColumn = false;
   }
 
-  private void processUniqueIndices(final IMemoryStatistic stat) {
+  private void processUniqueIndices(final AMemoryStatistic stat) {
     processIndexList(stat, IndexType.UNIQUE);
   }
 
-  private void processKeyIndices(final IMemoryStatistic stat) {
+  private void processKeyIndices(final AMemoryStatistic stat) {
     processIndexList(stat, IndexType.KEY);
   }
 
-  private void processSecondaryIndices(final IMemoryStatistic stat) {
+  private void processSecondaryIndices(final AMemoryStatistic stat) {
     processIndexList(stat, IndexType.SECONDARY);
   }
 
-  private void processIndexList(final IMemoryStatistic stat, final IndexType type) {
+  private void processIndexList(final AMemoryStatistic stat, final IndexType type) {
     final var oldComponent = this.rootComponent;
     final var oldParent = this.directParentType;
 

@@ -7,8 +7,8 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import java.util.Collection;
 
 /**

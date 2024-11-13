@@ -7,23 +7,24 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
 
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -165,15 +166,15 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   /**
-   * Visits all the children of the given {@link IMemoryStatistic}.
+   * Visits all the children of the given {@link AMemoryStatistic}.
    *
    * @param visitor the visitor to use to visit the children
    * @param statistic The statistics whose children to visit
    */
   protected static void visitChildren(
-      final IMemoryStatisticVisitor<?> visitor, final IMemoryStatistic statistic) {
+      final IMemoryStatisticVisitor<?> visitor, final AMemoryStatistic statistic) {
     if (statistic.getChildren() != null) {
-      for (final IMemoryStatistic child : statistic.getChildren()) {
+      for (final AMemoryStatistic child : statistic.getChildren()) {
         child.accept(visitor);
       }
     }
@@ -246,17 +247,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println(
-        "Unexpected type of statistics : "
-            + memoryStatistic
-            + " which is a "
-            + memoryStatistic.getClass().getSimpleName());
-    visitChildren(this, memoryStatistic);
-    return null;
-  }
-
-  @Override
   public Void visit(DefaultMemoryStatistic stat) {
     switch (stat.getName()) {
       case MemoryStatisticConstants.STAT_NAME_DATASTORE:
@@ -277,6 +267,17 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
         visitChildren(this, stat);
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    System.err.println(
+        "Unexpected type of statistics : "
+            + memoryStatistic
+            + " which is a "
+            + memoryStatistic.getClass().getSimpleName());
+    visitChildren(this, memoryStatistic);
     return null;
   }
 

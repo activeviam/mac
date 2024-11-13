@@ -6,26 +6,24 @@
  */
 package com.activeviam.mac;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.impl.GenericMonitoringStatisticBuilder;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.IMemoryStatisticBuilder;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatisticBuilder;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticBuilder;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /** @author ActiveViam */
-public class TestMemoryStatisticBuilder
-    extends GenericMonitoringStatisticBuilder<
-        IMemoryStatistic, IStatisticAttribute, IMemoryStatisticBuilder>
-    implements IMemoryStatisticBuilder {
+public class TestMemoryStatisticBuilder extends AMemoryStatisticBuilder<AMemoryStatistic> {
 
   /** Name of the statistic */
   protected String name;
@@ -101,6 +99,11 @@ public class TestMemoryStatisticBuilder
     }
     if (delegateParent == null) return statistic;
     else return delegateParent;
+  }
+
+  @Override
+  protected IMemoryStatistic createStatistic() {
+    return null;
   }
 
   @Override
