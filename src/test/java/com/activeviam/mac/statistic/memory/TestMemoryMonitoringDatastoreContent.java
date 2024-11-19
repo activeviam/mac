@@ -671,11 +671,12 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
 
     final AMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     monitoringDatastore.edit(
         tm -> {
-          new AnalysisDatastoreFeeder("App", datastore).loadWithTransaction(tm, Stream.of(stats));
-          new AnalysisDatastoreFeeder("AppWithBitmap", datastore)
+          new AnalysisDatastoreFeeder("App", monitoringDatastore)
+              .loadWithTransaction(tm, Stream.of(stats));
+          new AnalysisDatastoreFeeder("AppWithBitmap", monitoringDatastore)
               .loadWithTransaction(tm, Stream.of(statsWithBitmap));
         });
 

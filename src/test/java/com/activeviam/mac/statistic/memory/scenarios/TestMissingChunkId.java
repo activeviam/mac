@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory.scenarios;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
@@ -40,7 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith({ResourcesExtension.class})
 public class TestMissingChunkId {
 
-  @Resources protected ResourcesHolder resources;
+  @Resources public ResourcesHolder resources;
   private Collection<AMemoryStatistic> memoryStatistics;
   private final ApplicationInTests analysisApplication = createAnalysisApplication();;
 
@@ -104,7 +105,7 @@ public class TestMissingChunkId {
                 + "  ) ON ROWS"
                 + "  FROM [MemoryCube]");
 
-    final CellSetDTO totalResult = analysisApplication.getSingleCube().execute(query);
+    final CellSetDTO totalResult = MdxQueryUtil.execute(analysisApplication.getManager(), query);
     final List<String> negativeChunkIds =
         totalResult.getAxes().get(0).getPositions().stream()
             .map(p -> p.getMembers().get(0).getCaption())

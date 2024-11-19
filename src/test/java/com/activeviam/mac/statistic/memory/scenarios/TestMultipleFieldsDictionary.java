@@ -35,9 +35,7 @@ import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
-import com.activeviam.tech.test.internal.junit.resources.Resources;
 import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
 import com.activeviam.tech.test.internal.util.FileTestUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -62,7 +60,6 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   protected static final Path TEMP_DIRECTORY =
       FileTestUtil.createTempDirectory(TestMultipleFieldsDictionary.class);
-  @Resources protected ResourcesHolder resources;
   protected IInternalDatastore monitoredDatastore;
   protected IActivePivotManager monitoredManager;
   protected Path statisticsPath;

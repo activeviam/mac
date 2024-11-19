@@ -3,6 +3,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
@@ -85,12 +86,6 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testStoreTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery storeTotal =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
@@ -119,9 +114,12 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final CellSetDTO totalResult = pivot.execute(storeTotal);
-    final CellSetDTO fieldResult = pivot.execute(perFieldQuery);
-    final CellSetDTO excessResult = pivot.execute(excessMemoryQuery);
+    final CellSetDTO totalResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), storeTotal);
+    final CellSetDTO fieldResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), perFieldQuery);
+    final CellSetDTO excessResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), excessMemoryQuery);
 
     Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
         .isEqualTo(

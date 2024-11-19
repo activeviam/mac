@@ -18,13 +18,14 @@ import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.tech.core.api.agent.AgentException;
-import com.activeviam.tech.core.internal.contributions.impl.ClasspathContributionProvider;
-import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
 import com.google.common.collect.HashMultimap;
@@ -46,11 +47,11 @@ import org.junit.jupiter.api.Test;
 public class TestBranches extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   @BeforeEach
@@ -59,7 +60,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
     final Path exportPath = generateMemoryStatistics();
 
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication(stats);
 
@@ -103,12 +104,12 @@ public class TestBranches extends ATestMemoryStatistic {
     return analysisService.exportApplication("testBranches");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
-    ApplicationInTests<IDatastore> application =
+    ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(schemaConfig.datastoreSchemaDescription())
             .withManager(config.managerDescription())

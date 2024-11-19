@@ -3,6 +3,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
@@ -97,16 +98,11 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testOverviewGrandTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
-    final CellSetDTO totalResult = pivot.execute(totalQuery);
+    final CellSetDTO totalResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
 
     Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(totalResult))
         .isEqualTo(this.summary.offHeapMemory);
@@ -114,12 +110,6 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testOwnerTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
@@ -141,9 +131,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
                 + " SELECT [Measures].[ExcessDirectMemory] ON COLUMNS"
                 + " FROM [MemoryCube]");
 
-    final CellSetDTO totalResult = pivot.execute(totalQuery);
-    final CellSetDTO perOwnerResult = pivot.execute(perOwnerQuery);
-    final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
+    final CellSetDTO totalResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
+    final CellSetDTO perOwnerResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), perOwnerQuery);
+    final CellSetDTO excessMemoryResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), excessMemoryQuery);
 
     Assertions.assertThat(
             CellSetUtils.sumValuesFromCellSetDTO(perOwnerResult)
@@ -153,12 +146,6 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testStoreTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery storeTotalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
@@ -185,9 +172,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final CellSetDTO storeTotalResult = pivot.execute(storeTotalQuery);
-    final CellSetDTO perComponentStoreResult = pivot.execute(perComponentsStoreQuery);
-    final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
+    final CellSetDTO storeTotalResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), storeTotalQuery);
+    final CellSetDTO perComponentStoreResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), perComponentsStoreQuery);
+    final CellSetDTO excessMemoryResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), excessMemoryQuery);
 
     Assertions.assertThat(
             CellSetUtils.sumValuesFromCellSetDTO(perComponentStoreResult)
@@ -197,12 +187,6 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testCubeTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery cubeTotalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
@@ -229,9 +213,12 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
-    final CellSetDTO cubeTotalResult = pivot.execute(cubeTotalQuery);
-    final CellSetDTO perComponentCubeResult = pivot.execute(perComponentCubeQuery);
-    final CellSetDTO excessMemoryResult = pivot.execute(excessMemoryQuery);
+    final CellSetDTO cubeTotalResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), cubeTotalQuery);
+    final CellSetDTO perComponentCubeResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), perComponentCubeQuery);
+    final CellSetDTO excessMemoryResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), excessMemoryQuery);
 
     Assertions.assertThat(
             CellSetUtils.sumValuesFromCellSetDTO(perComponentCubeResult)

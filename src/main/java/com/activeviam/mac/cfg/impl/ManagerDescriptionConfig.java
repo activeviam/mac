@@ -18,7 +18,6 @@ import com.activeviam.activepivot.core.impl.internal.util.impl.MdxNamingUtil;
 import com.activeviam.activepivot.core.intf.api.copper.ICopperContext;
 import com.activeviam.activepivot.core.intf.api.cube.hierarchy.IDimension;
 import com.activeviam.activepivot.core.intf.api.cube.hierarchy.IHierarchy;
-import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.ILevelInfo;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.LevelIdentifier;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotInstanceDescription;
@@ -510,8 +509,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             .joinToCube()
             .withMapping(
                 DatastoreConstants.OWNER__OWNER,
-                Copper.level(
-                    new LevelIdentifier("OWNER_DIMENSION", OWNER_HIERARCHY, OWNER_HIERARCHY)))
+                Copper.level(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY))
             .withMapping(
                 DatastoreConstants.CHUNK__DUMP_NAME,
                 Copper.level(
@@ -595,7 +593,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   private void bucketingHierarchies(final ICopperContext context) {
     Copper.newHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY)
         .fromValues(
-            Copper.level(new LevelIdentifier(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY))
+            Copper.level(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
                 .map(ChunkOwner::getType))
         .withMemberList((Object[]) OwnerType.values())
         .withLevelOfSameName()
@@ -791,7 +789,8 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
             SingleValueFunction.PLUGIN_KEY)
         .filter(
             Copper.level(
-                    new LevelIdentifier(CHUNK_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY))
+                    new LevelIdentifier(
+                        COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY))
                 .eq(ParentType.DICTIONARY))
         .per(
             Copper.level(
@@ -812,14 +811,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
     perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
         .max()
         .per(
-            Copper.hierarchy(new HierarchyIdentifier(OWNER_DIMENSION, OWNER_HIERARCHY))
-                .level(OWNER_HIERARCHY),
-            Copper.hierarchy(new HierarchyIdentifier(FIELD_DIMENSION, FIELD_HIERARCHY))
-                .level(FIELD_HIERARCHY),
-            Copper.hierarchy(new HierarchyIdentifier(PARTITION_DIMENSION, PARTITION_HIERARCHY))
-                .level(PARTITION_HIERARCHY),
-            Copper.hierarchy(new HierarchyIdentifier(CHUNK_DIMENSION, CHUNK_CLASS_LEVEL))
-                .level(CHUNK_CLASS_LEVEL))
+            Copper.hierarchy(OWNER_DIMENSION, OWNER_HIERARCHY).level(OWNER_HIERARCHY),
+            Copper.hierarchy(FIELD_DIMENSION, FIELD_HIERARCHY).level(FIELD_HIERARCHY),
+            Copper.hierarchy(PARTITION_DIMENSION, PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
+            Copper.hierarchy(CHUNK_DIMENSION, CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
         .min()
         .as("Chunk size")
         .withFormatter(NUMBER_FORMATTER)

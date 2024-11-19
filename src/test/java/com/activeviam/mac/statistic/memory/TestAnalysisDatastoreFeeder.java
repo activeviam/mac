@@ -19,6 +19,7 @@ import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.query.impl.DatastoreQueryHelper;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
@@ -27,8 +28,9 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.tech.core.api.agent.AgentException;
-import com.activeviam.tech.core.internal.contributions.impl.ClasspathContributionProvider;
-import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.mvcc.api.IEpochHistory;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
 import gnu.trove.set.TLongSet;
@@ -46,14 +48,14 @@ import org.junit.jupiter.api.Test;
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
   private ApplicationInTests<IDatastore> distributedMonitoredApp;
-  private IMemoryStatistic appStatistics;
-  private IMemoryStatistic distributedAppHeadStatistics;
+  private AMemoryStatistic appStatistics;
+  private AMemoryStatistic distributedAppHeadStatistics;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   @BeforeEach
@@ -81,7 +83,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   /** Ensures the same statistics can be loaded in different dump names. */
   @Test
   public void testDifferentDumps() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -103,7 +105,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
    */
   @Test
   public void testEpochReplicationForAlreadyExistingChunks() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     // load a cluster's single epoch statistics
     ATestMemoryStatistic.feedMonitoringApplication(
@@ -161,7 +163,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingEpochs() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -288,7 +290,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withManager(config.managerDescription())
             .withDatastore(schemaConfig.datastoreSchemaDescription())

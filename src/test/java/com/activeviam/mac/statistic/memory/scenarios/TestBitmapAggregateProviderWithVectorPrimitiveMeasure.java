@@ -26,9 +26,7 @@ import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
-import com.activeviam.tech.test.internal.junit.resources.Resources;
 import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
 import com.activeviam.tech.test.internal.util.FileTestUtil;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,7 +49,6 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
   protected static final Path TEMP_DIRECTORY =
       FileTestUtil.createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
   protected static final int RECORD_COUNT = 100;
-  @Resources protected ResourcesHolder resources;
   protected IDatastore datastore;
   protected IActivePivotManager manager;
   protected Path statisticsPath;

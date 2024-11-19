@@ -25,7 +25,7 @@
   <properties>
     <jdk.version>11</jdk.version>
 
-    <atoti-server.version>6.1.1</atoti-server.version>
+    <atoti-server.version>6.1.2-SNAPSHOT</atoti-server.version>
     <atoti-ui.version>5.1.13</atoti-ui.version>
 
     <tomcat.version>9.0.31</tomcat.version>
@@ -184,6 +184,11 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
       <version>1.27.1</version>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.persistence</groupId>
+      <artifactId>jakarta.persistence-api</artifactId>
+      <version>3.2.0</version>
     </dependency>
   </dependencies>
 

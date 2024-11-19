@@ -1247,10 +1247,16 @@ public abstract class ATestMemoryStatistic {
 
   protected static MemoryStatisticsTestUtils.StatisticsSummary computeStatisticsSummary(
       final Collection<? extends AMemoryStatistic> statistics, final Class<?> creatorClass) {
+      // create a new list of statistics with no parent
+        final List<AMemoryStatistic> statisticsWithoutParent =
+            statistics.stream()
+                .peek(
+                    stat -> stat.setParent(null))
+                .collect(Collectors.toList());
     return MemoryStatisticsTestUtils.getStatisticsSummary(
-        new TestMemoryStatisticBuilder()
+        new TestMemoryStatisticBuilder(creatorClass.getName())
             .withCreatorClasses(creatorClass)
-            .withChildren(statistics)
+            .withChildren(statisticsWithoutParent)
             .build());
   }
 
@@ -1451,6 +1457,7 @@ public abstract class ATestMemoryStatistic {
                     throw new RuntimeException("Cannot read " + file, e);
                   }
                 })
+                .peek(stat -> stat.setParent(null))
             .collect(Collectors.toList());
 
     return new DefaultMemoryStatistic.Builder()

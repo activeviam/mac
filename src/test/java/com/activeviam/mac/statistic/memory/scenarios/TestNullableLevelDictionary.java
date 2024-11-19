@@ -52,7 +52,7 @@ public class TestNullableLevelDictionary {
   protected static final Path TEMP_DIRECTORY =
       FileTestUtil.createTempDirectory(TestNullableLevelDictionary.class);
   protected static final int RECORD_COUNT = 10;
-  @Resources ResourcesHolder resources;
+  @Resources public ResourcesHolder resources;
   protected IDatastore datastore;
   protected IActivePivotManager manager;
   protected Path statisticsPath;

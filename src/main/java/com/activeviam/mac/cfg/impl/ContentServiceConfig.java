@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
+import org.hibernate.HibernateException;
+import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,11 +81,13 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    *
    * @return the Hibernate's configuration
    */
-  private static org.hibernate.cfg.Configuration loadConfiguration(
-      final Properties hibernateProperties) {
+  private static SessionFactory loadConfiguration(final Properties hibernateProperties)
+      throws HibernateException {
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
-    return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+    return new org.hibernate.cfg.Configuration()
+        .addProperties(hibernateProperties)
+        .buildSessionFactory();
   }
 
   /**
@@ -133,8 +137,13 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   @Override
   @Bean
   public IContentService contentService() {
-    org.hibernate.cfg.Configuration conf = loadConfiguration(contentServiceHibernateProperties());
-    return new HibernateContentService(conf);
+    final SessionFactory sessionFactory;
+    try {
+      sessionFactory = loadConfiguration(contentServiceHibernateProperties());
+      return new HibernateContentService(sessionFactory);
+    } catch (HibernateException e) {
+      throw new BeanInitializationException("Failed to initialize the Content Service", e);
+    }
   }
 
   /**

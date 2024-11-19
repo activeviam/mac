@@ -16,6 +16,7 @@ import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
@@ -24,8 +25,8 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.tech.core.api.agent.AgentException;
-import com.activeviam.tech.core.internal.contributions.impl.ClasspathContributionProvider;
-import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
 import com.google.common.collect.HashMultimap;
@@ -47,12 +48,12 @@ import org.junit.jupiter.api.Test;
 public class TestViewEpochs extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
-  private IMemoryStatistic statistics;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
+  private AMemoryStatistic statistics;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    Registry.initialize(Registry.RegistryContributions.builder().build());
   }
 
   @BeforeEach
@@ -110,7 +111,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
     return analysisService.exportApplication("testEpochs");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();

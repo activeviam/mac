@@ -114,8 +114,6 @@ public class TestEpochs extends ATestMemoryStatistic {
             transactionManager ->
                 transactionManager.removeWhere(
                     "A", BaseConditions.greaterOrEqual(FieldPath.of("id"), 20)));
-
-    //    this.monitoredApp.getManager().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
@@ -153,7 +151,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   public void testExpectedEpochs() {
     final Set<Long> epochIds = retrieveEpochIds();
 
-    Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 10L);
+    Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L);
   }
 
   @Test

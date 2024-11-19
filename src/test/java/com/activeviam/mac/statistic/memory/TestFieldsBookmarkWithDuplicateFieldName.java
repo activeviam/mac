@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
@@ -18,7 +19,6 @@ import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
-import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
@@ -43,7 +43,7 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
   }
 
   @BeforeEach
-  public void setup() throws AgentException {
+  public void setup() {
     this.monitoredApp = createMicroApplicationWithReferenceAndSameFieldName();
 
     this.monitoredApp
@@ -93,12 +93,6 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
 
   @Test
   public void testDifferentMemoryUsagesForBothFields() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery usageQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
@@ -108,7 +102,7 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
                 + "} ON ROWS "
                 + "FROM [MemoryCube]");
 
-    final CellSetDTO result = pivot.execute(usageQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), usageQuery);
 
     Assertions.assertThat((long) result.getCells().get(0).getValue())
         .isNotEqualTo((long) result.getCells().get(1).getValue());

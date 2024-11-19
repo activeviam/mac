@@ -15,7 +15,7 @@ import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class TestMemoryStatisticLoadingWithReverseOrder extends ATestMemoryStati
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-          final List<? extends IMemoryStatistic> storeStats =
+          final List<? extends AMemoryStatistic> storeStats =
               new ArrayList<>(loadMemoryStatFromFolder(exportPath).getChildren());
 
           Collections.shuffle(storeStats);
@@ -59,7 +59,7 @@ public class TestMemoryStatisticLoadingWithReverseOrder extends ATestMemoryStati
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-          final List<? extends IMemoryStatistic> storeStats =
+          final List<? extends AMemoryStatistic> storeStats =
               new ArrayList<>(loadMemoryStatFromFolder(exportPath).getChildren());
 
           Collections.shuffle(storeStats);

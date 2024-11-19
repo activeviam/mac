@@ -10,6 +10,7 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.AxisDTO;
 import com.activeviam.activepivot.server.intf.api.dto.AxisPositionDTO;
@@ -102,19 +103,13 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testIndexedFieldsForStoreA() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
 
     final List<AxisDTO> axes = result.getAxes();
     Assertions.assertThat(axes).hasSize(1);
@@ -129,12 +124,6 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarizedFieldsForStoreB() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NonEmpty("
@@ -149,7 +138,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + "   [Owners].[Owner].[ALL].[AllMember].[Store B]"
                 + " )");
 
-    final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
 
     final List<AxisDTO> axes = result.getAxes();
     Assertions.assertThat(axes).hasSize(1);
@@ -163,12 +152,6 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySizeTotal() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
@@ -189,8 +172,9 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final CellSetDTO total = pivot.execute(totalQuery);
-    final CellSetDTO perField = pivot.execute(perFieldQuery);
+    final CellSetDTO total = MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
+    final CellSetDTO perField =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), perFieldQuery);
 
     Assertions.assertThat(perField.getCells().stream().mapToLong(x -> (long) x.getValue()).sum())
         .isEqualTo((long) total.getCells().get(0).getValue());
@@ -198,12 +182,6 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySizesPerField() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery totalQuery =
         new MDXQuery(
             "SELECT NON EMPTY"
@@ -218,7 +196,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
                 + "   [Components].[Component].[ALL].[AllMember].[DICTIONARY]"
                 + " )");
 
-    final CellSetDTO result = pivot.execute(totalQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
 
     final IDictionaryProvider dictionaryProvider =
         this.monitoredApp

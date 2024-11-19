@@ -7,9 +7,12 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
@@ -25,7 +28,6 @@ import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.IntStream;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +47,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   }
 
   @BeforeEach
-  public void setup() throws AgentException {
+  public void setup() {
     this.monitoredApp = createMicroApplicationWithSharedVectorField();
 
     this.monitoredApp
@@ -90,7 +92,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
             .getManager()
             .getActivePivots()
             .get(ManagerDescriptionConfig.MONITORING_CUBE);
-    Assertions.assertThat(pivot).isNotNull();
+    assertThat(pivot).isNotNull();
   }
 
   @AfterEach
@@ -101,12 +103,6 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery recordQuery =
         new MDXQuery(
             "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
@@ -117,19 +113,13 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector1]"
                 + " )");
 
-    final CellSetDTO result = pivot.execute(recordQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), recordQuery);
 
-    Assertions.assertThat((long) result.getCells().get(0).getValue()).isZero();
+    assertThat((long) result.getCells().get(0).getValue()).isZero();
   }
 
   @Test
   public void testVectorBlockConsumption() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery vectorBlockQueryField1 =
         new MDXQuery(
             "SELECT {"
@@ -143,7 +133,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector1]"
                 + " )");
 
-    final CellSetDTO result1 = pivot.execute(vectorBlockQueryField1);
+    final CellSetDTO result1 =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), vectorBlockQueryField1);
 
     // Vector1 and Vector2 data are intertwined in the same blocks, so the direct memory is only
     // partially used
@@ -152,9 +143,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
         ((ADDED_DATA_SIZE * 2 + ADDED_DATA_SIZE) / MICROAPP_VECTOR_BLOCK_SIZE) + 1;
     final var directMemoryUsedOnVector = blockCountUsed * MICROAPP_VECTOR_BLOCK_SIZE * Double.BYTES;
 
-    Assertions.assertThat((long) result1.getCells().get(1).getValue())
-        .isEqualTo(directMemoryUsedOnVector);
-    Assertions.assertThat((long) result1.getCells().get(1).getValue())
+    assertThat((long) result1.getCells().get(1).getValue()).isEqualTo(directMemoryUsedOnVector);
+    assertThat((long) result1.getCells().get(1).getValue())
         .isEqualTo((long) result1.getCells().get(0).getValue());
 
     final MDXQuery vectorBlockQueryField2 =
@@ -170,22 +160,16 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector2]"
                 + " )");
 
-    final CellSetDTO result2 = pivot.execute(vectorBlockQueryField2);
+    final CellSetDTO result2 =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), vectorBlockQueryField2);
 
-    Assertions.assertThat((long) result2.getCells().get(1).getValue())
-        .isEqualTo(directMemoryUsedOnVector);
-    Assertions.assertThat((long) result2.getCells().get(1).getValue())
+    assertThat((long) result2.getCells().get(1).getValue()).isEqualTo(directMemoryUsedOnVector);
+    assertThat((long) result2.getCells().get(1).getValue())
         .isEqualTo((long) result2.getCells().get(0).getValue());
   }
 
   @Test
   public void testVectorBlockLength() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery lengthQuery =
         new MDXQuery(
             "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
@@ -195,20 +179,14 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector1]"
                 + " )");
 
-    final CellSetDTO result = pivot.execute(lengthQuery);
+    final CellSetDTO result = MdxQueryUtil.execute(this.monitoringApp.getManager(), lengthQuery);
 
-    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(result))
+    assertThat(CellSetUtils.extractValueFromSingleCellDTO(result))
         .isEqualTo(MICROAPP_VECTOR_BLOCK_SIZE);
   }
 
   @Test
   public void testVectorBlockRefCount() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery refCountQuery =
         new MDXQuery(
             "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
@@ -218,9 +196,10 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                 + "   [Fields].[Field].[Field].[vector1]"
                 + " )");
 
-    final CellSetDTO refCountResult = pivot.execute(refCountQuery);
+    final CellSetDTO refCountResult =
+        MdxQueryUtil.execute(this.monitoringApp.getManager(), refCountQuery);
 
-    Assertions.assertThat(CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
+    assertThat(CellSetUtils.extractValueFromSingleCellDTO(refCountResult))
         .isEqualTo(FIELD_SHARING_COUNT * ADDED_DATA_SIZE);
   }
 }
