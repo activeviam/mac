@@ -23,6 +23,7 @@ import com.activeviam.tech.core.internal.monitoring.JmxOperation;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 /**
  * Spring configuration of the Content Service.
@@ -82,11 +85,13 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    * @return the Hibernate's configuration
    */
   private static SessionFactory loadConfiguration(final Properties hibernateProperties)
-      throws HibernateException {
+      throws HibernateException, IOException {
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
+    final Resource entityMappingFile = new ClassPathResource("content-service-hibernate.xml");
     return new org.hibernate.cfg.Configuration()
         .addProperties(hibernateProperties)
+        .addInputStream(entityMappingFile.getInputStream())
         .buildSessionFactory();
   }
 
@@ -141,7 +146,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     try {
       sessionFactory = loadConfiguration(contentServiceHibernateProperties());
       return new HibernateContentService(sessionFactory);
-    } catch (HibernateException e) {
+    } catch (HibernateException | IOException e) {
       throw new BeanInitializationException("Failed to initialize the Content Service", e);
     }
   }

@@ -41,9 +41,9 @@ public class ActiveUiResourceServerConfig extends ASpringResourceServerConfig {
 
   protected void registerExtensions(final ResourceRegistry registry) {
     registry.serve("/ui/extensions*.json").addResourceLocations("classpath:/static/activeui/");
-    registry
-        .serve("/ui/extensions/text-editor-extension/**/*.js")
-        .addResourceLocations("classpath:/static/activeui/extensions/text-editor-extension/");
+    //    registry
+    //        .serve("/ui/extensions/text-editor-extension/**/*.js")
+    //        .addResourceLocations("classpath:/static/activeui/extensions/text-editor-extension/");
   }
 
   /**

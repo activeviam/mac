@@ -9,7 +9,7 @@ package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
 import com.activeviam.tech.core.api.registry.Registry;
-import javax.servlet.MultipartConfigElement;
+import jakarta.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

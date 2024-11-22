@@ -12,14 +12,12 @@ import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 /** Test class for tests related to loading cases of the SpringBoot application */
-@WebAppConfiguration
-@Import({MacServerConfig.class})
-@PropertySource(value = "classpath:application.yml")
+@WebAppConfiguration("classpath:application.yml")
+@ContextConfiguration(classes = MacServerConfig.class)
 public class TestAppLoading {
 
   /** Ensures that the default application setup works */

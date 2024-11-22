@@ -6,7 +6,6 @@ import com.activeviam.activepivot.server.impl.private_.spring.ContextValueFilter
 import com.activeviam.activepivot.server.spring.private_.pivot.security.impl.UserDetailsServiceWrapper;
 import com.activeviam.tech.contentserver.storage.api.IContentService;
 import com.activeviam.tech.core.api.security.IUserDetailsService;
-import com.activeviam.web.spring.api.config.ICorsConfig;
 import com.activeviam.web.spring.api.config.IJwtConfig;
 import com.activeviam.web.spring.api.jwt.JwtAuthenticationProvider;
 import com.activeviam.web.spring.internal.config.JwtRestServiceConfig;
@@ -21,11 +20,17 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -36,11 +41,9 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
   /** Authentication Bean Name. */
@@ -81,8 +84,8 @@ public class SecurityConfig {
   /** {@code true} to enable the logout URL. */
   protected final WebConfiguration webConfiguration;
 
-  public SecurityConfig(final String cookieName) {
-    this.webConfiguration = new WebConfiguration(cookieName);
+  public SecurityConfig() {
+    this.webConfiguration = new WebConfiguration(COOKIE_NAME);
   }
 
   /**
@@ -124,6 +127,38 @@ public class SecurityConfig {
    * <p>This binds the defined user service to the authentication and sets the source for JWT
    * tokens.
    *
+   * @param inMemoryAuthenticationProvider the in-memory authentication provider
+   * @param jwtAuthenticationProvider is a provider which can perform authentication from the
+   *     jwtService's tokens. Implementation from the {@link IJwtConfig} .
+   * @return the authentication manager
+   */
+  @Bean
+  public AuthenticationManager authenticationManager(
+      final JwtAuthenticationProvider jwtAuthenticationProvider,
+      final AuthenticationProvider inMemoryAuthenticationProvider) {
+    final ProviderManager providerManager =
+        new ProviderManager(inMemoryAuthenticationProvider, jwtAuthenticationProvider);
+    providerManager.setEraseCredentialsAfterAuthentication(false);
+
+    return providerManager;
+  }
+
+  @Bean
+  public AuthenticationProvider inMemoryAuthenticationProvider(
+      final UserDetailsService userDetailsService, final PasswordEncoder passwordEncoder) {
+    final var authenticationProvider = new DaoAuthenticationProvider();
+    authenticationProvider.setPasswordEncoder(passwordEncoder);
+    authenticationProvider.setUserDetailsService(userDetailsService);
+
+    return authenticationProvider;
+  }
+
+  /**
+   * Configures the authentication of the whole application.
+   *
+   * <p>This binds the defined user service to the authentication and sets the source for JWT
+   * tokens.
+   *
    * @param auth Spring builder to manage authentication
    * @throws Exception in case of error
    */
@@ -134,28 +169,6 @@ public class SecurityConfig {
     auth
         // Required to allow JWT
         .authenticationProvider(jwtAuthenticationProvider);
-  }
-
-  /**
-   * [Bean] Spring standard way of configuring CORS.
-   *
-   * <p>This simply forwards the configuration of {@link ICorsConfig} to Spring security system.
-   *
-   * @return the configuration for the application.
-   */
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource(final ICorsConfig corsConfig) {
-    final CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(corsConfig.getAllowedOrigins());
-    configuration.setAllowedHeaders(corsConfig.getAllowedHeaders());
-    configuration.setExposedHeaders(corsConfig.getExposedHeaders());
-    configuration.setAllowedMethods(corsConfig.getAllowedMethods());
-    configuration.setAllowCredentials(true);
-
-    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    return source;
   }
 
   /**
@@ -280,12 +293,18 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .hasAnyAuthority(ROLE_USER))
-        // One has to be a user for all the other URLs
-        .securityMatcher("/**")
-        .authorizeHttpRequests(auth -> auth.anyRequest().hasAnyAuthority(ROLE_USER))
-        .httpBasic(Customizer.withDefaults())
         // SwitchUserFilter is the last filter in the chain. See FilterComparator class.
         .addFilterAfter(contextValueFilter, SwitchUserFilter.class);
+    return http.build();
+  }
+
+  // One has to be a user for all the other URLs
+  @Bean
+  @Order(5)
+  public SecurityFilterChain otherSecurity(final HttpSecurity http) throws Exception {
+    http.securityMatcher("/**")
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+        .httpBasic(Customizer.withDefaults());
     return http.build();
   }
 
