@@ -124,23 +124,19 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   }
 
   private int getPartition(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
-    return record.readInt(idx);
+    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
   }
 
   private int getDicId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
-    return record.readInt(idx);
+    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
   }
 
   private int getIdxId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
-    return record.readInt(idx);
+    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
   }
 
   private int getRefId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
-    return record.readInt(idx);
+    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
   }
 
   private String getChunkClassName(

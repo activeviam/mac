@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- {@codeBlock: Override hibernate} -->
+<entity-mappings xmlns="http://java.sun.com/xml/ns/persistence/orm" version="2.0">
+<entity class="com.activeviam.tech.contentserver.storage.private_.CSEntry">
+    <attribute-override name="content">
+        <column column-definition="varchar"/>
+    </attribute-override>
+</entity>
+</entity-mappings>
+<!-- {@codeBlock: Override hibernate} -->
