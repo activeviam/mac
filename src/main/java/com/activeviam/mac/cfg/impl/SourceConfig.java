@@ -10,11 +10,11 @@ package com.activeviam.mac.cfg.impl;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.impl.Datastore;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
+import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.source.common.api.impl.WatcherService;
 import com.activeviam.source.csv.api.DirectoryCsvTopic;
 import com.activeviam.source.csv.api.ICsvDataProvider;
@@ -215,28 +215,13 @@ public class SourceConfig {
         (dumpName, entry) -> {
           try {
             final Stream<AMemoryStatistic> inputs =
-                entry.stream().parallel().map(this::readStatisticFile);
+                entry.stream().parallel().map(RetroCompatibleDeserializer::readStatisticFile);
             final String message = feedDatastore(inputs, dumpName);
             LOGGER.info(message);
           } catch (final Exception e) {
             throw new ActiveViamRuntimeException(e);
           }
         });
-  }
-
-  private AMemoryStatistic readStatisticFile(final Path file) {
-    try {
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("Reading statistics from " + file.toAbsolutePath());
-      }
-      final AMemoryStatistic read = MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-      if (LOGGER.isLoggable(Level.FINE)) {
-        LOGGER.fine("Statistics read from " + file.toAbsolutePath());
-      }
-      return read;
-    } catch (final IOException ioe) {
-      throw new RuntimeException("Cannot read statistics from " + file);
-    }
   }
 
   /**

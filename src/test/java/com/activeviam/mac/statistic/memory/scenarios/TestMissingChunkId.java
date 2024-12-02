@@ -11,14 +11,13 @@ import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
 import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
-import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
@@ -69,14 +68,8 @@ public class TestMissingChunkId {
 
   protected Collection<AMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
     return Files.list(path)
-        .map(
-            file -> {
-              try {
-                return MemoryStatisticSerializerUtil.readStatisticFile(file.toFile());
-              } catch (IOException exception) {
-                throw new ActiveViamRuntimeException(exception);
-              }
-            })
+        .map(Path::toFile)
+        .map(RetroCompatibleDeserializer::readStatistic)
         .collect(Collectors.toList());
   }
 
