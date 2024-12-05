@@ -20,6 +20,7 @@ import com.activeviam.database.datastore.api.transaction.DatastoreTransactionExc
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
@@ -51,7 +52,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach

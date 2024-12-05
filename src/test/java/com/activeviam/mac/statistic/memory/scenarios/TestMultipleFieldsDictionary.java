@@ -24,6 +24,7 @@ import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescrip
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.dictionary.ISchemaDictionaryProvider;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
@@ -67,7 +68,7 @@ public class TestMultipleFieldsDictionary extends ATestMemoryStatistic {
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach

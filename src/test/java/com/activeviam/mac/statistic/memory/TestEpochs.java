@@ -19,12 +19,12 @@ import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.activeviam.tech.core.api.agent.AgentException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
@@ -50,7 +50,7 @@ public class TestEpochs extends ATestMemoryStatistic {
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach

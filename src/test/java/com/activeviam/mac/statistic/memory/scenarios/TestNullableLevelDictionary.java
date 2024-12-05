@@ -23,6 +23,7 @@ import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
@@ -59,7 +60,7 @@ public class TestNullableLevelDictionary {
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach

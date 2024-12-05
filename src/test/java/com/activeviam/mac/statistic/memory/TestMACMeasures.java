@@ -16,6 +16,7 @@ import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.NoTransactionException;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
@@ -68,7 +69,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @BeforeAll
   public static void init() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {

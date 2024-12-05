@@ -30,11 +30,11 @@ import com.activeviam.activepivot.core.intf.api.description.builder.ISelectionDe
 import com.activeviam.activepivot.core.intf.api.description.builder.dimension.ICanStartBuildingDimensions;
 import com.activeviam.activepivot.server.spring.api.config.IActivePivotManagerDescriptionConfig;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
-import com.activeviam.comparators.ReverseEpochViewComparator;
+import com.activeviam.mac.comparators.ReverseEpochViewComparator;
 import com.activeviam.database.api.schema.FieldPath;
-import com.activeviam.formatter.ByteFormatter;
-import com.activeviam.formatter.ClassFormatter;
-import com.activeviam.formatter.PartitionIdFormatter;
+import com.activeviam.mac.formatter.ByteFormatter;
+import com.activeviam.mac.formatter.ClassFormatter;
+import com.activeviam.mac.formatter.PartitionIdFormatter;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;

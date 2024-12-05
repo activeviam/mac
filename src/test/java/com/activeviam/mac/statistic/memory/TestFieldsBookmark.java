@@ -11,10 +11,10 @@ import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.query.QueryException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import java.nio.file.Path;
 import java.util.List;
@@ -33,7 +33,7 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.initialize(Registry.RegistryContributions.builder().build());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach

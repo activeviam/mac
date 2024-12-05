@@ -5,7 +5,7 @@
  * reproduction or transfer of this material is strictly prohibited
  */
 
-package com.activeviam.formatter;
+package com.activeviam.mac.formatter;
 
 import com.activeviam.tech.core.api.format.IFormatter;
 import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;

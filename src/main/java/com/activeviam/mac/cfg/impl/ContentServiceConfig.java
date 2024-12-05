@@ -129,12 +129,16 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   @Override
   @Bean
   public IContentService contentService() {
-    final SessionFactory sessionFactory;
-    try {
-      sessionFactory = loadConfiguration(contentServiceHibernateProperties());
-      return new HibernateContentService(sessionFactory);
-    } catch (HibernateException | IOException e) {
-      throw new BeanInitializationException("Failed to initialize the Content Service", e);
+    if ("db".equals(this.env.getProperty("content-service.type", "db"))) {
+      return IContentService.builder().inMemory().build();
+    } else {
+      final SessionFactory sessionFactory;
+      try {
+        sessionFactory = loadConfiguration(contentServiceHibernateProperties());
+        return new HibernateContentService(sessionFactory);
+      } catch (HibernateException | IOException e) {
+        throw new BeanInitializationException("Failed to initialize the Content Service", e);
+      }
     }
   }
 

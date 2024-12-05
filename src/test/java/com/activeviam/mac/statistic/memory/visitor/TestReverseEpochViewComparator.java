@@ -9,7 +9,7 @@ package com.activeviam.mac.statistic.memory.visitor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.activeviam.comparators.ReverseEpochViewComparator;
+import com.activeviam.mac.comparators.ReverseEpochViewComparator;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
