@@ -1,5 +1,6 @@
 package com.activeviam.mac.cfg.security.impl;
 
+import com.activeviam.tech.contentserver.storage.api.IContentService;
 import com.activeviam.web.spring.api.config.IJwtConfig;
 import com.activeviam.web.spring.api.jwt.JwtAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
@@ -12,11 +13,14 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
@@ -34,6 +38,24 @@ public class SecurityConfig {
 
   /** Name of the Cookies of the MAC application. */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
+
+  /**
+   * [Bean] Create the users that can access the application.
+   *
+   * @return {@link UserDetailsService user data}
+   */
+  @Bean
+  public UserDetailsService userDetailsService(final PasswordEncoder passwordEncoder) {
+    final UserBuilder builder = User.builder().passwordEncoder(passwordEncoder::encode);
+    final InMemoryUserDetailsManager service = new InMemoryUserDetailsManager();
+    service.createUser(
+        builder
+            .username("admin")
+            .password("admin")
+            .authorities(ROLE_USER, ROLE_ADMIN, IContentService.ROLE_ROOT)
+            .build());
+    return service;
+  }
 
   /**
    * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
