@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.cfg.security.impl;
 
+import com.activeviam.tech.contentserver.storage.api.IContentService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -43,7 +44,7 @@ public class UserConfig {
             SecurityConfig.ROLE_USER,
             SecurityConfig.ROLE_ADMIN,
             ROLE_KPI,
-            SecurityConfig.ROLE_CS_ROOT)
+            IContentService.ROLE_ROOT)
         .and()
 
         // We're done

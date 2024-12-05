@@ -9,8 +9,9 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
 import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
-import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.database.datastore.private_.IStore;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -27,7 +28,6 @@ import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
 import com.activeviam.tech.observability.internal.memory.IndexStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
-import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,17 +46,21 @@ import java.util.Objects;
 public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
+  protected final IDataTable chunkRecordFormat;
+
   /**
    * A boolean that if true tells us that the currently visited component is responsible for storing
    * versioning data.
    */
   // FIXME find a cleaner way to do that. (specific stat for instance).
   protected boolean isVersionColumn = false;
+
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId = null;
+
   /** Branch owning {@link #epochId}. */
   protected String branch = null;
 
@@ -67,10 +71,13 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** Type of the root component visited. */
   protected ParentType rootComponent;
+
   /** Types of the direct parent component owning the chunk. */
   protected ParentType directParentType;
+
   /** Id of the direct parent owning the chunk. */
   protected String directParentId;
+
   /** The partition id of the visited statistic. */
   protected Integer partitionId = null;
 
@@ -85,20 +92,15 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    * @param dumpName The name of the off-heap dump. Can be null.
    */
   public DatastoreFeederVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final IOpenedTransaction transaction,
       final String dumpName) {
     super(transaction, storageMetadata, dumpName);
-    this.chunkRecordFormat =
-        this.storageMetadata
-            .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    this.chunkRecordFormat = this.storageMetadata.getTable(DatastoreConstants.CHUNK_STORE);
   }
 
-  private static Object[] buildIndexTupleFrom(
-      final IRecordFormat format, final IndexStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+  private static Object[] buildIndexTupleFrom(final IDataTable format, final IndexStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
     tuple[format.getFieldIndex(DatastoreConstants.INDEX_ID)] =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
 
@@ -221,7 +223,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
     final String initialBranch = this.branch;
 
     if (readEpochAndBranchIfAny(stat)) {
-      final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
+      final var versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
       final Object[] tuple =
           FeedVisitor.buildVersionTupleFrom(
               versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
@@ -295,7 +297,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
   @Override
   public Void visit(final ReferenceStatistic referenceStatistic) {
     final Object[] tuple = buildPartOfReferenceStatisticTuple(referenceStatistic);
-    final IRecordFormat refStoreFormat = getReferenceFormat(this.storageMetadata);
+    final var refStoreFormat = getReferenceFormat(this.storageMetadata);
 
     // fill out the tuple
     this.referenceId =
@@ -332,7 +334,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
 
   @Override
   public Void visit(final IndexStatistic stat) {
-    final IRecordFormat format = getIndexFormat(this.storageMetadata);
+    final var format = getIndexFormat(this.storageMetadata);
     final Object[] tuple = buildIndexTupleFrom(format, stat);
 
     this.indexId = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_INDEX_ID).asLong();
@@ -562,9 +564,9 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
    */
   protected Object[] buildPartOfReferenceStatisticTuple(
       final ReferenceStatistic referenceStatistic) {
-    final IRecordFormat refStoreFormat = getReferenceFormat(this.storageMetadata);
+    final var refStoreFormat = getReferenceFormat(this.storageMetadata);
 
-    final Object[] tuple = new Object[refStoreFormat.getFieldCount()];
+    final Object[] tuple = new Object[refStoreFormat.getFields().size()];
     tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_FROM_STORE)] =
         referenceStatistic.getAttribute(DatastoreConstants.REFERENCE_FROM_STORE).asText();
     tuple[refStoreFormat.getFieldIndex(DatastoreConstants.REFERENCE_FROM_STORE_PARTITION_ID)] =

@@ -13,8 +13,9 @@ import com.activeviam.activepivot.core.impl.internal.impl.ActivePivotManager;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.LevelIdentifier;
 import com.activeviam.activepivot.dist.impl.api.cube.IMultiVersionDistributedActivePivot;
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
 import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
-import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -32,7 +33,6 @@ import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor
 import com.activeviam.tech.observability.internal.memory.IndexStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
-import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -45,28 +45,40 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId = null;
+
   /** The branch of the pivot we're currently reading statistics. */
   protected String branch = null;
+
   /** Current {@link ActivePivotManager}. */
   protected String manager;
+
   /** Aggregate provider being currently visited. */
   protected Long providerId;
+
   /** Partition being currently visited. */
   protected Integer partition;
+
   /** Dimension being currently visited. */
   protected String dimension;
+
   /** Hierarchy being currently visited. */
   protected String hierarchy;
+
   /** Level being currently visited. */
   protected String level;
+
   /** Type of the aggregate Provider being currently visited. */
   protected ProviderComponentType providerComponentType;
+
   /** Type of the root structure. */
   protected ParentType rootComponent;
+
   /** Type of the direct parent structure. */
   protected ParentType directParentType;
+
   /** Id of the direct parent structure. */
   protected String directParentId;
 
@@ -81,9 +93,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    * @param dumpName name of the current import
    */
   public PivotFeederVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
-      final IOpenedTransaction tm,
-      final String dumpName) {
+      final IDatabaseSchema storageMetadata, final IOpenedTransaction tm, final String dumpName) {
     super(tm, storageMetadata, dumpName);
   }
 
@@ -100,8 +110,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private static Object[] buildProviderTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+      final IDataTable format, final IMemoryStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
 
     final IStatisticAttribute indexAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_NAME);
@@ -120,8 +130,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private static Object[] buildLevelTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+      final IDataTable format, final IMemoryStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
 
     tuple[format.getFieldIndex(DatastoreConstants.LEVEL__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
     tuple[format.getFieldIndex(DatastoreConstants.LEVEL__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
@@ -197,8 +207,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
       case MemoryStatisticConstants.STAT_NAME_PIVOT:
         processPivot(stat);
         break;
-        // Unless said otherwise we assume all providers are partial,safer than the
-        // other way
+      // Unless said otherwise we assume all providers are partial,safer than the
+      // other way
       case MemoryStatisticConstants.STAT_NAME_PROVIDER:
       case MemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
       case MemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
@@ -257,7 +267,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   @Override
   public Void visit(final ChunkStatistic stat) {
 
-    final IRecordFormat format = getChunkFormat(this.storageMetadata);
+    final var format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
@@ -379,7 +389,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     readEpochAndBranchIfAny(stat);
 
     if (readEpochAndBranchIfAny(stat)) {
-      final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
+      final var versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
       final Object[] tuple =
           FeedVisitor.buildVersionTupleFrom(
               versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
@@ -415,7 +425,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private void processProvider(final AMemoryStatistic stat) {
-    final IRecordFormat format = getProviderFormat(this.storageMetadata);
+    final var format = getProviderFormat(this.storageMetadata);
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
     FeedVisitor.setTupleElement(
@@ -458,7 +468,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private void processLevel(final AMemoryStatistic stat) {
-    final IRecordFormat format = getLevelFormat(this.storageMetadata);
+    final var format = getLevelFormat(this.storageMetadata);
     final Object[] tuple = buildLevelTupleFrom(format, stat);
 
     String levelDescription =

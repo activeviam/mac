@@ -10,7 +10,7 @@ package com.activeviam.mac.cfg.impl;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.impl.Datastore;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -52,22 +53,19 @@ import org.springframework.core.env.Environment;
  * @author ActiveViam
  */
 @Configuration
+@RequiredArgsConstructor
 public class SourceConfig {
 
   /** The name of the property that holds the path to the statistics folder. */
   public static final String STATISTIC_FOLDER_PROPERTY = "statistic.folder";
 
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
+
   /** Autowired {@link Datastore} to be fed by this source. */
-  protected IInternalDatastore datastore;
+  private final IDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  protected Environment env;
-
-  public SourceConfig(final IInternalDatastore datastore, final Environment env) {
-    this.datastore = datastore;
-    this.env = env;
-  }
+  private final Environment env;
 
   /**
    * Provides a {@link DirectoryCsvTopic topic}.

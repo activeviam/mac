@@ -7,8 +7,9 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
 import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
-import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
@@ -26,7 +27,6 @@ import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
 import com.activeviam.tech.observability.internal.memory.IndexStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
-import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,30 +41,37 @@ import java.util.Collections;
 public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
+  protected final IDataTable chunkRecordFormat;
 
   /** The export date, found on the first statistics we read. */
   protected final Instant current;
 
   /** Type of the root structure. */
   protected final ParentType rootComponent;
+
   /** Type of the direct parent structure. */
   protected final ParentType directParentType;
+
   /** id of the direct parent structure. */
   protected final String directParentId;
+
   /** Aggregate provider being currently visited. */
   protected final Long providerId;
 
   /** The partition id of the visited statistic. */
   protected final int partitionId;
+
   /** Whether or not to ignore the field attributes of the visited statistics. */
   protected final boolean ignoreFieldSpecifications;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
+
   /**
    * Whether or not the currently visited statistics were flagged as used by the current version.
    */
   protected UsedByVersion usedByVersion;
+
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
 
@@ -93,7 +100,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    *     the encountered fields
    */
   public ChunkSetStatisticVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final IOpenedTransaction transaction,
       final String dumpName,
       final Instant current,
@@ -122,11 +129,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.usedByVersion = usedByVersion;
     this.ignoreFieldSpecifications = ignoreFieldSpecifications;
 
-    this.chunkRecordFormat =
-        this.storageMetadata
-            .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    this.chunkRecordFormat = this.storageMetadata.getTable(DatastoreConstants.CHUNK_STORE);
   }
 
   @Override
@@ -234,7 +237,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      final IRecordFormat format = this.chunkRecordFormat;
+      final var format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
       FeedVisitor.setTupleElement(

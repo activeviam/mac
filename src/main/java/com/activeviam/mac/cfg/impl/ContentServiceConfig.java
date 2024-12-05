@@ -29,11 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,20 +52,8 @@ import org.springframework.core.io.Resource;
  * @author ActiveViam
  */
 @Configuration
+@RequiredArgsConstructor
 public class ContentServiceConfig implements IActivePivotContentServiceConfig {
-
-  /**
-   * The name of the property which contains the role allowed to add new calculated members in the
-   * configuration service.
-   */
-  public static final String CALCULATED_MEMBER_ROLE_PROPERTY =
-      "contentServer.security.calculatedMemberRole";
-
-  /**
-   * The name of the property which contains the role allowed to add new KPIs in the configuration
-   * service.
-   */
-  public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
 
   /**
    * The name of the property that controls whether or not to force the reloading of the predefined
@@ -76,8 +64,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   /** The name of the property that precise the name of the folder the bookmarks are in. */
   public static final String UI_FOLDER_PROPERTY = "bookmarks.folder";
 
-  /** Instance of the Spring context environment. */
-  @Autowired public Environment env;
+  private final Environment env;
 
   /**
    * Loads the Hibernate's configuration from the specified file.
@@ -164,18 +151,16 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     return new ActivePivotContentServiceBuilder()
         .with(contentService())
         .withCacheForEntitlements(-1)
-        .needInitialization(
-            this.env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
-            this.env.getRequiredProperty(KPI_ROLE_PROPERTY))
+        .needInitialization(SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER)
         .build();
   }
 
   private Map<String, List<String>> defaultBookmarkPermissions() {
     return Map.of(
         Role.OWNERS,
-        List.of(SecurityConfig.ROLE_CS_ROOT),
+        List.of(SecurityConfig.ROLE_USER),
         Role.READERS,
-        List.of(SecurityConfig.ROLE_CS_ROOT));
+        List.of(SecurityConfig.ROLE_USER));
   }
 
   /**

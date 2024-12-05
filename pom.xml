@@ -12,7 +12,7 @@
 
   <groupId>com.activeviam.tools</groupId>
   <artifactId>mac</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>3.1.0-SNAPSHOT</version>
   <name>Atoti Server Memory Analysis Cube</name>
 
   <licenses>
@@ -23,10 +23,9 @@
   </licenses>
 
   <properties>
-    <jdk.version>11</jdk.version>
+    <jdk.version>21</jdk.version>
 
     <atoti-server.version>6.1.3-SNAPSHOT</atoti-server.version>
-    <atoti-ui.version>5.2.0-beta</atoti-ui.version>
 
     <tomcat.version>10.1.30</tomcat.version>
 
@@ -66,33 +65,14 @@
       <version>${atoti-server.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.activeviam.springboot</groupId>
+      <artifactId>atoti-ui-starter</artifactId>
+      <version>${atoti-server.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <!-- ActivePivot Dependencies -->
-    <dependency>
-      <groupId>com.activeviam.activepivot</groupId>
-      <artifactId>activepivot-server-spring</artifactId>
-    </dependency>
-
-    <!-- Composer dependencies are provided in QFS artifacts -->
-    <!-- And must be explicitly declared in application projects -->
-    <dependency>
-      <groupId>com.activeviam.tech</groupId>
-      <artifactId>composer-core</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <!-- The following artifact allows to expose the Rest API of the content
-        service -->
-    <dependency>
-      <groupId>com.activeviam.tech</groupId>
-      <artifactId>content-server-spring</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.activeviam.web</groupId>
-      <artifactId>activeviam-web-spring</artifactId>
     </dependency>
 
     <!-- Dependencies for the content service persistence -->
@@ -109,14 +89,6 @@
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-c3p0</artifactId>
       <version>6.4.10.Final</version>
-    </dependency>
-
-    <!-- Atoti UI dependency -->
-    <dependency>
-      <groupId>com.activeviam.activeui</groupId>
-      <artifactId>activeui</artifactId>
-      <version>${atoti-ui.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
     <!-- SpringBoot dependencies -->

@@ -7,8 +7,8 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.api.schema.IDatabaseSchema;
 import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
-import com.activeviam.database.datastore.internal.IDatastoreSchemaMetadata;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
@@ -23,7 +23,6 @@ import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor
 import com.activeviam.tech.observability.internal.memory.IndexStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
-import com.activeviam.tech.records.api.IRecordFormat;
 import java.util.logging.Logger;
 
 /**
@@ -39,6 +38,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
   private final PivotFeederVisitor parent;
   private final IOpenedTransaction transaction;
   private final Long epochId;
+
   /** The number of members of the visited level. */
   protected Integer memberCount;
 
@@ -57,7 +57,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
   public LevelStatisticVisitor(
       final PivotFeederVisitor parent,
       final IOpenedTransaction transaction,
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final String dumpName,
       final Long epochId) {
     super(transaction, storageMetadata, dumpName);
@@ -97,7 +97,7 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
 
     recordLevelForStructure(this.directParentType, this.directParentId);
 
-    final IRecordFormat format = getChunkFormat(this.storageMetadata);
+    final var format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
@@ -182,9 +182,9 @@ public class LevelStatisticVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private void recordLevelForStructure(final ParentType type, final String id) {
-    final IRecordFormat format =
+    final var format =
         FeedVisitor.getRecordFormat(this.storageMetadata, DatastoreConstants.CHUNK_TO_LEVEL_STORE);
-    final Object[] tuple = new Object[format.getFieldCount()];
+    final Object[] tuple = new Object[format.getFields().size()];
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(
         tuple, format, DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, this.parent.manager);

@@ -1,23 +1,11 @@
 server:
   port: 9092
-  remote:
-    uri: localhost:9090
-
-activeui:
-  address: http://localhost:9092/ui
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-
-contentServer:
-  security:
-    calculatedMemberRole: ROLE_USER
-    kpiRole: ROLE_USER
-    cache:
-      entitlementsTTL: 3600
 
 bookmarks:
   folder: ui

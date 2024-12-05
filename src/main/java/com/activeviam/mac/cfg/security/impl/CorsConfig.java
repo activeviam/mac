@@ -14,10 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
+import org.springframework.web.cors.CorsConfiguration;
 
 /**
- * Generic implementation for security configuration of a server hosting ActivePivot, or Content
- * server or ActiveMonitor.
+ * Generic implementation for security configuration of a server hosting ActivePivot, or Content server or
+ * ActiveMonitor.
  *
  * <p>This class contains methods:
  *
@@ -34,10 +35,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 @Configuration
 public class CorsConfig implements ICorsConfig {
 
-  /** The name of the Environment to use. */
+  /**
+   * The name of the Environment to use.
+   */
   protected Environment env;
 
-  /** The address the UI is exposed to. */
+  /**
+   * The address the UI is exposed to.
+   */
   public static final String ACTIVEUI_ADDRESS = "activeui.address";
 
   public CorsConfig(@Autowired Environment env) {
@@ -46,6 +51,6 @@ public class CorsConfig implements ICorsConfig {
 
   @Override
   public List<String> getAllowedOrigins() {
-    return Collections.singletonList(env.getRequiredProperty(ACTIVEUI_ADDRESS));
+    return Collections.singletonList(env.getProperty(ACTIVEUI_ADDRESS, CorsConfiguration.ALL));
   }
 }
