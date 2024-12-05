@@ -58,7 +58,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
                     .forEach(i -> tm.add("A", i * i, new double[] {i}, new double[] {-i, -i * i})));
 
     // Force to discard all versions
-    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(__ -> true);
+    this.monitoredApp.getDatabase().getEpochManager().forceDiscardEpochs(epoch -> true);
 
     // perform GCs before exporting the store data
     performGC();
@@ -102,7 +102,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testVectorBlockRecordConsumptionIsZero() throws QueryException {
+  void testVectorBlockRecordConsumptionIsZero() throws QueryException {
     final MDXQuery recordQuery =
         new MDXQuery(
             "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
@@ -119,7 +119,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testVectorBlockConsumption() throws QueryException {
+  void testVectorBlockConsumption() throws QueryException {
     final MDXQuery vectorBlockQueryField1 =
         new MDXQuery(
             "SELECT {"
@@ -143,8 +143,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
         ((ADDED_DATA_SIZE * 2 + ADDED_DATA_SIZE) / MICROAPP_VECTOR_BLOCK_SIZE) + 1;
     final var directMemoryUsedOnVector = blockCountUsed * MICROAPP_VECTOR_BLOCK_SIZE * Double.BYTES;
 
-    assertThat((long) result1.getCells().get(1).getValue()).isEqualTo(directMemoryUsedOnVector);
     assertThat((long) result1.getCells().get(1).getValue())
+        .isEqualTo(directMemoryUsedOnVector)
         .isEqualTo((long) result1.getCells().get(0).getValue());
 
     final MDXQuery vectorBlockQueryField2 =
@@ -163,13 +163,13 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
     final CellSetDTO result2 =
         MdxQueryUtil.execute(this.monitoringApp.getManager(), vectorBlockQueryField2);
 
-    assertThat((long) result2.getCells().get(1).getValue()).isEqualTo(directMemoryUsedOnVector);
     assertThat((long) result2.getCells().get(1).getValue())
+        .isEqualTo(directMemoryUsedOnVector)
         .isEqualTo((long) result2.getCells().get(0).getValue());
   }
 
   @Test
-  public void testVectorBlockLength() throws QueryException {
+  void testVectorBlockLength() throws QueryException {
     final MDXQuery lengthQuery =
         new MDXQuery(
             "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
@@ -186,7 +186,7 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testVectorBlockRefCount() throws QueryException {
+  void testVectorBlockRefCount() throws QueryException {
     final MDXQuery refCountQuery =
         new MDXQuery(
             "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"

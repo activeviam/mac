@@ -74,17 +74,20 @@ public class SecurityConfig {
   private static final String PING_SUFFIX = "/ping";
 
   /** The User Configuration. */
-  @Autowired protected UserConfig userDetailsConfig;
+  protected UserConfig userDetailsConfig;
 
   /** The JWT Configuration. */
-  @Autowired protected IJwtConfig jwtConfig;
+  protected IJwtConfig jwtConfig;
   /** The name of the Environment to use. */
-  @Autowired protected Environment env;
-
+  protected Environment env;
   /** {@code true} to enable the logout URL. */
   protected final WebConfiguration webConfiguration;
 
-  public SecurityConfig() {
+  public SecurityConfig(
+      final UserConfig userDetailsConfig, final IJwtConfig jwtConfig, final Environment env) {
+    this.userDetailsConfig = userDetailsConfig;
+    this.jwtConfig = jwtConfig;
+    this.env = env;
     this.webConfiguration = new WebConfiguration(COOKIE_NAME);
   }
 

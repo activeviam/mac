@@ -87,9 +87,10 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
   }
 
-  private void init(final IRecordReader record, final IDictionaryProvider dictionaryProvider) {
+  private void init(
+      final IRecordReader recordReader, final IDictionaryProvider dictionaryProvider) {
     if (this.sharedPartitionId < 0) {
-      final int dicIdIdx = getPartition(record);
+      final int dicIdIdx = getPartition(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> partitionDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
@@ -97,7 +98,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
           partitionDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.MANY_PARTITIONS);
     }
     if (this.defaultDicId < 0) {
-      final int dicIdIdx = getDicId(record);
+      final int dicIdIdx = getDicId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> dicIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
@@ -105,7 +106,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
           dicIdDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.DEFAULT_COMPONENT_ID_VALUE);
     }
     if (this.defaultIdxId < 0) {
-      final int idxIdIdx = getIdxId(record);
+      final int idxIdIdx = getIdxId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> idxIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(idxIdIdx);
@@ -114,7 +115,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
 
     if (this.defaultRefId < 0) {
-      final int refIdIdx = getRefId(record);
+      final int refIdIdx = getRefId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> refIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(refIdIdx);
@@ -123,31 +124,31 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
   }
 
-  private int getPartition(final IRecordReader record) {
-    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
+  private int getPartition(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
   }
 
-  private int getDicId(final IRecordReader record) {
-    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
+  private int getDicId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
   }
 
-  private int getIdxId(final IRecordReader record) {
-    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
+  private int getIdxId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
   }
 
-  private int getRefId(final IRecordReader record) {
-    return record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
+  private int getRefId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
   }
 
   private String getChunkClassName(
-      final IRecordReader record, final IDictionaryProvider dictionaryProvider) {
-    final int partitionIdx = getPartition(record);
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
+      final IRecordReader recordReader, final IDictionaryProvider dictionaryProvider) {
+    final int partitionIdx = getPartition(recordReader);
+    final int idx = recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
     @SuppressWarnings("unchecked")
     final IWritableDictionary<Object> refIdDictionary =
         (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
 
-    return (String) refIdDictionary.read((Integer) record.read(idx));
+    return (String) refIdDictionary.read((Integer) recordReader.read(idx));
   }
 
   private IWritableRecord copyRecord(final IRecordReader record) {

@@ -35,10 +35,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 public class CorsConfig implements ICorsConfig {
 
   /** The name of the Environment to use. */
-  @Autowired protected Environment env;
+  protected Environment env;
 
   /** The address the UI is exposed to. */
   public static final String ACTIVEUI_ADDRESS = "activeui.address";
+
+  public CorsConfig(@Autowired Environment env) {
+    this.env = env;
+  }
 
   @Override
   public List<String> getAllowedOrigins() {

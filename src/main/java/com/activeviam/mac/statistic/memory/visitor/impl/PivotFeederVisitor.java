@@ -151,39 +151,37 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    *     MemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
   public void startFrom(final AMemoryStatistic stat) {
+    if (this.current != null) {
+      throw new IllegalArgumentException("Cannot reuse a feed instance");
+    }
+    final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
+    this.current =
+        Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
+    readEpochAndBranchIfAny(stat);
+    if (this.epochId == null && stat.getName().equals(MemoryStatisticConstants.STAT_NAME_MANAGER)) {
+      // Look amongst the children to find the epoch
+      findEpoch(stat);
+    }
 
-    if (this.current == null) {
-      final IStatisticAttribute dateAtt =
-          stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
+    FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
 
-      this.current =
-          Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
-
-      readEpochAndBranchIfAny(stat);
-      if (this.epochId == null
-          && stat.getName().equals(MemoryStatisticConstants.STAT_NAME_MANAGER)) {
-        // Look amongst the children to find the epoch
-        for (final IMemoryStatistic child : stat.getChildren()) {
-          readEpochAndBranchIfAny(child);
-          if (this.epochId != null) {
-            break;
-          }
-        }
+    try {
+      stat.accept(this);
+    } catch (final RuntimeException e) {
+      if (Boolean.TRUE.equals(DEBUG)) {
+        final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
+        printer.print();
       }
+      throw e;
+    }
+  }
 
-      FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
-
-      try {
-        stat.accept(this);
-      } catch (final RuntimeException e) {
-        if (Boolean.TRUE.equals(DEBUG)) {
-          final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
-          printer.print();
-        }
-        throw e;
+  private void findEpoch(AMemoryStatistic stat) {
+    for (final IMemoryStatistic child : stat.getChildren()) {
+      readEpochAndBranchIfAny(child);
+      if (this.epochId != null) {
+        break;
       }
-    } else {
-      throw new RuntimeException("Cannot reuse a feed instance");
     }
   }
 
@@ -591,9 +589,9 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     final IStatisticAttribute branchAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
     if (branchAttr != null) {
-      final String branch = branchAttr.asText();
-      assert this.branch == null || this.branch.equals(branch);
-      this.branch = branch;
+      final String branchAttrText = branchAttr.asText();
+      assert this.branch == null || this.branch.equals(branchAttrText);
+      this.branch = branchAttrText;
       epochOrBranchChanged = true;
     }
 

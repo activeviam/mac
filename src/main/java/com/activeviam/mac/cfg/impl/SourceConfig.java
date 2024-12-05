@@ -41,7 +41,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -60,10 +59,15 @@ public class SourceConfig {
 
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
   /** Autowired {@link Datastore} to be fed by this source. */
-  @Autowired protected IInternalDatastore datastore;
+  protected IInternalDatastore datastore;
 
   /** Spring environment, automatically wired. */
-  @Autowired protected Environment env;
+  protected Environment env;
+
+  public SourceConfig(final IInternalDatastore datastore, final Environment env) {
+    this.datastore = datastore;
+    this.env = env;
+  }
 
   /**
    * Provides a {@link DirectoryCsvTopic topic}.
@@ -129,9 +133,14 @@ public class SourceConfig {
               e);
         }
       }
-      if (url == null
-          || !Files.isDirectory(directory = Paths.get(URI.create(url.toExternalForm())))) {
-        throw new IllegalArgumentException("'" + name + "' could not be resolved to a directory.");
+      if (url != null) {
+        directory = Paths.get(URI.create(url.toExternalForm()));
+        if (!Files.isDirectory(directory)) {
+          throw new IllegalArgumentException(
+              "'" + name + "' could not be resolved to a directory.");
+        }
+      } else {
+        throw new IllegalArgumentException("could not find  '" + name + "' in the classpath.");
       }
     }
     return directory;
@@ -207,7 +216,7 @@ public class SourceConfig {
   }
 
   private Path getStatisticFolder() {
-    return resolveDirectory(this.env.getRequiredProperty("statistic.folder"));
+    return resolveDirectory(this.env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY));
   }
 
   private void loadDumps(final Map<String, List<Path>> dumpFiles) {
