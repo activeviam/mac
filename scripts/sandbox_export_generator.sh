@@ -6,7 +6,7 @@
 # 2- Run the sandbox
 # 3- Generate the memory statistics file for the Sandbox
 
-# This script EXPECTS to be executed from the ROOT of a buildable mac project	
+# This script EXPECTS to be executed from the ROOT of a buildable mac project
 
 # REQUIREMENTS :
 # Java Development Kit 11+ (JRE is not enough as we use the jps command)
@@ -15,7 +15,7 @@
 # Valid Atoti Server License
 # cURL
 
-# INPUT : 
+# INPUT :
 # - 1 String : Atoti Server version used by the sandbox app
 # - 2 String : URL of the Artifactory Sandbox repository
 # - 3 Optional String : Path to the maven settings file, this file is expected to grant read access to ActiveViam artifacs
@@ -33,7 +33,7 @@ check_root(){
 	if [[ -z $(cat pom.xml) || -z $(cat pom.xml | grep "<artifactId>${MAC_ARTIFACTID}</artifactId>") ]]; then
 		echo "The execution directory of the script ${PWD} is not the root of a buildable mac project."
 	exit 1
-	fi	
+	fi
 }
 
 check_requirements(){
@@ -82,6 +82,8 @@ AP_MINOR=$(echo ${AP_VERSION} | cut -f2 -d.)
 AP_BUGFIX=$(echo ${AP_VERSION} | cut -f3 -d.)
 if [[ ${AP_HUMAN} == 5 && ${AP_MINOR} == 8  ]]; then
 	echo https://artifacts.activeviam.com/share/ActivePivot_stable/${AP_VERSION}/${JDK_VERSION}/sandbox-release-${AP_VERSION}-${JDK_VERSION}.zip
+elif [[ ${AP_HUMAN} == 6 && ${AP_MINOR} == 1  ]]; then
+	echo https://artifacts.activeviam.com/share/ActivePivot_stable/${AP_VERSION}/sandbox-${AP_VERSION}.zip
 else
 	echo https://artifacts.activeviam.com/share/ActivePivot_stable/${AP_VERSION}/${JDK_VERSION}/sandbox-release-${AP_VERSION}.zip
 fi
@@ -134,7 +136,7 @@ JMXTERM_VERSION=1.0.4
 JMX_REPO_PATH=https://github.com/jiaqi/jmxterm/releases/download/
 JMX_JAR_PATH=${JMX_REPO_PATH}v${JMXTERM_VERSION}/jmxterm-${JMXTERM_VERSION}-uber.jar
 
-# 2- Download a sandbox project zip 
+# 2- Download a sandbox project zip
 
 SANDBOX_URL=$(get_sandbox_url)
 echo "$SANDBOX_URL"
@@ -159,7 +161,7 @@ if [ ! SANDBOX_VERSION==AP_VERSION ];then
     echo "The downloaded sandbox version and the expected version do not match, something went wrong.  Aborting."
     cleanup
     exit 1
-fi	
+fi
 
 mvn clean install -s ${MAVEN_SETTINGS} -DskipTests=true -T1C >> ${LOG_DIR}/maven.log
 cd ../
