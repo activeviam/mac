@@ -7,15 +7,15 @@
 
 package com.activeviam.tools.bookmark.impl;
 
+import com.activeviam.tech.contentserver.storage.api.BasicJsonContentEntry;
+import com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter;
+import com.activeviam.tech.contentserver.storage.api.IContentTree;
+import com.activeviam.tech.contentserver.storage.api.SnapshotContentTree;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.qfs.content.service.IContentTree;
-import com.qfs.content.snapshot.impl.BasicJsonContentEntry;
-import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
-import com.qfs.content.snapshot.impl.SnapshotContentTree;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;

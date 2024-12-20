@@ -7,20 +7,20 @@
 
 package com.activeviam.mac.memory;
 
-import com.activeviam.builders.StartBuilding;
+import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.schema.StoreField;
-import com.qfs.chunk.IChunk;
-import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.desc.IReferenceDescription;
-import com.qfs.desc.IStoreDescription;
-import com.qfs.desc.impl.DatastoreSchemaDescription;
-import com.qfs.desc.impl.DuplicateKeyHandlers;
-import com.qfs.desc.impl.StoreDescription;
-import com.qfs.literal.ILiteralType;
-import com.qfs.pool.impl.QFSPools;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.util.impl.QfsArrays;
-import com.quartetfs.fwk.format.IParser;
+import com.activeviam.database.api.types.ILiteralType;
+import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
+import com.activeviam.database.datastore.api.description.IReferenceDescription;
+import com.activeviam.database.datastore.api.description.IStoreDescription;
+import com.activeviam.database.datastore.api.description.impl.DatastoreSchemaDescription;
+import com.activeviam.database.datastore.api.description.impl.DuplicateKeyHandlers;
+import com.activeviam.database.datastore.api.description.impl.StoreDescription;
+import com.activeviam.tech.chunks.internal.IChunk;
+import com.activeviam.tech.chunks.internal.pool.impl.AtotiPools;
+import com.activeviam.tech.core.api.format.IParser;
+import com.activeviam.tech.core.internal.util.ArrayUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -64,7 +64,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchem
    * @return the modulo partitioning value
    */
   private static int partitioningModulo() {
-    return QFSPools.getMixedWorkloadThreadCount();
+    return AtotiPools.getMixedWorkloadThreadCount();
   }
 
   @Override
@@ -369,7 +369,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchem
         .build();
   }
 
-  public Collection<? extends IStoreDescription> getStoreDescriptions() {
+  public List<? extends IStoreDescription> getStoreDescriptions() {
     return Arrays.asList(
         chunkStore(),
         referenceStore(),
@@ -584,7 +584,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchem
 
     @Override
     public String toString() {
-      return QfsArrays.join(", ", this.fieldNames).toString();
+      return ArrayUtil.join(", ", this.fieldNames).toString();
     }
   }
 }

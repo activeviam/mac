@@ -5,18 +5,18 @@
  * reproduction or transfer of this material is strictly prohibited
  */
 
-package com.activeviam.formatter;
+package com.activeviam.mac.formatter;
 
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
-import com.quartetfs.fwk.QuartetExtendedPluginValue;
-import com.quartetfs.fwk.format.IFormatter;
+import com.activeviam.tech.core.api.format.IFormatter;
+import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
 
 /**
  * Formatter for partitions.
  *
  * @author ActiveViam
  */
-@QuartetExtendedPluginValue(intf = IFormatter.class, key = PartitionIdFormatter.KEY)
+@AtotiExtendedPluginValue(intf = IFormatter.class, key = PartitionIdFormatter.KEY)
 public class PartitionIdFormatter implements IFormatter {
 
   /** Plugin key. */

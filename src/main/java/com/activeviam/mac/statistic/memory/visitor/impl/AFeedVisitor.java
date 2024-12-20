@@ -7,13 +7,14 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.records.api.IRecordFormat;
 
 /**
  * Abstract class for {@link IMemoryStatisticVisitor memory statistic visitors}.
@@ -25,10 +26,13 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
 
   /** Ongoing transaction. */
   protected final IOpenedTransaction transaction;
+
   /** Metadata of the Analysis Datastore. */
-  protected final IDatastoreSchemaMetadata storageMetadata;
+  protected final IDatabaseSchema storageMetadata;
+
   /** Name of the import. */
   protected final String dumpName;
+
   /** Owner of the visited statistics. */
   protected ChunkOwner owner = null;
 
@@ -41,7 +45,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    */
   public AFeedVisitor(
       final IOpenedTransaction transaction,
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final String dumpName) {
     this.transaction = transaction;
     this.storageMetadata = storageMetadata;
@@ -54,7 +58,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#CHUNK_STORE} record format
    */
-  protected static IRecordFormat getChunkFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getChunkFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.CHUNK_STORE);
   }
 
@@ -64,7 +68,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#PROVIDER_STORE} record format
    */
-  protected static IRecordFormat getProviderFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getProviderFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.PROVIDER_STORE);
   }
 
@@ -74,7 +78,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#LEVEL_STORE} record format
    */
-  protected static IRecordFormat getLevelFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getLevelFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.LEVEL_STORE);
   }
 
@@ -84,7 +88,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#INDEX_STORE} record format
    */
-  protected static IRecordFormat getIndexFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getIndexFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.INDEX_STORE);
   }
 
@@ -94,7 +98,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#REFERENCE_STORE} record format
    */
-  protected static IRecordFormat getReferenceFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getReferenceFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.REFERENCE_STORE);
   }
 
@@ -104,7 +108,7 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#VERSION_STORE} record format
    */
-  protected static IRecordFormat getVersionStoreFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getVersionStoreFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.VERSION_STORE);
   }
 
@@ -114,23 +118,17 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
    * @param storageMetadata metadata of the application datastore
    * @return the {@link DatastoreConstants#DICTIONARY_STORE} record format
    */
-  protected static IRecordFormat getDictionaryFormat(IDatastoreSchemaMetadata storageMetadata) {
+  protected static IDataTable getDictionaryFormat(IDatabaseSchema storageMetadata) {
     return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.DICTIONARY_STORE);
   }
 
-  @Override
-  public R visit(final IMemoryStatistic memoryStatistic) {
-    visitChildren(memoryStatistic);
-    return null;
-  }
-
   /**
-   * Visits all the children of the given {@link IMemoryStatistic}.
+   * Visits all the children of the given {@link AMemoryStatistic}.
    *
    * @param statistic The statistics whose children to visit.
    */
-  protected void visitChildren(final IMemoryStatistic statistic) {
-    for (final IMemoryStatistic child : statistic.getChildren()) {
+  protected void visitChildren(final AMemoryStatistic statistic) {
+    for (final AMemoryStatistic child : statistic.getChildren()) {
       child.accept(this);
     }
   }

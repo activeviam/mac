@@ -8,19 +8,20 @@ package com.activeviam.mac.statistic.memory;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.internal.monitoring.AMemoryStatisticWithPredicate;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.quartetfs.fwk.util.impl.TruePredicate;
+import com.activeviam.tech.core.internal.util.TruePredicate;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.records.api.ICursor;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +47,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-          final Collection<IMemoryStatistic> storeStats =
+          final Collection<AMemoryStatistic> storeStats =
               loadDatastoreMemoryStatFromFolder(exportPath);
           assertNotEquals(0, storeStats.size());
           assertLoadsCorrectly(storeStats, getClass());
@@ -64,7 +65,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final Path exportPath =
               analysisService.exportMostRecentVersion(
                   "doTestLoadMonitoringDatastoreWithVectors[" + duplicateVectors + "]");
-          final Collection<IMemoryStatistic> datastoreStats =
+          final Collection<AMemoryStatistic> datastoreStats =
               loadDatastoreMemoryStatFromFolder(exportPath);
 
           final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
@@ -130,7 +131,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportMostRecentVersion("testLoadPivotStats");
-          final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
+          final Collection<AMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
           assertNotEquals(0, pivotStats.size());
           assertLoadsCorrectly(pivotStats, getClass());
         });
@@ -145,7 +146,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportMostRecentVersion("testLoadFullStats");
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+          final AMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
           assertNotEquals(null, fullStats);
           assertLoadsCorrectly(fullStats);
         });
@@ -167,7 +168,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportBranches("testLoadFullStats", branchSet);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+          final AMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
           assertNotEquals(null, fullStats);
           assertLoadsCorrectly(fullStats);
         });
@@ -188,7 +189,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
           final IMemoryAnalysisService analysisService =
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportVersions("testLoadFullStats", epochs);
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+          final AMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
           assertNotEquals(null, fullStats);
           assertLoadsCorrectly(fullStats);
         });
@@ -208,7 +209,7 @@ public class TestMemoryStatisticLoading extends ATestMemoryStatistic {
    * Asserts the chunks number and off-heap memory as computed from the loaded datastore are
    * consistent with the ones computed by visiting the statistic.
    */
-  protected void assertLoadsCorrectly(IMemoryStatistic statistic) {
+  protected void assertLoadsCorrectly(AMemoryStatistic statistic) {
     assertLoadsCorrectly(Collections.singleton(statistic), getClass());
   }
 }

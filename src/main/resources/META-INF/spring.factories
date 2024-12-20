@@ -1,0 +1,1 @@
+org.springframework.context.ApplicationListener=com.activeviam.mac.cfg.impl.RegistryInitializationConfig

@@ -7,14 +7,14 @@
 
 package com.activeviam.mac.memory;
 
-import com.qfs.chunk.impl.TombStoneChunk;
-import com.qfs.desc.IDuplicateKeyHandler;
-import com.qfs.dic.IWritableDictionary;
-import com.qfs.store.IStoreMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.record.IWritableRecord;
-import com.qfs.store.record.impl.IDictionaryProvider;
+import com.activeviam.database.datastore.api.description.IDuplicateKeyHandler;
+import com.activeviam.database.datastore.api.description.IKeyEventContext;
+import com.activeviam.tech.chunks.internal.impl.TombStoneChunk;
+import com.activeviam.tech.dictionaries.api.IDictionaryProvider;
+import com.activeviam.tech.dictionaries.avinternal.IWritableDictionary;
+import com.activeviam.tech.records.api.IRecordFormat;
+import com.activeviam.tech.records.api.IRecordReader;
+import com.activeviam.tech.records.api.IWritableRecord;
 
 /**
  * {@link IDuplicateKeyHandler} implementation defining the process of dealing with duplicated
@@ -29,28 +29,16 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   private int defaultRefId = -1;
   private int defaultIdxId = -1;
 
-  @Override
-  public IRecordReader selectDuplicateKeyInDatastore(
-      final IRecordReader duplicateRecord,
-      final IRecordReader previousRecord,
-      final IStoreMetadata storeMetadata,
-      final IDictionaryProvider dictionaryProvider,
-      final int[] uniqueIndexFields,
-      final int partitionId) {
-    return createMergedRecord(duplicateRecord, previousRecord, storeMetadata, dictionaryProvider);
-  }
-
   private IRecordReader createMergedRecord(
       IRecordReader duplicateRecord,
       IRecordReader previousRecord,
-      IStoreMetadata storeMetadata,
-      IDictionaryProvider dictionaryProvider) {
-    init(storeMetadata, dictionaryProvider);
+      IKeyEventContext keyEventContext) {
 
     final int currentPartition = getPartition(previousRecord);
-    final long currentDicId = getDicId(previousRecord);
-    final long currentRefId = getRefId(previousRecord);
-    final long currentIdxId = getIdxId(previousRecord);
+    final int currentDicId = getDicId(previousRecord);
+    final int currentRefId = getRefId(previousRecord);
+    final int currentIdxId = getIdxId(previousRecord);
+    init(previousRecord, keyEventContext.getDictionaryProvider());
 
     if (currentPartition == this.sharedPartitionId) {
       // We cannot make any change
@@ -67,7 +55,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
       } else {
         // We ignore TombStoneChunks as they are a singleton that has minimal memory footprint
         // but don't work with the current MAC data model
-        if (getChunkClassName(duplicateRecord, dictionaryProvider, storeMetadata)
+        if (getChunkClassName(duplicateRecord, keyEventContext.getDictionaryProvider())
             .contains(TombStoneChunk.class.getName())) {
           return duplicateRecord;
         }
@@ -75,8 +63,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
 
         assert newPartition != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION;
         assert currentPartition != MemoryAnalysisDatastoreDescriptionConfig.NO_PARTITION;
-        final int partitionIdx =
-            storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
+        final int partitionIdx = getPartition(newRecord);
         newRecord.writeInt(partitionIdx, this.sharedPartitionId);
 
         // Sanity check in case two Chunks have different parents which should never happen
@@ -101,26 +88,25 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
   }
 
   private void init(
-      final IStoreMetadata storeMetadata, final IDictionaryProvider dictionaryProvider) {
+      final IRecordReader recordReader, final IDictionaryProvider dictionaryProvider) {
     if (this.sharedPartitionId < 0) {
-      final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
+      final int dicIdIdx = getPartition(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> partitionDictionary =
-          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
+          (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
       this.sharedPartitionId =
           partitionDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.MANY_PARTITIONS);
     }
     if (this.defaultDicId < 0) {
-      final int dicIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
+      final int dicIdIdx = getDicId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> dicIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(dicIdIdx);
       this.defaultDicId =
           dicIdDictionary.map(MemoryAnalysisDatastoreDescriptionConfig.DEFAULT_COMPONENT_ID_VALUE);
     }
-
     if (this.defaultIdxId < 0) {
-      final int idxIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
+      final int idxIdIdx = getIdxId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> idxIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(idxIdIdx);
@@ -129,7 +115,7 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
 
     if (this.defaultRefId < 0) {
-      final int refIdIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
+      final int refIdIdx = getRefId(recordReader);
       @SuppressWarnings("unchecked")
       final IWritableDictionary<Object> refIdDictionary =
           (IWritableDictionary<Object>) dictionaryProvider.getDictionary(refIdIdx);
@@ -138,37 +124,31 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
   }
 
-  private int getPartition(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
-    return record.readInt(idx);
+  private int getPartition(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARTITION_ID);
   }
 
-  private long getDicId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
-    return record.readLong(idx);
+  private int getDicId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_DICO_ID);
   }
 
-  private long getIdxId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
-    return record.readLong(idx);
+  private int getIdxId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_INDEX_ID);
   }
 
-  private long getRefId(final IRecordReader record) {
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
-    return record.readLong(idx);
+  private int getRefId(final IRecordReader recordReader) {
+    return recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__PARENT_REF_ID);
   }
 
   private String getChunkClassName(
-      final IRecordReader record,
-      final IDictionaryProvider dictionaryProvider,
-      final IStoreMetadata storeMetadata) {
-    final int partitionIdx = storeMetadata.getFieldIndex(DatastoreConstants.CHUNK__CLASS);
-    final int idx = record.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
+      final IRecordReader recordReader, final IDictionaryProvider dictionaryProvider) {
+    final int partitionIdx = getPartition(recordReader);
+    final int idx = recordReader.getFormat().getFieldIndex(DatastoreConstants.CHUNK__CLASS);
     @SuppressWarnings("unchecked")
     final IWritableDictionary<Object> refIdDictionary =
         (IWritableDictionary<Object>) dictionaryProvider.getDictionary(partitionIdx);
 
-    return (String) refIdDictionary.read((Integer) record.read(idx));
+    return (String) refIdDictionary.read((Integer) recordReader.read(idx));
   }
 
   private IWritableRecord copyRecord(final IRecordReader record) {
@@ -179,5 +159,13 @@ public class ChunkRecordHandler implements IDuplicateKeyHandler {
     }
 
     return newRecord;
+  }
+
+  @Override
+  public IRecordReader selectDuplicateKeyInDatastore(
+      final IRecordReader duplicateRecord,
+      final IRecordReader previousRecord,
+      final IKeyEventContext keyEventContext) {
+    return createMergedRecord(duplicateRecord, previousRecord, keyEventContext);
   }
 }

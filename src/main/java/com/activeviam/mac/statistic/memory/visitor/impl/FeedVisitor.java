@@ -7,23 +7,25 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
+import com.activeviam.tech.records.api.IRecordFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +41,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
 
   private static final Logger LOGGER = Logger.getLogger(Loggers.LOADING);
 
-  private final IDatastoreSchemaMetadata storageMetadata;
+  private final IDatabaseSchema storageMetadata;
   private final IOpenedTransaction transaction;
   private final String dumpName;
   private static final AtomicLong chunkIdGenerator = new AtomicLong(0L);
@@ -52,9 +54,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    * @param dumpName name of the import being currently executed
    */
   public FeedVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
-      final IOpenedTransaction tm,
-      final String dumpName) {
+      final IDatabaseSchema storageMetadata, final IOpenedTransaction tm, final String dumpName) {
     this.storageMetadata = storageMetadata;
     this.transaction = tm;
     this.dumpName = dumpName;
@@ -73,8 +73,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     transaction.add(store, tuple);
   }
 
-  static Object[] buildChunkTupleFrom(final IRecordFormat format, final ChunkStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+  static Object[] buildChunkTupleFrom(final IDataTable format, final ChunkStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK_ID)] = getChunkId(stat);
     tuple[format.getFieldIndex(DatastoreConstants.CHUNK__CLASS)] =
         stat.getAttribute(ATTR_NAME_CREATOR_CLASS).asText();
@@ -124,7 +124,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
       final ChunkStatistic statistic,
       final IOpenedTransaction transaction,
       final Collection<String> fields,
-      final IRecordFormat format,
+      final IDataTable format,
       final Object... tuple) {
     if (fields == null || fields.isEmpty()) {
       FeedVisitor.add(statistic, transaction, DatastoreConstants.CHUNK_STORE, tuple);
@@ -138,12 +138,12 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   static Object[] buildDictionaryTupleFrom(
-      final IRecordFormat format,
+      final IDataTable format,
       final long dictionaryId,
       final String dictionaryClass,
       final int dictionarySize,
       final int dictionaryOrder) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+    final Object[] tuple = new Object[format.getFields().size()];
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_ID)] = dictionaryId;
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_CLASS)] = dictionaryClass;
     tuple[format.getFieldIndex(DatastoreConstants.DICTIONARY_SIZE)] = dictionarySize;
@@ -152,12 +152,12 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   static Object[] buildVersionTupleFrom(
-      final IRecordFormat format,
+      final IDataTable format,
       final IMemoryStatistic statistic,
       final String dumpName,
       final long epochId,
       final String branch) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+    final Object[] tuple = new Object[format.getFields().size()];
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__DUMP_NAME, dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, epochId);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__BRANCH_NAME, branch);
@@ -165,15 +165,15 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   /**
-   * Visits all the children of the given {@link IMemoryStatistic}.
+   * Visits all the children of the given {@link AMemoryStatistic}.
    *
    * @param visitor the visitor to use to visit the children
    * @param statistic The statistics whose children to visit
    */
   protected static void visitChildren(
-      final IMemoryStatisticVisitor<?> visitor, final IMemoryStatistic statistic) {
+      final IMemoryStatisticVisitor<?> visitor, final AMemoryStatistic statistic) {
     if (statistic.getChildren() != null) {
-      for (final IMemoryStatistic child : statistic.getChildren()) {
+      for (final AMemoryStatistic child : statistic.getChildren()) {
         child.accept(visitor);
       }
     }
@@ -208,9 +208,8 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
     }
   }
 
-  static IRecordFormat getRecordFormat(
-      final IDatastoreSchemaMetadata storageMetadata, final String storeName) {
-    return storageMetadata.getStoreMetadata(storeName).getStoreFormat().getRecordFormat();
+  static IDataTable getRecordFormat(final IDatabaseSchema storageMetadata, final String storeName) {
+    return storageMetadata.getTable(storeName);
   }
 
   /**
@@ -222,7 +221,7 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
    * @param value data to insert
    */
   protected static void setTupleElement(
-      Object[] tuple, IRecordFormat format, String field, final Object value) {
+      Object[] tuple, IDataTable format, String field, final Object value) {
     if (value == null) {
       throw new RuntimeException("Expected a non-null value for field " + field);
     }
@@ -246,17 +245,6 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
   }
 
   @Override
-  public Void visit(final IMemoryStatistic memoryStatistic) {
-    System.err.println(
-        "Unexpected type of statistics : "
-            + memoryStatistic
-            + " which is a "
-            + memoryStatistic.getClass().getSimpleName());
-    visitChildren(this, memoryStatistic);
-    return null;
-  }
-
-  @Override
   public Void visit(DefaultMemoryStatistic stat) {
     switch (stat.getName()) {
       case MemoryStatisticConstants.STAT_NAME_DATASTORE:
@@ -277,6 +265,17 @@ public class FeedVisitor implements IMemoryStatisticVisitor<Void> {
         visitChildren(this, stat);
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    System.err.println(
+        "Unexpected type of statistics : "
+            + memoryStatistic
+            + " which is a "
+            + memoryStatistic.getClass().getSimpleName());
+    visitChildren(this, memoryStatistic);
     return null;
   }
 

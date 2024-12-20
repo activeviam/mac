@@ -17,50 +17,52 @@ import static com.activeviam.mac.memory.DatastoreConstants.OWNER__OWNER;
 import static com.activeviam.mac.memory.DatastoreConstants.VERSION__EPOCH_ID;
 import static com.qfs.chunk.impl.MemoryTestUtils.resetAllThreadsVectorAllocator;
 
-import com.activeviam.builders.StartBuilding;
-import com.activeviam.copper.HierarchyIdentifier;
-import com.activeviam.copper.api.Copper;
+import com.activeviam.activepivot.copper.api.Copper;
+import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
+import com.activeviam.activepivot.core.impl.api.description.impl.ActivePivotManagerDescription;
+import com.activeviam.activepivot.core.impl.internal.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
+import com.activeviam.activepivot.core.impl.internal.test.util.PivotTestUtils;
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
+import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
+import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
+import com.activeviam.activepivot.core.intf.api.description.IMessengerDefinition;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.ICondition;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.api.types.ILiteralType;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
+import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.NoTransactionException;
+import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
+import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.activeviam.pivot.utils.ApplicationInTests;
+import com.activeviam.tech.chunks.api.types.TypeValues;
+import com.activeviam.tech.mvcc.api.policy.KeepAllEpochPolicy;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
+import com.activeviam.tech.test.internal.junit.resources.Resources;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
+import com.activeviam.tech.test.internal.util.FileTestUtil;
+import com.activeviam.tech.test.internal.util.ThrowingLambda;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.qfs.condition.ICondition;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.literal.ILiteralType;
-import com.qfs.messenger.impl.LocalMessenger;
-import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.multiversion.impl.KeepAllEpochPolicy;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.NoTransactionException;
-import com.qfs.store.TypeValues;
-import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.store.transaction.ITransactionManager;
-import com.qfs.util.impl.QfsFileTestUtils;
-import com.qfs.util.impl.ThrowingLambda;
-import com.qfs.util.impl.ThrowingLambda.ThrowingBiConsumer;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.definitions.impl.ActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,8 +83,9 @@ import java.util.stream.StreamSupport;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith({ResourcesExtension.class})
 public abstract class ATestMemoryStatistic {
 
   public static final int STORE_PEOPLE_COUNT = 10;
@@ -95,7 +98,7 @@ public abstract class ATestMemoryStatistic {
 
   public static final int MAX_GC_STEPS = 10;
 
-  @RegisterExtension public final LocalResourcesExtension resources = new LocalResourcesExtension();
+  @Resources public ResourcesHolder resources;
 
   protected static final String VECTOR_STORE_NAME = "vectorStore";
 
@@ -331,7 +334,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   void createMinimalApplication(
-      final ThrowingLambda.ThrowingBiConsumer<IDatastore, IActivePivotManager> actions) {
+      final ThrowingLambda.ThrowingBiConsumer<IInternalDatastore, IActivePivotManager> actions) {
 
     final IDatastoreSchemaDescription datastoreSchema =
         StartBuilding.datastoreSchema()
@@ -381,7 +384,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(datastoreSchema)
             .withManager(userManagerDescription)
@@ -392,7 +395,8 @@ public abstract class ATestMemoryStatistic {
   }
 
   /**
-   * Fills the datastore created by {@link #createMinimalApplication(ThrowingBiConsumer)}.
+   * Fills the datastore created by {@link
+   * #createMinimalApplication(ThrowingLambda.ThrowingBiConsumer)}.
    *
    * @param datastore datastore to fill
    */
@@ -576,16 +580,16 @@ public abstract class ATestMemoryStatistic {
 
   static IMemoryAnalysisService createService(
       final IDatastore datastore, final IActivePivotManager manager) {
-    final Path dumpDirectory =
-        QfsFileTestUtils.createTempDirectory(TestMemoryStatisticLoading.class);
+    final Path dumpDirectory = FileTestUtil.createTempDirectory(TestMemoryStatisticLoading.class);
     return new MemoryAnalysisService(datastore, manager, dumpDirectory);
   }
 
-  IDatastore createAnalysisDatastore() {
+  IInternalDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc =
         new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
 
-    final IDatastore datastore = new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    final IInternalDatastore datastore =
+        new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
     resources.register(datastore);
     return datastore;
   }
@@ -705,7 +709,7 @@ public abstract class ATestMemoryStatistic {
    * Builds a minimal application with one field <i>id</i> in the store <i>A</i>, loaded into a cube
    * <i>Cube</i> with a single hierarchy <i>id</i>.
    */
-  ApplicationInTests<IDatastore> createMicroApplication() {
+  ApplicationInTests<IInternalDatastore> createMicroApplication() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -733,7 +737,7 @@ public abstract class ATestMemoryStatistic {
                     .build())
             .build();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(schemaDescription)
             .withManager(userManagerDescription)
@@ -744,7 +748,7 @@ public abstract class ATestMemoryStatistic {
     return application;
   }
 
-  ApplicationInTests<IDatastore> createMicroApplicationWithIndexedFields() {
+  ApplicationInTests<IInternalDatastore> createMicroApplicationWithIndexedFields() {
     final IDatastoreSchemaDescription schemaDescription =
         StartBuilding.datastoreSchema()
             .withStore(
@@ -778,7 +782,7 @@ public abstract class ATestMemoryStatistic {
     final IActivePivotManagerDescription userManagerDescription =
         new ActivePivotManagerDescription();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withDatastore(schemaDescription)
             .withEpochPolicy(new KeepAllEpochPolicy())
@@ -927,7 +931,7 @@ public abstract class ATestMemoryStatistic {
                     .withClusterDefinition()
                     .withClusterId(clusterName)
                     .withMessengerDefinition()
-                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withKey(IMessengerDefinition.LOCAL_PLUGIN_KEY)
                     .withNoProperty()
                     .end()
                     .withApplicationId("app")
@@ -948,7 +952,7 @@ public abstract class ATestMemoryStatistic {
                     .withClusterDefinition()
                     .withClusterId(clusterName)
                     .withMessengerDefinition()
-                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withKey(IMessengerDefinition.LOCAL_PLUGIN_KEY)
                     .withNoProperty()
                     .end()
                     .withApplication("app")
@@ -961,7 +965,7 @@ public abstract class ATestMemoryStatistic {
                     .withClusterDefinition()
                     .withClusterId(clusterName)
                     .withMessengerDefinition()
-                    .withKey(LocalMessenger.PLUGIN_KEY)
+                    .withKey(IMessengerDefinition.LOCAL_PLUGIN_KEY)
                     .withNoProperty()
                     .end()
                     .withApplication("app")
@@ -1225,12 +1229,13 @@ public abstract class ATestMemoryStatistic {
   }
 
   IDatastore assertLoadsCorrectly(
-      final Collection<? extends IMemoryStatistic> statistics, Class<?> klass) {
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+      final Collection<? extends AMemoryStatistic> statistics, Class<?> klass) {
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
 
     feedMonitoringApplication(monitoringDatastore, statistics, "storeA");
 
-    final StatisticsSummary statisticsSummary = computeStatisticsSummary(statistics, klass);
+    final MemoryStatisticsTestUtils.StatisticsSummary statisticsSummary =
+        computeStatisticsSummary(statistics, klass);
 
     assertDatastoreConsistentWithSummary(monitoringDatastore, statisticsSummary);
 
@@ -1240,10 +1245,10 @@ public abstract class ATestMemoryStatistic {
     return monitoringDatastore;
   }
 
-  protected static StatisticsSummary computeStatisticsSummary(
-      final Collection<? extends IMemoryStatistic> statistics, final Class<?> creatorClass) {
+  protected static MemoryStatisticsTestUtils.StatisticsSummary computeStatisticsSummary(
+      final Collection<? extends AMemoryStatistic> statistics, final Class<?> creatorClass) {
     return MemoryStatisticsTestUtils.getStatisticsSummary(
-        new TestMemoryStatisticBuilder()
+        new TestMemoryStatisticBuilder(creatorClass.getName())
             .withCreatorClasses(creatorClass)
             .withChildren(statistics)
             .build());
@@ -1339,7 +1344,8 @@ public abstract class ATestMemoryStatistic {
    * @param statisticsSummary The statistics summary we want to compare the datastore with.
    */
   static void assertDatastoreConsistentWithSummary(
-      IDatastore monitoringDatastore, StatisticsSummary statisticsSummary) {
+      IDatastore monitoringDatastore,
+      MemoryStatisticsTestUtils.StatisticsSummary statisticsSummary) {
 
     final Map<Long, VersionedChunkInfo> latestChunkInfos =
         extractLatestChunkInfos(monitoringDatastore);
@@ -1402,31 +1408,31 @@ public abstract class ATestMemoryStatistic {
     }
   }
 
-  static IMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {
+  static AMemoryStatistic loadMemoryStatFromFolder(final Path folderPath) {
     return loadMemoryStatFromFolder(folderPath, __ -> true);
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) {
+  static Collection<AMemoryStatistic> loadDatastoreMemoryStatFromFolder(final Path folderPath) {
     final IMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
             path ->
                 path.getFileName().toString().startsWith(MemoryAnalysisService.STORE_FILE_PREFIX));
-    return (Collection<IMemoryStatistic>) allStat.getChildren();
+    return (Collection<AMemoryStatistic>) allStat.getChildren();
   }
 
   @SuppressWarnings("unchecked")
-  static Collection<IMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) {
-    final IMemoryStatistic allStat =
+  static Collection<AMemoryStatistic> loadPivotMemoryStatFromFolder(final Path folderPath) {
+    final AMemoryStatistic allStat =
         loadMemoryStatFromFolder(
             folderPath,
             path ->
                 path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
-    return (Collection<IMemoryStatistic>) allStat.getChildren();
+    return (Collection<AMemoryStatistic>) allStat.getChildren();
   }
 
-  static IMemoryStatistic loadMemoryStatFromFolder(
+  static AMemoryStatistic loadMemoryStatFromFolder(
       final Path folderPath, final Predicate<Path> filter) {
     final Stream<Path> fileList;
     try {
@@ -1434,7 +1440,7 @@ public abstract class ATestMemoryStatistic {
     } catch (IOException e) {
       throw new IllegalArgumentException("Cannot list files under " + folderPath, e);
     }
-    final List<IMemoryStatistic> childStats =
+    final List<AMemoryStatistic> childStats =
         fileList
             .filter(filter)
             .map(
@@ -1445,6 +1451,7 @@ public abstract class ATestMemoryStatistic {
                     throw new RuntimeException("Cannot read " + file, e);
                   }
                 })
+            .peek(stat -> stat.setParent(null))
             .collect(Collectors.toList());
 
     return new DefaultMemoryStatistic.Builder()
@@ -1454,10 +1461,10 @@ public abstract class ATestMemoryStatistic {
   }
 
   public static void feedMonitoringApplication(
-      final IDatastore monitoringDatastore,
-      final Collection<? extends IMemoryStatistic> stats,
+      final IInternalDatastore monitoringDatastore,
+      final Collection<? extends AMemoryStatistic> stats,
       final String dumpName) {
-    new AnalysisDatastoreFeeder(dumpName).loadInto(monitoringDatastore, stats.stream());
+    new AnalysisDatastoreFeeder(dumpName, monitoringDatastore).loadInto(stats.stream());
   }
 
   protected static class VersionedChunkInfo {

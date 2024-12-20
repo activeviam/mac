@@ -7,18 +7,17 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
-import static com.qfs.monitoring.statistic.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_CREATOR_CLASS;
+import static com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID;
 
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.private_.structure.impl.StructureDictionaryManager;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.store.structure.impl.StructureDictionaryManager;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import java.util.logging.Logger;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,7 +39,7 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
    * @param dumpName Name of the import
    */
   public AFeedVisitorWithDictionary(
-      IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
+      IOpenedTransaction transaction, IDatabaseSchema storageMetadata, String dumpName) {
     super(transaction, storageMetadata, dumpName);
   }
 
@@ -88,7 +87,7 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
       if (!this.dictionaryAttributes
           .getDictionaryClass()
           .equals(StructureDictionaryManager.class.getName())) {
-        final IRecordFormat format = getDictionaryFormat(this.storageMetadata);
+        final var format = getDictionaryFormat(this.storageMetadata);
         final Object[] tuple =
             FeedVisitor.buildDictionaryTupleFrom(
                 format,
@@ -114,12 +113,16 @@ public abstract class AFeedVisitorWithDictionary<R> extends AFeedVisitor<R> {
 
     /** An instance representing no dictionary (all attributes set to {@code null}. */
     public static final DictionaryAttributes NONE = new DictionaryAttributes();
+
     /** ID of the current dictionary. */
     protected Long dictionaryId;
+
     /** Class of the current dictionary. */
     protected String dictionaryClass;
+
     /** Size of the current dictionary. */
     protected Integer dictionarySize;
+
     /** Order of the current dictionary (i.e. base-2 log of its size). */
     protected Integer dictionaryOrder;
 

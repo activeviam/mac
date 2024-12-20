@@ -9,29 +9,30 @@ package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import static com.activeviam.mac.statistic.memory.visitor.impl.DebugVisitor.DEBUG;
 
-import com.activeviam.copper.HierarchyIdentifier;
-import com.activeviam.copper.LevelIdentifier;
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.activepivot.core.impl.internal.impl.ActivePivotManager;
+import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
+import com.activeviam.activepivot.core.intf.api.cube.metadata.LevelIdentifier;
+import com.activeviam.activepivot.dist.impl.api.cube.IMultiVersionDistributedActivePivot;
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.qfs.distribution.IMultiVersionDistributedActivePivot;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
-import com.quartetfs.biz.pivot.impl.ActivePivotManager;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -44,28 +45,40 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
 
   /** The export date, found on the first statistics we read. */
   protected Instant current = null;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId = null;
+
   /** The branch of the pivot we're currently reading statistics. */
   protected String branch = null;
+
   /** Current {@link ActivePivotManager}. */
   protected String manager;
+
   /** Aggregate provider being currently visited. */
   protected Long providerId;
+
   /** Partition being currently visited. */
   protected Integer partition;
+
   /** Dimension being currently visited. */
   protected String dimension;
+
   /** Hierarchy being currently visited. */
   protected String hierarchy;
+
   /** Level being currently visited. */
   protected String level;
+
   /** Type of the aggregate Provider being currently visited. */
   protected ProviderComponentType providerComponentType;
+
   /** Type of the root structure. */
   protected ParentType rootComponent;
+
   /** Type of the direct parent structure. */
   protected ParentType directParentType;
+
   /** Id of the direct parent structure. */
   protected String directParentId;
 
@@ -80,9 +93,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    * @param dumpName name of the current import
    */
   public PivotFeederVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
-      final IOpenedTransaction tm,
-      final String dumpName) {
+      final IDatabaseSchema storageMetadata, final IOpenedTransaction tm, final String dumpName) {
     super(tm, storageMetadata, dumpName);
   }
 
@@ -99,8 +110,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private static Object[] buildProviderTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+      final IDataTable format, final IMemoryStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
 
     final IStatisticAttribute indexAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_NAME);
@@ -119,8 +130,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private static Object[] buildLevelTupleFrom(
-      final IRecordFormat format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFieldCount()];
+      final IDataTable format, final IMemoryStatistic stat) {
+    final Object[] tuple = new Object[format.getFields().size()];
 
     tuple[format.getFieldIndex(DatastoreConstants.LEVEL__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
     tuple[format.getFieldIndex(DatastoreConstants.LEVEL__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
@@ -149,40 +160,38 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
    *     MemoryStatisticConstants#STAT_NAME_PIVOT} or {@link
    *     MemoryStatisticConstants#STAT_NAME_MANAGER} named statistic
    */
-  public void startFrom(final IMemoryStatistic stat) {
+  public void startFrom(final AMemoryStatistic stat) {
+    if (this.current != null) {
+      throw new IllegalArgumentException("Cannot reuse a feed instance");
+    }
+    final IStatisticAttribute dateAtt = stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
+    this.current =
+        Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
+    readEpochAndBranchIfAny(stat);
+    if (this.epochId == null && stat.getName().equals(MemoryStatisticConstants.STAT_NAME_MANAGER)) {
+      // Look amongst the children to find the epoch
+      findEpoch(stat);
+    }
 
-    if (this.current == null) {
-      final IStatisticAttribute dateAtt =
-          stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DATE);
+    FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
 
-      this.current =
-          Instant.ofEpochSecond(null != dateAtt ? dateAtt.asLong() : System.currentTimeMillis());
-
-      readEpochAndBranchIfAny(stat);
-      if (this.epochId == null
-          && stat.getName().equals(MemoryStatisticConstants.STAT_NAME_MANAGER)) {
-        // Look amongst the children to find the epoch
-        for (final IMemoryStatistic child : stat.getChildren()) {
-          readEpochAndBranchIfAny(child);
-          if (this.epochId != null) {
-            break;
-          }
-        }
+    try {
+      stat.accept(this);
+    } catch (final RuntimeException e) {
+      if (Boolean.TRUE.equals(DEBUG)) {
+        final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
+        printer.print();
       }
+      throw e;
+    }
+  }
 
-      FeedVisitor.includeApplicationInfoIfAny(this.transaction, this.current, this.dumpName, stat);
-
-      try {
-        stat.accept(this);
-      } catch (final RuntimeException e) {
-        if (Boolean.TRUE.equals(DEBUG)) {
-          final StatisticTreePrinter printer = DebugVisitor.createDebugPrinter(stat);
-          printer.print();
-        }
-        throw e;
+  private void findEpoch(AMemoryStatistic stat) {
+    for (final IMemoryStatistic child : stat.getChildren()) {
+      readEpochAndBranchIfAny(child);
+      if (this.epochId != null) {
+        break;
       }
-    } else {
-      throw new RuntimeException("Cannot reuse a feed instance");
     }
   }
 
@@ -198,8 +207,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
       case MemoryStatisticConstants.STAT_NAME_PIVOT:
         processPivot(stat);
         break;
-        // Unless said otherwise we assume all providers are partial,safer than the
-        // other way
+      // Unless said otherwise we assume all providers are partial,safer than the
+      // other way
       case MemoryStatisticConstants.STAT_NAME_PROVIDER:
       case MemoryStatisticConstants.STAT_NAME_PARTIAL_PROVIDER:
       case MemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
@@ -229,6 +238,12 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
+    return null;
+  }
+
+  @Override
   public Void visit(final ChunkSetStatistic stat) {
     return new ChunkSetStatisticVisitor(
             this.storageMetadata,
@@ -252,7 +267,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   @Override
   public Void visit(final ChunkStatistic stat) {
 
-    final IRecordFormat format = getChunkFormat(this.storageMetadata);
+    final var format = getChunkFormat(this.storageMetadata);
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, stat);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.CHUNK__DUMP_NAME, this.dumpName);
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.VERSION__EPOCH_ID, this.epochId);
@@ -344,7 +359,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
         "An ActivePivot cannot contain indices. Received: " + stat);
   }
 
-  private void processManager(final IMemoryStatistic stat) {
+  private void processManager(final AMemoryStatistic stat) {
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_MANAGER_ID),
@@ -356,7 +371,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.manager = null;
   }
 
-  private void processMultiVersionPivot(final IMemoryStatistic stat) {
+  private void processMultiVersionPivot(final AMemoryStatistic stat) {
     final IStatisticAttribute managerAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_MANAGER_ID);
     if (managerAttr != null) {
@@ -370,11 +385,11 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     }
   }
 
-  private void processPivot(final IMemoryStatistic stat) {
+  private void processPivot(final AMemoryStatistic stat) {
     readEpochAndBranchIfAny(stat);
 
     if (readEpochAndBranchIfAny(stat)) {
-      final IRecordFormat versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
+      final var versionStoreFormat = getVersionStoreFormat(this.storageMetadata);
       final Object[] tuple =
           FeedVisitor.buildVersionTupleFrom(
               versionStoreFormat, stat, this.dumpName, this.epochId, this.branch);
@@ -409,8 +424,8 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.branch = null;
   }
 
-  private void processProvider(final IMemoryStatistic stat) {
-    final IRecordFormat format = getProviderFormat(this.storageMetadata);
+  private void processProvider(final AMemoryStatistic stat) {
+    final var format = getProviderFormat(this.storageMetadata);
     final Object[] tuple = buildProviderTupleFrom(format, stat);
 
     FeedVisitor.setTupleElement(
@@ -427,7 +442,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.providerId = null;
   }
 
-  private void processPartition(final IMemoryStatistic stat) {
+  private void processPartition(final AMemoryStatistic stat) {
     final IStatisticAttribute idAttr =
         Objects.requireNonNull(
             stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_PROVIDER_PARTITION_ID),
@@ -440,26 +455,26 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.partition = null;
   }
 
-  private void processHierarchy(final IMemoryStatistic stat) {
+  private void processHierarchy(final AMemoryStatistic stat) {
     String hierarchyDescription =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_HIERARCHY_ID).asText();
     HierarchyIdentifier hc = HierarchyIdentifier.fromDescription(hierarchyDescription);
-    this.dimension = hc.dimension;
-    this.hierarchy = hc.hierarchy;
+    this.dimension = hc.getDimensionName();
+    this.hierarchy = hc.getHierarchyName();
 
     visitChildren(stat);
 
     this.hierarchy = null;
   }
 
-  private void processLevel(final IMemoryStatistic stat) {
-    final IRecordFormat format = getLevelFormat(this.storageMetadata);
+  private void processLevel(final AMemoryStatistic stat) {
+    final var format = getLevelFormat(this.storageMetadata);
     final Object[] tuple = buildLevelTupleFrom(format, stat);
 
     String levelDescription =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
     LevelIdentifier lc = LevelIdentifier.fromDescription(levelDescription);
-    this.level = lc.level;
+    this.level = lc.getLevelName();
 
     FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MANAGER_ID, this.manager);
     FeedVisitor.setTupleElement(
@@ -493,7 +508,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private void processProviderComponent(
-      final IMemoryStatistic stat, final ProviderComponentType type) {
+      final AMemoryStatistic stat, final ProviderComponentType type) {
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
     this.directParentType = getCorrespondingParentType(type);
@@ -509,7 +524,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.providerComponentType = null;
   }
 
-  private void processChunkObject(final IMemoryStatistic statistic) {
+  private void processChunkObject(final AMemoryStatistic statistic) {
     if (VectorStatisticVisitor.isVector(statistic)) {
       final VectorStatisticVisitor subVisitor =
           new VectorStatisticVisitor(
@@ -584,9 +599,9 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     final IStatisticAttribute branchAttr =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_BRANCH);
     if (branchAttr != null) {
-      final String branch = branchAttr.asText();
-      assert this.branch == null || this.branch.equals(branch);
-      this.branch = branch;
+      final String branchAttrText = branchAttr.asText();
+      assert this.branch == null || this.branch.equals(branchAttrText);
+      this.branch = branchAttrText;
       epochOrBranchChanged = true;
     }
 

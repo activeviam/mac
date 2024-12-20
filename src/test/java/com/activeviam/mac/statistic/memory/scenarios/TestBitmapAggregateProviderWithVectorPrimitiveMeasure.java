@@ -7,26 +7,27 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
-import com.activeviam.builders.StartBuilding;
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
+import com.activeviam.activepivot.core.impl.internal.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
+import com.activeviam.activepivot.core.impl.internal.test.util.PivotTestUtils;
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
+import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.types.ILiteralType;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.pivot.utils.ApplicationInTests;
-import com.qfs.desc.IDatastoreSchemaDescription;
-import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.literal.ILiteralType;
-import com.qfs.monitoring.memory.impl.OnHeapPivotMemoryQuantifierPlugin;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.build.impl.UnitTestDatastoreBuilder;
-import com.qfs.util.impl.QfsFileTestUtils;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.biz.pivot.definitions.IActivePivotManagerDescription;
-import com.quartetfs.biz.pivot.test.util.PivotTestUtils;
-import com.quartetfs.fwk.AgentException;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.test.internal.util.FileTestUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,19 +37,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * The scenario this test produces created a situation where the dictionary used by the point index
  * of the aggregate store of the cube would leak into subsequent chunks.
  */
+@ExtendWith({ResourcesExtension.class})
 public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATestMemoryStatistic {
 
   protected static final Path TEMP_DIRECTORY =
-      QfsFileTestUtils.createTempDirectory(
-          TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
+      FileTestUtil.createTempDirectory(TestBitmapAggregateProviderWithVectorPrimitiveMeasure.class);
   protected static final int RECORD_COUNT = 100;
-  @RegisterExtension protected LocalResourcesExtension resources = new LocalResourcesExtension();
   protected IDatastore datastore;
   protected IActivePivotManager manager;
   protected Path statisticsPath;
@@ -133,24 +133,25 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
 
   @Test
   public void testLoading() throws IOException {
-    final Collection<IMemoryStatistic> memoryStatistics = loadMemoryStatistic(this.statisticsPath);
+    final Collection<AMemoryStatistic> memoryStatistics = loadMemoryStatistic(this.statisticsPath);
 
-    final IDatastore analysisDatastore = createAnalysisDatastore();
+    final IInternalDatastore analysisDatastore = createAnalysisDatastore();
     Assertions.assertDoesNotThrow(
         () ->
             ATestMemoryStatistic.feedMonitoringApplication(
                 analysisDatastore, memoryStatistics, "test"));
   }
 
-  protected IDatastore createAnalysisDatastore() {
+  protected IInternalDatastore createAnalysisDatastore() {
     final IDatastoreSchemaDescription desc =
         new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
-    final IDatastore datastore = new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    final IInternalDatastore datastore =
+        new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
     this.resources.register(datastore);
     return datastore;
   }
 
-  protected Collection<IMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
+  protected Collection<AMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
     return Files.list(path)
         .map(
             file -> {

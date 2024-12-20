@@ -7,8 +7,8 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import java.util.Collection;
 
 /**
@@ -21,8 +21,10 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitorWithDictionar
 
   /** Names of the currently visited fields. */
   protected Collection<String> fields;
+
   /** ID of the current index. */
   protected Long indexId;
+
   /** ID of the current reference. */
   protected Long referenceId;
 
@@ -34,7 +36,7 @@ public abstract class ADatastoreFeedVisitor<R> extends AFeedVisitorWithDictionar
    * @param dumpName dumpName of the ongoing import
    */
   public ADatastoreFeedVisitor(
-      IOpenedTransaction transaction, IDatastoreSchemaMetadata storageMetadata, String dumpName) {
+      IOpenedTransaction transaction, IDatabaseSchema storageMetadata, String dumpName) {
     super(transaction, storageMetadata, dumpName);
   }
 }

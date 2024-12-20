@@ -6,8 +6,8 @@
  */
 package com.activeviam.mac.tools;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
-import com.qfs.pivot.monitoring.impl.MemoryStatisticSerializerUtil;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryStatisticSerializerUtil;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;

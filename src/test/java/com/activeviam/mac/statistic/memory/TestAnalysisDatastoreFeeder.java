@@ -7,32 +7,32 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.IDatabaseVersion;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.query.impl.DatastoreQueryHelper;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
-import com.activeviam.pivot.utils.ApplicationInTests;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.multiversion.IEpochHistory;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.query.impl.DatastoreQueryHelper;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.store.transaction.ITransactionManager;
-import com.quartetfs.biz.pivot.IActivePivotManager;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.mvcc.api.IEpochHistory;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.nio.file.Path;
@@ -48,14 +48,14 @@ import org.junit.jupiter.api.Test;
 public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
   private ApplicationInTests<IDatastore> distributedMonitoredApp;
-  private IMemoryStatistic appStatistics;
-  private IMemoryStatistic distributedAppHeadStatistics;
+  private AMemoryStatistic appStatistics;
+  private AMemoryStatistic distributedAppHeadStatistics;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach
@@ -83,7 +83,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   /** Ensures the same statistics can be loaded in different dump names. */
   @Test
   public void testDifferentDumps() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -105,7 +105,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
    */
   @Test
   public void testEpochReplicationForAlreadyExistingChunks() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     // load a cluster's single epoch statistics
     ATestMemoryStatistic.feedMonitoringApplication(
@@ -163,7 +163,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
 
   @Test
   public void testEpochReplicationForAlreadyExistingEpochs() {
-    final IDatastore monitoringDatastore = this.monitoringApp.getDatabase();
+    final IInternalDatastore monitoringDatastore = this.monitoringApp.getDatabase();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringDatastore, List.of(this.appStatistics), "app");
@@ -290,7 +290,7 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
-    final ApplicationInTests<IDatastore> application =
+    final ApplicationInTests<IInternalDatastore> application =
         ApplicationInTests.builder()
             .withManager(config.managerDescription())
             .withDatastore(schemaConfig.datastoreSchemaDescription())

@@ -7,63 +7,71 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import com.activeviam.mac.Workaround;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.qfs.fwk.services.InternalServiceException;
-import com.qfs.monitoring.statistic.IStatisticAttribute;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.impl.ChunkSet;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.chunks.internal.chunkset.impl.ChunkSet;
+import com.activeviam.tech.core.api.exceptions.service.InternalServiceException;
+import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
- * class for {@link ChunkSetStatistic}.
+ * Implementation of the {@link
+ * com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor} class for {@link
+ * ChunkSetStatistic}.
  *
  * @author ActiveViam
  */
 public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
+  protected final IDataTable chunkRecordFormat;
 
   /** The export date, found on the first statistics we read. */
   protected final Instant current;
 
   /** Type of the root structure. */
   protected final ParentType rootComponent;
+
   /** Type of the direct parent structure. */
   protected final ParentType directParentType;
+
   /** id of the direct parent structure. */
   protected final String directParentId;
+
   /** Aggregate provider being currently visited. */
   protected final Long providerId;
 
   /** The partition id of the visited statistic. */
   protected final int partitionId;
+
   /** Whether or not to ignore the field attributes of the visited statistics. */
   protected final boolean ignoreFieldSpecifications;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
+
   /**
    * Whether or not the currently visited statistics were flagged as used by the current version.
    */
   protected UsedByVersion usedByVersion;
+
   /** ID of the current {@link ChunkSet}. */
   protected Long chunkSetId = null;
 
@@ -92,7 +100,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
    *     the encountered fields
    */
   public ChunkSetStatisticVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final IOpenedTransaction transaction,
       final String dumpName,
       final Instant current,
@@ -121,11 +129,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
     this.usedByVersion = usedByVersion;
     this.ignoreFieldSpecifications = ignoreFieldSpecifications;
 
-    this.chunkRecordFormat =
-        this.storageMetadata
-            .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    this.chunkRecordFormat = this.storageMetadata.getTable(DatastoreConstants.CHUNK_STORE);
   }
 
   @Override
@@ -136,7 +140,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
     } else if (VectorStatisticVisitor.isVector(memoryStatistic)) {
       @Workaround(jira = "PIVOT-4127", solution = "Support for 5.8.4- versions")
-      final IMemoryStatistic vectorStat = memoryStatistic;
+      final AMemoryStatistic vectorStat = memoryStatistic;
       visitVectorBlock(vectorStat);
     } else if (memoryStatistic
         .getName()
@@ -178,6 +182,12 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       handleUnknownDefaultStatistic(memoryStatistic);
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
     return null;
   }
 
@@ -227,7 +237,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
         this.fields = Collections.singleton(fieldAttribute.asText());
       }
 
-      final IRecordFormat format = this.chunkRecordFormat;
+      final var format = this.chunkRecordFormat;
       final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, chunkStatistic);
 
       FeedVisitor.setTupleElement(
@@ -313,7 +323,7 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
 
   // endregion
 
-  private void visitVectorBlock(final IMemoryStatistic memoryStatistic) {
+  private void visitVectorBlock(final AMemoryStatistic memoryStatistic) {
     final VectorStatisticVisitor subVisitor =
         new VectorStatisticVisitor(
             this.storageMetadata,

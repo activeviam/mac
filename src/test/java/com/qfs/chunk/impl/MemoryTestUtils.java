@@ -1,10 +1,10 @@
 package com.qfs.chunk.impl;
 
 import com.activeviam.mac.Workaround;
-import com.qfs.pool.impl.NamedThread;
-import com.qfs.util.impl.QfsReflection;
-import com.qfs.vector.IVectorAllocator;
-import com.qfs.vector.impl.Vectors;
+import com.activeviam.tech.chunks.api.vectors.IVectorAllocator;
+import com.activeviam.tech.chunks.internal.pool.impl.NamedThread;
+import com.activeviam.tech.chunks.internal.vectors.impl.Vectors;
+import com.activeviam.tech.test.internal.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
@@ -24,16 +24,16 @@ public class MemoryTestUtils {
     final int nbrActives = Thread.activeCount();
     final Thread[] allThreads = new Thread[nbrActives * 2];
     final Field directAllocatorsField =
-        QfsReflection.findField(NamedThread.class, "directVectorAllocators");
+        ReflectionUtil.findField(NamedThread.class, "directVectorAllocators");
     final Field transientAllocatorsField =
-        QfsReflection.findField(NamedThread.class, "transientVectorAllocators");
+        ReflectionUtil.findField(NamedThread.class, "transientVectorAllocators");
     Thread.enumerate(allThreads);
     for (final Thread t : allThreads) {
       if (t instanceof NamedThread) {
         final IVectorAllocator[] directAllocators =
-            QfsReflection.getFieldValue(directAllocatorsField, t);
+            ReflectionUtil.getFieldValue(directAllocatorsField, t);
         final IVectorAllocator[] transientAllocators =
-            QfsReflection.getFieldValue(transientAllocatorsField, t);
+            ReflectionUtil.getFieldValue(transientAllocatorsField, t);
         Stream.concat(Arrays.stream(directAllocators), Arrays.stream(transientAllocators))
             .filter(Objects::nonNull)
             .forEach(

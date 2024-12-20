@@ -8,7 +8,7 @@
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

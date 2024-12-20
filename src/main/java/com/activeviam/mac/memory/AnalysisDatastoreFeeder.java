@@ -7,7 +7,13 @@
 
 package com.activeviam.mac.memory;
 
+import com.activeviam.database.api.conditions.BaseConditions;
+import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
+import com.activeviam.database.datastore.api.transaction.stats.IDatastoreSchemaTransactionInformation;
 import com.activeviam.mac.Loggers;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.DistributedCubeOwner;
@@ -15,14 +21,9 @@ import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.FeedVisitor;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.IDatastoreSchemaTransactionInformation;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,18 +52,23 @@ public class AnalysisDatastoreFeeder {
    * statistics.
    */
   private final Map<ChunkOwner, SortedSet<Long>> regularEpochsPerOwner;
+
   /**
    * A mapping giving for each distributed owner the epochs that were expressed in their statistics.
    */
   private final Map<ChunkOwner, Set<Long>> distributedEpochsPerOwner;
 
+  final IDatastore datastore;
+
   /**
    * Constructor.
    *
    * @param dumpName the dump name to assign to the statistic
+   * @param datastore
    */
-  public AnalysisDatastoreFeeder(final String dumpName) {
+  public AnalysisDatastoreFeeder(final String dumpName, IDatastore datastore) {
     this.dumpName = dumpName;
+    this.datastore = datastore;
 
     this.datastoreEpochs = new HashSet<>();
     this.regularEpochsPerOwner = new HashMap<>();
@@ -80,12 +86,12 @@ public class AnalysisDatastoreFeeder {
    * @return the record
    */
   private static Object[] generateEpochViewTuple(
-      final IRecordFormat recordFormat,
+      final IDataTable recordFormat,
       final ChunkOwner owner,
       final String dumpName,
       final long baseEpochId,
       final EpochView epochView) {
-    final Object[] tuple = new Object[recordFormat.getFieldCount()];
+    final Object[] tuple = new Object[recordFormat.getFields().size()];
     tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__OWNER)] = owner;
     tuple[recordFormat.getFieldIndex(DatastoreConstants.CHUNK__DUMP_NAME)] = dumpName;
     tuple[recordFormat.getFieldIndex(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID)] = baseEpochId;
@@ -99,13 +105,13 @@ public class AnalysisDatastoreFeeder {
    * @return the result of the transaction
    */
   public Optional<IDatastoreSchemaTransactionInformation> loadInto(
-      final IDatastore datastore, final Stream<? extends IMemoryStatistic> stats) {
+      final Stream<? extends AMemoryStatistic> stats) {
     return datastore.edit(transaction -> loadWithTransaction(transaction, stats));
   }
 
   /** Loads the provided statistics within an open transaction. */
   public void loadWithTransaction(
-      final IOpenedTransaction transaction, final Stream<? extends IMemoryStatistic> stats) {
+      final IOpenedTransaction transaction, final Stream<? extends AMemoryStatistic> stats) {
     stats.forEach(stat -> feedChunk(transaction, stat));
     completeTransaction(transaction);
   }
@@ -115,12 +121,13 @@ public class AnalysisDatastoreFeeder {
    *
    * @param transaction the transaction to add facts to
    */
-  private void feedChunk(final IOpenedTransaction transaction, final IMemoryStatistic statistic) {
+  private void feedChunk(final IOpenedTransaction transaction, final AMemoryStatistic statistic) {
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine("Start feeding the application with " + statistic);
     }
 
-    statistic.accept(new FeedVisitor(transaction.getMetadata(), transaction, this.dumpName));
+    statistic.accept(
+        new FeedVisitor(this.datastore.getCurrentSchema(), transaction, this.dumpName));
 
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine("Application processed " + statistic);
@@ -139,15 +146,17 @@ public class AnalysisDatastoreFeeder {
    * @param transaction the transaction to collect the epochs from
    */
   private void collectEpochsFromOpenedTransaction(final IOpenedTransaction transaction) {
-    final ICursor result =
-        transaction
-            .getQueryRunner()
-            .forStore(DatastoreConstants.CHUNK_STORE)
+    final ListQuery query =
+        this.datastore
+            .getQueryManager()
+            .listQuery()
+            .forTable(DatastoreConstants.CHUNK_STORE)
             .withCondition(
                 BaseConditions.equal(
                     FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME), this.dumpName))
-            .selecting(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
-            .run();
+            .withTableFields(DatastoreConstants.OWNER__OWNER, DatastoreConstants.VERSION__EPOCH_ID)
+            .toQuery();
+    final ICursor result = transaction.getQueryRunner().listQuery(query).run();
 
     for (final IRecordReader reader : result) {
       final ChunkOwner owner = (ChunkOwner) reader.read(0);
@@ -173,12 +182,8 @@ public class AnalysisDatastoreFeeder {
   }
 
   private void replicateDatastoreEpochs(final IOpenedTransaction transaction) {
-    final IRecordFormat epochViewRecordFormat =
-        transaction
-            .getMetadata()
-            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    final var epochViewRecordFormat =
+        this.datastore.getCurrentSchema().getTable(DatastoreConstants.EPOCH_VIEW_STORE);
 
     for (final var datastoreEpochId : this.datastoreEpochs) {
       for (final ChunkOwner owner : this.regularEpochsPerOwner.keySet()) {
@@ -212,12 +217,8 @@ public class AnalysisDatastoreFeeder {
   }
 
   private void replicateDistributedEpochs(final IOpenedTransaction transaction) {
-    final IRecordFormat epochViewRecordFormat =
-        transaction
-            .getMetadata()
-            .getStoreMetadata(DatastoreConstants.EPOCH_VIEW_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    final var epochViewRecordFormat =
+        this.datastore.getCurrentSchema().getTable(DatastoreConstants.EPOCH_VIEW_STORE);
 
     for (final ChunkOwner owner : this.distributedEpochsPerOwner.keySet()) {
       final Collection<Long> epochs = this.distributedEpochsPerOwner.get(owner);

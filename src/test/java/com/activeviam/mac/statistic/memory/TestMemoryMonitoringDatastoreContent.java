@@ -1,38 +1,40 @@
 package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
+import static com.activeviam.tech.test.internal.assertj.AssertJConditions.identical;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.server.intf.api.observability.IMemoryAnalysisService;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.NoTransactionException;
+import com.activeviam.database.datastore.internal.impl.Datastore;
+import com.activeviam.database.datastore.internal.monitoring.AMemoryStatisticWithPredicate;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
-import com.activeviam.pivot.utils.ApplicationInTests;
+import com.activeviam.tech.chunks.internal.impl.ChunkSingleVector;
+import com.activeviam.tech.chunks.internal.vectors.direct.impl.DirectIntegerVectorBlock;
+import com.activeviam.tech.chunks.internal.vectors.direct.impl.DirectLongVectorBlock;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.dictionaries.api.IDictionary;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.qfs.assertj.QfsConditions;
-import com.qfs.chunk.impl.ChunkSingleVector;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.dic.IDictionary;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.visitor.impl.AMemoryStatisticWithPredicate;
-import com.qfs.service.monitoring.IMemoryAnalysisService;
-import com.qfs.store.IDatastore;
-import com.qfs.store.NoTransactionException;
-import com.qfs.store.impl.Datastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.vector.direct.impl.DirectIntegerVectorBlock;
-import com.qfs.vector.direct.impl.DirectLongVectorBlock;
-import com.quartetfs.fwk.AgentException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +68,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath = analysisService.exportApplication("testLoadComplete");
 
-          final IMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
+          final AMemoryStatistic fullStats = loadMemoryStatFromFolder(exportPath);
           final Datastore monitoringDatastore = (Datastore) createAnalysisDatastore();
 
           IDictionary<Object> dic =
@@ -138,7 +140,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithSingleRecord() {
-    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IInternalDatastore> monitoredApp = createMicroApplication();
 
     // Add a single record
     monitoredApp.getDatabase().edit(tm -> tm.add("A", 0));
@@ -149,13 +151,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
+    final Collection<AMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
     // Make sure there is only one loaded store
     Assertions.assertThat(storeStats).hasSize(1);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     ListQuery query =
@@ -197,7 +199,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithFullChunk() {
-    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IInternalDatastore> monitoredApp = createMicroApplication();
 
     // Add a full chunk
     monitoredApp
@@ -210,13 +212,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
+    final Collection<AMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
     // Make sure there is only one loaded store
     Assertions.assertThat(storeStats).hasSize(1);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     // Query record chunks data :
@@ -259,7 +261,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   @Test
   public void testChunkStructureFieldsWithTwoChunks() {
-    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IInternalDatastore> monitoredApp = createMicroApplication();
 
     // Add a full chunk + 10 records on the second chunk
     monitoredApp
@@ -272,13 +274,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryAnalysisService analysisService =
         createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
+    final Collection<AMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
 
     // Make sure there is only one loaded store
     Assertions.assertThat(storeStats).hasSize(1);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     ListQuery query =
@@ -329,7 +331,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   @Test
   public void testChunkStructureFieldsWithFreedRows() {
 
-    final ApplicationInTests<IDatastore> monitoredApp = createMicroApplication();
+    final ApplicationInTests<IInternalDatastore> monitoredApp = createMicroApplication();
     // Add 100 records
     monitoredApp.getDatabase().edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Delete 10 records
@@ -356,9 +358,9 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
         createService(monitoredApp.getDatabase(), monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
 
-    final Collection<IMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
+    final Collection<AMemoryStatistic> storeStats = loadDatastoreMemoryStatFromFolder(exportPath);
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, storeStats, "storeA");
 
     // Query record chunks data :
@@ -417,13 +419,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IMemoryAnalysisService analysisService =
         createService(datastore, monitoredApp.getManager());
     final Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final Collection<IMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
+    final Collection<AMemoryStatistic> pivotStats = loadPivotMemoryStatFromFolder(exportPath);
 
     // Make sure there is only one loaded store
     Assertions.assertThat(pivotStats).hasSize(1);
 
     // Start a monitoring datastore with the exported data
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, pivotStats, "Cube");
 
     // Query record of level data :
@@ -460,12 +462,12 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     datastore.edit(tm -> IntStream.range(0, 10).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "appAInit");
 
-    final List<IMemoryStatistic> dics =
+    final List<AMemoryStatistic> dics =
         collectStatistics(
             stats,
             List.of(
@@ -480,7 +482,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     Assertions.assertThat(dics)
         .extracting(
             stat -> stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID).asLong())
-        .are(QfsConditions.identical());
+        .are(identical());
     final var dicForFieldId =
         dics.get(0).getAttribute(MemoryStatisticConstants.ATTR_NAME_DICTIONARY_ID).asLong();
 
@@ -548,7 +550,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     datastore.edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Initial Dump
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     // Delete 10 records
     datastore.edit(
         tm ->
@@ -567,13 +569,15 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     datastore.getEpochManager().forceDiscardEpochs(__ -> true);
 
     exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final IMemoryStatistic statsEpoch2 = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic statsEpoch2 = loadMemoryStatFromFolder(exportPath);
 
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     monitoringDatastore.edit(
         tm -> {
-          new AnalysisDatastoreFeeder("appAInit").loadWithTransaction(tm, Stream.of(stats));
-          new AnalysisDatastoreFeeder("appAEpoch2").loadWithTransaction(tm, Stream.of(statsEpoch2));
+          new AnalysisDatastoreFeeder("appAInit", monitoringDatastore)
+              .loadWithTransaction(tm, Stream.of(stats));
+          new AnalysisDatastoreFeeder("appAEpoch2", monitoringDatastore)
+              .loadWithTransaction(tm, Stream.of(statsEpoch2));
         });
 
     // Verify that chunkIds are the same for the two dumps by checking that the Ids are there twice
@@ -647,14 +651,14 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   @Test
   public void testCompareDumpsOfDifferentApps() throws AgentException {
     // Create First App
-    final ApplicationInTests<?> monitoredApp = createMicroApplication();
-    IDatastore datastore = (IDatastore) monitoredApp.getDatabase();
+    final ApplicationInTests<IInternalDatastore> monitoredApp = createMicroApplication();
+    IInternalDatastore datastore = monitoredApp.getDatabase();
     final IMemoryAnalysisService analysisService =
         createService(datastore, monitoredApp.getManager());
     datastore.edit(tm -> IntStream.range(0, 100).forEach(i -> tm.add("A", i * i)));
     // Export first app
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
     // Create second app
     final ApplicationInTests<IDatastore> monitoredAppWithBitmap =
         createMicroApplicationWithLeafBitmap();
@@ -666,12 +670,13 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     // Export second app
     exportPath = analysisServiceWithBitmap.exportMostRecentVersion("testLoadDatastoreStats");
 
-    final IMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final AMemoryStatistic statsWithBitmap = loadMemoryStatFromFolder(exportPath);
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     monitoringDatastore.edit(
         tm -> {
-          new AnalysisDatastoreFeeder("App").loadWithTransaction(tm, Stream.of(stats));
-          new AnalysisDatastoreFeeder("AppWithBitmap")
+          new AnalysisDatastoreFeeder("App", monitoringDatastore)
+              .loadWithTransaction(tm, Stream.of(stats));
+          new AnalysisDatastoreFeeder("AppWithBitmap", monitoringDatastore)
               .loadWithTransaction(tm, Stream.of(statsWithBitmap));
         });
 
@@ -744,8 +749,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                         }));
     // Export first app
     Path exportPath = analysisService.exportMostRecentVersion("testLoadDatastoreStats");
-    final IMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
-    final IDatastore monitoringDatastore = createAnalysisDatastore();
+    final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
+    final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, List.of(stats), "App");
 
     ListQuery query =
@@ -792,7 +797,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
               createService(monitoredDatastore, monitoredManager);
           final Path exportPath =
               analysisService.exportMostRecentVersion("testBlocksOfSingleVectors");
-          final Collection<IMemoryStatistic> datastoreStats =
+          final Collection<AMemoryStatistic> datastoreStats =
               loadDatastoreMemoryStatFromFolder(exportPath);
 
           final IDatastore monitoringDatastore = assertLoadsCorrectly(datastoreStats, getClass());
@@ -857,8 +862,8 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
 
   // TODO Test content of all stores similarly
 
-  private List<IMemoryStatistic> collectStatistics(
-      final IMemoryStatistic root, final List<Predicate<IMemoryStatistic>> predicates) {
+  private List<AMemoryStatistic> collectStatistics(
+      final AMemoryStatistic root, final List<Predicate<AMemoryStatistic>> predicates) {
     return predicates.stream()
         .reduce(
             List.of(root),

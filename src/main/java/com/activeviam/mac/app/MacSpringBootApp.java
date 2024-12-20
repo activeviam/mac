@@ -8,9 +8,7 @@
 package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import javax.servlet.MultipartConfigElement;
+import jakarta.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -35,11 +33,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 @Import({MacServerConfig.class})
 public class MacSpringBootApp {
-
-  /* Before anything else we statically initialize the Quartet FS Registry. */
-  static {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
-  }
 
   /**
    * Starts the Memory Analysis Cube application.

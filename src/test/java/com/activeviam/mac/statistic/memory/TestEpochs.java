@@ -7,30 +7,29 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
+import com.activeviam.database.api.ICondition;
+import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.activeviam.pivot.utils.ApplicationInTests;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.qfs.condition.ICondition;
-import com.qfs.condition.impl.BaseConditions;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.multiversion.impl.Epoch;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordReader;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -46,12 +45,12 @@ import org.junit.jupiter.api.Test;
 public class TestEpochs extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
-  private IMemoryStatistic statistics;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
+  private AMemoryStatistic statistics;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach
@@ -115,8 +114,6 @@ public class TestEpochs extends ATestMemoryStatistic {
             transactionManager ->
                 transactionManager.removeWhere(
                     "A", BaseConditions.greaterOrEqual(FieldPath.of("id"), 20)));
-
-    this.monitoredApp.getManager().getActivePivots().get("Cube").commit(new Epoch(10L));
   }
 
   private Path generateMemoryStatistics() {
@@ -129,7 +126,7 @@ public class TestEpochs extends ATestMemoryStatistic {
     return analysisService.exportApplication("testEpochs");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
 
@@ -154,7 +151,7 @@ public class TestEpochs extends ATestMemoryStatistic {
   public void testExpectedEpochs() {
     final Set<Long> epochIds = retrieveEpochIds();
 
-    Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L, 10L);
+    Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L);
   }
 
   @Test

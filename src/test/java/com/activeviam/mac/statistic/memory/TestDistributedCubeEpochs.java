@@ -7,28 +7,29 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import static com.qfs.distribution.impl.DistributionUtil.stopDistribution;
+import static com.activeviam.activepivot.dist.impl.internal.distribution.impl.DistributionUtil.stopDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.dist.impl.internal.impl.MultiVersionDistributedActivePivot;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
-import com.activeviam.pivot.utils.ApplicationInTests;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.impl.MultiVersionDistributedActivePivot;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -45,11 +46,11 @@ import org.junit.jupiter.api.Test;
 public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach
@@ -57,7 +58,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     initializeApplication();
 
     final Path exportPath = generateMemoryStatistics();
-    final IMemoryStatistic statistics = loadMemoryStatFromFolder(exportPath);
+    final AMemoryStatistic statistics = loadMemoryStatFromFolder(exportPath);
 
     initializeMonitoringApplication(statistics);
 
@@ -121,7 +122,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     return analysisService.exportApplication("testEpochs");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
@@ -151,12 +152,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   }
 
   private long getHeadEpochId(String queryCube) {
-    return this.monitoredApp
-        .getManager()
-        .getActivePivots()
-        .get(queryCube)
-        .getMostRecentVersion()
-        .getEpochId();
+    return this.monitoredApp.getManager().getActivePivots().get(queryCube).getHead().getEpochId();
   }
 
   protected Set<EpochView> retrieveViewEpochIds() {

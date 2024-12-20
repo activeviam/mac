@@ -1,70 +1,125 @@
-/*
- * (C) ActiveViam 2019-2020
- * ALL RIGHTS RESERVED. This material is the CONFIDENTIAL and PROPRIETARY
- * property of ActiveViam. Any unauthorized use,
- * reproduction or transfer of this material is strictly prohibited
- */
-
 package com.activeviam.mac.cfg.security.impl;
 
-import static com.qfs.QfsWebUtils.url;
-import static com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig.ID_GENERATOR_REMOTING_SERVICE;
-import static com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig.LICENSING_REMOTING_SERVICE;
-import static com.qfs.server.cfg.impl.ActivePivotRemotingServicesConfig.LONG_POLLING_REMOTING_SERVICE;
-import static com.qfs.server.cfg.impl.ActivePivotRestServicesConfig.PING_SUFFIX;
-import static com.qfs.server.cfg.impl.ActivePivotRestServicesConfig.REST_API_URL_PREFIX;
-
-import com.qfs.server.cfg.IActivePivotConfig;
-import com.quartetfs.biz.pivot.security.impl.UserDetailsServiceWrapper;
-import com.quartetfs.fwk.security.IUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.activeviam.tech.contentserver.storage.api.IContentService;
+import com.activeviam.web.spring.api.config.IJwtConfig;
+import com.activeviam.web.spring.api.jwt.JwtAuthenticationProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.BeanIds;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.User.UserBuilder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 
-/**
- * Spring configuration fragment for security on an ActivePivot Server.
- *
- * <p>This configuration will in particular load:
- *
- * <ul>
- *   <li>The service to authenticate users
- *   <li>The Spring configuration that defines security on the Version RESTful service
- *   <li>The Spring configuration that defines security on the Content server
- *   <li>The Spring configuration that defines security on the ActivePivot server
- * </ul>
- *
- * @author ActiveViam
- */
-@Import(
-    value = {
-      ActiveUiSecurityConfigurer.class,
-      JwtSecurityConfigurer.class,
-      VersionSecurityConfigurer.class
-    })
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends ASecurityConfig {
+@RequiredArgsConstructor
+public class SecurityConfig {
+
+  /** Name of the User Role. */
+  public static final String ROLE_USER = "ROLE_USER";
+
+  /** Name of the Admin Role. */
+  public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
   /** Name of the Cookies of the MAC application. */
   public static final String COOKIE_NAME = "MEMORY_ANALYSIS_CUBE";
 
   /**
-   * Returns the spring security bean user details service wrapper.
+   * [Bean] Create the users that can access the application.
    *
-   * @return the {@link IUserDetailsService} used as spring security bean user details service
-   *     wrapper.
+   * @return {@link UserDetailsService user data}
    */
   @Bean
-  public IUserDetailsService qfsUserDetailsService() {
-    return new UserDetailsServiceWrapper(this.userDetailsConfig.userDetailsService());
+  public UserDetailsService userDetailsService(final PasswordEncoder passwordEncoder) {
+    final UserBuilder builder = User.builder().passwordEncoder(passwordEncoder::encode);
+    final InMemoryUserDetailsManager service = new InMemoryUserDetailsManager();
+    service.createUser(
+        builder
+            .username("admin")
+            .password("admin")
+            .authorities(ROLE_USER, ROLE_ADMIN, IContentService.ROLE_ROOT)
+            .build());
+    return service;
+  }
+
+  /**
+   * As of Spring Security 5.0, the way the passwords are encoded must be specified. When logging,
+   * the input password will be encoded and compared with the stored encoded password. To determine
+   * which encoding function was used to encode the password, the stored encoded passwords are
+   * prefixed with the id of the encoding function.
+   *
+   * <p>In order to avoid reformatting existing passwords in databases one can set the default
+   * <code>PasswordEncoder</code> to use for stored passwords that are not prefixed. This is the
+   * role of the following function.
+   *
+   * @return The {@link PasswordEncoder} to encode passwords with.
+   */
+  @Bean
+  @SuppressWarnings({"deprecation", "unused"})
+  public PasswordEncoder passwordEncoder() {
+    PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    ((DelegatingPasswordEncoder) passwordEncoder)
+        .setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
+    return passwordEncoder;
+  }
+
+  /**
+   * Returns the default {@link AuthenticationEntryPoint} to use for the fallback basic HTTP
+   * authentication.
+   *
+   * @return The default {@link AuthenticationEntryPoint} for the fallback HTTP basic
+   *     authentication.
+   */
+  @Bean
+  public AuthenticationEntryPoint basicAuthenticationEntryPoint() {
+    return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+  }
+
+  /**
+   * Configures the authentication of the whole application.
+   *
+   * <p>This binds the defined user service to the authentication and sets the source for JWT
+   * tokens.
+   *
+   * @param inMemoryAuthenticationProvider the in-memory authentication provider
+   * @param jwtAuthenticationProvider is a provider which can perform authentication from the
+   *     jwtService's tokens. Implementation from the {@link IJwtConfig} .
+   * @return the authentication manager
+   */
+  @Bean
+  public AuthenticationManager authenticationManager(
+      final JwtAuthenticationProvider jwtAuthenticationProvider,
+      final AuthenticationProvider inMemoryAuthenticationProvider) {
+    final ProviderManager providerManager =
+        new ProviderManager(inMemoryAuthenticationProvider, jwtAuthenticationProvider);
+    providerManager.setEraseCredentialsAfterAuthentication(false);
+
+    return providerManager;
+  }
+
+  @Bean
+  public AuthenticationProvider inMemoryAuthenticationProvider(
+      final UserDetailsService userDetailsService, final PasswordEncoder passwordEncoder) {
+    final var authenticationProvider = new DaoAuthenticationProvider();
+    authenticationProvider.setPasswordEncoder(passwordEncoder);
+    authenticationProvider.setUserDetailsService(userDetailsService);
+
+    return authenticationProvider;
   }
 
   /**
@@ -78,54 +133,27 @@ public class SecurityConfig extends ASecurityConfig {
   }
 
   /**
-   * To expose the Pivot services.
+   * {@inheritDoc}
    *
-   * @author ActiveViam
+   * <p>This configures a new firewall accepting `%` in URLs, as none of the core services encode
+   * information in URL. This prevents from double-decoding exploits.<br>
+   * The firewall is also configured to accept `\` - backslash - as none of ActiveViam APIs offer to
+   * manipulate files from URL parameters.<br>
+   * Yet, nor `/` and `.` - slash and point - are accepted, as it may trick the REGEXP matchers used
+   * for security. Support for those two characters can be added at your own risk, by extending this
+   * method. As far as ActiveViam APIs are concerned, `/` and `.` in URL parameters do not represent
+   * any risk. `;` - semi-colon - is also not supported, for various APIs end up target an actual
+   * database, and because this character is less likely to be used.
    */
-  @Configuration
-  public static class ActivePivotSecurityConfigurer extends AWebSecurityConfigurer {
+  @Bean
+  public StrictHttpFirewall configureFirewall() {
+    final StrictHttpFirewall firewall = new StrictHttpFirewall();
+    firewall.setAllowUrlEncodedPercent(true);
+    firewall.setAllowBackSlash(true);
 
-    /** The autowired Spring configuration for ActivePivot. */
-    @Autowired protected IActivePivotConfig activePivotConfig;
-
-    /** Constructor. */
-    public ActivePivotSecurityConfigurer() {
-      super(COOKIE_NAME);
-    }
-
-    @Override
-    protected void doConfigure(HttpSecurity http) throws Exception {
-      http.authorizeRequests()
-          // The order of the matchers matters
-          .antMatchers(HttpMethod.OPTIONS, REST_API_URL_PREFIX + "/**")
-          .permitAll()
-          // Spring remoting services used by AP live 3.4
-          .antMatchers(url(ID_GENERATOR_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(url(LONG_POLLING_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          .antMatchers(url(LICENSING_REMOTING_SERVICE, "**"))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          // The ping service is temporarily authenticated (see PIVOT-3149)
-          .antMatchers(url(REST_API_URL_PREFIX, PING_SUFFIX))
-          .hasAnyAuthority(ROLE_USER, ROLE_TECH)
-          // REST services
-          .antMatchers(REST_API_URL_PREFIX + "/**")
-          .hasAnyAuthority(ROLE_USER)
-          // One has to be a user for all the other URLs
-          .antMatchers("/**")
-          .hasAuthority(ROLE_USER)
-          .and()
-          .httpBasic()
-          // SwitchUserFilter is the last filter in the chain. See FilterComparator class.
-          .and()
-          .addFilterAfter(this.activePivotConfig.contextValueFilter(), SwitchUserFilter.class);
-    }
-
-    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-      return super.authenticationManagerBean();
-    }
+    firewall.setAllowUrlEncodedSlash(false);
+    firewall.setAllowUrlEncodedPeriod(false);
+    firewall.setAllowSemicolon(false);
+    return firewall;
   }
 }

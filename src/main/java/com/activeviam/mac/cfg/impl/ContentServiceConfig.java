@@ -7,33 +7,39 @@
 
 package com.activeviam.mac.cfg.impl;
 
+import static com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter.create;
+
+import com.activeviam.activepivot.core.intf.api.contextvalues.IContextValue;
+import com.activeviam.activepivot.core.intf.api.description.ICalculatedMemberDescription;
+import com.activeviam.activepivot.core.intf.api.description.IKpiDescription;
+import com.activeviam.activepivot.server.intf.api.entitlements.IActivePivotContentService;
+import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
+import com.activeviam.activepivot.server.spring.api.content.ActivePivotContentServiceBuilder;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
+import com.activeviam.tech.contentserver.spring.internal.config.ContentServerRestServicesConfig;
+import com.activeviam.tech.contentserver.storage.api.IContentService;
+import com.activeviam.tech.contentserver.storage.private_.HibernateContentService;
+import com.activeviam.tech.core.internal.monitoring.JmxOperation;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
 import com.activeviam.tools.bookmark.impl.BookmarkTool;
-import com.qfs.content.cfg.impl.ContentServerRestServicesConfig;
-import com.qfs.content.service.IContentService;
-import com.qfs.content.service.impl.HibernateContentService;
-import com.qfs.content.snapshot.impl.ContentServiceSnapshotter;
-import com.qfs.jmx.JmxOperation;
-import com.qfs.pivot.content.IActivePivotContentService;
-import com.qfs.pivot.content.impl.ActivePivotContentServiceBuilder;
-import com.qfs.server.cfg.content.IActivePivotContentServiceConfig;
-import com.quartetfs.biz.pivot.context.IContextValue;
-import com.quartetfs.biz.pivot.definitions.ICalculatedMemberDescription;
-import com.quartetfs.biz.pivot.definitions.IKpiDescription;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
+import org.hibernate.HibernateException;
+import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 /**
  * Spring configuration of the Content Service.
@@ -46,20 +52,8 @@ import org.springframework.core.env.Environment;
  * @author ActiveViam
  */
 @Configuration
+@RequiredArgsConstructor
 public class ContentServiceConfig implements IActivePivotContentServiceConfig {
-
-  /**
-   * The name of the property which contains the role allowed to add new calculated members in the
-   * configuration service.
-   */
-  public static final String CALCULATED_MEMBER_ROLE_PROPERTY =
-      "contentServer.security.calculatedMemberRole";
-
-  /**
-   * The name of the property which contains the role allowed to add new KPIs in the configuration
-   * service.
-   */
-  public static final String KPI_ROLE_PROPERTY = "contentServer.security.kpiRole";
 
   /**
    * The name of the property that controls whether or not to force the reloading of the predefined
@@ -70,19 +64,22 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   /** The name of the property that precise the name of the folder the bookmarks are in. */
   public static final String UI_FOLDER_PROPERTY = "bookmarks.folder";
 
-  /** Instance of the Spring context environment. */
-  @Autowired public Environment env;
+  private final Environment env;
 
   /**
    * Loads the Hibernate's configuration from the specified file.
    *
    * @return the Hibernate's configuration
    */
-  private static org.hibernate.cfg.Configuration loadConfiguration(
-      final Properties hibernateProperties) {
+  private static SessionFactory loadConfiguration(final Properties hibernateProperties)
+      throws HibernateException, IOException {
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
-    return new org.hibernate.cfg.Configuration().addProperties(hibernateProperties);
+    final Resource entityMappingFile = new ClassPathResource("content-service-hibernate.xml");
+    return new org.hibernate.cfg.Configuration()
+        .addProperties(hibernateProperties)
+        .addInputStream(entityMappingFile.getInputStream())
+        .buildSessionFactory();
   }
 
   /**
@@ -132,8 +129,17 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
   @Override
   @Bean
   public IContentService contentService() {
-    org.hibernate.cfg.Configuration conf = loadConfiguration(contentServiceHibernateProperties());
-    return new HibernateContentService(conf);
+    if ("db".equals(this.env.getProperty("content-service.type", "db"))) {
+      return IContentService.builder().inMemory().build();
+    } else {
+      final SessionFactory sessionFactory;
+      try {
+        sessionFactory = loadConfiguration(contentServiceHibernateProperties());
+        return new HibernateContentService(sessionFactory);
+      } catch (HibernateException | IOException e) {
+        throw new BeanInitializationException("Failed to initialize the Content Service", e);
+      }
+    }
   }
 
   /**
@@ -149,18 +155,16 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     return new ActivePivotContentServiceBuilder()
         .with(contentService())
         .withCacheForEntitlements(-1)
-        .needInitialization(
-            this.env.getRequiredProperty(CALCULATED_MEMBER_ROLE_PROPERTY),
-            this.env.getRequiredProperty(KPI_ROLE_PROPERTY))
+        .needInitialization(SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER)
         .build();
   }
 
   private Map<String, List<String>> defaultBookmarkPermissions() {
     return Map.of(
         Role.OWNERS,
-        List.of(SecurityConfig.ROLE_CS_ROOT),
+        List.of(SecurityConfig.ROLE_USER),
         Role.READERS,
-        List.of(SecurityConfig.ROLE_CS_ROOT));
+        List.of(SecurityConfig.ROLE_USER));
   }
 
   /**
@@ -173,16 +177,14 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
       desc = "Export the current bookmark structure",
       params = {"destination"})
   public void exportBookMarks(String destination) {
-    BookmarkTool.exportBookmarks(
-        new ContentServiceSnapshotter(contentService().withRootPrivileges()), destination);
+    BookmarkTool.exportBookmarks(create(contentService().withRootPrivileges()), destination);
   }
 
   /** Loads the bookmarks packaged with the application. */
   public void loadPredefinedBookmarks() {
     final var service = contentService().withRootPrivileges();
     if (!service.exists("/" + Paths.UI) || shouldReloadBookmarks()) {
-      BookmarkTool.importBookmarks(
-          new ContentServiceSnapshotter(service), defaultBookmarkPermissions());
+      BookmarkTool.importBookmarks(create(service), defaultBookmarkPermissions());
     }
   }
 

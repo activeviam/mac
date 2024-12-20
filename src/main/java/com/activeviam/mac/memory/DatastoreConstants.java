@@ -7,8 +7,8 @@
 
 package com.activeviam.mac.memory;
 
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.quartetfs.biz.pivot.impl.ActivePivotManager;
+import com.activeviam.activepivot.core.impl.internal.impl.ActivePivotManager;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 
 /**
  * List of constants used by stores storing the off-heap memory analysis results.

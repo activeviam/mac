@@ -7,35 +7,36 @@
 
 package com.activeviam.mac.statistic.memory.visitor.impl;
 
+import com.activeviam.database.api.schema.IDataTable;
+import com.activeviam.database.api.schema.IDatabaseSchema;
+import com.activeviam.database.datastore.api.transaction.IOpenedTransaction;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.monitoring.statistic.memory.impl.ChunkSetStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ChunkStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DefaultMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.DictionaryStatistic;
-import com.qfs.monitoring.statistic.memory.impl.IndexStatistic;
-import com.qfs.monitoring.statistic.memory.impl.ReferenceStatistic;
-import com.qfs.store.IDatastoreSchemaMetadata;
-import com.qfs.store.record.IRecordFormat;
-import com.qfs.store.transaction.IOpenedTransaction;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
+import com.activeviam.tech.observability.internal.memory.ChunkStatistic;
+import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.DictionaryStatistic;
+import com.activeviam.tech.observability.internal.memory.IndexStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
 import java.time.Instant;
 import java.util.Collection;
 
 /**
- * Implementation of the {@link com.qfs.monitoring.statistic.memory.visitor.IMemoryStatisticVisitor}
- * class for Vectors.
+ * Implementation of the {@link
+ * com.activeviam.tech.observability.internal.memory.IMemoryStatisticVisitor} class for Vectors.
  *
  * @author ActiveViam
  */
 public class VectorStatisticVisitor extends AFeedVisitor<Void> {
 
   /** The record format of the store that stores the chunks. */
-  protected final IRecordFormat chunkRecordFormat;
+  protected final IDataTable chunkRecordFormat;
 
   /** The export date, found on the first statistics we read. */
   protected final Instant current;
@@ -44,8 +45,10 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   protected final int partitionId;
 
   private final UsedByVersion usedByVersion;
+
   /** The epoch id we are currently reading statistics for. */
   protected Long epochId;
+
   /** The fields corresponding to the vector block statistic. */
   protected Collection<String> fields;
 
@@ -63,7 +66,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
    * @param usedByVersion the used by version flag for the current statistic
    */
   public VectorStatisticVisitor(
-      final IDatastoreSchemaMetadata storageMetadata,
+      final IDatabaseSchema storageMetadata,
       final IOpenedTransaction transaction,
       final String dumpName,
       final Instant current,
@@ -80,11 +83,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
     this.epochId = epochId;
     this.usedByVersion = usedByVersion;
 
-    this.chunkRecordFormat =
-        this.storageMetadata
-            .getStoreMetadata(DatastoreConstants.CHUNK_STORE)
-            .getStoreFormat()
-            .getRecordFormat();
+    this.chunkRecordFormat = this.storageMetadata.getTable(DatastoreConstants.CHUNK_STORE);
   }
 
   /**
@@ -117,7 +116,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
    *
    * @param statistic root statistic
    */
-  public void process(final IMemoryStatistic statistic) {
+  public void process(final AMemoryStatistic statistic) {
     statistic.accept(this);
   }
 
@@ -125,6 +124,12 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   public Void visit(DefaultMemoryStatistic memoryStatistic) {
     // TODO we could store the information on that vector in another dedicated store.
     FeedVisitor.visitChildren(this, memoryStatistic);
+    return null;
+  }
+
+  @Override
+  public Void visit(AMemoryStatistic memoryStatistic) {
+    visitChildren(memoryStatistic);
     return null;
   }
 
@@ -175,7 +180,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
   protected void visitVectorBlock(final ChunkStatistic statistic) {
     assert statistic.getChildren().isEmpty() : "Vector statistics with children";
 
-    final IRecordFormat format = this.chunkRecordFormat;
+    final var format = this.chunkRecordFormat;
     final Object[] tuple = FeedVisitor.buildChunkTupleFrom(format, statistic);
 
     FeedVisitor.setTupleElement(

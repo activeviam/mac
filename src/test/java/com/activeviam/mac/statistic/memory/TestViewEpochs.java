@@ -7,30 +7,30 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
+import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
-import com.activeviam.pivot.utils.ApplicationInTests;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.records.api.ICursor;
+import com.activeviam.tech.records.api.IRecordReader;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.query.ICursor;
-import com.qfs.store.record.IRecordReader;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.store.transaction.ITransactionManager;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,12 +48,12 @@ import org.junit.jupiter.api.Test;
 public class TestViewEpochs extends ATestMemoryStatistic {
 
   private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
-  private IMemoryStatistic statistics;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
+  private AMemoryStatistic statistics;
 
   @BeforeAll
   public static void setupRegistry() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   @BeforeEach
@@ -111,7 +111,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
     return analysisService.exportApplication("testEpochs");
   }
 
-  private void initializeMonitoringApplication(final IMemoryStatistic data) throws AgentException {
+  private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
     final IDatastoreSchemaDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();

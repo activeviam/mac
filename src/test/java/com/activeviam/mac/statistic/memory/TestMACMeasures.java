@@ -1,34 +1,34 @@
 package com.activeviam.mac.statistic.memory;
 
-import static com.qfs.util.impl.ThrowingLambda.cast;
+import static com.activeviam.tech.test.internal.util.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
-import com.activeviam.fwk.ActiveViamRuntimeException;
+import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
+import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
+import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
+import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
+import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
+import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.internal.IInternalDatastore;
+import com.activeviam.database.datastore.internal.NoTransactionException;
+import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
+import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
-import com.activeviam.pivot.utils.ApplicationInTests;
-import com.activeviam.properties.impl.ActiveViamProperty;
-import com.activeviam.properties.impl.ActiveViamPropertyExtension;
-import com.activeviam.properties.impl.ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder;
-import com.qfs.junit.LocalResourcesExtension;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils;
-import com.qfs.monitoring.offheap.MemoryStatisticsTestUtils.StatisticsSummary;
-import com.qfs.monitoring.statistic.memory.IMemoryStatistic;
-import com.qfs.monitoring.statistic.memory.MemoryStatisticConstants;
-import com.qfs.pivot.monitoring.impl.MemoryAnalysisService;
-import com.qfs.server.cfg.IDatastoreSchemaDescriptionConfig;
-import com.qfs.store.IDatastore;
-import com.qfs.store.NoTransactionException;
-import com.qfs.store.transaction.DatastoreTransactionException;
-import com.qfs.util.impl.QfsArrays;
-import com.quartetfs.biz.pivot.IMultiVersionActivePivot;
-import com.quartetfs.biz.pivot.dto.CellDTO;
-import com.quartetfs.biz.pivot.dto.CellSetDTO;
-import com.quartetfs.biz.pivot.query.impl.MDXQuery;
-import com.quartetfs.fwk.AgentException;
-import com.quartetfs.fwk.Registry;
-import com.quartetfs.fwk.contributions.impl.ClasspathContributionProvider;
-import com.quartetfs.fwk.query.QueryException;
+import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.core.api.properties.ActiveViamProperty;
+import com.activeviam.tech.core.api.query.QueryException;
+import com.activeviam.tech.core.api.registry.Registry;
+import com.activeviam.tech.core.internal.properties.ActiveViamPropertyExtension;
+import com.activeviam.tech.core.internal.util.ArrayUtil;
+import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
+import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
+import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +38,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
@@ -47,6 +48,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  *
  * <p>Tools.extractSnappyFile(path to file);
  */
+@ExtendWith({ResourcesExtension.class})
 public class TestMACMeasures extends ATestMemoryStatistic {
 
   public static final int ADDED_DATA_SIZE = 100;
@@ -55,27 +57,24 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @RegisterExtension
   @SuppressWarnings("unused")
   public static ActiveViamPropertyExtension propertyRule =
-      new ActiveViamPropertyExtensionBuilder()
+      new ActiveViamPropertyExtension.ActiveViamPropertyExtensionBuilder()
           .withProperty(ActiveViamProperty.ACTIVEVIAM_TEST_PROPERTY, true)
           .build();
 
-  @RegisterExtension
-  public final LocalResourcesExtension methodResources = new LocalResourcesExtension();
-
-  private ApplicationInTests<IDatastore> monitoredApp;
-  private ApplicationInTests<IDatastore> monitoringApp;
-  IMemoryStatistic stats;
+  private ApplicationInTests<IInternalDatastore> monitoredApp;
+  private ApplicationInTests<IInternalDatastore> monitoringApp;
+  AMemoryStatistic stats;
   Map<String, Long> appStats;
-  StatisticsSummary statsSumm;
+  MemoryStatisticsTestUtils.StatisticsSummary statsSumm;
 
   @BeforeAll
   public static void init() {
-    Registry.setContributionProvider(new ClasspathContributionProvider());
+    RegistryInitializationConfig.setupRegistry();
   }
 
   private static Map<String, Long> extractApplicationStats(final IMemoryStatistic export) {
     final IMemoryStatistic firstChild = export.getChildren().iterator().next();
-    return QfsArrays.<String, String>mutableMap(
+    return ArrayUtil.<String, String>mutableMap(
             ManagerDescriptionConfig.USED_HEAP,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_HEAP_MEMORY,
             ManagerDescriptionConfig.COMMITTED_HEAP,
@@ -154,24 +153,19 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDirectMemorySum() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
             "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
-    CellSetDTO res2 = pivot.execute(query2);
+    CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
@@ -180,7 +174,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res3 = pivot.execute(query3);
+    CellSetDTO res3 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query3);
 
     // Check that the cell size is the expected one (the amount of chunks)
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
@@ -193,24 +187,19 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
     final MDXQuery query2 =
         new MDXQuery(
             "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
-    CellSetDTO res2 = pivot.execute(query2);
+    CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
     final MDXQuery query3 =
@@ -219,7 +208,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res3 = pivot.execute(query3);
+    CellSetDTO res3 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query3);
 
     // Check that the cell size is the expected one (the amount of chunks)
     Assertions.assertThat(res3.getCells().size()).isEqualTo(nbC.intValue());
@@ -237,19 +226,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testChunkSize() throws QueryException {
 
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE);
@@ -258,19 +241,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testNonWrittenCount() throws QueryException {
 
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) ATestMemoryStatistic.MICROAPP_CHUNK_SIZE - ADDED_DATA_SIZE);
@@ -278,11 +255,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testApplicationMeasures() {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
         assertions ->
@@ -296,7 +268,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                   + measure
                                   + "] ON COLUMNS"
                                   + "  FROM [MemoryCube]");
-                      final CellSetDTO result = pivot.execute(query);
+                      final CellSetDTO result =
+                          MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
                       final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                       assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                     })));
@@ -308,11 +281,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
    */
   @Test
   public void testApplicationMeasuresAtAnyPointOfTheCube() {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
 
     SoftAssertions.assertSoftly(
         assertions ->
@@ -327,7 +295,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                   + "] ON COLUMNS"
                                   + " FROM [MemoryCube]"
                                   + " WHERE ([Owners].[Owner].[ALL].[AllMember].FirstChild)");
-                      final CellSetDTO result = pivot.execute(query);
+                      final CellSetDTO result =
+                          MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
                       final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                       assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                     })));
@@ -347,7 +316,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                                   + " WHERE (["
                                   + ManagerDescriptionConfig.CHUNK_DIMENSION
                                   + "].[ChunkId].[ALL].[AllMember].FirstChild)");
-                      final CellSetDTO result = pivot.execute(query);
+                      final CellSetDTO result =
+                          MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
                       final Long resultValue = CellSetUtils.extractValueFromSingleCellDTO(result);
                       assertions.assertThat(resultValue).as("Value of " + measure).isEqualTo(value);
                     })));
@@ -356,19 +326,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testFreedCount() throws QueryException {
 
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
-
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  [Measures].[Deleted rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     Assertions.assertThat(CellSetUtils.extractValuesFromCellSetDTO(res))
         .contains((double) REMOVED_DATA_SIZE);
@@ -377,18 +341,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testNonWrittenRatio() throws QueryException {
 
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -396,7 +355,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res2 = pivot.execute(query2);
+    CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -404,7 +363,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows ratio] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res3 = pivot.execute(query3);
+    CellSetDTO res3 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query3);
 
     final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
     final Double[] nonWrittenRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
@@ -418,18 +377,13 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testDeletedRatio() throws QueryException {
 
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     final MDXQuery query2 =
         new MDXQuery(
@@ -437,7 +391,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Deleted rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res2 = pivot.execute(query2);
+    CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
 
     final MDXQuery query3 =
         new MDXQuery(
@@ -445,7 +399,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Deleted rows ratio] ON COLUMNS"
                 + "  FROM [MemoryCube]");
-    CellSetDTO res3 = pivot.execute(query3);
+    CellSetDTO res3 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query3);
 
     final Double[] chunkSizes = CellSetUtils.extractValuesFromCellSetDTO(res);
     final Double[] DeletedRows = CellSetUtils.extractValuesFromCellSetDTO(res2);
@@ -458,11 +412,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySize() throws QueryException {
-    final IMultiVersionActivePivot pivot =
-        this.monitoringApp
-            .getManager()
-            .getActivePivots()
-            .get(ManagerDescriptionConfig.MONITORING_CUBE);
     final MDXQuery query =
         new MDXQuery(
             "SELECT"
@@ -473,7 +422,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                 + "  [Owners].[Owner].[Owner].[Store A],"
                 + "  [Fields].[Field].[Field].[id]"
                 + " )");
-    CellSetDTO res = pivot.execute(query);
+    CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
     final long expectedDictionarySize =
         this.monitoredApp

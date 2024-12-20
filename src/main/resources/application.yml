@@ -1,23 +1,11 @@
 server:
   port: 9092
-  remote:
-    uri: localhost:9090
-
-activeui:
-  address: http://localhost:9092/ui
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
-
-contentServer:
-  security:
-    calculatedMemberRole: ROLE_USER
-    kpiRole: ROLE_USER
-    cache:
-      entitlementsTTL: 3600
 
 bookmarks:
   folder: ui
@@ -49,7 +37,7 @@ activeviam:
         lULiNZ73+TSdoT8yD6mH2hVArkajsnv1PNw0cR2V2aLY1Cg030jyTtmdOky/ZBhMiT/bH7H1M/BNjsC23rcOtdwFRlApUlOkGMecZN\
         8IzqaYV0zuL+cQt2Iwo="
     # The time of validity of a token in seconds
-    expiration: 86400
+    expiration: PT24H
 
 # The path of the folder containing statistic files in .json or .json.sz (Snappy-compressed) formats
 # This path is relative to the execution directory of the Application
@@ -57,6 +45,7 @@ statistic:
   folder: input_statistics
 
 content-service:
+  mode: "in-memory" # "in-memory" or "db"
   db:
     hibernate:
       dialect: org.hibernate.dialect.H2Dialect
