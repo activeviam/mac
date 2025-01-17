@@ -34,6 +34,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+/**
+ * Checks that exports from various Atoti Server versions can be loaded and that querying them
+ * returns the expected results.
+ *
+ * <p>To test a new version:
+ *
+ * <ol>
+ *   <li>Create an export from the sandbox.
+ *   <li>Copy it in a new subdirectory of the {@value BASE_DATA_DIRECTORY_NAME} resource directory.
+ *   <li>Run {@link #testGenerateExpectedQueryResults(Path, Path)} to generate a file containing the
+ *       results of {@link #STATISTICS_QUERY} and manually check that the generated file is correct.
+ * </ol>
+ */
 public class TestMemoryStatisticsCompatibility extends ATestMemoryStatistic {
 
   private static final String STATISTICS_QUERY = """
@@ -105,19 +118,6 @@ public class TestMemoryStatisticsCompatibility extends ATestMemoryStatistic {
     }
   }
 
-  /**
-   * Checks that the given export can be loaded and that querying returns the expected results.
-   *
-   * <p>To add a new export to test:
-   *
-   * <ol>
-   *   <li>Create an export from the sandbox.
-   *   <li>Copy it in a new subdirectory of the {@value BASE_DATA_DIRECTORY_NAME} directory.
-   *   <li>Run {@link #testGenerateExpectedQueryResults(Path, Path)} to generate a file containing
-   *       the results of {@link #STATISTICS_QUERY} and manually check that the generated file is
-   *       correct.
-   * </ol>
-   */
   @ParameterizedTest
   @MethodSource("getExportDirectories")
   public void testQueryWithExport(
