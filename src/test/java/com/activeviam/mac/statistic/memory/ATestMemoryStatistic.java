@@ -49,6 +49,7 @@ import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
+import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.tech.chunks.api.types.TypeValues;
 import com.activeviam.tech.mvcc.api.policy.KeepAllEpochPolicy;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
@@ -1430,6 +1431,13 @@ public abstract class ATestMemoryStatistic {
             path ->
                 path.getFileName().toString().startsWith(MemoryAnalysisService.PIVOT_FILE_PREFIX));
     return (Collection<AMemoryStatistic>) allStat.getChildren();
+  }
+
+  public static Collection<AMemoryStatistic> retroCompatiblyLoadMemoryStatFromFolder(
+      final Path path) throws IOException {
+    try (Stream<Path> children = Files.list(path)) {
+      return children.map(Path::toFile).map(RetroCompatibleDeserializer::readStatistic).toList();
+    }
   }
 
   static AMemoryStatistic loadMemoryStatFromFolder(

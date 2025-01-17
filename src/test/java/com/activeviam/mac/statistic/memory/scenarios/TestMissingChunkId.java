@@ -18,15 +18,12 @@ import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
-import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.tech.core.api.query.QueryException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.test.internal.junit.resources.Resources;
 import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
 import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +51,7 @@ public class TestMissingChunkId {
   public void setup() throws IOException {
     final Path statisticsPath =
         Path.of("src", "test", "resources", "stats_files_with_missing_chunk_id");
-    memoryStatistics = loadMemoryStatistic(statisticsPath);
+    memoryStatistics = ATestMemoryStatistic.retroCompatiblyLoadMemoryStatFromFolder(statisticsPath);
 
     resources.register(analysisApplication).start();
   }
@@ -65,13 +62,6 @@ public class TestMissingChunkId {
     final IActivePivotManagerDescription manager =
         new ManagerDescriptionConfig().managerDescription();
     return ApplicationInTests.builder().withDatastore(desc).withManager(manager).build();
-  }
-
-  protected Collection<AMemoryStatistic> loadMemoryStatistic(final Path path) throws IOException {
-    return Files.list(path)
-        .map(Path::toFile)
-        .map(RetroCompatibleDeserializer::readStatistic)
-        .collect(Collectors.toList());
   }
 
   protected void loadStatisticsIntoDatastore(
