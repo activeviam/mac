@@ -7,9 +7,6 @@ parameters:
   base_ref:
     type: string
     default: NONE
-  run_compatibility:
-    type: boolean
-    default: false
 executors:
   jdk11-docker:
     docker:

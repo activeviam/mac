@@ -9,7 +9,6 @@ runs:
   steps:
     - run : |
        echo "PARAMETER_DATA=\"parameters\":{\
-        \"run_compatibility\":${{ env.compatibility-check }},\
         \"head_ref\":\"${{ github.head_ref }}\",\
         \"base_ref\":\"${{ github.base_ref }}\"\
           }" >> $GITHUB_ENV

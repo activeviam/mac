@@ -79,9 +79,6 @@ jobs:
       - name: Checkout Repository to run local actions
         uses: actions/checkout@v3.3.0 # Necessary to access local actions & files
 
-      - name: parse the PR description for the Test execution
-        run: . ./.github/actions/parser.bash && parsePR compatibility-check
-
       # LAUNCH CIRCLECI MAIN WORKFLOW
       # Reuse the existing "check" workflow of CircleCI but add the parameters to the payload
       - name: start Checks CI Pipeline
@@ -92,8 +89,7 @@ jobs:
         # RUN BLOCKER STEP
       - name: Parse the PR description for all mandatory steps
         run: echo "Run blocker parser"
-      - if: ${{ contains(fromJson('["main"]'), github.event.pull_request.base.ref)
-          && !( env.compatibility-check == 'true' ) }}
+      - if: ${{ contains(fromJson('["main"]'), github.event.pull_request.base.ref) }}
         # Failing step
         name: Block merge due to missing mandatory steps
         run: exit 1
