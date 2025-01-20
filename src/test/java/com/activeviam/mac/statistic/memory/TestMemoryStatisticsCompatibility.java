@@ -49,7 +49,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
  */
 public class TestMemoryStatisticsCompatibility extends ATestMemoryStatistic {
 
-  private static final String STATISTICS_QUERY = """
+  private static final String STATISTICS_QUERY =
+      """
       SELECT
         NON EMPTY {
           [Measures].[contributors.COUNT],

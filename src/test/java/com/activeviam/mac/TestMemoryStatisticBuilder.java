@@ -16,7 +16,9 @@ import com.activeviam.tech.observability.internal.memory.IndexStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
 import com.activeviam.tech.observability.internal.memory.ReferenceStatistic;
 
-/** @author ActiveViam */
+/**
+ * @author ActiveViam
+ */
 public class TestMemoryStatisticBuilder extends AMemoryStatisticBuilder<AMemoryStatistic> {
 
   /** Name of the statistic */

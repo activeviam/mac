@@ -32,7 +32,6 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.Parent
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;

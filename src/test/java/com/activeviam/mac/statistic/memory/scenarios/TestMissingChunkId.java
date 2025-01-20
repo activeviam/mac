@@ -40,7 +40,7 @@ public class TestMissingChunkId {
 
   @Resources public ResourcesHolder resources;
   private Collection<AMemoryStatistic> memoryStatistics;
-  private final ApplicationInTests analysisApplication = createAnalysisApplication();;
+  private final ApplicationInTests analysisApplication = createAnalysisApplication();
 
   @BeforeAll
   public static void setupRegistry() {
