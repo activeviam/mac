@@ -22,7 +22,6 @@ import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import com.activeviam.tech.core.api.properties.ActiveViamProperty;
 import com.activeviam.tech.core.api.query.QueryException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.core.internal.properties.ActiveViamPropertyExtension;
 import com.activeviam.tech.core.internal.util.ArrayUtil;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
@@ -83,7 +82,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             MemoryStatisticConstants.STAT_NAME_GLOBAL_USED_DIRECT_MEMORY,
             ManagerDescriptionConfig.MAX_DIRECT,
             MemoryStatisticConstants.STAT_NAME_GLOBAL_MAX_DIRECT_MEMORY)
-        .entrySet().stream()
+        .entrySet()
+        .stream()
         .collect(
             toMap(
                 Map.Entry::getKey,

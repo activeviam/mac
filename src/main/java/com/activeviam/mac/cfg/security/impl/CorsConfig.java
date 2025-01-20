@@ -17,8 +17,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.web.cors.CorsConfiguration;
 
 /**
- * Generic implementation for security configuration of a server hosting ActivePivot, or Content server or
- * ActiveMonitor.
+ * Generic implementation for security configuration of a server hosting ActivePivot, or Content
+ * server or ActiveMonitor.
  *
  * <p>This class contains methods:
  *
@@ -35,14 +35,10 @@ import org.springframework.web.cors.CorsConfiguration;
 @Configuration
 public class CorsConfig implements ICorsConfig {
 
-  /**
-   * The name of the Environment to use.
-   */
+  /** The name of the Environment to use. */
   protected Environment env;
 
-  /**
-   * The address the UI is exposed to.
-   */
+  /** The address the UI is exposed to. */
   public static final String ACTIVEUI_ADDRESS = "activeui.address";
 
   public CorsConfig(@Autowired Environment env) {

@@ -30,12 +30,15 @@ public class DebugVisitor implements IMemoryStatisticVisitor<Void> {
 
   /** Boolean stating if the debug mode is activated or not. */
   public static final Boolean DEBUG = false;
+
   /** key string for the debug-id attribute. */
   protected static final String ID_KEY = "debug-id";
 
   private static final String DEPTH_KEY = "debug-depth";
+
   /** Debug Id of the current {@link IMemoryStatistic}. */
   protected final AtomicLong id = new AtomicLong(0);
+
   /** Depth of the current memory statistic in the tree. */
   protected int depth = 0;
 

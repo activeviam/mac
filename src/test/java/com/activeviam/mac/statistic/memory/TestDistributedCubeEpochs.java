@@ -27,7 +27,6 @@ import com.activeviam.mac.statistic.memory.visitor.impl.DistributedEpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.mac.statistic.memory.visitor.impl.RegularEpochView;
 import com.activeviam.tech.core.api.agent.AgentException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import java.nio.file.Path;

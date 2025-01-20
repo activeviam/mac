@@ -20,10 +20,13 @@ public class ByteFormatter implements IFormatter {
 
   /** Plugin key. */
   public static final String KEY = "ByteFormatter";
+
   /** Number of bytes in 1 GB. */
   protected static final long GB = 1_000_000_000;
+
   /** Number of bytes in 1 MB. */
   protected static final long MB = 1_000_000;
+
   /** Number of bytes in 1 kB. */
   protected static final long KB = 1_000;
 

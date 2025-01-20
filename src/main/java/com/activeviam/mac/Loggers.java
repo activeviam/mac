@@ -16,8 +16,10 @@ public class Loggers {
 
   /** Logger for the loading of generic memory statistics. */
   public static final String LOADING = "com.activeviam.mac.loading";
+
   /** Logger for the loading of datastore-related memory stistics. */
   public static final String DATASTORE_LOADING = "com.activeviam.mac.loading.datastore";
+
   /** Logger for the loading of pivot-related memory statistics. */
   public static final String ACTIVEPIVOT_LOADING = "com.activeviam.mac.loading.activepivot";
 }

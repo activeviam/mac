@@ -30,13 +30,13 @@ import com.activeviam.activepivot.core.intf.api.description.builder.ISelectionDe
 import com.activeviam.activepivot.core.intf.api.description.builder.dimension.ICanStartBuildingDimensions;
 import com.activeviam.activepivot.server.spring.api.config.IActivePivotManagerDescriptionConfig;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
-import com.activeviam.mac.comparators.ReverseEpochViewComparator;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.mac.comparators.ReverseEpochViewComparator;
+import com.activeviam.mac.entities.ChunkOwner;
+import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.formatter.ByteFormatter;
 import com.activeviam.mac.formatter.ClassFormatter;
 import com.activeviam.mac.formatter.PartitionIdFormatter;
-import com.activeviam.mac.entities.ChunkOwner;
-import com.activeviam.mac.entities.ChunkOwner.OwnerType;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
@@ -74,71 +74,100 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   // region formatters
   /** Formatter for Numbers. */
   public static final String NUMBER_FORMATTER = IFormatter.NUMBER_PLUGIN_KEY + "[#,###]";
+
   /** Formatter for Percentages. */
   public static final String PERCENT_FORMATTER = IFormatter.NUMBER_PLUGIN_KEY + "[#.##%]";
+
   // endregion
 
   // region dimensions
   /** Name of the Chunk Hierarchy. */
   public static final String CHUNK_DIMENSION = "Chunks";
+
   /** Name of the component dimension. */
   public static final String COMPONENT_DIMENSION = "Components";
+
   /** Name of the component dimension. */
   public static final String OWNER_DIMENSION = "Owners";
+
   /** Name of the owner type analysis hierarchy. */
   public static final String OWNER_TYPE_HIERARCHY = "Owner Type";
+
   /** Name of the field dimension. */
   public static final String FIELD_DIMENSION = "Fields";
+
   /** Name of the index dimension. */
   public static final String INDEX_DIMENSION = "Indices";
+
   /** Name of the version dimension. */
   public static final String VERSION_DIMENSION = "Versions";
+
   /** Name of the aggregate provider dimension. */
   public static final String AGGREGATE_PROVIDER_DIMENSION = "Aggregate Provider";
+
   /** Name of the partition dimension. */
   public static final String PARTITION_DIMENSION = "Partitions";
+
   /** Name of the used by version dimension. */
   public static final String USED_BY_VERSION_DIMENSION = "Used by Version";
+
   // endregion
 
   // region hierarchies
   /** The name of the hierarchy of indexed fields. */
   public static final String INDEXED_FIELDS_HIERARCHY = "Indexed Fields";
+
   /** The name of the hierarchy of indexed fields. */
   public static final String INDEX_TYPE_HIERARCHY = "Index Type";
+
   /** Name of the owner hierarchy. */
   public static final String OWNER_HIERARCHY = "Owner";
+
   /** Name of the component hierarchy. */
   public static final String COMPONENT_HIERARCHY = "Component";
+
   /** Name of the field hierarchy. */
   public static final String FIELD_HIERARCHY = "Field";
+
   /** The name of the hierarchy of reference names. */
   public static final String REFERENCE_NAMES_HIERARCHY = "Reference Names";
+
   /** The name of the hierarchy of provider ids. */
   public static final String PROVIDER_ID_HIERARCHY = "ProviderId";
+
   /** The name of the hierarchy of provider types. */
   public static final String PROVIDER_TYPE_HIERARCHY = "ProviderType";
+
   /** The name of the hierarchy of provider categories. */
   public static final String PROVIDER_CATEGORY_HIERARCHY = "ProviderCategory";
+
   /** The name of the hierarchy of managers. */
   public static final String MANAGER_HIERARCHY = "Manager";
+
   /** The name of the hierarchy of owner components. */
   public static final String CHUNK_ID_HIERARCHY = "ChunkId";
+
   /** The name of the hierarchy of partitions. */
   public static final String PARTITION_HIERARCHY = "Partition";
+
   /** Name of the branch hierarchy. */
   public static final String BRANCH_HIERARCHY = "Branch";
+
   /** Name of the internal epoch id hierarchy. */
   public static final String INTERNAL_EPOCH_ID_HIERARCHY = "Internal Epoch Id";
+
   /** Name of the epoch id hierarchy. */
   public static final String EPOCH_ID_HIERARCHY = "Epoch Id";
+
   /** Name of the date hierarchy. */
   public static final String DATE_HIERARCHY = "Date";
+
   // endregion
 
   // region levels
   /** Java class of the chunk. */
   public static final String CHUNK_CLASS_LEVEL = "Class";
+
   /** Type of the structure owning the chunk. */
   public static final String CHUNK_TYPE_LEVEL = "Type";
 
@@ -150,10 +179,13 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   /** Level for the Ids of the dictionary. */
   public static final String CHUNK_DICO_ID_LEVEL = "DicoID";
+
   /** Level for the Ids of the references. */
   public static final String CHUNK_REF_ID_LEVEL = "ReferenceID";
+
   /** Level for the Ids of the indexes. */
   public static final String CHUNK_INDEX_ID_LEVEL = "IndexID";
+
   // endregion
 
   // region measures
@@ -181,62 +213,87 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
    * entire on-heap footprint of the entire ActivePivot Application
    */
   public static final String HEAP_MEMORY_SUM = "HeapMemory.SUM";
+
   /** Total on-heap memory footprint of the application. */
   public static final String USED_HEAP = "UsedHeapMemory";
+
   /** Total on-heap memory committed by the JVM. */
   public static final String COMMITTED_HEAP = "CommittedHeapMemory";
+
   /** Total off-heap memory footprint of the application. */
   public static final String USED_DIRECT = "UsedDirectMemory";
+
   /** Total off-heap memory committed by the JVM. */
   public static final String MAX_DIRECT = "MaxDirectMemory";
+
   /** Total on-heap memory footprint, relative to the total memory footprint of the application. */
   public static final String USED_MEMORY_RATIO = "UsedDirectMemory.Ratio";
+
   /** Total off-heap memory footprint, relative to the total memory committed by the JVM. */
   public static final String MAX_MEMORY_RATIO = "MaxDirectMemory.Ratio";
+
   /** The dictionary size of the dictionary associated to a chunk. */
   public static final String DICTIONARY_SIZE = "DictionarySize.SUM";
+
   /** For vector block facts, the number of references to the vector block. */
   public static final String VECTOR_BLOCK_REFCOUNT = "VectorBlock.RefCount";
+
   /** For vector block facts, the size the vector block. */
   public static final String VECTOR_BLOCK_SIZE = "VectorBlock.Length";
+
   /** Measure of the chunk size. */
   public static final String CHUNK_SIZE_SUM = "ChunkSize.SUM";
+
   /** Measure of the the non-written rows in Chunks. */
   public static final String NON_WRITTEN_ROWS_COUNT = "Unused rows";
+
   /**
    * Measure of the the non-written rows in Chunks, relative to the total non-written rows in the
    * application.
    */
   public static final String NON_WRITTEN_ROWS_RATIO = "Unused rows ratio";
+
   /** Measure of the deleted rows in Chunks. */
   public static final String DELETED_ROWS_COUNT = "Deleted rows";
+
   /**
    * Measure of the deleted rows in Chunks, relative to the total deleted rows in the application.
    */
   public static final String DELETED_ROWS_RATIO = "Deleted rows ratio";
+
   /** The number of committed rows within chunks. */
   public static final String COMMITTED_ROWS_COUNT = "Used rows";
+
   /** The size in bytes of chunk memory used to store effective data. */
   public static final String COMMITTED_CHUNK_MEMORY = "CommittedChunkMemory.SUM";
+
   /** The ratio of committed rows within chunks. */
   public static final String COMMITTED_ROWS_RATIO = "CommittedRows.Ratio";
+
   // endregion
 
   // region folders
   /** The name of the folder for measures related to application memory metrics. */
   public static final String APPLICATION_FOLDER = "Application Memory";
+
   /** The name of the folder for measures related to dictionaries. */
   public static final String DICTIONARY_FOLDER = "Dictionary";
+
   /** The name of the folder for measures related to chunks. */
   public static final String CHUNK_FOLDER = "Chunk";
+
   /** The name of the folder for measures related to datastore-related chunks. */
   public static final String STORE_CHUNK_FOLDER = "Datastore Chunk";
+
   /** The name of the folder for measures related to chunk memory usage. */
   public static final String CHUNK_MEMORY_FOLDER = "Chunk Memory";
+
   /** The name of the folder for measures related to vectors. */
   public static final String VECTOR_FOLDER = "Vector";
+
   /** The name of the folder for internal measures not intended for regular uses. */
   public static final String INTERNAL_FOLDER = "Internal";
+
   // endregion
 
   protected IDatastoreSchemaDescriptionConfig datastoreDescriptionConfig =

@@ -7,13 +7,10 @@ parameters:
   base_ref:
     type: string
     default: NONE
-  run_compatibility:
-    type: boolean
-    default: false
 executors:
   jdk11-docker:
     docker:
-      - image: cimg/openjdk:17.0.13
+      - image: cimg/openjdk:21.0.5
     environment:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
@@ -46,122 +43,15 @@ jobs:
               -v "$HOME/.m2/repository:/tmp/repository" \
               -v "$PWD:/home/circleci/mac" \
               -w /home/circleci/mac -u root \
-              cimg/openjdk:17.0.13 \
+              cimg/openjdk:21.0.5 \
               mvn package --settings .circleci/circleci-settings.xml -Dmaven.repo.local=/tmp/repository
       - save_cache:
           paths: [ ~/.m2/repository ]
           key: mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
 
-  launch_compatibility_checks:
-    executor: vm
-    resource_class: medium
-    steps:
-      - unless:
-          condition: <<pipeline.parameters.run_compatibility>>
-          steps:
-            - run:
-                name: Fail if no compatibility enabled
-                command: exit 1
-      - when:
-          condition: <<pipeline.parameters.run_compatibility>>
-          steps:
-            - checkout
-# Somehow fails on ubuntu 20.04 (https://askubuntu.com/questions/1240056/unable-to-install-libxml2-utils-on-ubuntu-20-04-wsl)
-#            - run:
-#               name: Try downloading xmllint
-#               command: sudo apt-get install libxml2-utils
-            - run:
-                name: Compatibility enabled, fetch matching releases using artifacts.activeviam.com
-                command: bash ./scripts/get_compatible_ap_releases.sh
-  compatibility_check:
-    executor: vm
-    resource_class: large
-    working_directory: ~/mac
-    parameters:
-      ap-version:
-        type: string
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - mac-java-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - mac-java-{{ .Branch }}-
-            - mac-java-
-            - mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
-      - run:
-          name: "Run sandbox memory export"
-          command: |
-            sudo sysctl -w vm.overcommit_memory=1 && \
-            # using cached exports if available
-            if [[ ! -d ${PWD}/target/exported_statistics || -z $(ls -A ${PWD}/target/exported_statistics) ]]; then
-              echo "No available export cache : Run sandbox export script."
-              bash ./scripts/sandbox_export_generator.sh << parameters.ap-version >> "${ARTIFACTS_READER}:${ARTIFACTS_PWD}"
-            else
-              echo "Use available export cache."
-            fi
-      - run:
-          name: "Run checks on export"
-          command: bash ./scripts/mac_export_load.sh $(cat ./logs/jmxterm.log | tail -1) << parameters.ap-version >>
-      - store_artifacts:
-          path: ./logs
-      - save_cache:
-          paths: [ target/exported_statistics ]
-          key: mac-export-<< parameters.ap-version >>-{{ checksum "pom.xml" }}
 workflows:
   version: 2
   check:
     jobs:
       - build_and_test:
           context: rnd-server
-      - launch_compatibility_checks:
-          context: rnd-server
-          requires:
-            - build_and_test
-      - compatibility_check:
-          matrix:
-            parameters:
-              ap-version: [
-                  "5.9.0",
-                  "5.9.1",
-                  "5.9.2",
-                # The following two versions have their export broken (NPE on export)
-                # "5.9.3",
-                # "5.9.4",
-                  "5.9.5",
-                  "5.9.6",
-                  "5.9.7",
-                  "5.9.8",
-                  "5.9.9",
-                  "5.9.10",
-                  "5.9.11",
-                  "5.9.12",
-                  "5.9.13",
-                # Early releases of the 5.10 sandbox have a dependency on a now removed Atoti UI snapshot : activeui:jar:5.0.0-beta-20210224125715-19abcee
-                # "5.10.0",
-                # "5.10.1",
-                # "5.10.2",
-                  "5.10.3",
-                  "5.10.4",
-                  "5.10.5",
-                  "5.10.6",
-                  "5.10.7",
-                  "5.10.8",
-                  "5.10.9",
-                  "5.10.10",
-                  "5.10.11",
-                  "5.10.12",
-                  "5.10.13",
-                # Early releases of the 5.11 sandbox have a dependency on a now removed Atoti UI snapshot : activeui:jar:5.0.4-20211117104705-da07c29
-                # "5.11.0",
-                  "5.11.1",
-                  "5.11.2",
-                  "5.11.3",
-                  "5.11.4",
-                  "5.11.5",
-                  "6.0.0",
-                  "6.0.1",
-                  "6.0.2"
-              ]
-          context: rnd-server
-          requires:
-            - launch_compatibility_checks

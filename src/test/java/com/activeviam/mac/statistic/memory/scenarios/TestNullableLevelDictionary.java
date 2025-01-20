@@ -27,7 +27,6 @@ import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
-import com.activeviam.tech.core.api.registry.Registry;
 import com.activeviam.tech.dictionaries.api.IDictionary;
 import com.activeviam.tech.dictionaries.internal.impl.NullableDictionary;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;

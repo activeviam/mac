@@ -55,6 +55,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchem
 
   /** Partition value for chunks held by no partitions. */
   public static final int NO_PARTITION = -3;
+
   /** Partition value for chunks held by multiple partitions. */
   public static final int MANY_PARTITIONS = -2;
 
