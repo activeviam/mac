@@ -10,7 +10,7 @@ parameters:
 executors:
   jdk11-docker:
     docker:
-      - image: cimg/openjdk:17.0.13
+      - image: cimg/openjdk:21.0.5
     environment:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
@@ -43,7 +43,7 @@ jobs:
               -v "$HOME/.m2/repository:/tmp/repository" \
               -v "$PWD:/home/circleci/mac" \
               -w /home/circleci/mac -u root \
-              cimg/openjdk:17.0.13 \
+              cimg/openjdk:21.0.5 \
               mvn package --settings .circleci/circleci-settings.xml -Dmaven.repo.local=/tmp/repository
       - save_cache:
           paths: [ ~/.m2/repository ]
