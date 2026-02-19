@@ -890,9 +890,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
         .publish(context);
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
-        .custom(SingleValueFunction.PLUGIN_KEY)
-        // The underlying vector block length should be the same for all the chunks of an
-        // application
+        .max()
+        // The underlying vector block length might change from one vector to another depending on how the Aggregate
+        // Provider computes the vector measure, since this measure does not give as much information as the others,
+        // we decide to only show the maximum length.
         .per(Copper.level(new LevelIdentifier(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)))
         .doNotAggregateAbove()
         .as(VECTOR_BLOCK_SIZE)
