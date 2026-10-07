@@ -13,7 +13,6 @@ import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -62,7 +61,7 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =

@@ -58,7 +58,7 @@ public class MacSpringBootApp {
       final DispatcherServlet dispatcherServlet,
       final ObjectProvider<MultipartConfigElement> multipartConfig) {
     final DispatcherServletRegistrationBean registration =
-        new DispatcherServletRegistrationBean(dispatcherServlet, "/*");
+        new DispatcherServletRegistrationBean(dispatcherServlet, "/");
     registration.setName("springDispatcherServlet");
     registration.setLoadOnStartup(1);
     multipartConfig.ifAvailable(registration::setMultipartConfig);

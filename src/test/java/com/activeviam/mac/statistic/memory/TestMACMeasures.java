@@ -1,6 +1,6 @@
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.tech.test.internal.util.ThrowingLambda.cast;
+import static com.activeviam.tech.composer.test.internal.util.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
 import com.activeviam.activepivot.core.api.query.MdxQuery;
@@ -10,24 +10,22 @@ import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
-import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
+import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.composer.test.internal.properties.ActiveViamPropertyExtension;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import com.activeviam.tech.core.api.properties.ActiveViamProperty;
 import com.activeviam.tech.core.api.query.QueryException;
-import com.activeviam.tech.core.internal.properties.ActiveViamPropertyExtension;
 import com.activeviam.tech.core.internal.util.ArrayUtil;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.MemoryStatisticConstants;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +106,6 @@ public class TestMACMeasures extends ATestMemoryStatistic {
                           try {
                             tm.remove("A", i * i);
                           } catch (NoTransactionException
-                              | DatastoreTransactionException
                               | IllegalArgumentException
                               | NullPointerException e) {
                             throw new ActiveViamRuntimeException(e);
@@ -130,7 +127,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
         ApplicationInTests.builder()

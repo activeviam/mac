@@ -7,13 +7,12 @@
 
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotConfig;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreConfig;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
+import com.activeviam.activepivot.server.intf.api.entitlements.IActivePivotContentService;
+import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.web.spring.internal.JMXEnabler;
-import com.activeviam.web.spring.internal.config.JwtConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
@@ -44,7 +43,6 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Import(
     value = {
-      JwtConfig.class,
       ManagerDescriptionConfig.class,
 
       // Pivot
@@ -59,14 +57,14 @@ import org.springframework.core.env.Environment;
     })
 public class MacServerConfig {
 
-  /** Datastore spring configuration. */
-  @Autowired protected IDatastoreConfig datastoreConfig;
+  /** Datastore of the application. */
+  @Autowired protected IDatastore datastore;
 
-  /** ActivePivot spring configuration. */
-  @Autowired protected IActivePivotConfig apConfig;
+  /** ActivePivot manager of the application. */
+  @Autowired protected IActivePivotManager activePivotManager;
 
-  /** ActivePivot content service spring configuration. */
-  @Autowired protected IActivePivotContentServiceConfig apContentServiceConfig;
+  /** ActivePivot content service. */
+  @Autowired protected IActivePivotContentService activePivotContentService;
 
   /** Content Service configuration. */
   @Autowired protected ContentServiceConfig contentServiceConfig;
@@ -88,8 +86,8 @@ public class MacServerConfig {
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
     try {
-      this.apConfig.activePivotManager().init(null);
-      this.apConfig.activePivotManager().start();
+      this.activePivotManager.init(null);
+      this.activePivotManager.start();
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }

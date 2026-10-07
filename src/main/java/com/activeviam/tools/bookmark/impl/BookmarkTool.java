@@ -8,12 +8,12 @@
 package com.activeviam.tools.bookmark.impl;
 
 import com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter;
-import tools.jackson.core.util.DefaultPrettyPrinter;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
 import java.util.List;
 import java.util.Map;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import tools.jackson.core.util.DefaultPrettyPrinter;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Library class exposing content server bookmark import and export functionality for Accelerators.
@@ -45,7 +45,7 @@ public class BookmarkTool {
   public static void exportBookmarks(ContentServiceSnapshotter snapshotter, String folderName) {
     ObjectMapper mapper = new JsonMapper();
     ContentServerToJsonUi.setMapper(mapper);
-    ContentServerToJsonUi.setWriter(mapper.writer(new DefaultPrettyPrinter()));
+    ContentServerToJsonUi.setWriter(mapper.writer().with(new DefaultPrettyPrinter()));
     ContentServerToJsonUi.export(snapshotter, folderName);
   }
 }

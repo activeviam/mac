@@ -28,7 +28,7 @@ but the dependency versions can be changed in the project's POM.
 ### Build steps
 The requirements for building the MAC application are the following : 
   - Maven 3.0 +
-  - Java 11 +
+  - Java 25 +
   - Atoti Server artifacts
   - Atoti UI artifacts
 
@@ -41,7 +41,7 @@ mvn clean install -DskipTests=true
 ### Launch steps
 
 The requirements for launching the MAC application are the following :
-  - Java 11+
+  - Java 25+
   - The built MAC .jar file
   - A valid Atoti Server license
 

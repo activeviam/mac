@@ -9,7 +9,6 @@ import com.activeviam.activepivot.server.json.api.dataexport.IJsonOutputConfigur
 import com.activeviam.activepivot.server.json.api.dataexport.JsonCsvTabularOutputConfiguration;
 import com.activeviam.activepivot.server.json.api.dataexport.JsonDataExportOrder;
 import com.activeviam.activepivot.server.json.api.query.JsonMdxQuery;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
@@ -102,7 +101,7 @@ public class TestMemoryStatisticsCompatibility extends ATestMemoryStatistic {
   @BeforeEach
   public void initializeMonitoringApplication() {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
     this.monitoringApp =
         ApplicationInTests.builder()

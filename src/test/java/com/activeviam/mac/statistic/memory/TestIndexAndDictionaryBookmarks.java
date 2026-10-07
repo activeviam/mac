@@ -16,7 +16,6 @@ import com.activeviam.activepivot.server.intf.api.dto.AxisDTO;
 import com.activeviam.activepivot.server.intf.api.dto.AxisPositionDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
@@ -87,7 +86,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
         ApplicationInTests.builder()

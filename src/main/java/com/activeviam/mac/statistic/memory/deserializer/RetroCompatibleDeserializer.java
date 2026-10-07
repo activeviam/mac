@@ -17,16 +17,6 @@ import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import tools.jackson.core.JsonParser;
-import tools.jackson.core.JsonToken;
-import tools.jackson.core.StreamReadFeature;
-import tools.jackson.core.StreamWriteFeature;
-import tools.jackson.core.json.JsonReadFeature;
-import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.ObjectReader;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.module.SimpleModule;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,7 +36,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.xerial.snappy.SnappyFramedInputStream;
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
  * {@link ValueDeserializer} for {@link IMemoryStatistic}.
@@ -84,17 +84,18 @@ public class RetroCompatibleDeserializer extends AStatisticDeserializer<AMemoryS
   private static ObjectMapper serializer;
 
   static {
-
     final SimpleModule deserializeModule = new SimpleModule();
     deserializeModule.addDeserializer(AMemoryStatistic.class, new RetroCompatibleDeserializer());
     serializer =
         JsonMapper.builder()
             .configure(StreamReadFeature.AUTO_CLOSE_SOURCE, false)
-            .configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER.mappedFeature(), true)
-            .configure(tools.jackson.core.json.JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES.mappedFeature(), true)
+            .enable(
+                JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER,
+                JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
+                JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
             .configure(StreamWriteFeature.AUTO_CLOSE_TARGET, false)
-            .configure(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature(), true)
-            .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL).withValueInclusion(JsonInclude.Include.NON_NULL))
+            .changeDefaultPropertyInclusion(
+                incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
             .addModule(deserializeModule)
             .build();
   }

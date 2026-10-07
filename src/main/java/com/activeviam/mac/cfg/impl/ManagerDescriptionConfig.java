@@ -28,8 +28,6 @@ import com.activeviam.activepivot.core.intf.api.description.builder.ICanStartBui
 import com.activeviam.activepivot.core.intf.api.description.builder.IHasAtLeastOneMeasure;
 import com.activeviam.activepivot.core.intf.api.description.builder.ISelectionDescriptionBuilder;
 import com.activeviam.activepivot.core.intf.api.description.builder.dimension.ICanStartBuildingDimensions;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotManagerDescriptionConfig;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.mac.comparators.ReverseEpochViewComparator;
 import com.activeviam.mac.entities.ChunkOwner;
@@ -60,7 +58,7 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import(MemoryAnalysisDatastoreDescriptionConfig.class)
-public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionConfig {
+public class ManagerDescriptionConfig {
 
   /** The main monitoring cube name. */
   public static final String MONITORING_CUBE = "MemoryCube";
@@ -296,7 +294,7 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
   // endregion
 
-  protected IDatastoreSchemaDescriptionConfig datastoreDescriptionConfig =
+  protected MemoryAnalysisDatastoreDescriptionConfig datastoreDescriptionConfig =
       new MemoryAnalysisDatastoreDescriptionConfig();
 
   /**
@@ -311,7 +309,6 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
   }
 
   @Bean
-  @Override
   public IActivePivotManagerDescription managerDescription() {
     return StartBuilding.managerDescription()
         .withSchema(MONITORING_SCHEMA)
@@ -891,8 +888,10 @@ public class ManagerDescriptionConfig implements IActivePivotManagerDescriptionC
 
     perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
         .max()
-        // The underlying vector block length might change from one vector to another depending on how the Aggregate
-        // Provider computes the vector measure, since this measure does not give as much information as the others,
+        // The underlying vector block length might change from one vector to another depending on
+        // how the Aggregate
+        // Provider computes the vector measure, since this measure does not give as much
+        // information as the others,
         // we decide to only show the maximum length.
         .per(Copper.level(new LevelIdentifier(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)))
         .doNotAggregateAbove()

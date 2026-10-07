@@ -18,6 +18,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
+import com.activeviam.mac.statistic.memory.LegacyMemoryStatisticConstants;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
@@ -237,7 +238,7 @@ public class DatastoreFeederVisitor extends ADatastoreFeedVisitor<Void> {
       case MemoryStatisticConstants.STAT_NAME_STORE_PARTITION:
         processStorePartition(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
+      case LegacyMemoryStatisticConstants.STAT_NAME_PRIMARY_INDICES:
       case MemoryStatisticConstants.STAT_NAME_UNIQUE_INDICES:
         processUniqueIndices(stat);
         break;

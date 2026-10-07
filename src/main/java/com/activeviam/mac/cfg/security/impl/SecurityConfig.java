@@ -115,9 +115,8 @@ public class SecurityConfig {
   @Bean
   public AuthenticationProvider inMemoryAuthenticationProvider(
       final UserDetailsService userDetailsService, final PasswordEncoder passwordEncoder) {
-    final var authenticationProvider = new DaoAuthenticationProvider();
+    final var authenticationProvider = new DaoAuthenticationProvider(userDetailsService);
     authenticationProvider.setPasswordEncoder(passwordEncoder);
-    authenticationProvider.setUserDetailsService(userDetailsService);
 
     return authenticationProvider;
   }

@@ -1,7 +1,7 @@
 package com.activeviam.mac.statistic.memory;
 
 import static com.activeviam.mac.memory.DatastoreConstants.CHUNK_STORE;
-import static com.activeviam.tech.test.internal.assertj.AssertJConditions.identical;
+import static com.activeviam.tech.composer.test.internal.assertj.AssertJConditions.identical;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -12,7 +12,6 @@ import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.api.schema.FieldPath;
 import com.activeviam.database.datastore.api.IDatastore;
-import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.impl.Datastore;
@@ -345,7 +344,6 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                           try {
                             tm.remove("A", i * i);
                           } catch (NoTransactionException
-                              | DatastoreTransactionException
                               | IllegalArgumentException
                               | NullPointerException e) {
                             throw new ActiveViamRuntimeException(e);
@@ -560,7 +558,6 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
                       try {
                         tm.remove("A", i * i);
                       } catch (NoTransactionException
-                          | DatastoreTransactionException
                           | IllegalArgumentException
                           | NullPointerException e) {
                         throw new ActiveViamRuntimeException(e);

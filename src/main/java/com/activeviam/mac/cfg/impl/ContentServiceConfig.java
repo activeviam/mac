@@ -13,12 +13,10 @@ import com.activeviam.activepivot.core.intf.api.contextvalues.IContextValue;
 import com.activeviam.activepivot.core.intf.api.description.ICalculatedMemberDescription;
 import com.activeviam.activepivot.core.intf.api.description.IKpiDescription;
 import com.activeviam.activepivot.server.intf.api.entitlements.IActivePivotContentService;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
 import com.activeviam.activepivot.server.spring.api.content.ActivePivotContentServiceBuilder;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.tech.contentserver.spring.internal.config.ContentServerRestServicesConfig;
 import com.activeviam.tech.contentserver.storage.api.IContentService;
-import com.activeviam.tech.contentserver.storage.private_.HibernateContentService;
 import com.activeviam.tech.core.internal.monitoring.JmxOperation;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Role;
@@ -31,7 +29,6 @@ import java.util.Properties;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.HibernateException;
-import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -53,7 +50,7 @@ import org.springframework.core.io.Resource;
  */
 @Configuration
 @RequiredArgsConstructor
-public class ContentServiceConfig implements IActivePivotContentServiceConfig {
+public class ContentServiceConfig {
 
   /**
    * The name of the property that controls whether or not to force the reloading of the predefined
@@ -71,15 +68,14 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    *
    * @return the Hibernate's configuration
    */
-  private static SessionFactory loadConfiguration(final Properties hibernateProperties)
-      throws HibernateException, IOException {
+  private static org.hibernate.cfg.Configuration loadConfiguration(
+      final Properties hibernateProperties) throws HibernateException, IOException {
     hibernateProperties.put(
         AvailableSettings.DATASOURCE, createTomcatJdbcDataSource(hibernateProperties));
     final Resource entityMappingFile = new ClassPathResource("content-service-hibernate.xml");
     return new org.hibernate.cfg.Configuration()
         .addProperties(hibernateProperties)
-        .addInputStream(entityMappingFile.getInputStream())
-        .buildSessionFactory();
+        .addInputStream(entityMappingFile.getInputStream());
   }
 
   /**
@@ -88,7 +84,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    *
    * @param hibernateProperties the hibernate properties loaded from <i>hibernate.properties</i>
    *     file.
-   * @return the {@link DataSource} for {@link HibernateContentService}.
+   * @return the {@link DataSource} for the persisted {@link IContentService}.
    */
   private static DataSource createTomcatJdbcDataSource(Properties hibernateProperties) {
     try {
@@ -126,16 +122,16 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    *
    * @return the content service
    */
-  @Override
   @Bean
   public IContentService contentService() {
     if ("db".equals(this.env.getProperty("content-service.type", "db"))) {
       return IContentService.builder().inMemory().build();
     } else {
-      final SessionFactory sessionFactory;
       try {
-        sessionFactory = loadConfiguration(contentServiceHibernateProperties());
-        return new HibernateContentService(sessionFactory);
+        return IContentService.builder()
+            .withPersistence()
+            .configuration(loadConfiguration(contentServiceHibernateProperties()))
+            .build();
       } catch (HibernateException | IOException e) {
         throw new BeanInitializationException("Failed to initialize the Content Service", e);
       }
@@ -150,12 +146,12 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
    * @return the {@link IActivePivotContentService content service} used by the Sandbox application
    */
   @Bean
-  @Override
   public IActivePivotContentService activePivotContentService() {
     return new ActivePivotContentServiceBuilder()
         .with(contentService())
         .withCacheForEntitlements(-1)
-        .needInitialization(SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER, IContentService.ROLE_ROOT)
+        .needInitialization(
+            SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER, IContentService.ROLE_ROOT)
         .build();
   }
 

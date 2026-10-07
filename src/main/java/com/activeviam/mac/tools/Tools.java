@@ -86,8 +86,7 @@ public class Tools {
 
     final String subpart =
         pathAsString.substring(0, pathAsString.length() - extension.length() - 1);
-    final Path uncompressedPath =
-        Path.of(subpart.endsWith(".json") ? subpart : subpart + ".json");
+    final Path uncompressedPath = Path.of(subpart.endsWith(".json") ? subpart : subpart + ".json");
     final InputStream rawInputStream;
     try {
       rawInputStream = new FileInputStream(path.toFile());

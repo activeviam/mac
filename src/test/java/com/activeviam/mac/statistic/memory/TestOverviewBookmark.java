@@ -6,7 +6,6 @@ import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -76,7 +75,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
     this.monitoringApp =
         ApplicationInTests.builder()

@@ -13,9 +13,6 @@ import com.activeviam.tech.contentserver.storage.api.IContentTree;
 import com.activeviam.tech.contentserver.storage.api.SnapshotContentTree;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.ObjectWriter;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -27,6 +24,9 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectWriter;
 
 /**
  * Helper class containing methods used for the export of the Content Server bookmarks into a
