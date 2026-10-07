@@ -9,6 +9,7 @@ package com.activeviam.mac.formatter;
 
 import com.activeviam.tech.core.api.format.IFormatter;
 import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ public class ClassFormatter implements IFormatter {
   /** Plugin key. */
   public static final String KEY = "ClassFormatter";
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   @Override
   public String getType() {
@@ -34,12 +35,12 @@ public class ClassFormatter implements IFormatter {
   @Override
   public String format(Object object) {
     // A String is expected has input.
-    if (object instanceof String) {
+    if (object instanceof String string) {
       /*
        * Input: com.qfs.chunk.impl.ChunkOffsetLong,com.qfs.chunk.direct.impl.DirectChunkBits Output:
        * ChunkOffsetLong,DirectChunkBits
        */
-      String[] classes = ((String) object).split(Pattern.quote(","));
+      String[] classes = string.split(Pattern.quote(","));
       return Arrays.stream(classes)
           .map(className -> className.replaceAll("^.*\\.", ""))
           .collect(Collectors.joining(","));

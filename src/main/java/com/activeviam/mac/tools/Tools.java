@@ -15,7 +15,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
@@ -43,7 +42,7 @@ public class Tools {
   public static void extractSnappyFileOrDirectory(final String path) {
     Objects.requireNonNull(path, "file or directory to uncompress was not provided");
 
-    final Path asPath = Paths.get(path);
+    final Path asPath = Path.of(path);
     extractSnappyFileOrDirectory(asPath);
   }
 
@@ -88,7 +87,7 @@ public class Tools {
     final String subpart =
         pathAsString.substring(0, pathAsString.length() - extension.length() - 1);
     final Path uncompressedPath =
-        Paths.get(subpart.endsWith(".json") ? subpart : subpart + ".json");
+        Path.of(subpart.endsWith(".json") ? subpart : subpart + ".json");
     final InputStream rawInputStream;
     try {
       rawInputStream = new FileInputStream(path.toFile());

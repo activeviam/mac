@@ -3,17 +3,17 @@ package com.activeviam.mac.statistic.memory;
 import static com.activeviam.tech.test.internal.util.ThrowingLambda.cast;
 import static java.util.stream.Collectors.toMap;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
+import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.database.datastore.internal.NoTransactionException;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
@@ -153,8 +153,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDirectMemorySum() throws QueryException {
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
@@ -162,14 +162,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
-    final MDXQuery query2 =
-        new MDXQuery(
+    final MdxQuery query2 =
+        new MdxQuery(
             "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
-    final MDXQuery query3 =
-        new MDXQuery(
+    final MdxQuery query3 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS"
@@ -187,8 +187,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testOnHeapMemorySum() throws QueryException {
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
@@ -196,14 +196,14 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
     Long value = CellSetUtils.extractValueFromSingleCellDTO(res);
 
-    final MDXQuery query2 =
-        new MDXQuery(
+    final MdxQuery query2 =
+        new MdxQuery(
             "SELECT" + "  NON EMPTY [Measures].[Chunks.COUNT] ON COLUMNS" + "  FROM [MemoryCube]");
     CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
     Long nbC = CellSetUtils.extractValueFromSingleCellDTO(res2);
 
-    final MDXQuery query3 =
-        new MDXQuery(
+    final MdxQuery query3 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[HeapMemory.SUM] ON COLUMNS"
@@ -226,8 +226,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testChunkSize() throws QueryException {
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
@@ -241,8 +241,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testNonWrittenCount() throws QueryException {
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
@@ -261,8 +261,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             this.appStats.forEach(
                 cast(
                     (measure, value) -> {
-                      final MDXQuery query =
-                          new MDXQuery(
+                      final MdxQuery query =
+                          new MdxQuery(
                               "SELECT"
                                   + "  NON EMPTY [Measures].["
                                   + measure
@@ -287,8 +287,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             this.appStats.forEach(
                 cast(
                     (measure, value) -> {
-                      final MDXQuery query =
-                          new MDXQuery(
+                      final MdxQuery query =
+                          new MdxQuery(
                               "SELECT"
                                   + " NON EMPTY [Measures].["
                                   + measure
@@ -306,8 +306,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
             this.appStats.forEach(
                 cast(
                     (measure, value) -> {
-                      final MDXQuery query =
-                          new MDXQuery(
+                      final MdxQuery query =
+                          new MdxQuery(
                               "SELECT"
                                   + " NON EMPTY [Measures].["
                                   + measure
@@ -326,8 +326,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testFreedCount() throws QueryException {
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  [Measures].[Deleted rows] ON COLUMNS"
@@ -341,24 +341,24 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testNonWrittenRatio() throws QueryException {
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
-    final MDXQuery query2 =
-        new MDXQuery(
+    final MdxQuery query2 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
 
-    final MDXQuery query3 =
-        new MDXQuery(
+    final MdxQuery query3 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Unused rows ratio] ON COLUMNS"
@@ -377,24 +377,24 @@ public class TestMACMeasures extends ATestMemoryStatistic {
   @Test
   public void testDeletedRatio() throws QueryException {
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res = MdxQueryUtil.execute(this.monitoringApp.getManager(), query);
 
-    final MDXQuery query2 =
-        new MDXQuery(
+    final MdxQuery query2 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Deleted rows] ON COLUMNS"
                 + "  FROM [MemoryCube]");
     CellSetDTO res2 = MdxQueryUtil.execute(this.monitoringApp.getManager(), query2);
 
-    final MDXQuery query3 =
-        new MDXQuery(
+    final MdxQuery query3 =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + "  NON EMPTY [Measures].[Deleted rows ratio] ON COLUMNS"
@@ -412,8 +412,8 @@ public class TestMACMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySize() throws QueryException {
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + " NON EMPTY [Chunks].[ChunkId].[ChunkId].Members ON ROWS,"
                 + " NON EMPTY [Measures].[DictionarySize.SUM] ON COLUMNS"

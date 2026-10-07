@@ -11,8 +11,9 @@ import com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter;
 import com.activeviam.tech.contentserver.storage.api.SnapshotContentTree;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -129,7 +130,7 @@ public class JsonUiToContentServer {
    * @return The contents of the inputStream, as a JsonNode.
    */
   private static JsonNode loadFileIntoNode(InputStream inputStream) throws IOException {
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new JsonMapper();
     return mapper.readTree(inputStream);
   }
 

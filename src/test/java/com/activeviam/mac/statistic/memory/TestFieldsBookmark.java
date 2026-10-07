@@ -1,8 +1,8 @@
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
@@ -86,21 +86,21 @@ public class TestFieldsBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testStoreTotal() throws QueryException {
-    final MDXQuery storeTotal =
-        new MDXQuery(
+    final MdxQuery storeTotal =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery perFieldQuery =
-        new MDXQuery(
+    final MdxQuery perFieldQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
                 + "NON EMPTY [Fields].[Field].[ALL].[AllMember].Children ON ROWS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery excessMemoryQuery =
-        new MDXQuery(
+    final MdxQuery excessMemoryQuery =
+        new MdxQuery(
             "WITH MEMBER [Measures].[Field.COUNT] AS "
                 + ownershipCountMdxExpression("[Fields].[Field]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"

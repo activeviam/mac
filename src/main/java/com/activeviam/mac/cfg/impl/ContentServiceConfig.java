@@ -155,7 +155,7 @@ public class ContentServiceConfig implements IActivePivotContentServiceConfig {
     return new ActivePivotContentServiceBuilder()
         .with(contentService())
         .withCacheForEntitlements(-1)
-        .needInitialization(SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER)
+        .needInitialization(SecurityConfig.ROLE_USER, SecurityConfig.ROLE_USER, IContentService.ROLE_ROOT)
         .build();
   }
 

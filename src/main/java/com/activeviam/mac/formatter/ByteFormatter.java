@@ -9,6 +9,7 @@ package com.activeviam.mac.formatter;
 
 import com.activeviam.tech.core.api.format.IFormatter;
 import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
+import java.io.Serial;
 
 /**
  * Formatter displaying byte amounts with decimal units.
@@ -30,7 +31,7 @@ public class ByteFormatter implements IFormatter {
   /** Number of bytes in 1 kB. */
   protected static final long KB = 1_000;
 
-  private static final long serialVersionUID = 1342335544322063849L;
+  @Serial private static final long serialVersionUID = 1342335544322063849L;
 
   /**
    * Format a number of bytes into a readable data size.

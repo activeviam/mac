@@ -7,9 +7,9 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
@@ -75,8 +75,8 @@ public class TestMissingChunkId {
     loadStatisticsIntoDatastore(
         memoryStatistics, (IInternalDatastore) analysisApplication.getDatabase());
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + "  NON EMPTY Hierarchize("
                 + "    Descendants("

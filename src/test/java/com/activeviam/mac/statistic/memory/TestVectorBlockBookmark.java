@@ -9,9 +9,9 @@ package com.activeviam.mac.statistic.memory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
@@ -103,8 +103,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @Test
   void testVectorBlockRecordConsumptionIsZero() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT [Components].[Component].[Component].[RECORDS] ON ROWS,"
                 + " [Measures].[DirectMemory.SUM] ON COLUMNS"
                 + " FROM [MemoryCube]"
@@ -120,8 +120,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @Test
   void testVectorBlockConsumption() throws QueryException {
-    final MDXQuery vectorBlockQueryField1 =
-        new MDXQuery(
+    final MdxQuery vectorBlockQueryField1 =
+        new MdxQuery(
             "SELECT {"
                 + "   [Components].[Component].[ALL].[AllMember],"
                 + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
@@ -147,8 +147,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
         .isEqualTo(directMemoryUsedOnVector)
         .isEqualTo((long) result1.getCells().get(0).getValue());
 
-    final MDXQuery vectorBlockQueryField2 =
-        new MDXQuery(
+    final MdxQuery vectorBlockQueryField2 =
+        new MdxQuery(
             "SELECT {"
                 + "   [Components].[Component].[ALL].[AllMember],"
                 + "   [Components].[Component].[Component].[VECTOR_BLOCK]"
@@ -170,8 +170,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @Test
   void testVectorBlockLength() throws QueryException {
-    final MDXQuery lengthQuery =
-        new MDXQuery(
+    final MdxQuery lengthQuery =
+        new MdxQuery(
             "SELECT  [Measures].[VectorBlock.Length] ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("
@@ -187,8 +187,8 @@ public class TestVectorBlockBookmark extends ATestMemoryStatistic {
 
   @Test
   void testVectorBlockRefCount() throws QueryException {
-    final MDXQuery refCountQuery =
-        new MDXQuery(
+    final MdxQuery refCountQuery =
+        new MdxQuery(
             "SELECT [Measures].[VectorBlock.RefCount] ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE ("

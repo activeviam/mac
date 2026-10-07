@@ -29,7 +29,6 @@ import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,7 +81,7 @@ public class SourceConfig {
   @Lazy
   public DirectoryCsvTopic statisticTopic() throws IllegalStateException {
     final String statisticFolder = this.env.getRequiredProperty(STATISTIC_FOLDER_PROPERTY);
-    final Path folderPath = Paths.get(statisticFolder);
+    final Path folderPath = Path.of(statisticFolder);
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info(
           "Using directory `"
@@ -111,7 +110,7 @@ public class SourceConfig {
    * @return the corresponding path object
    */
   protected Path resolveDirectory(final String name) {
-    Path directory = Paths.get(name);
+    Path directory = Path.of(name);
     if (!Files.isDirectory(directory)) {
 
       // Try as a classpath resource
@@ -132,7 +131,7 @@ public class SourceConfig {
         }
       }
       if (url != null) {
-        directory = Paths.get(URI.create(url.toExternalForm()));
+        directory = Path.of(URI.create(url.toExternalForm()));
         if (!Files.isDirectory(directory)) {
           throw new IllegalArgumentException(
               "'" + name + "' could not be resolved to a directory.");
@@ -265,7 +264,7 @@ public class SourceConfig {
       LOGGER.info("Loading user data from " + path);
     }
     final long start = System.nanoTime();
-    final Path dirPath = Paths.get(path);
+    final Path dirPath = Path.of(path);
     final String dumpName = dirPath.getFileName().toString();
     final List<Path> files = Files.list(dirPath).collect(toUnmodifiableList());
     loadDumps(Map.of(dumpName, files));
@@ -293,8 +292,8 @@ public class SourceConfig {
       LOGGER.info("Loading user data from " + path);
     }
     final long start = System.nanoTime();
-    final String dumpName = Paths.get(path).getFileName().toString().replaceAll("\\.[^.]*$", "");
-    loadDumps(Map.of(dumpName, List.of(Paths.get(path))));
+    final String dumpName = Path.of(path).getFileName().toString().replaceAll("\\.[^.]*$", "");
+    loadDumps(Map.of(dumpName, List.of(Path.of(path))));
     final long end = System.nanoTime();
 
     if (LOGGER.isLoggable(Level.INFO)) {

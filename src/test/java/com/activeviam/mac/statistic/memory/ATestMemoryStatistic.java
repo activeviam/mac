@@ -40,8 +40,8 @@ import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.database.datastore.internal.NoTransactionException;
 import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
@@ -937,7 +937,6 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .withApplicationId("app")
                     .withAllHierarchies()
-                    .withAllMeasures()
                     .end()
                     .build())
             .withDistributedCube(

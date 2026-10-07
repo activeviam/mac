@@ -7,9 +7,9 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
@@ -93,8 +93,8 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
 
   @Test
   public void testDifferentMemoryUsagesForBothFields() throws QueryException {
-    final MDXQuery usageQuery =
-        new MDXQuery(
+    final MdxQuery usageQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
                 + "{"
                 + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"
