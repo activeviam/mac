@@ -8,12 +8,10 @@
 package com.activeviam.mac.cfg.impl;
 
 import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
-import com.activeviam.activepivot.server.intf.api.entitlements.IActivePivotContentService;
-import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.web.spring.internal.JMXEnabler;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,22 +53,17 @@ import org.springframework.core.env.Environment;
       SecurityConfig.class,
       SourceConfig.class,
     })
+@RequiredArgsConstructor
 public class MacServerConfig {
 
-  /** Datastore of the application. */
-  @Autowired protected IDatastore datastore;
-
   /** ActivePivot manager of the application. */
-  @Autowired protected IActivePivotManager activePivotManager;
-
-  /** ActivePivot content service. */
-  @Autowired protected IActivePivotContentService activePivotContentService;
+  private final IActivePivotManager activePivotManager;
 
   /** Content Service configuration. */
-  @Autowired protected ContentServiceConfig contentServiceConfig;
+  private final ContentServiceConfig contentServiceConfig;
 
   /** Spring configuration of the source files of the Memory Analysis Cube application. */
-  @Autowired protected SourceConfig sourceConfig;
+  private final SourceConfig sourceConfig;
 
   /**
    * Initialize and start the ActivePivot Manager, after performing all the injections into the
