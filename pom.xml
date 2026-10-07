@@ -65,20 +65,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Dependencies for the content service persistence -->
-    <dependency>
-      <groupId>org.hibernate.orm</groupId>
-      <artifactId>hibernate-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.hibernate.orm</groupId>
-      <artifactId>hibernate-c3p0</artifactId>
-    </dependency>
-
     <!-- SpringBoot dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -92,13 +78,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <!-- Connection pool. Scope test to use import it only when using Jetty
-        Server. Automatically provided when the application is deployed in a tomcat. -->
-    <dependency>
-      <groupId>org.apache.tomcat</groupId>
-      <artifactId>tomcat-jdbc</artifactId>
     </dependency>
 
     <!-- Test dependencies -->
@@ -137,10 +116,6 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>jakarta.persistence</groupId>
-      <artifactId>jakarta.persistence-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
