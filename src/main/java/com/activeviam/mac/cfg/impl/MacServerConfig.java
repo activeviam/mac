@@ -56,9 +56,6 @@ import org.springframework.core.env.Environment;
 @RequiredArgsConstructor
 public class MacServerConfig {
 
-  /** ActivePivot manager of the application. */
-  private final IActivePivotManager activePivotManager;
-
   /** Content Service configuration. */
   private final ContentServiceConfig contentServiceConfig;
 
@@ -69,18 +66,19 @@ public class MacServerConfig {
    * Initialize and start the ActivePivot Manager, after performing all the injections into the
    * ActivePivot plug-ins.
    *
+   * @param activePivotManager the ActivePivot Manager of the application
    * @return void
    */
   @Bean
-  public Void startManager() {
+  public Void startManager(final IActivePivotManager activePivotManager) {
     this.contentServiceConfig.loadPredefinedBookmarks();
 
     /* *********************************************** */
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
     try {
-      this.activePivotManager.init(null);
-      this.activePivotManager.start();
+      activePivotManager.init(null);
+      activePivotManager.start();
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }
