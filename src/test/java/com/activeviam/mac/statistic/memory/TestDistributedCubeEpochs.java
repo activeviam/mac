@@ -7,14 +7,14 @@
 
 package com.activeviam.mac.statistic.memory;
 
-import static com.activeviam.activepivot.dist.impl.internal.distribution.impl.DistributionUtil.stopDistribution;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.dist.impl.internal.impl.MultiVersionDistributedActivePivot;
+import com.activeviam.activepivot.dist.impl.api.cube.IMultiVersionDistributedActivePivot;
+import com.activeviam.activepivot.dist.querynode.internal.cube.IInternalMultiVersionDistributedActivePivot;
+import com.activeviam.activepivot.dist.querynode.internal.cube.IInternalMultiVersionDistributedActivePivot.DiscardingStep;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
 import com.activeviam.database.datastore.api.IDatastore;
@@ -72,7 +72,10 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
   @AfterEach
   public void tearDown() {
     monitoringApp.close();
-    stopDistribution(monitoredApp.getManager());
+    monitoredApp.getManager().getActivePivots().values().stream()
+        .filter(IMultiVersionDistributedActivePivot.class::isInstance)
+        .map(IMultiVersionDistributedActivePivot.class::cast)
+        .forEach(IMultiVersionDistributedActivePivot::stopDistribution);
   }
 
   private void initializeApplication() {
@@ -80,10 +83,10 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     this.monitoredApp = createDistributedApplicationWithKeepAllEpochPolicy("distributed-epochs");
 
     final var queryCubeA =
-        ((MultiVersionDistributedActivePivot)
+        ((IInternalMultiVersionDistributedActivePivot)
             this.monitoredApp.getManager().getActivePivots().get("QueryCubeA"));
     final var queryCubeB =
-        ((MultiVersionDistributedActivePivot)
+        ((IInternalMultiVersionDistributedActivePivot)
             this.monitoredApp.getManager().getActivePivots().get("QueryCubeB"));
     final var dataCube = this.monitoredApp.getManager().getActivePivots().get("Data");
     // epoch 1
@@ -100,13 +103,15 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
     // emulate commits on the query cubes at a greater epoch that does not exist in the datastore
     // produces 5 distributed epochs
     for (int i = 0; i < 5; ++i) {
-      queryCubeA.removeMembersFromCube(Collections.emptySet(), 0, false);
+      queryCubeA.removeMembersFromCube(
+          Collections.emptySet(), 0, DiscardingStep.CONTRIBUTIONS_REMOVAL);
       queryCubeA.awaitNotifications();
       dataCube.awaitNotifications();
     }
 
     // produces 1 distributed epoch
-    queryCubeB.removeMembersFromCube(Collections.emptySet(), 0, false);
+    queryCubeB.removeMembersFromCube(
+        Collections.emptySet(), 0, DiscardingStep.CONTRIBUTIONS_REMOVAL);
     queryCubeB.awaitNotifications();
     dataCube.awaitNotifications();
   }
@@ -123,7 +128,7 @@ public class TestDistributedCubeEpochs extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =

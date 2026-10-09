@@ -17,15 +17,6 @@ import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.json.JsonReadFeature;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,9 +35,21 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.xerial.snappy.SnappyFramedInputStream;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 /**
- * {@link JsonDeserializer} for {@link IMemoryStatistic}.
+ * {@link ValueDeserializer} for {@link IMemoryStatistic}.
  *
  * @author ActiveViam
  */
@@ -81,23 +84,24 @@ public class RetroCompatibleDeserializer extends AStatisticDeserializer<AMemoryS
   private static ObjectMapper serializer;
 
   static {
-    serializer =
-        new ObjectMapper()
-            .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
-            .configure(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER.mappedFeature(), true)
-            .configure(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES.mappedFeature(), true)
-            .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
-            .configure(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS.mappedFeature(), true);
-    serializer.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
     final SimpleModule deserializeModule = new SimpleModule();
     deserializeModule.addDeserializer(AMemoryStatistic.class, new RetroCompatibleDeserializer());
-    serializer.registerModule(deserializeModule);
+    serializer =
+        JsonMapper.builder()
+            .configure(StreamReadFeature.AUTO_CLOSE_SOURCE, false)
+            .enable(
+                JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER,
+                JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES,
+                JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+            .configure(StreamWriteFeature.AUTO_CLOSE_TARGET, false)
+            .changeDefaultPropertyInclusion(
+                incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .addModule(deserializeModule)
+            .build();
   }
 
   @Override
-  public AMemoryStatistic deserialize(final JsonParser parser, final DeserializationContext ctx)
-      throws IOException {
+  public AMemoryStatistic deserialize(final JsonParser parser, final DeserializationContext ctx) {
     if (!JsonToken.START_OBJECT.equals(parser.currentToken())) {
       throw new IllegalArgumentException("Should be called at the start of an object");
     }
@@ -240,7 +244,7 @@ public class RetroCompatibleDeserializer extends AStatisticDeserializer<AMemoryS
         final ObjectReader reader = serializer.readerFor(AMemoryStatistic.class);
         return readStatisticObject(reader, statistic);
       }
-    } catch (IOException e) {
+    } catch (JacksonException | IOException e) {
       throw new ActiveViamRuntimeException(e);
     }
   }
@@ -249,7 +253,7 @@ public class RetroCompatibleDeserializer extends AStatisticDeserializer<AMemoryS
       ObjectReader reader, InputStreamReader statistic) {
     try {
       return reader.readValue(new BufferedReader(statistic));
-    } catch (final IOException e) {
+    } catch (final JacksonException e) {
       throw new ActiveViamRuntimeException(e);
     }
   }

@@ -10,7 +10,6 @@ package com.activeviam.mac.statistic.memory;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
 import com.activeviam.database.api.query.ListQuery;
@@ -106,7 +105,7 @@ public class TestBranches extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) {
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
     ApplicationInTests<IInternalDatastore> application =

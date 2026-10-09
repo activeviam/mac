@@ -10,7 +10,6 @@ package com.activeviam.mac.cfg.security.impl;
 import com.activeviam.web.spring.api.config.ICorsConfig;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
@@ -41,7 +40,7 @@ public class CorsConfig implements ICorsConfig {
   /** The address the UI is exposed to. */
   public static final String ACTIVEUI_ADDRESS = "activeui.address";
 
-  public CorsConfig(@Autowired Environment env) {
+  public CorsConfig(Environment env) {
     this.env = env;
   }
 

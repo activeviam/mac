@@ -15,6 +15,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
+import com.activeviam.mac.statistic.memory.LegacyMemoryStatisticConstants;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.ChunkSetStatistic;
@@ -107,7 +108,7 @@ public class VectorStatisticVisitor extends AFeedVisitor<Void> {
    * @return true for a stat on a vector
    */
   static boolean isVectorName(final String statisticName) {
-    return statisticName.equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
+    return statisticName.equals(LegacyMemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)
         || statisticName.endsWith("BlockVector");
   }
 

@@ -7,9 +7,9 @@
 
 package com.activeviam.mac.statistic.memory.scenarios;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
@@ -18,11 +18,11 @@ import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
+import com.activeviam.tech.composer.test.internal.junit.resources.Resources;
+import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesHolder;
 import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
-import com.activeviam.tech.test.internal.junit.resources.Resources;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -75,8 +75,8 @@ public class TestMissingChunkId {
     loadStatisticsIntoDatastore(
         memoryStatistics, (IInternalDatastore) analysisApplication.getDatabase());
 
-    final MDXQuery query =
-        new MDXQuery(
+    final MdxQuery query =
+        new MdxQuery(
             "SELECT"
                 + "  NON EMPTY Hierarchize("
                 + "    Descendants("

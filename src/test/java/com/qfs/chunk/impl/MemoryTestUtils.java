@@ -4,7 +4,7 @@ import com.activeviam.mac.Workaround;
 import com.activeviam.tech.chunks.api.vectors.IVectorAllocator;
 import com.activeviam.tech.chunks.internal.pool.impl.NamedThread;
 import com.activeviam.tech.chunks.internal.vectors.impl.Vectors;
-import com.activeviam.tech.test.internal.util.ReflectionUtil;
+import com.activeviam.tech.composer.test.internal.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;

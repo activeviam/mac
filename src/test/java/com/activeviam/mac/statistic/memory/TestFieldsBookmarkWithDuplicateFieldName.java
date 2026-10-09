@@ -7,13 +7,12 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
@@ -70,7 +69,8 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
 
     // Start a monitoring datastore with the exported data
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
     this.monitoringApp =
         ApplicationInTests.builder()
             .withDatastore(schemaConfig.datastoreSchemaDescription())
@@ -93,8 +93,8 @@ public class TestFieldsBookmarkWithDuplicateFieldName extends ATestMemoryStatist
 
   @Test
   public void testDifferentMemoryUsagesForBothFields() throws QueryException {
-    final MDXQuery usageQuery =
-        new MDXQuery(
+    final MdxQuery usageQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
                 + "{"
                 + "  ([Owners].[Owner].[Owner].[Store A], [Fields].[Field].[Field].[val]),"

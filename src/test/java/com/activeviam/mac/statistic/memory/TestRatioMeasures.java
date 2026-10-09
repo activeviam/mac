@@ -1,12 +1,11 @@
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -62,7 +61,7 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
@@ -87,20 +86,20 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testDirectMemoryRatio() throws QueryException {
-    final MDXQuery totalDirectMemory =
-        new MDXQuery(
+    final MdxQuery totalDirectMemory =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember]");
 
-    final MDXQuery storeADirectMemory =
-        new MDXQuery(
+    final MdxQuery storeADirectMemory =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery storeADirectMemoryRatio =
-        new MDXQuery(
+    final MdxQuery storeADirectMemoryRatio =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.Ratio] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
@@ -122,20 +121,20 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
 
   @Test
   public void testCommittedRowsRatio() throws QueryException {
-    final MDXQuery storeAcommittedRows =
-        new MDXQuery(
+    final MdxQuery storeAcommittedRows =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[Used rows] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery storeAchunkSize =
-        new MDXQuery(
+    final MdxQuery storeAchunkSize =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[ChunkSize.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery storeAcommittedRowsRatio =
-        new MDXQuery(
+    final MdxQuery storeAcommittedRowsRatio =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[CommittedRows.Ratio] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");

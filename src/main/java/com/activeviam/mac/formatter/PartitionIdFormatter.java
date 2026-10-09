@@ -10,6 +10,7 @@ package com.activeviam.mac.formatter;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.core.api.format.IFormatter;
 import com.activeviam.tech.core.api.registry.AtotiExtendedPluginValue;
+import java.io.Serial;
 
 /**
  * Formatter for partitions.
@@ -22,7 +23,7 @@ public class PartitionIdFormatter implements IFormatter {
   /** Plugin key. */
   public static final String KEY = "PartitionIdFormatter";
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   @Override
   public String getType() {

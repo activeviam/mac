@@ -15,7 +15,7 @@ import lombok.Value;
 public class StoreOwner implements ChunkOwner {
 
   /** Unique name of the store. */
-  @Getter(onMethod = @__({@Override}))
+  @Getter(onMethod_ = {@Override})
   String name;
 
   @Override

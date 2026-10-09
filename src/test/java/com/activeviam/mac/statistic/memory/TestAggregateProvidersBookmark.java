@@ -7,13 +7,12 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -62,7 +61,7 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
     // Start a monitoring datastore with the exported data
     final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
@@ -87,8 +86,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testPresentPartials() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY Crossjoin("
                 + "  [Aggregate Provider].[ProviderCategory].[ProviderCategory].Members,"
                 + "  [Aggregate Provider].[ProviderType].[ProviderType].Members"
@@ -132,8 +131,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testFullAggregateStoreFields() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS,"
                 + "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
@@ -163,8 +162,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testFullAggregateStoreTotal() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY Except("
                 + "  [Fields].[Field].[Field].Members,"
                 + "  [Fields].[Field].[ALL].[AllMember].[N/A]"
@@ -178,8 +177,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
                 + "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
                 + ")");
 
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE ("
@@ -199,8 +198,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testPartialBitmapAggregateStoreFields() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS,"
                 + "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
@@ -229,8 +228,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testPartialBitmapAggregateStoreTotal() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY Except("
                 + "  [Fields].[Field].[Field].Members,"
                 + "  [Fields].[Field].[ALL].[AllMember].[N/A]"
@@ -244,8 +243,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
                 + "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[BITMAP]"
                 + ")");
 
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE ("
@@ -265,8 +264,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testPartialLeafAggregateStoreFields() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS,"
                 + "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
@@ -295,8 +294,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testPartialLeafAggregateStoreTotal() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY Except("
                 + "  [Fields].[Field].[Field].Members,"
                 + "  [Fields].[Field].[ALL].[AllMember].[N/A]"
@@ -310,8 +309,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
                 + "  [Aggregate Provider].[ProviderType].[ALL].[AllMember].[LEAF]"
                 + ")");
 
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"
                 + "WHERE ("
@@ -331,8 +330,8 @@ public class TestAggregateProvidersBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testCubeLevels() throws QueryException {
-    final MDXQuery recordQuery =
-        new MDXQuery(
+    final MdxQuery recordQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Fields].[Field].[Field].Members ON ROWS,"
                 + "NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube]"

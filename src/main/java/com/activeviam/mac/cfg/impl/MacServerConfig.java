@@ -7,14 +7,11 @@
 
 package com.activeviam.mac.cfg.impl;
 
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotConfig;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotContentServiceConfig;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreConfig;
+import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
 import com.activeviam.mac.cfg.security.impl.SecurityConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.web.spring.internal.JMXEnabler;
-import com.activeviam.web.spring.internal.config.JwtConfig;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,7 +41,6 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Import(
     value = {
-      JwtConfig.class,
       ManagerDescriptionConfig.class,
 
       // Pivot
@@ -57,39 +53,32 @@ import org.springframework.core.env.Environment;
       SecurityConfig.class,
       SourceConfig.class,
     })
+@RequiredArgsConstructor
 public class MacServerConfig {
 
-  /** Datastore spring configuration. */
-  @Autowired protected IDatastoreConfig datastoreConfig;
-
-  /** ActivePivot spring configuration. */
-  @Autowired protected IActivePivotConfig apConfig;
-
-  /** ActivePivot content service spring configuration. */
-  @Autowired protected IActivePivotContentServiceConfig apContentServiceConfig;
-
   /** Content Service configuration. */
-  @Autowired protected ContentServiceConfig contentServiceConfig;
+  private final ContentServiceConfig contentServiceConfig;
 
   /** Spring configuration of the source files of the Memory Analysis Cube application. */
-  @Autowired protected SourceConfig sourceConfig;
+  private final SourceConfig sourceConfig;
 
   /**
    * Initialize and start the ActivePivot Manager, after performing all the injections into the
    * ActivePivot plug-ins.
    *
+   * @param activePivotManager the ActivePivot Manager of the application
    * @return void
    */
   @Bean
-  public Void startManager() {
+  public Void startManager(final IActivePivotManager activePivotManager) {
     this.contentServiceConfig.loadPredefinedBookmarks();
 
     /* *********************************************** */
     /* Initialize the ActivePivot Manager and start it */
     /* *********************************************** */
     try {
-      this.apConfig.activePivotManager().init(null);
-      this.apConfig.activePivotManager().start();
+      activePivotManager.init(null);
+      activePivotManager.start();
     } catch (AgentException e) {
       throw new IllegalStateException("Cannot start the application", e);
     }

@@ -12,18 +12,22 @@ management:
       exposure:
         include: "*"
 
-contentServer:
-  security:
-    calculatedMemberRole: ROLE_USER
-    kpiRole: ROLE_USER
-    cache:
-      entitlementsTTL: 3600
-
 bookmarks:
   folder: ui
 
+atoti:
+  server:
+    content-service:
+      enabled-type: in_memory
+      pivot-integration:
+        roles:
+          calculated-member: ROLE_USER
+          kpi: ROLE_USER
+          set: ROLE_CS_ROOT
+      # MAC loads its own bookmarks into the Content Service at startup
+      ui-content-integration:
+        enabled: false
   # The RSA key pair encoded in Base64
-activeviam:
   jwt:
     key:
       public: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkirRjoq1RSB+Z4TZ7ZK+D4If2qYWdUX6wt3K1AQYk2kfeyv2v\
@@ -48,28 +52,10 @@ activeviam:
         pp/ngTMDxuFx29ykj4D3ubQFpFTRK7rDWkvKDfAgmreisTxRAoGAam5RZq1F2cVW/VETePpD9cvojReFUiqaxwvVpqNtykC7jAOW96\
         lULiNZ73+TSdoT8yD6mH2hVArkajsnv1PNw0cR2V2aLY1Cg030jyTtmdOky/ZBhMiT/bH7H1M/BNjsC23rcOtdwFRlApUlOkGMecZN\
         8IzqaYV0zuL+cQt2Iwo="
-    # The time of validity of a token in seconds
-    expiration: 86400
+    # The time of validity of a token
+    expiration: PT24H
 
 # The path of the folder containing statistic files in .json or .json.sz (Snappy-compressed) formats
 # This path is relative to the execution directory of the Application
 statistic:
   folder: input_statistics
-
-content-service:
-  db:
-    hibernate:
-      dialect: org.hibernate.dialect.H2Dialect
-      format_sql: false
-      #The following line should be removed once the table is created
-      hbm2ddl.auto: update
-      # Connection Provider
-      connection:
-        provider_class: org.hibernate.engine.jdbc.connections.internal.DatasourceConnectionProviderImpl
-
-    # Tomcat connection pool settings. List of properties can be found in org.apache.tomcat.jdbc.pool.DataSourceFactory
-    # or https://tomcat.apache.org/tomcat-8.0-doc/jdbc-pool.html
-    url: jdbc:h2:file:./content_service;DB_CLOSE_DELAY=-1
-    defaultAutoCommit: false
-    driverClassName: org.h2.Driver
-    jdbcInterceptors: org.apache.tomcat.jdbc.pool.interceptor.ConnectionState

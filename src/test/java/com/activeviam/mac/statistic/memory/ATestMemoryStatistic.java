@@ -25,6 +25,7 @@ import com.activeviam.activepivot.core.impl.internal.test.util.PivotTestUtils;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
+import com.activeviam.activepivot.core.intf.api.cube.metadata.LevelIdentifier;
 import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
 import com.activeviam.activepivot.core.intf.api.description.IMessengerDefinition;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
@@ -40,8 +41,8 @@ import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.api.transaction.DatastoreTransactionException;
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
+import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.database.datastore.internal.NoTransactionException;
 import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
@@ -51,17 +52,17 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.tech.chunks.api.types.TypeValues;
+import com.activeviam.tech.composer.test.internal.junit.resources.Resources;
+import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
+import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesHolder;
+import com.activeviam.tech.composer.test.internal.util.FileTestUtil;
+import com.activeviam.tech.composer.test.internal.util.ThrowingLambda;
 import com.activeviam.tech.mvcc.api.policy.KeepAllEpochPolicy;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.observability.internal.memory.DefaultMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
-import com.activeviam.tech.test.internal.junit.resources.Resources;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesExtension;
-import com.activeviam.tech.test.internal.junit.resources.ResourcesHolder;
-import com.activeviam.tech.test.internal.util.FileTestUtil;
-import com.activeviam.tech.test.internal.util.ThrowingLambda;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
@@ -937,7 +938,6 @@ public abstract class ATestMemoryStatistic {
                     .end()
                     .withApplicationId("app")
                     .withAllHierarchies()
-                    .withAllMeasures()
                     .end()
                     .build())
             .withDistributedCube(
@@ -957,7 +957,7 @@ public abstract class ATestMemoryStatistic {
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withDistributingFields("id")
+                    .withDistributingLevels(new LevelIdentifier("id", "id", "id"))
                     .end()
                     .build())
             .withDistributedCube(
@@ -970,7 +970,7 @@ public abstract class ATestMemoryStatistic {
                     .withNoProperty()
                     .end()
                     .withApplication("app")
-                    .withDistributingFields("id")
+                    .withDistributingLevels(new LevelIdentifier("id", "id", "id"))
                     .end()
                     .withEpochDimension()
                     .build())

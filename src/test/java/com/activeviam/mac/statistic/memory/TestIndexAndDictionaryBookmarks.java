@@ -7,16 +7,15 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.AxisDTO;
 import com.activeviam.activepivot.server.intf.api.dto.AxisPositionDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellDTO;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
@@ -87,7 +86,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    IDatastoreSchemaDescriptionConfig schemaConfig = new MemoryAnalysisDatastoreDescriptionConfig();
+    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
+        new MemoryAnalysisDatastoreDescriptionConfig();
 
     this.monitoringApp =
         ApplicationInTests.builder()
@@ -103,8 +103,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testIndexedFieldsForStoreA() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Indices].[Indexed Fields].[Indexed Fields].Members ON COLUMNS"
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
@@ -124,8 +124,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarizedFieldsForStoreB() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NonEmpty("
                 + "   Except("
                 + "     [Fields].[Field].[Field].Members,"
@@ -152,15 +152,15 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySizeTotal() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Fields].[Field].[ALL].[AllMember] ON COLUMNS,"
                 + " [Measures].[DictionarySize.SUM] ON ROWS"
                 + " FROM [MemoryCube]"
                 + " WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery perFieldQuery =
-        new MDXQuery(
+    final MdxQuery perFieldQuery =
+        new MdxQuery(
             "SELECT NonEmpty("
                 + "   Except("
                 + "     [Fields].[Field].[Field].Members,"
@@ -182,8 +182,8 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
 
   @Test
   public void testDictionarySizesPerField() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery(
+    final MdxQuery totalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY"
                 + "   Except("
                 + "     [Fields].[Field].[Field].Members,"

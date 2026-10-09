@@ -8,7 +8,6 @@
 package com.activeviam.mac.memory;
 
 import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.api.schema.StoreField;
 import com.activeviam.database.api.types.ILiteralType;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
@@ -27,7 +26,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -36,7 +37,7 @@ import org.springframework.context.annotation.Configuration;
  * @author ActiveViam
  */
 @Configuration
-public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchemaDescriptionConfig {
+public class MemoryAnalysisDatastoreDescriptionConfig {
 
   /** Constant enabling the creation of Debug tree for each info, stored in the Datastore. */
   public static final boolean ADD_DEBUG_TREE = false;
@@ -65,10 +66,12 @@ public class MemoryAnalysisDatastoreDescriptionConfig implements IDatastoreSchem
    * @return the modulo partitioning value
    */
   private static int partitioningModulo() {
-    return AtotiPools.getMixedWorkloadThreadCount();
+    return IntStream.range(0, AtotiPools.getPoolCount())
+        .map(poolId -> AtotiPools.getMixedWorkloadPool(poolId).getQueryPool().getParallelism())
+        .sum();
   }
 
-  @Override
+  @Bean
   public IDatastoreSchemaDescription datastoreSchemaDescription() {
     return new DatastoreSchemaDescription(
         getStoreDescriptions(), getReferenceDescriptions(), getDictionaryGroups());

@@ -1,12 +1,11 @@
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
-import com.activeviam.activepivot.server.impl.api.query.MDXQuery;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
@@ -76,7 +75,7 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
     ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final IDatastoreSchemaDescriptionConfig schemaConfig =
+    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
         new MemoryAnalysisDatastoreDescriptionConfig();
     this.monitoringApp =
         ApplicationInTests.builder()
@@ -98,8 +97,8 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testOverviewGrandTotal() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+    final MdxQuery totalQuery =
+        new MdxQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
     final CellSetDTO totalResult =
         MdxQueryUtil.execute(this.monitoringApp.getManager(), totalQuery);
@@ -110,17 +109,17 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testOwnerTotal() throws QueryException {
-    final MDXQuery totalQuery =
-        new MDXQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
+    final MdxQuery totalQuery =
+        new MdxQuery("SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS FROM [MemoryCube]");
 
-    final MDXQuery perOwnerQuery =
-        new MDXQuery(
+    final MdxQuery perOwnerQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
                 + "NON EMPTY [Owners].[Owner].[ALL].[AllMember].Children ON ROWS "
                 + "FROM [MemoryCube]");
 
-    final MDXQuery excessMemoryQuery =
-        new MDXQuery(
+    final MdxQuery excessMemoryQuery =
+        new MdxQuery(
             "WITH MEMBER [Measures].[Owner.COUNT] AS "
                 + ownershipCountMdxExpression("[Owners].[Owner]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"
@@ -146,21 +145,21 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testStoreTotal() throws QueryException {
-    final MDXQuery storeTotalQuery =
-        new MDXQuery(
+    final MdxQuery storeTotalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube] "
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery perComponentsStoreQuery =
-        new MDXQuery(
+    final MdxQuery perComponentsStoreQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS, "
                 + "[Components].[Component].[ALL].[AllMember].Children ON ROWS "
                 + "FROM [MemoryCube] "
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Store A]");
 
-    final MDXQuery excessMemoryQuery =
-        new MDXQuery(
+    final MdxQuery excessMemoryQuery =
+        new MdxQuery(
             "WITH MEMBER [Measures].[Component.COUNT] AS "
                 + ownershipCountMdxExpression("[Components].[Component]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"
@@ -187,21 +186,21 @@ public class TestOverviewBookmark extends ATestMemoryStatistic {
 
   @Test
   public void testCubeTotal() throws QueryException {
-    final MDXQuery cubeTotalQuery =
-        new MDXQuery(
+    final MdxQuery cubeTotalQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS "
                 + "FROM [MemoryCube] "
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
-    final MDXQuery perComponentCubeQuery =
-        new MDXQuery(
+    final MdxQuery perComponentCubeQuery =
+        new MdxQuery(
             "SELECT NON EMPTY [Measures].[DirectMemory.SUM] ON COLUMNS,"
                 + "[Components].[Component].[ALL].[AllMember].Children ON ROWS "
                 + "FROM [MemoryCube] "
                 + "WHERE [Owners].[Owner].[ALL].[AllMember].[Cube Cube]");
 
-    final MDXQuery excessMemoryQuery =
-        new MDXQuery(
+    final MdxQuery excessMemoryQuery =
+        new MdxQuery(
             "WITH MEMBER [Measures].[Component.COUNT] AS "
                 + ownershipCountMdxExpression("[Components].[Component]")
                 + " MEMBER [Measures].[ExcessDirectMemory] AS"

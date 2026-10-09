@@ -16,6 +16,7 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
+import com.activeviam.mac.statistic.memory.LegacyMemoryStatisticConstants;
 import com.activeviam.tech.chunks.internal.chunkset.impl.ChunkSet;
 import com.activeviam.tech.core.api.exceptions.service.InternalServiceException;
 import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
@@ -160,7 +161,9 @@ public class ChunkSetStatisticVisitor extends ADatastoreFeedVisitor<Void> {
       if (isFieldSpecified) {
         this.fields = oldFields;
       }
-    } else if (memoryStatistic.getName().equals(MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
+    } else if (memoryStatistic
+        .getName()
+        .equals(LegacyMemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY)) {
 
       // Remove this stat for a subchunk, particularly for vector chunks
       final Integer previousSize = this.chunkSize;

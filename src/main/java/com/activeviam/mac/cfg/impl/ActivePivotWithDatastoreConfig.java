@@ -3,45 +3,43 @@ package com.activeviam.mac.cfg.impl;
 import com.activeviam.activepivot.core.datastore.api.builder.ApplicationWithDatastore;
 import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
 import com.activeviam.activepivot.core.intf.api.cube.IActivePivotManager;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotBranchPermissionsManagerConfig;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotConfig;
-import com.activeviam.activepivot.server.spring.api.config.IActivePivotManagerDescriptionConfig;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreConfig;
-import com.activeviam.activepivot.server.spring.api.config.IDatastoreSchemaDescriptionConfig;
+import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
 import com.activeviam.database.datastore.api.IDatastore;
+import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
+import com.activeviam.tech.mvcc.api.policy.KeepLastEpochPolicy;
+import com.activeviam.tech.mvcc.api.security.IBranchPermissionsManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 @RequiredArgsConstructor
-public class ActivePivotWithDatastoreConfig implements IDatastoreConfig, IActivePivotConfig {
+public class ActivePivotWithDatastoreConfig {
 
-  private final IActivePivotManagerDescriptionConfig apManagerConfig;
+  private final IActivePivotManagerDescription managerDescription;
 
-  private final IDatastoreSchemaDescriptionConfig datastoreDescriptionConfig;
+  private final IDatastoreSchemaDescription datastoreSchemaDescription;
 
-  private final IActivePivotBranchPermissionsManagerConfig branchPermissionsManagerConfig;
+  private final IBranchPermissionsManager branchPermissionsManager;
 
   @Bean
   protected ApplicationWithDatastore applicationWithDatastore() {
     return StartBuilding.application()
-        .withDatastore(this.datastoreDescriptionConfig.datastoreSchemaDescription())
-        .withManager(this.apManagerConfig.managerDescription())
-        .withEpochPolicy(this.apManagerConfig.epochManagementPolicy())
-        .withBranchPermissionsManager(
-            this.branchPermissionsManagerConfig.branchPermissionsManager())
+        .withDatastore(this.datastoreSchemaDescription)
+        .withManager(this.managerDescription)
+        .withEpochPolicy(new KeepLastEpochPolicy())
+        .withBranchPermissionsManager(this.branchPermissionsManager)
         .build();
   }
 
   @Bean
-  @Override
   public IActivePivotManager activePivotManager() {
     return applicationWithDatastore().getManager();
   }
 
   @Bean
-  @Override
+  @DependsOn("poolsCleaner")
   public IDatastore database() {
     return applicationWithDatastore().getDatastore();
   }

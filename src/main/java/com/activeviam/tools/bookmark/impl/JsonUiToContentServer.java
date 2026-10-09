@@ -11,8 +11,6 @@ import com.activeviam.tech.contentserver.storage.api.ContentServiceSnapshotter;
 import com.activeviam.tech.contentserver.storage.api.SnapshotContentTree;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants;
 import com.activeviam.tools.bookmark.constant.impl.ContentServerConstants.Paths;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -23,6 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Reads a Directory hierarchy representing the contents and structure part of the bookmarks and
@@ -74,52 +75,66 @@ public class JsonUiToContentServer {
   }
 
   /**
-   * Generates a SnapshotContentTree from a directory.
+   * Generates a SnapshotContentTree from a directory of the classpath.
    *
+   * <p>Each json file of the directory, or of one of its subdirectories, becomes a leaf of the
+   * tree, named after the file without its extension. Each subdirectory becomes a directory node.
+   *
+   * @param path the path of the directory, relative to the root of the classpath
    * @return the SnapshotContentTree.
    */
   static SnapshotContentTree loadDirectory(String path) {
-    return createDirectoryTree(path, createEmptyDirectoryNode());
+    final SnapshotContentTree tree = createEmptyDirectoryNode();
+    try {
+      // The files are listed from the roots of the directory, as Spring cannot find resources
+      // packaged in a jar with a pattern starting with a wildcard (e.g. "classpath*:/**/ui/*"),
+      // nor list the subdirectories of a directory packaged in a jar.
+      for (final Resource rootDirectory :
+          dashboardTreeResolver.getResources("classpath*:" + path + Paths.SEPARATOR)) {
+        final String rootUrl = rootDirectory.getURL().toString();
+        for (final Resource file :
+            dashboardTreeResolver.getResources(rootUrl + "**/*" + Paths.JSON)) {
+          final String relativePath = file.getURL().toString().substring(rootUrl.length());
+          addFile(tree, relativePath.split(Paths.SEPARATOR), file);
+        }
+      }
+      return tree;
+    } catch (IOException ioe) {
+      LOGGER.error("Unable to retrieve directory {} from resources. The import will fail.", path);
+      return null;
+    }
   }
 
   /**
-   * Creates a {@link SnapshotContentTree} from the content of a directory assuming that the
-   * directory contains only subdirectories with one json file each. For each subdirectory, we add a
-   * leaf to the root {@link SnapshotContentTree}. The key of the leaf is the name of the
-   * subdirectory. The content of the leaf is a {@link SnapshotContentTree} with one leaf. The key
-   * of this grandchild leaf is the name of the subdirectory + "_metadata". Its content is the
-   * content of the json file inside the subdirectory.
+   * Adds the content of a json file to a tree, creating the missing intermediate directories.
    *
-   * @param root the current directory to add to the structureTree.
+   * @param tree the tree to add the file to
+   * @param relativePath the path of the file in the tree, split into its parts
+   * @param file the json file
    */
-  private static SnapshotContentTree createDirectoryTree(String root, SnapshotContentTree parent) {
-    try {
-      Resource[] rootFiles = dashboardTreeResolver.getResources("classpath*:/**/" + root + "/*");
-      for (Resource child : rootFiles) {
-        String[] path = child.getURL().toString().split(Paths.SEPARATOR);
-        String childName = path[path.length - 1];
-        if (childName.endsWith(Paths.JSON)) {
-          final JsonNode jsonNodeContent = loadFileIntoNode(child.getInputStream());
-          final SnapshotContentTree node =
-              new SnapshotContentTree(
-                  jsonNodeContent.toString(),
-                  false,
-                  PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
-                  PERMISSIONS.get(ContentServerConstants.Role.READERS),
-                  new HashMap<>());
-          parent.putChild(childName.replace(Paths.JSON, ""), node, true);
-        } else {
-          final SnapshotContentTree childNode = createEmptyDirectoryNode();
-          SnapshotContentTree childTree =
-              createDirectoryTree(root + Paths.SEPARATOR + childName, childNode);
-          parent.putChild(childName, childTree, true);
-        }
+  private static void addFile(SnapshotContentTree tree, String[] relativePath, Resource file)
+      throws IOException {
+    SnapshotContentTree parent = tree;
+    for (int i = 0; i < relativePath.length - 1; i++) {
+      final String directoryName = relativePath[i];
+      SnapshotContentTree directory = (SnapshotContentTree) parent.getChildren().get(directoryName);
+      if (directory == null) {
+        directory = createEmptyDirectoryNode();
+        parent.putChild(directoryName, directory, true);
       }
-      return parent;
-    } catch (IOException ioe) {
-      LOGGER.error("Unable to retrieve directory {} from resources. The import will fail.", root);
-      return null;
+      parent = directory;
     }
+
+    final String fileName = relativePath[relativePath.length - 1];
+    final JsonNode jsonNodeContent = loadFileIntoNode(file.getInputStream());
+    final SnapshotContentTree node =
+        new SnapshotContentTree(
+            jsonNodeContent.toString(),
+            false,
+            PERMISSIONS.get(ContentServerConstants.Role.OWNERS),
+            PERMISSIONS.get(ContentServerConstants.Role.READERS),
+            new HashMap<>());
+    parent.putChild(fileName.replace(Paths.JSON, ""), node, true);
   }
 
   /**
@@ -129,7 +144,7 @@ public class JsonUiToContentServer {
    * @return The contents of the inputStream, as a JsonNode.
    */
   private static JsonNode loadFileIntoNode(InputStream inputStream) throws IOException {
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new JsonMapper();
     return mapper.readTree(inputStream);
   }
 

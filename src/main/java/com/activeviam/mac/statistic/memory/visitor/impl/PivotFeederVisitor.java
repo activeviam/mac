@@ -21,6 +21,7 @@ import com.activeviam.mac.entities.DistributedCubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
+import com.activeviam.mac.statistic.memory.LegacyMemoryStatisticConstants;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
 import com.activeviam.tech.observability.api.memory.IMemoryStatistic;
 import com.activeviam.tech.observability.api.memory.IStatisticAttribute;
@@ -223,7 +224,7 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
       case MemoryStatisticConstants.STAT_NAME_LEVEL:
         processLevel(stat);
         break;
-      case MemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY:
+      case LegacyMemoryStatisticConstants.STAT_NAME_CHUNK_ENTRY:
         processChunkObject(stat);
         break;
       default:
