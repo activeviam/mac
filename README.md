@@ -69,6 +69,9 @@ The process is explained below:
 To fully make use of MAC's capabilities for analyzing your project, it is
 important to get familiar with its [data model](docs/data_model.md).
 
+The data model is defined with the experimental Foundry API of Atoti Server, in
+`MacModelConfigurer`. The application enables this API on startup.
+
 ## Bookmarks
 
 MAC comes with a number of predefined Atoti UI bookmarks that each offer some insights to
