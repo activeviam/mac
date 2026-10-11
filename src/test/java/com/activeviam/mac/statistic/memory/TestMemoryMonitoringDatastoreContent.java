@@ -403,7 +403,7 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
   }
 
   @Test
-  public void testLevelStoreContent() {
+  public void testLevelChunksContent() {
 
     final ApplicationInTests<?> monitoredApp = createMicroApplication();
 
@@ -426,26 +426,24 @@ public class TestMemoryMonitoringDatastoreContent extends ATestMemoryStatistic {
     final IInternalDatastore monitoringDatastore = createAnalysisDatastore();
     ATestMemoryStatistic.feedMonitoringApplication(monitoringDatastore, pivotStats, "Cube");
 
-    // Query record of level data :
+    // Query the chunks of the level structures
     ListQuery query =
         monitoringDatastore
             .getQueryManager()
             .listQuery()
-            .forTable(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-            .withCondition(BaseConditions.TRUE)
-            .withAliasedFields(
-                AliasedField.fromFieldName(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID))
+            .forTable(DatastoreConstants.CHUNK_STORE)
+            .withCondition(
+                BaseConditions.equal(
+                    FieldPath.of(DatastoreConstants.OWNER__COMPONENT), ParentType.LEVEL))
+            .withAliasedFields(AliasedField.fromFieldName(DatastoreConstants.CHUNK__PARENT_ID))
             .toQuery();
 
     try (final ICursor cursor =
         monitoringDatastore.getHead("master").getQueryRunner().listQuery(query).run()) {
-      final List<Object[]> list = new ArrayList<>();
-      cursor.forEach(
-          (record) -> {
-            Object[] data = record.toTuple();
-            list.add(data);
-          });
-      Assertions.assertThat(list).hasSize(1);
+      final Set<Object> parentIds = new HashSet<>();
+      cursor.forEach(record -> parentIds.add(record.read(0)));
+      // All the chunks of the single level belong to the same level structure
+      Assertions.assertThat(parentIds).hasSize(1);
     }
   }
 

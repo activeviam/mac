@@ -38,14 +38,8 @@ public class DatastoreConstants {
   /** Name of the store containing dictionary related facts. */
   public static final String DICTIONARY_STORE = MemoryStatisticConstants.STAT_NAME_DICTIONARY;
 
-  /** Name of the store containing level related facts. */
-  public static final String LEVEL_STORE = "Levels";
-
   /** Name of the store containing facts related to the aggregate provider. */
   public static final String PROVIDER_STORE = "Provider";
-
-  /** Name of the store containing pivot -related facts. */
-  public static final String PIVOT_STORE = "ActivePivot";
 
   /** Name of the store related to the application. */
   public static final String APPLICATION_STORE = "Application";
@@ -190,48 +184,6 @@ public class DatastoreConstants {
   /** Dictionary class field. */
   public static final String DICTIONARY_CLASS = MemoryStatisticConstants.ATTR_NAME_CLASS;
 
-  /** Field for the {@link ActivePivotManager} name. */
-  public static final String LEVEL__MANAGER_ID = "managerId";
-
-  /** Field for the Pivot name. */
-  public static final String LEVEL__PIVOT_ID = "pivotId";
-
-  /** Field for the dimension name. */
-  public static final String LEVEL__DIMENSION = "dimension";
-
-  /** Field for the hierarchy name. */
-  public static final String LEVEL__HIERARCHY = "hierarchy";
-
-  /** Field for the level name. */
-  public static final String LEVEL__LEVEL = "level";
-
-  /** Field for the on-heap footprint of levels. */
-  public static final String LEVEL__ON_HEAP_SIZE = "onHeap";
-
-  /** Field for the direct memory footprint of levels. */
-  public static final String LEVEL__OFF_HEAP_SIZE = "offHeap";
-
-  /** member count field. */
-  public static final String LEVEL__MEMBER_COUNT = "memberCount";
-
-  /** Name of the store for joining chunk and level data. */
-  public static final String CHUNK_TO_LEVEL_STORE = "ChunkToLevel";
-
-  /** {@link ActivePivotManager} id field. */
-  public static final String CHUNK_TO_LEVEL__MANAGER_ID = "managerId";
-
-  /** Pivot id field. */
-  public static final String CHUNK_TO_LEVEL__PIVOT_ID = "pivotId";
-
-  /** Dimension field. */
-  public static final String CHUNK_TO_LEVEL__DIMENSION = "dimension";
-
-  /** Hierarchy field. */
-  public static final String CHUNK_TO_LEVEL__HIERARCHY = "hierarchy";
-
-  /** level field. */
-  public static final String CHUNK_TO_LEVEL__LEVEL = "level";
-
   /** The chunk ID field in the store of chunk owners. */
   public static final String OWNER__CHUNK_ID = CHUNK_ID;
 
@@ -246,12 +198,6 @@ public class DatastoreConstants {
 
   /** Class of the aggregate provider compoent. */
   public static final String PROVIDER_COMPONENT__CLASS = "class";
-
-  /** Id of the Pivot. */
-  public static final String PIVOT__PIVOT_ID = "pivotId";
-
-  /** Id of the {@link ActivePivotManager}. */
-  public static final String PIVOT__MANAGER_ID = "managerId";
 
   /** Date. */
   public static final String APPLICATION__DATE = "date";
@@ -288,14 +234,6 @@ public class DatastoreConstants {
 
   /** The view epoch id field in the epoch view store. */
   public static final String EPOCH_VIEW__VIEW_EPOCH_ID = "viewEpochId";
-
-  private static final String LEVEL_SUFFIX = "Lvl";
-
-  /** parent id field. */
-  public static final String CHUNK_TO_LEVEL__PARENT_ID = "parentId" + LEVEL_SUFFIX;
-
-  /** Parent type in the chunk to level store. */
-  public static final String CHUNK_TO_LEVEL__PARENT_TYPE = "parentType" + LEVEL_SUFFIX;
 
   private DatastoreConstants() {}
 }

@@ -130,16 +130,6 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     return tuple;
   }
 
-  private static Object[] buildLevelTupleFrom(
-      final IDataTable format, final IMemoryStatistic stat) {
-    final Object[] tuple = new Object[format.getFields().size()];
-
-    tuple[format.getFieldIndex(DatastoreConstants.LEVEL__ON_HEAP_SIZE)] = stat.getShallowOnHeap();
-    tuple[format.getFieldIndex(DatastoreConstants.LEVEL__OFF_HEAP_SIZE)] = stat.getShallowOffHeap();
-
-    return tuple;
-  }
-
   private static String getProviderCategory(final IMemoryStatistic stat) {
     switch (stat.getName()) {
       case MemoryStatisticConstants.STAT_NAME_FULL_PROVIDER:
@@ -469,20 +459,10 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
   }
 
   private void processLevel(final AMemoryStatistic stat) {
-    final var format = getLevelFormat(this.storageMetadata);
-    final Object[] tuple = buildLevelTupleFrom(format, stat);
-
     String levelDescription =
         stat.getAttribute(MemoryStatisticConstants.ATTR_NAME_LEVEL_ID).asText();
     LevelIdentifier lc = LevelIdentifier.fromDescription(levelDescription);
     this.level = lc.getLevelName();
-
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__MANAGER_ID, this.manager);
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.LEVEL__PIVOT_ID, this.owner.getName());
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__DIMENSION, this.dimension);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__HIERARCHY, this.hierarchy);
-    FeedVisitor.setTupleElement(tuple, format, DatastoreConstants.LEVEL__LEVEL, this.level);
 
     final ParentType previousParentType = this.directParentType;
     final String previousParentId = this.directParentId;
@@ -498,11 +478,6 @@ public class PivotFeederVisitor extends AFeedVisitorWithDictionary<Void> {
     this.directParentType = previousParentType;
     this.directParentId = previousParentId;
     this.rootComponent = null;
-
-    FeedVisitor.setTupleElement(
-        tuple, format, DatastoreConstants.LEVEL__MEMBER_COUNT, levelVisitor.memberCount);
-
-    this.transaction.add(DatastoreConstants.LEVEL_STORE, tuple);
 
     this.dictionaryAttributes = DictionaryAttributes.NONE;
     this.level = null;

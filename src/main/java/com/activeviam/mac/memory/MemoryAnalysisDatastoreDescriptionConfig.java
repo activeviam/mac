@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -239,64 +238,6 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#LEVEL_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#LEVEL_STORE}
-   */
-  protected IStoreDescription levelStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.LEVEL_STORE)
-        .withField(DatastoreConstants.LEVEL__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__DIMENSION)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__HIERARCHY)
-        .asKeyField()
-        .withField(DatastoreConstants.LEVEL__LEVEL)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .withField(DatastoreConstants.VERSION__EPOCH_ID, ILiteralType.LONG)
-        .asKeyField()
-
-        /* Attributes */
-        .withField(DatastoreConstants.LEVEL__ON_HEAP_SIZE, ILiteralType.LONG)
-        // TODO(ope) will be empty, but how to consider this in the cube
-        .withField(DatastoreConstants.LEVEL__OFF_HEAP_SIZE, ILiteralType.LONG)
-        .withField(DatastoreConstants.LEVEL__MEMBER_COUNT, ILiteralType.LONG)
-        .build();
-  }
-
-  /**
-   * Returns the description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#CHUNK_TO_LEVEL_STORE}
-   */
-  protected IStoreDescription chunkTolevelStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK_TO_LEVEL__PARENT_TYPE, ILiteralType.OBJECT)
-        .asKeyField()
-        .withField(DatastoreConstants.CHUNK__DUMP_NAME, ILiteralType.STRING)
-        .asKeyField()
-        .build();
-  }
-
-  /**
    * Returns the description of {@link DatastoreConstants#VERSION_STORE}.
    *
    * @return description of {@link DatastoreConstants#VERSION_STORE}
@@ -336,23 +277,6 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
   }
 
   /**
-   * Returns the description of {@link DatastoreConstants#PIVOT_STORE}.
-   *
-   * @return description of {@link DatastoreConstants#PIVOT_STORE}
-   */
-  protected IStoreDescription pivotStore() {
-    return StartBuilding.store()
-        .withStoreName(DatastoreConstants.PIVOT_STORE)
-        .withField(DatastoreConstants.PIVOT__PIVOT_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.PIVOT__MANAGER_ID)
-        .asKeyField()
-        .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
-        .asKeyField()
-        .build();
-  }
-
-  /**
    * Returns the description of {@link DatastoreConstants#APPLICATION_STORE}.
    *
    * @return description of {@link DatastoreConstants#APPLICATION_STORE}
@@ -379,19 +303,14 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
         referenceStore(),
         indexStore(),
         dictionaryStore(),
-        levelStore(),
         providerStore(),
-        pivotStore(),
-        chunkTolevelStore(),
         epochViewStore(),
         versionStore(),
         applicationStore());
   }
 
   public Collection<? extends IReferenceDescription> getReferenceDescriptions() {
-    return Stream.of(getChunkReferences(), getPivotAndProviderReferences())
-        .flatMap(Function.identity())
-        .collect(Collectors.toList());
+    return getChunkReferences().collect(Collectors.toList());
   }
 
   public Collection<Set<StoreField>> getDictionaryGroups() {
@@ -406,15 +325,9 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
                 DatastoreConstants.INDEX_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             new StoreField(
                 DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            new StoreField(
-                DatastoreConstants.LEVEL_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            new StoreField(
-                DatastoreConstants.CHUNK_TO_LEVEL_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
             new StoreField(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__DUMP_NAME),
             new StoreField(
                 DatastoreConstants.PROVIDER_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
-            new StoreField(
-                DatastoreConstants.PIVOT_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             new StoreField(
                 DatastoreConstants.APPLICATION_STORE, DatastoreConstants.APPLICATION__DUMP_NAME)),
         Set.of(
@@ -426,7 +339,6 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
             new StoreField(DatastoreConstants.INDEX_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             new StoreField(
                 DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.VERSION__EPOCH_ID),
-            new StoreField(DatastoreConstants.LEVEL_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             new StoreField(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__EPOCH_ID)),
         Set.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.OWNER__OWNER),
@@ -474,37 +386,6 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
             .withName(CHUNK_TO_VERSION)
             .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.VERSION__DUMP_NAME)
             .withMapping(DatastoreConstants.VERSION__EPOCH_ID, DatastoreConstants.VERSION__EPOCH_ID)
-            .build());
-  }
-
-  private Stream<IReferenceDescription> getPivotAndProviderReferences() {
-    return Stream.of(
-        // Level refs
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.CHUNK_TO_LEVEL_STORE)
-            .toStore(DatastoreConstants.LEVEL_STORE)
-            .withName("LevelInfo")
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_LEVEL__MANAGER_ID, DatastoreConstants.LEVEL__MANAGER_ID)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_LEVEL__PIVOT_ID, DatastoreConstants.LEVEL__PIVOT_ID)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_LEVEL__DIMENSION, DatastoreConstants.LEVEL__DIMENSION)
-            .withMapping(
-                DatastoreConstants.CHUNK_TO_LEVEL__HIERARCHY, DatastoreConstants.LEVEL__HIERARCHY)
-            .withMapping(DatastoreConstants.CHUNK_TO_LEVEL__LEVEL, DatastoreConstants.LEVEL__LEVEL)
-            .build(),
-        // Provider partitions refs
-        StartBuilding.reference()
-            .fromStore(DatastoreConstants.PROVIDER_STORE)
-            .toStore(DatastoreConstants.PIVOT_STORE)
-            .withName("ProviderToPivot")
-            .withMapping(DatastoreConstants.PROVIDER__PIVOT_ID, DatastoreConstants.PIVOT__PIVOT_ID)
-            .withMapping(
-                DatastoreConstants.PROVIDER__MANAGER_ID, DatastoreConstants.PIVOT__MANAGER_ID)
-            .withMapping(
-                DatastoreConstants.APPLICATION__DUMP_NAME,
-                DatastoreConstants.APPLICATION__DUMP_NAME)
             .build());
   }
 

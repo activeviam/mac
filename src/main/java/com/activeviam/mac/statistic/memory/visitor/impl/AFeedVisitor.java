@@ -73,16 +73,6 @@ public abstract class AFeedVisitor<R> implements IMemoryStatisticVisitor<R> {
   }
 
   /**
-   * Returns the {@link IRecordFormat} of the Level store.
-   *
-   * @param storageMetadata metadata of the application datastore
-   * @return the {@link DatastoreConstants#LEVEL_STORE} record format
-   */
-  protected static IDataTable getLevelFormat(IDatabaseSchema storageMetadata) {
-    return FeedVisitor.getRecordFormat(storageMetadata, DatastoreConstants.LEVEL_STORE);
-  }
-
-  /**
    * Returns the {@link IRecordFormat} of the Index store.
    *
    * @param storageMetadata metadata of the application datastore
