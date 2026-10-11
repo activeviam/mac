@@ -10,7 +10,6 @@ import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import java.nio.file.Path;
@@ -60,15 +59,7 @@ public class TestRatioMeasures extends ATestMemoryStatistic {
     final AMemoryStatistic stats = loadMemoryStatFromFolder(exportPath);
 
     // Start a monitoring datastore with the exported data
-    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
-    this.monitoringApp =
-        ApplicationInTests.builder()
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .withManager(config.managerDescription())
-            .build();
+    this.monitoringApp = MacTestApplications.createMonitoringApplication();
 
     resources.register(this.monitoringApp).start();
 

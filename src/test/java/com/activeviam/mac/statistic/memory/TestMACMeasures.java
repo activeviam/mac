@@ -15,7 +15,6 @@ import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
 import com.activeviam.tech.composer.test.internal.properties.ActiveViamPropertyExtension;
 import com.activeviam.tech.core.api.agent.AgentException;
@@ -126,15 +125,7 @@ public class TestMACMeasures extends ATestMemoryStatistic {
     this.statsSumm = MemoryStatisticsTestUtils.getStatisticsSummary(this.stats);
 
     // Start a monitoring datastore with the exported data
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
-    this.monitoringApp =
-        ApplicationInTests.builder()
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .withManager(config.managerDescription())
-            .build();
+    this.monitoringApp = MacTestApplications.createMonitoringApplication();
     resources.register(this.monitoringApp).start();
 
     // Fill the monitoring datastore

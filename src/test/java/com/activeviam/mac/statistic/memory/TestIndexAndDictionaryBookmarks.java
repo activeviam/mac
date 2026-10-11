@@ -19,7 +19,6 @@ import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.dictionaries.api.IDictionaryProvider;
@@ -85,15 +84,7 @@ public class TestIndexAndDictionaryBookmarks extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
-    ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
-    this.monitoringApp =
-        ApplicationInTests.builder()
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .withManager(config.managerDescription())
-            .build();
+    this.monitoringApp = MacTestApplications.createMonitoringApplication();
 
     resources.register(this.monitoringApp).start();
 

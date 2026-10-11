@@ -43,12 +43,10 @@ import com.activeviam.database.datastore.api.transaction.DatastoreTransactionExc
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
 import com.activeviam.database.datastore.api.transaction.NoTransactionException;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
 import com.activeviam.database.datastore.internal.monitoring.MemoryStatisticsTestUtils;
 import com.activeviam.mac.TestMemoryStatisticBuilder;
 import com.activeviam.mac.entities.NoOwner;
 import com.activeviam.mac.memory.AnalysisDatastoreFeeder;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.statistic.memory.deserializer.RetroCompatibleDeserializer;
 import com.activeviam.tech.chunks.api.types.TypeValues;
@@ -587,11 +585,7 @@ public abstract class ATestMemoryStatistic {
   }
 
   IInternalDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc =
-        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
-
-    final IInternalDatastore datastore =
-        new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    final IInternalDatastore datastore = MacTestApplications.createMonitoringDatastore();
     resources.register(datastore);
     return datastore;
   }

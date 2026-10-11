@@ -22,7 +22,6 @@ import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.entities.StoreOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
@@ -111,15 +110,7 @@ public class TestViewEpochs extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) throws AgentException {
-    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
-    this.monitoringApp =
-        ApplicationInTests.builder()
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .withManager(config.managerDescription())
-            .build();
+    this.monitoringApp = MacTestApplications.createMonitoringApplication();
 
     ATestMemoryStatistic.feedMonitoringApplication(
         monitoringApp.getDatabase(), List.of(data), "testViewEpochs");

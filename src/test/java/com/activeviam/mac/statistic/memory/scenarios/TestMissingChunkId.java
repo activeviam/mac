@@ -9,15 +9,12 @@ package com.activeviam.mac.statistic.memory.scenarios;
 
 import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
-import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
 import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
-import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
+import com.activeviam.mac.statistic.memory.MacTestApplications;
 import com.activeviam.tech.composer.test.internal.junit.resources.Resources;
 import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
 import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesHolder;
@@ -57,11 +54,7 @@ public class TestMissingChunkId {
   }
 
   protected ApplicationInTests createAnalysisApplication() {
-    final IDatastoreSchemaDescription desc =
-        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
-    final IActivePivotManagerDescription manager =
-        new ManagerDescriptionConfig().managerDescription();
-    return ApplicationInTests.builder().withDatastore(desc).withManager(manager).build();
+    return MacTestApplications.createMonitoringApplication();
   }
 
   protected void loadStatisticsIntoDatastore(

@@ -21,7 +21,6 @@ import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
@@ -104,15 +103,8 @@ public class TestBranches extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication(final AMemoryStatistic data) {
-    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
     ApplicationInTests<IInternalDatastore> application =
-        ApplicationInTests.builder()
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .withManager(config.managerDescription())
-            .build();
+        MacTestApplications.createMonitoringApplication();
     resources.register(application).start();
 
     this.monitoringApp = application;

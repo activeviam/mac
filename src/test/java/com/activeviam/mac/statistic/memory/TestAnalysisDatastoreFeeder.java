@@ -20,12 +20,10 @@ import com.activeviam.database.datastore.api.transaction.DatastoreTransactionExc
 import com.activeviam.database.datastore.api.transaction.ITransactionManager;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
 import com.activeviam.database.datastore.internal.query.impl.DatastoreQueryHelper;
-import com.activeviam.mac.cfg.impl.ManagerDescriptionConfig;
 import com.activeviam.mac.cfg.impl.RegistryInitializationConfig;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.CubeOwner;
 import com.activeviam.mac.memory.DatastoreConstants;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.visitor.impl.EpochView;
 import com.activeviam.tech.core.api.agent.AgentException;
 import com.activeviam.tech.mvcc.api.IEpochHistory;
@@ -285,15 +283,8 @@ public class TestAnalysisDatastoreFeeder extends ATestMemoryStatistic {
   }
 
   private void initializeMonitoringApplication() {
-    final ManagerDescriptionConfig config = new ManagerDescriptionConfig();
-    final MemoryAnalysisDatastoreDescriptionConfig schemaConfig =
-        new MemoryAnalysisDatastoreDescriptionConfig();
-
     final ApplicationInTests<IInternalDatastore> application =
-        ApplicationInTests.builder()
-            .withManager(config.managerDescription())
-            .withDatastore(schemaConfig.datastoreSchemaDescription())
-            .build();
+        MacTestApplications.createMonitoringApplication();
 
     this.monitoringApp = application;
   }

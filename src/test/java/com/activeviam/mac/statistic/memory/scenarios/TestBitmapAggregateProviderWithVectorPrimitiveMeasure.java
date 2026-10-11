@@ -20,9 +20,8 @@ import com.activeviam.database.api.types.ILiteralType;
 import com.activeviam.database.datastore.api.IDatastore;
 import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.internal.IInternalDatastore;
-import com.activeviam.database.datastore.internal.builder.impl.UnitTestDatastoreBuilder;
-import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.statistic.memory.ATestMemoryStatistic;
+import com.activeviam.mac.statistic.memory.MacTestApplications;
 import com.activeviam.tech.composer.test.internal.junit.resources.ResourcesExtension;
 import com.activeviam.tech.composer.test.internal.util.FileTestUtil;
 import com.activeviam.tech.core.api.agent.AgentException;
@@ -143,10 +142,7 @@ public class TestBitmapAggregateProviderWithVectorPrimitiveMeasure extends ATest
   }
 
   protected IInternalDatastore createAnalysisDatastore() {
-    final IDatastoreSchemaDescription desc =
-        new MemoryAnalysisDatastoreDescriptionConfig().datastoreSchemaDescription();
-    final IInternalDatastore datastore =
-        new UnitTestDatastoreBuilder().setSchemaDescription(desc).build();
+    final IInternalDatastore datastore = MacTestApplications.createMonitoringDatastore();
     this.resources.register(datastore);
     return datastore;
   }
