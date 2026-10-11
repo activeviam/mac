@@ -325,6 +325,19 @@ whether the chunk belongs to a cube or a store.
 A single-level slicing hierarchy whose members are the branches of the exported
 chunks. Its default member is the `master` branch.
 
+### Used By Version
+
+This single-level hierarchy describes, for each chunk and epoch id whether
+the chunk is "used" by the corresponding version i.e. if it has not been
+flagged as deleted in a previous version.
+
+* `TRUE`: the chunk is still used by the expressed epoch
+* `FALSE`: the chunk has been fully marked as deleted in a previous version
+* `UNKNOWN`: the chunk cannot be classified - this can be the case for bitmap
+  aggregate store chunks for example
+
+## Epochs
+
 ### Epoch Id
 
 A single-level hierarchy whose members are the epoch ids of the exported chunks.
@@ -336,17 +349,6 @@ A single-level hierarchy whose members are the epoch ids of the exported chunks.
 > The present chunks are always chunks that are still present at the time of the
 > export either because they are still used by the most recent version or
 > because they were not yet discarded.
-
-### Used By Version
-
-This single-level hierarchy describes, for each chunk and epoch id whether
-the chunk is "used" by the corresponding version i.e. if it has not been
-flagged as deleted in a previous version.
-
-* `TRUE`: the chunk is still used by the expressed epoch
-* `FALSE`: the chunk has been fully marked as deleted in a previous version
-* `UNKNOWN`: the chunk cannot be classified - this can be the case for bitmap
-  aggregate store chunks for example
 
 ## Import Info
 

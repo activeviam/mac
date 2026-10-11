@@ -11,24 +11,34 @@ import com.activeviam.activepivot.copper.api.Copper;
 import com.activeviam.activepivot.copper.api.CopperMeasure;
 import com.activeviam.activepivot.copper.api.CopperMeasureToAggregateAbove;
 import com.activeviam.activepivot.copper.api.CopperStore;
-import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
+import com.activeviam.activepivot.core.api.foundry.configurator.ICubeConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.ICubeManagerConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.IDimensionConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.IDimensionRelationship;
+import com.activeviam.activepivot.core.api.foundry.configurator.IDimensionRelationship.ManyToManyRelationship;
+import com.activeviam.activepivot.core.api.foundry.configurator.IDimensionRelationship.ManyToOneRelationship;
+import com.activeviam.activepivot.core.api.foundry.configurator.IDimensionsConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.IHierarchyConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.ILevelConfigurator;
+import com.activeviam.activepivot.core.api.foundry.configurator.IMeasuresConfigurator;
+import com.activeviam.activepivot.core.api.foundry.definition.hierarchy.ICustomHierarchyDefinition;
+import com.activeviam.activepivot.core.api.foundry.definition.hierarchy.IDerivedHierarchyInput;
+import com.activeviam.activepivot.core.api.foundry.definition.hierarchy.ITableHierarchyDefinition;
+import com.activeviam.activepivot.core.api.foundry.measure.CopperNext;
 import com.activeviam.activepivot.core.impl.api.contextvalues.QueriesResultLimit;
 import com.activeviam.activepivot.core.impl.api.contextvalues.QueriesTimeLimit;
-import com.activeviam.activepivot.core.impl.internal.util.impl.MdxNamingUtil;
-import com.activeviam.activepivot.core.intf.api.copper.ICopperContext;
+import com.activeviam.activepivot.core.impl.api.contextvalues.mdx.MdxContext;
+import com.activeviam.activepivot.core.impl.api.description.impl.ComparatorDescription;
+import com.activeviam.activepivot.core.impl.api.description.impl.ComparatorOrderDescription;
+import com.activeviam.activepivot.core.impl.internal.description.ComparatorOrderDescriptionNames;
 import com.activeviam.activepivot.core.intf.api.cube.hierarchy.IDimension;
 import com.activeviam.activepivot.core.intf.api.cube.hierarchy.IHierarchy;
+import com.activeviam.activepivot.core.intf.api.cube.hierarchy.IMeasureHierarchy;
+import com.activeviam.activepivot.core.intf.api.cube.metadata.HierarchyIdentifier;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.ILevelInfo;
 import com.activeviam.activepivot.core.intf.api.cube.metadata.LevelIdentifier;
-import com.activeviam.activepivot.core.intf.api.description.IActivePivotInstanceDescription;
-import com.activeviam.activepivot.core.intf.api.description.IActivePivotManagerDescription;
-import com.activeviam.activepivot.core.intf.api.description.ISelectionDescription;
-import com.activeviam.activepivot.core.intf.api.description.builder.ICanBuildCubeDescription;
-import com.activeviam.activepivot.core.intf.api.description.builder.ICanStartBuildingMeasures;
-import com.activeviam.activepivot.core.intf.api.description.builder.IHasAtLeastOneMeasure;
-import com.activeviam.activepivot.core.intf.api.description.builder.ISelectionDescriptionBuilder;
-import com.activeviam.activepivot.core.intf.api.description.builder.dimension.ICanStartBuildingDimensions;
 import com.activeviam.database.api.schema.FieldPath;
+import com.activeviam.database.api.schema.JoinPath;
 import com.activeviam.mac.comparators.ReverseEpochViewComparator;
 import com.activeviam.mac.entities.ChunkOwner;
 import com.activeviam.mac.entities.ChunkOwner.OwnerType;
@@ -39,32 +49,28 @@ import com.activeviam.mac.memory.DatastoreConstants;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.tech.aggregation.internal.impl.SingleValueFunction;
+import com.activeviam.tech.chunks.api.types.ContentType;
 import com.activeviam.tech.chunks.api.types.Types;
 import com.activeviam.tech.core.api.format.IFormatter;
 import com.activeviam.tech.core.api.ordering.IComparator;
 import com.activeviam.tech.mvcc.api.IEpoch;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * Manager Description Config that defines the manager description which contains the cube
- * dimensions and every CopperMeasure.
+ * Defines the monitoring cube, with its dimensions and its measures.
  *
  * @author ActiveViam
  */
-@Configuration
-@Import(MemoryAnalysisDatastoreDescriptionConfig.class)
 public class ManagerDescriptionConfig {
 
   /** The main monitoring cube name. */
   public static final String MONITORING_CUBE = "MemoryCube";
-
-  /** The main monitoring schema name. */
-  public static final String MONITORING_SCHEMA = "MemorySchema";
 
   /** The {@link QueriesTimeLimit} timeout duration. */
   public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(15);
@@ -268,6 +274,12 @@ public class ManagerDescriptionConfig {
   /** The ratio of committed rows within chunks. */
   public static final String COMMITTED_ROWS_RATIO = "CommittedRows.Ratio";
 
+  /** The total number of rows in chunks, without deduplicating the chunks. */
+  public static final String PHYSICAL_ROW_COUNT = "Physical row count";
+
+  /** The size of each chunk of a store. */
+  public static final String STORE_CHUNK_SIZE = "Chunk size";
+
   // endregion
 
   // region folders
@@ -294,622 +306,702 @@ public class ManagerDescriptionConfig {
 
   // endregion
 
-  protected MemoryAnalysisDatastoreDescriptionConfig datastoreDescriptionConfig =
-      new MemoryAnalysisDatastoreDescriptionConfig();
+  /** Name of the dimension holding the epochs viewing the chunks. */
+  public static final String EPOCH_DIMENSION = "Epochs";
+
+  private static final LevelIdentifier CHUNK_ID_LEVEL =
+      new LevelIdentifier(CHUNK_DIMENSION, CHUNK_ID_HIERARCHY, CHUNK_ID_HIERARCHY);
+
+  private static final LevelIdentifier DICO_ID_LEVEL =
+      new LevelIdentifier(CHUNK_DIMENSION, CHUNK_DICO_ID_LEVEL, CHUNK_DICO_ID_LEVEL);
+
+  private static final LevelIdentifier INDEX_ID_LEVEL =
+      new LevelIdentifier(CHUNK_DIMENSION, CHUNK_INDEX_ID_LEVEL, CHUNK_INDEX_ID_LEVEL);
+
+  private static final LevelIdentifier REFERENCE_ID_LEVEL =
+      new LevelIdentifier(CHUNK_DIMENSION, CHUNK_REF_ID_LEVEL, CHUNK_REF_ID_LEVEL);
+
+  private static final LevelIdentifier DUMP_NAME_LEVEL =
+      new LevelIdentifier(CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL);
+
+  private static final LevelIdentifier INTERNAL_EPOCH_ID_LEVEL =
+      new LevelIdentifier(
+          VERSION_DIMENSION, INTERNAL_EPOCH_ID_HIERARCHY, INTERNAL_EPOCH_ID_HIERARCHY);
+
+  private static final LevelIdentifier OWNER_LEVEL =
+      new LevelIdentifier(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY);
+
+  private static final LevelIdentifier COMPONENT_LEVEL =
+      new LevelIdentifier(COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY);
+
+  private static final LevelIdentifier FIELD_LEVEL =
+      new LevelIdentifier(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY);
+
+  private static final LevelIdentifier PARTITION_LEVEL =
+      new LevelIdentifier(PARTITION_DIMENSION, PARTITION_HIERARCHY, PARTITION_HIERARCHY);
+
+  private static final LevelIdentifier CLASS_LEVEL =
+      new LevelIdentifier(CHUNK_DIMENSION, CHUNK_CLASS_LEVEL, CHUNK_CLASS_LEVEL);
 
   /**
-   * Prefixes a field by another string.
+   * Defines the monitoring cube: its dimensions, its measures and its shared context values.
    *
-   * @param prefix string to prepend
-   * @param field field to be prefixed
-   * @return the prefixed string
+   * @param cubeManager the object used to configure the cubes
    */
-  private static String prefixField(String prefix, String field) {
-    return prefix + field.substring(0, 1).toUpperCase() + field.substring(1);
-  }
-
-  @Bean
-  public IActivePivotManagerDescription managerDescription() {
-    return StartBuilding.managerDescription()
-        .withSchema(MONITORING_SCHEMA)
-        .withSelection(memorySelection())
-        .withCube(memoryCube())
-        .build();
-  }
-
-  private ISelectionDescription memorySelection() {
-    return StartBuilding.selection(datastoreDescriptionConfig.datastoreSchemaDescription())
-        .fromBaseStore(DatastoreConstants.CHUNK_STORE)
-        .withAllReachableFields(
-            allReachableFields -> {
-              allReachableFields.remove(DatastoreConstants.CHUNK__CLASS);
-              final Map<String, FieldPath> result =
-                  ISelectionDescriptionBuilder.FieldsCollisionHandler.CLOSEST.handle(
-                      allReachableFields);
-              result.put(
-                  prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS),
-                  FieldPath.of(DatastoreConstants.CHUNK__CLASS));
-
-              return result;
-            })
-        .build();
-  }
-
-  private IActivePivotInstanceDescription memoryCube() {
-    return StartBuilding.cube(MONITORING_CUBE)
-        .withCalculations(this::copperCalculations)
-        .withMeasures(this::nativeMeasures)
-        .withDimensions(this::defineDimensions)
-        .withSharedContextValue(
+  public void configureCubes(final ICubeManagerConfigurator cubeManager) {
+    final ICubeConfigurator cube =
+        cubeManager.addCube(MONITORING_CUBE, DatastoreConstants.CHUNK_STORE);
+    cube.withSharedContextValue(
             QueriesTimeLimit.of(TIMEOUT_DURATION.getSeconds(), TimeUnit.SECONDS))
         .withSharedContextValue(QueriesResultLimit.withoutLimit())
-        .withSharedMdxContext()
-        .withDefaultMember()
-        .onHierarchy(MdxNamingUtil.hierarchyUniqueName(IDimension.MEASURES, IHierarchy.MEASURES))
-        .withMemberPath(CHUNK_COUNT)
-        .end()
+        .withSharedContextValue(mdxContext());
+
+    defineDimensions(cube.dimensions());
+    defineMeasures(cube.measures());
+  }
+
+  private static MdxContext mdxContext() {
+    final MdxContext mdxContext = new MdxContext();
+    mdxContext.setDefaultMembers(
+        Map.of(
+            new HierarchyIdentifier(IDimension.MEASURES, IHierarchy.MEASURES),
+            List.of(CHUNK_COUNT)));
+    return mdxContext;
+  }
+
+  // region dimensions
+
+  private void defineDimensions(final IDimensionsConfigurator dimensions) {
+    defineChunkDimension(dimensions);
+    definePartitionDimension(dimensions);
+    defineImportInfoDimension(dimensions);
+    defineAggregateProviderDimension(dimensions);
+    defineVersionDimension(dimensions);
+    defineOwnerDimension(dimensions);
+
+    final String componentDescription =
+        "The owning structure associated with the chunk (dictionary, index, ...)";
+    addFactHierarchy(
+        dimensions,
+        addFactDimension(dimensions, COMPONENT_DIMENSION, componentDescription),
+        COMPONENT_HIERARCHY,
+        DatastoreConstants.OWNER__COMPONENT,
+        componentDescription);
+
+    final String fieldDescription = "The field(s) associated with the chunk, if any";
+    addFactHierarchy(
+        dimensions,
+        addFactDimension(dimensions, FIELD_DIMENSION, fieldDescription),
+        FIELD_HIERARCHY,
+        DatastoreConstants.OWNER__FIELD,
+        fieldDescription);
+
+    defineEpochDimension(dimensions);
+    defineReferenceDimension(dimensions);
+    defineIndexDimension(dimensions);
+  }
+
+  private void defineChunkDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator chunks = addFactDimension(dimensions, CHUNK_DIMENSION, null);
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_ID_HIERARCHY,
+        FieldPath.of(DatastoreConstants.CHUNK_ID),
+        "Holds low-level hierarchies for classifying chunks",
+        "The ID of the chunk");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_TYPE_LEVEL,
+        DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE,
+        "The kind of data the chunk holds (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_PARENT_ID_LEVEL,
+        DatastoreConstants.CHUNK__PARENT_ID,
+        "The internal ID associated with the parent"
+            + " structure holding the chunk (e.g. dictionary, index, aggregate store...)");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_DICO_ID_LEVEL,
+        DatastoreConstants.CHUNK__PARENT_DICO_ID,
+        "The ID of the dictionary the chunk is attributed to, if any");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_INDEX_ID_LEVEL,
+        DatastoreConstants.CHUNK__PARENT_INDEX_ID,
+        "The ID of the index the chunk is attributed to, if any");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_REF_ID_LEVEL,
+        DatastoreConstants.CHUNK__PARENT_REF_ID,
+        "The ID of the reference the chunk is attributed to, if any");
+    addFactHierarchy(
+        dimensions,
+        chunks,
+        CHUNK_CLASS_LEVEL,
+        DatastoreConstants.CHUNK__CLASS,
+        "The java class of the chunk");
+    dimensions.level(CLASS_LEVEL).formatter(ClassFormatter.KEY);
+  }
+
+  private void definePartitionDimension(final IDimensionsConfigurator dimensions) {
+    addFactDimension(
+            dimensions,
+            PARTITION_DIMENSION,
+            "The ID of the store or cube partition that holds the chunk")
+        .addHierarchy(
+            singleLevelHierarchy(
+                PARTITION_HIERARCHY, FieldPath.of(DatastoreConstants.CHUNK__PARTITION_ID)));
+    describe(
+            dimensions,
+            PARTITION_LEVEL,
+            "The ID of the store or cube partition that holds the chunk")
+        .formatter(PartitionIdFormatter.KEY);
+  }
+
+  private void defineImportInfoDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator importInfo =
+        addFactDimension(
+            dimensions,
+            CHUNK_DUMP_NAME_LEVEL,
+            "Holds hierarchies with metadata on the statistics from which the chunks were "
+                + "retrieved");
+    importInfo
+        .addHierarchy(
+            ITableHierarchyDefinition.builder(CHUNK_DUMP_NAME_LEVEL)
+                .slicing()
+                .withFieldLevel(
+                    CHUNK_DUMP_NAME_LEVEL, FieldPath.of(DatastoreConstants.CHUNK__DUMP_NAME))
+                .build())
+        .description("The source folder name from which the statistics were retrieved");
+    describe(
+            dimensions,
+            DUMP_NAME_LEVEL,
+            "The source folder name from which the statistics were retrieved")
+        .comparator(IComparator.NATURAL_ORDER_PLUGIN_KEY);
+
+    addFactHierarchy(
+            dimensions,
+            importInfo,
+            DATE_HIERARCHY,
+            FieldPath.of(
+                MemoryAnalysisDatastoreDescriptionConfig.CHUNK_TO_APP,
+                DatastoreConstants.APPLICATION__DATE),
+            "Date at which statistics were retrieved",
+            "Date at which statistics were retrieved")
+        .type(ILevelInfo.LevelType.TIME)
+        .comparator(IComparator.DESCENDING_NATURAL_ORDER_PLUGIN_KEY);
+  }
+
+  private void defineAggregateProviderDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator providers =
+        addFactDimension(
+            dimensions,
+            AGGREGATE_PROVIDER_DIMENSION,
+            "Holds hierarchies relative to pivot aggregate providers");
+    addFactHierarchy(
+        dimensions,
+        providers,
+        MANAGER_HIERARCHY,
+        providerField(DatastoreConstants.PROVIDER__MANAGER_ID),
+        "The id of the manager associated with the chunk, if any");
+    addFactHierarchy(
+        dimensions,
+        providers,
+        PROVIDER_TYPE_HIERARCHY,
+        providerField(DatastoreConstants.PROVIDER__TYPE),
+        "The type of the aggregate provider associated with the chunk, if any");
+    addFactHierarchy(
+        dimensions,
+        providers,
+        PROVIDER_CATEGORY_HIERARCHY,
+        providerField(DatastoreConstants.PROVIDER__CATEGORY),
+        "The category of the aggregate provider associated with the chunk, if any");
+    addFactHierarchy(
+        dimensions,
+        providers,
+        PROVIDER_ID_HIERARCHY,
+        DatastoreConstants.CHUNK__PROVIDER_ID,
+        "The ID of the aggregate provider associated with the chunk, if any");
+  }
+
+  private static FieldPath providerField(final String field) {
+    return FieldPath.of(MemoryAnalysisDatastoreDescriptionConfig.CHUNK_TO_PROVIDER, field);
+  }
+
+  private void defineVersionDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator versions =
+        addFactDimension(
+            dimensions,
+            VERSION_DIMENSION,
+            "Holds hierarchies relative to the versioning of the chunks");
+    final String internalEpochDescription =
+        "The internal epoch ID of the chunk (may be less than the epoch to view)";
+    addFactHierarchy(
+            dimensions,
+            versions,
+            INTERNAL_EPOCH_ID_HIERARCHY,
+            FieldPath.of(DatastoreConstants.VERSION__EPOCH_ID),
+            internalEpochDescription,
+            internalEpochDescription)
+        .comparator(IComparator.DESCENDING_NATURAL_ORDER_PLUGIN_KEY);
+    versions.hierarchy(INTERNAL_EPOCH_ID_HIERARCHY).hidden();
+
+    addFactHierarchy(
+            dimensions,
+            versions,
+            BRANCH_HIERARCHY,
+            FieldPath.of(
+                MemoryAnalysisDatastoreDescriptionConfig.CHUNK_TO_VERSION,
+                DatastoreConstants.VERSION__BRANCH_NAME),
+            "The branch of the chunk",
+            "The branch of the chunk")
+        .comparator(
+            new ComparatorDescription(IComparator.CUSTOM_PLUGIN_KEY)
+                .setOrders(
+                    List.of(
+                        new ComparatorOrderDescription(
+                            ComparatorOrderDescriptionNames.FIRST_OBJECTS,
+                            List.of(IEpoch.MASTER_BRANCH_NAME)))));
+
+    addFactHierarchy(
+        dimensions,
+        versions,
+        USED_BY_VERSION_DIMENSION,
+        DatastoreConstants.CHUNK__USED_BY_VERSION,
+        "Whether or not the chunk is known to be used by the currently viewed version");
+  }
+
+  private void defineOwnerDimension(final IDimensionsConfigurator dimensions) {
+    final String description = "The cube(s) or store(s) owning the chunk";
+    final IDimensionConfigurator owners =
+        addFactDimension(dimensions, OWNER_DIMENSION, description);
+    addFactHierarchy(
+        dimensions, owners, OWNER_HIERARCHY, DatastoreConstants.OWNER__OWNER, description);
+
+    owners.addHierarchy(
+        ICustomHierarchyDefinition.builder(OWNER_TYPE_HIERARCHY)
+            .derived()
+            .withAllMember()
+            .withLevel(
+                OWNER_TYPE_HIERARCHY,
+                IDerivedHierarchyInput.create(OWNER_LEVEL),
+                reader -> ((ChunkOwner) reader.read(0)).getType())
+            .withMembers((Object[]) OwnerType.values())
+            .build());
+  }
+
+  /**
+   * Defines the dimension of the epochs viewing the chunks.
+   *
+   * <p>A chunk of a given epoch can be viewed by several epochs: the dimension table is joined to
+   * the cube with a many-to-many relationship. Such a dimension cannot hold the hierarchies of
+   * another table, hence this dimension being separated from the {@link #VERSION_DIMENSION}.
+   */
+  private void defineEpochDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator epochs =
+        dimensions.addDimension(
+            EPOCH_DIMENSION,
+            DatastoreConstants.EPOCH_VIEW_STORE,
+            ManyToManyRelationship.builder()
+                .withMapping(DatastoreConstants.EPOCH_VIEW__OWNER, OWNER_LEVEL)
+                .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DUMP_NAME_LEVEL)
+                .withMapping(DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID, INTERNAL_EPOCH_ID_LEVEL)
+                .build());
+    addJoinedHierarchy(epochs, EPOCH_ID_HIERARCHY, DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID)
+        .level(EPOCH_ID_HIERARCHY)
+        .comparator(ReverseEpochViewComparator.PLUGIN_KEY);
+  }
+
+  private void defineReferenceDimension(final IDimensionsConfigurator dimensions) {
+    addJoinedHierarchy(
+        dimensions.addDimension(
+            REFERENCE_NAMES_HIERARCHY,
+            DatastoreConstants.REFERENCE_STORE,
+            componentRelationship(DatastoreConstants.REFERENCE_ID, REFERENCE_ID_LEVEL)),
+        REFERENCE_NAMES_HIERARCHY,
+        DatastoreConstants.REFERENCE_NAME);
+  }
+
+  private void defineIndexDimension(final IDimensionsConfigurator dimensions) {
+    final IDimensionConfigurator indices =
+        dimensions.addDimension(
+            INDEX_DIMENSION,
+            DatastoreConstants.INDEX_STORE,
+            componentRelationship(DatastoreConstants.INDEX_ID, INDEX_ID_LEVEL));
+    addJoinedHierarchy(indices, INDEXED_FIELDS_HIERARCHY, DatastoreConstants.INDEX__FIELDS);
+    addJoinedHierarchy(indices, INDEX_TYPE_HIERARCHY, DatastoreConstants.INDEX_TYPE);
+  }
+
+  /**
+   * Adds a single-level hierarchy to a dimension whose table is joined to the cube with a
+   * many-to-many relationship.
+   *
+   * <p>The unknown member is only contributed when the hierarchy is empty: the facts without any
+   * matching row in the dimension table are not expected to be displayed under the unknown member.
+   */
+  private static IHierarchyConfigurator addJoinedHierarchy(
+      final IDimensionConfigurator dimension, final String name, final String field) {
+    return dimension
+        .addHierarchy(singleLevelHierarchy(name, FieldPath.of(field)))
+        .withProperty(
+            IHierarchyConfigurator.AUTO_CONTRIBUTE_UNKNOWN_MEMBER_PROPERTY,
+            IHierarchyConfigurator.AUTO_CONTRIBUTE_UNKNOWN_MEMBER_IF_EMPTY);
+  }
+
+  /**
+   * Returns the relationship between the cube and the table of a chunk component (dictionary,
+   * index, reference...), for the given import and epoch.
+   */
+  private static IDimensionRelationship componentRelationship(
+      final String componentIdField, final LevelIdentifier componentIdLevel) {
+    return ManyToManyRelationship.builder()
+        .withMapping(componentIdField, componentIdLevel)
+        .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, DUMP_NAME_LEVEL)
+        .withMapping(DatastoreConstants.VERSION__EPOCH_ID, INTERNAL_EPOCH_ID_LEVEL)
         .build();
   }
 
-  private ICanBuildCubeDescription<IActivePivotInstanceDescription> defineDimensions(
-      final ICanStartBuildingDimensions builder) {
-    return builder
-        .withDimension(CHUNK_DIMENSION)
-        .withHierarchy(CHUNK_ID_HIERARCHY)
-        .withHierarchyProperty("description", "Holds low-level hierarchies for classifying chunks")
-        .withLevelOfSameName()
-        .withLevelProperty("description", "The ID of the chunk")
-        .withPropertyName(DatastoreConstants.CHUNK_ID)
-        .withHierarchy(CHUNK_TYPE_LEVEL)
-        .withHierarchyProperty(
-            "description",
-            "The kind of data the chunk holds"
-                + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__CLOSEST_PARENT_TYPE)
-        .withLevelProperty(
-            "description",
-            "The kind of data the chunk holds"
-                + " (e.g. RECORDS, DICTIONARY, INDEX, AGGREGATE_STORE, ...)")
-        .withHierarchy(CHUNK_PARENT_ID_LEVEL)
-        .withHierarchyProperty(
-            "description",
-            "The internal ID associated with the parent"
-                + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_ID)
-        .withLevelProperty(
-            "description",
-            "The internal ID associated with the parent"
-                + " structure holding the chunk (e.g. dictionary, index, aggregate store...)")
-        .withHierarchy(CHUNK_DICO_ID_LEVEL)
-        .withHierarchyProperty(
-            "description", "The ID of the dictionary the chunk is attributed to, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_DICO_ID)
-        .withLevelProperty(
-            "description", "The ID of the dictionary the chunk is attributed to, if any")
-        .withHierarchy(CHUNK_INDEX_ID_LEVEL)
-        .withHierarchyProperty(
-            "description", "The ID of the index the chunk is attributed to, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_INDEX_ID)
-        .withLevelProperty("description", "The ID of the index the chunk is attributed to, if any")
-        .withHierarchy(CHUNK_REF_ID_LEVEL)
-        .withHierarchyProperty(
-            "description", "The ID of the reference the chunk is attributed to, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PARENT_REF_ID)
-        .withLevelProperty(
-            "description", "The ID of the reference the chunk is attributed to, if any")
-        .withHierarchy(CHUNK_CLASS_LEVEL)
-        .withHierarchyProperty("description", "The java class of the chunk")
-        .withLevelOfSameName()
-        .withPropertyName(
-            prefixField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__CLASS))
-        .withFormatter(ClassFormatter.KEY)
-        .withLevelProperty("description", "The java class of the chunk")
-        .withDimension(PARTITION_DIMENSION)
-        .withDimensionProperty(
-            "description", "The ID of the store or cube partition that holds the chunk")
-        .withHierarchy(PARTITION_HIERARCHY)
-        .withLevelOfSameName()
-        .withLevelProperty(
-            "description", "The ID of the store or cube partition that holds the chunk")
-        .withPropertyName(DatastoreConstants.CHUNK__PARTITION_ID)
-        .withFormatter(PartitionIdFormatter.KEY)
-        .withLevelProperty(
-            "description", "The ID of the store or cube partition that holds the chunk")
-        .withDimension(CHUNK_DUMP_NAME_LEVEL)
-        .withDimensionProperty(
-            "description",
-            "Holds hierarchies with metadata on the statistics from which the chunks were "
-                + "retrieved")
-        .withHierarchyOfSameName()
-        .slicing()
-        .withHierarchyProperty(
-            "description", "The source folder name from which the statistics were retrieved")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__DUMP_NAME)
-        .withComparator(IComparator.NATURAL_ORDER_PLUGIN_KEY)
-        .withLevelProperty(
-            "description", "The source folder name from which the statistics were retrieved")
-        .withHierarchy(DATE_HIERARCHY)
-        .withHierarchyProperty("description", "Date at which statistics were retrieved")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.APPLICATION__DATE)
-        .withType(ILevelInfo.LevelType.TIME)
-        .withComparator(IComparator.DESCENDING_NATURAL_ORDER_PLUGIN_KEY)
-        .withLevelProperty("description", "Date at which statistics were retrieved")
-        .withDimension(AGGREGATE_PROVIDER_DIMENSION)
-        .withDimensionProperty(
-            "description", "Holds hierarchies relative to pivot aggregate providers")
-        .withHierarchy(MANAGER_HIERARCHY)
-        .withHierarchyProperty(
-            "description", "The id of the manager associated with the chunk, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER__MANAGER_ID)
-        .withLevelProperty("description", "The id of the manager associated with the chunk, if any")
-        .withHierarchy(PROVIDER_TYPE_HIERARCHY)
-        .withHierarchyProperty(
-            "description", "The type of the aggregate provider associated with the chunk, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER__TYPE)
-        .withLevelProperty(
-            "description", "The type of the aggregate provider associated with the chunk, if any")
-        .withHierarchy(PROVIDER_CATEGORY_HIERARCHY)
-        .withHierarchyProperty(
-            "description",
-            "The category of the aggregate provider associated with the chunk, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.PROVIDER__CATEGORY)
-        .withLevelProperty(
-            "description",
-            "The category of the aggregate provider associated with the chunk, if any")
-        .withHierarchy(PROVIDER_ID_HIERARCHY)
-        .withHierarchyProperty(
-            "description", "The ID of the aggregate provider associated with the chunk, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__PROVIDER_ID)
-        .withLevelProperty(
-            "description", "The ID of the aggregate provider associated with the chunk, if any")
-        .withDimension(VERSION_DIMENSION)
-        .withDimensionProperty(
-            "description", "Holds hierarchies relative to the versioning of the chunks")
-        .withHierarchy(INTERNAL_EPOCH_ID_HIERARCHY)
-        .hidden()
-        .withHierarchyProperty(
-            "description",
-            "The internal epoch ID of the chunk (may be less than the epoch to view)")
-        .withLevel(INTERNAL_EPOCH_ID_HIERARCHY)
-        .withPropertyName(DatastoreConstants.VERSION__EPOCH_ID)
-        .withLevelProperty(
-            "description",
-            "The internal epoch ID of the chunk (may be less than the epoch to view)")
-        .withComparator(IComparator.DESCENDING_NATURAL_ORDER_PLUGIN_KEY)
-        .withHierarchy(BRANCH_HIERARCHY)
-        .withHierarchyProperty("description", "The branch of the chunk")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.VERSION__BRANCH_NAME)
-        .withFirstObjects(IEpoch.MASTER_BRANCH_NAME)
-        .withLevelProperty("description", "The branch of the chunk")
-        .withHierarchy(USED_BY_VERSION_DIMENSION)
-        .withHierarchyProperty(
-            "description",
-            "Whether or not the chunk is known to be used by the currently viewed version")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.CHUNK__USED_BY_VERSION)
-        .withLevelProperty(
-            "description",
-            "Whether or not the chunk is known to be used by the currently viewed version")
-        .withDimension(OWNER_DIMENSION)
-        .withDimensionProperty("description", "The cube(s) or store(s) owning the chunk")
-        .withHierarchy(OWNER_HIERARCHY)
-        .withHierarchyProperty("description", "The cube(s) or store(s) owning the chunk")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.OWNER__OWNER)
-        .withLevelProperty("description", "The cube(s) or store(s) owning the chunk")
-        .withDimension(COMPONENT_DIMENSION)
-        .withDimensionProperty(
-            "description",
-            "The owning structure associated with the chunk (dictionary, index, ...)")
-        .withHierarchy(COMPONENT_HIERARCHY)
-        .withHierarchyProperty(
-            "description",
-            "The owning structure associated with the chunk (dictionary, index, ...)")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.OWNER__COMPONENT)
-        .withLevelProperty(
-            "description",
-            "The owning structure associated with the chunk (dictionary, index, ...)")
-        .withDimension(FIELD_DIMENSION)
-        .withDimensionProperty("description", "The field(s) associated with the chunk, if any")
-        .withHierarchy(FIELD_HIERARCHY)
-        .withHierarchyProperty("description", "The field(s) associated with the chunk, if any")
-        .withLevelOfSameName()
-        .withPropertyName(DatastoreConstants.OWNER__FIELD)
-        .withLevelProperty("description", "The field(s) associated with the chunk, if any");
+  /** Adds a dimension whose levels are fed by the fact table and the tables it joins. */
+  private static IDimensionConfigurator addFactDimension(
+      final IDimensionsConfigurator dimensions, final String name, final String description) {
+    final IDimensionConfigurator dimension =
+        dimensions.addDimension(
+            name, DatastoreConstants.CHUNK_STORE, new ManyToOneRelationship(JoinPath.empty()));
+    if (description != null) {
+      dimension.description(description);
+    }
+    return dimension;
   }
 
-  private IHasAtLeastOneMeasure nativeMeasures(ICanStartBuildingMeasures builder) {
-    return builder
-        .withContributorsCount()
-        .withFormatter(NUMBER_FORMATTER)
-        .withinFolder(INTERNAL_FOLDER)
-        .withUpdateTimestamp()
-        .withFormatter(IFormatter.DATE_PLUGIN_KEY + "[HH:mm:ss]")
-        .withinFolder(INTERNAL_FOLDER);
+  /** Adds a single-level hierarchy, of the same name as its level, fed by the fact table. */
+  private static ILevelConfigurator addFactHierarchy(
+      final IDimensionsConfigurator dimensions,
+      final IDimensionConfigurator dimension,
+      final String name,
+      final String field,
+      final String description) {
+    return addFactHierarchy(dimensions, dimension, name, FieldPath.of(field), description);
   }
 
-  private void copperCalculations(final ICopperContext context) {
-    joinHierarchies(context);
-    bucketingHierarchies(context);
-
-    applicationMeasure(context);
-    chunkMeasures(context);
-    dictionaryMeasures(context);
-    vectorMeasures(context);
+  private static ILevelConfigurator addFactHierarchy(
+      final IDimensionsConfigurator dimensions,
+      final IDimensionConfigurator dimension,
+      final String name,
+      final FieldPath field,
+      final String description) {
+    return addFactHierarchy(dimensions, dimension, name, field, description, description);
   }
 
-  private void joinHierarchies(final ICopperContext context) {
-    joinViewVersion(context);
-    joinReferencesToChunks(context);
-    joinIndexesToChunks(context);
+  private static ILevelConfigurator addFactHierarchy(
+      final IDimensionsConfigurator dimensions,
+      final IDimensionConfigurator dimension,
+      final String name,
+      final FieldPath field,
+      final String hierarchyDescription,
+      final String levelDescription) {
+    dimension.addHierarchy(singleLevelHierarchy(name, field)).description(hierarchyDescription);
+    return describe(
+        dimensions,
+        new LevelIdentifier(dimension.getIdentifier().getName(), name, name),
+        levelDescription);
   }
 
-  private void joinViewVersion(ICopperContext context) {
-    final CopperStore epochViewStore =
-        Copper.store(DatastoreConstants.EPOCH_VIEW_STORE)
-            .joinToCube()
-            .withMapping(
-                DatastoreConstants.OWNER__OWNER,
-                Copper.level(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY))
-            .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                Copper.level(
-                    new LevelIdentifier(
-                        CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)))
-            .withMapping(
-                DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID,
-                Copper.level(
-                    new LevelIdentifier(
-                        VERSION_DIMENSION,
-                        INTERNAL_EPOCH_ID_HIERARCHY,
-                        INTERNAL_EPOCH_ID_HIERARCHY)));
-
-    Copper.newHierarchy(VERSION_DIMENSION, EPOCH_ID_HIERARCHY)
-        .fromField(epochViewStore.field(DatastoreConstants.EPOCH_VIEW__VIEW_EPOCH_ID))
-        .withLevelOfSameName()
-        .withComparator(ReverseEpochViewComparator.PLUGIN_KEY)
-        .publish(context);
+  private static ITableHierarchyDefinition singleLevelHierarchy(
+      final String name, final FieldPath field) {
+    return ITableHierarchyDefinition.builder(name)
+        .withAllMember()
+        .withFieldLevel(name, field)
+        .build();
   }
 
-  private void joinReferencesToChunks(ICopperContext context) {
-    final CopperStore chunkToReferenceStore =
-        Copper.store(DatastoreConstants.REFERENCE_STORE)
-            .joinToCube()
-            .withMapping(
-                DatastoreConstants.REFERENCE_ID,
-                Copper.level(
-                    new LevelIdentifier(CHUNK_DIMENSION, CHUNK_REF_ID_LEVEL, CHUNK_REF_ID_LEVEL)))
-            .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                Copper.level(
-                    new LevelIdentifier(
-                        CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)))
-            .withMapping(
-                DatastoreConstants.VERSION__EPOCH_ID,
-                Copper.level(
-                    new LevelIdentifier(
-                        VERSION_DIMENSION,
-                        INTERNAL_EPOCH_ID_HIERARCHY,
-                        INTERNAL_EPOCH_ID_HIERARCHY)));
-
-    Copper.newHierarchy(REFERENCE_NAMES_HIERARCHY)
-        .fromField(chunkToReferenceStore.field(DatastoreConstants.REFERENCE_NAME))
-        .withLevelOfSameName()
-        .publish(context);
+  private static ILevelConfigurator describe(
+      final IDimensionsConfigurator dimensions,
+      final LevelIdentifier level,
+      final String description) {
+    return dimensions.level(level).description(description);
   }
 
-  private void joinIndexesToChunks(ICopperContext context) {
-    final CopperStore chunkToIndexStore =
-        Copper.store(DatastoreConstants.INDEX_STORE)
-            .joinToCube()
-            .withMapping(
-                DatastoreConstants.INDEX_ID,
-                Copper.level(
-                    new LevelIdentifier(
-                        CHUNK_DIMENSION, CHUNK_INDEX_ID_LEVEL, CHUNK_INDEX_ID_LEVEL)))
-            .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                Copper.level(
-                    new LevelIdentifier(
-                        CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)))
-            .withMapping(
-                DatastoreConstants.VERSION__EPOCH_ID,
-                Copper.level(
-                    new LevelIdentifier(
-                        VERSION_DIMENSION,
-                        INTERNAL_EPOCH_ID_HIERARCHY,
-                        INTERNAL_EPOCH_ID_HIERARCHY)));
+  // endregion
 
-    Copper.newHierarchy(INDEX_DIMENSION, INDEXED_FIELDS_HIERARCHY)
-        .fromField(chunkToIndexStore.field(DatastoreConstants.INDEX__FIELDS))
-        .withLevelOfSameName()
-        .publish(context);
+  // region measures
 
-    Copper.newHierarchy(INDEX_DIMENSION, INDEX_TYPE_HIERARCHY)
-        .fromField(chunkToIndexStore.field(DatastoreConstants.INDEX_TYPE))
-        .withLevelOfSameName()
-        .publish(context);
+  private void defineMeasures(final IMeasuresConfigurator measures) {
+    measures
+        .updateMeasureMetadata(
+            IMeasureHierarchy.COUNT_ID,
+            metadata -> metadata.folder(INTERNAL_FOLDER).formatter(forAllTypes(NUMBER_FORMATTER)))
+        .updateMeasureMetadata(
+            IMeasureHierarchy.TIMESTAMP_ID,
+            metadata ->
+                metadata
+                    .folder(INTERNAL_FOLDER)
+                    .formatter(forAllTypes(IFormatter.DATE_PLUGIN_KEY + "[HH:mm:ss]")));
+
+    applicationMeasures(measures);
+    chunkMeasures(measures);
+    dictionaryMeasures(measures);
+    vectorMeasures(measures);
   }
 
-  private void bucketingHierarchies(final ICopperContext context) {
-    Copper.newHierarchy(OWNER_DIMENSION, OWNER_TYPE_HIERARCHY)
-        .fromValues(
-            Copper.level(OWNER_DIMENSION, OWNER_HIERARCHY, OWNER_HIERARCHY)
-                .map(ChunkOwner::getType))
-        .withMemberList((Object[]) OwnerType.values())
-        .withLevelOfSameName()
-        .publish(context);
+  /** Returns the formatter mapping that uses the given formatter, whatever the measure type. */
+  private static Map<ContentType, String> forAllTypes(final String formatter) {
+    return Arrays.stream(ContentType.values())
+        .collect(Collectors.toMap(Function.identity(), type -> formatter));
   }
 
-  private void applicationMeasure(final ICopperContext context) {
-    Copper.agg(DatastoreConstants.APPLICATION__USED_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(USED_HEAP)
-        .withFormatter(ByteFormatter.KEY)
-        .withinFolder(APPLICATION_FOLDER)
-        .withDescription("the amount of heap memory used by the application")
-        .publish(context);
-    Copper.agg(DatastoreConstants.APPLICATION__MAX_ON_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(COMMITTED_HEAP)
-        .withFormatter(ByteFormatter.KEY)
-        .withinFolder(APPLICATION_FOLDER)
-        .withDescription("the total size of the JVM heap")
-        .publish(context);
-    Copper.agg(DatastoreConstants.APPLICATION__USED_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(USED_DIRECT)
-        .withFormatter(ByteFormatter.KEY)
-        .withinFolder(APPLICATION_FOLDER)
-        .withDescription("the amount of off-heap memory used by the application")
-        .publish(context);
-    Copper.agg(DatastoreConstants.APPLICATION__MAX_OFF_HEAP, SingleValueFunction.PLUGIN_KEY)
-        .as(MAX_DIRECT)
-        .withFormatter(ByteFormatter.KEY)
-        .withinFolder(APPLICATION_FOLDER)
-        .withDescription("the amount of off-heap memory reserved by the application")
-        .publish(context);
+  private void applicationMeasures(final IMeasuresConfigurator measures) {
+    addApplicationMeasure(
+        measures,
+        USED_HEAP,
+        DatastoreConstants.APPLICATION__USED_ON_HEAP,
+        "the amount of heap memory used by the application");
+    addApplicationMeasure(
+        measures,
+        COMMITTED_HEAP,
+        DatastoreConstants.APPLICATION__MAX_ON_HEAP,
+        "the total size of the JVM heap");
+    addApplicationMeasure(
+        measures,
+        USED_DIRECT,
+        DatastoreConstants.APPLICATION__USED_OFF_HEAP,
+        "the amount of off-heap memory used by the application");
+    addApplicationMeasure(
+        measures,
+        MAX_DIRECT,
+        DatastoreConstants.APPLICATION__MAX_OFF_HEAP,
+        "the amount of off-heap memory reserved by the application");
   }
 
-  private void chunkMeasures(final ICopperContext context) {
-    perChunkAggregation(Copper.constant(1L))
-        .sum()
-        .as(CHUNK_COUNT)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the number of contributing chunks")
-        .publish(context);
+  private static void addApplicationMeasure(
+      final IMeasuresConfigurator measures,
+      final String name,
+      final String field,
+      final String description) {
+    measures.addMeasure(
+        name,
+        CopperNext.agg(
+                SingleValueFunction.PLUGIN_KEY,
+                FieldPath.of(MemoryAnalysisDatastoreDescriptionConfig.CHUNK_TO_APP, field))
+            .withFormatter(ByteFormatter.KEY)
+            .withinFolder(APPLICATION_FOLDER)
+            .withDescription(description));
+  }
 
-    perChunkAggregation(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
-        .sum()
-        .as(HEAP_MEMORY_SUM)
-        .withFormatter(ByteFormatter.KEY)
-        .withinFolder(CHUNK_MEMORY_FOLDER)
-        .withDescription("an estimate of the on-heap size of the chunks")
-        .publish(context);
-
-    final CopperMeasure chunkSize =
-        perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+  private void chunkMeasures(final IMeasuresConfigurator measures) {
+    measures.addMeasure(
+        CHUNK_COUNT,
+        perChunkAggregation(Copper.constant(1L))
             .sum()
-            .as(CHUNK_SIZE_SUM)
-            .withFormatter(NUMBER_FORMATTER)
             .withinFolder(CHUNK_FOLDER)
-            .withDescription("a sum aggregation of the chunk sizes")
-            .publish(context);
+            .withDescription("the number of contributing chunks"));
 
-    final CopperMeasure nonWrittenRowsCount =
-        perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
+    measures.addMeasure(
+        HEAP_MEMORY_SUM,
+        perChunkAggregation(DatastoreConstants.CHUNK__ON_HEAP_SIZE)
             .sum()
-            .as(NON_WRITTEN_ROWS_COUNT)
-            .withFormatter(NUMBER_FORMATTER)
-            .withinFolder(CHUNK_FOLDER)
-            .withDescription("the number of unused rows within the chunks")
-            .publish(context);
-
-    perChunkAggregation(DatastoreConstants.CHUNK__FREE_ROWS)
-        .sum()
-        .mapToDouble(a -> a.readDouble(0))
-        .withFormatter(NUMBER_FORMATTER)
-        .as(DELETED_ROWS_COUNT)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the number of freed rows within the chunks")
-        .publish(context)
-        .divide(chunkSize)
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(DELETED_ROWS_RATIO)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the ratio of freed rows within the chunks")
-        .publish(context);
-
-    final CopperMeasure totalRows =
-        Copper.sum(DatastoreConstants.CHUNK__SIZE)
-            .withDescription("the total number of rows in chunks")
-            .as("Physical row count")
-            .withFormatter(NUMBER_FORMATTER)
-            .withinFolder(CHUNK_FOLDER)
-            .publish(context);
-
-    nonWrittenRowsCount
-        .divide(totalRows)
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(NON_WRITTEN_ROWS_RATIO)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the ratio of unused rows within the chunks")
-        .publish(context);
-
-    chunkSize
-        .minus(nonWrittenRowsCount)
-        .withFormatter(NUMBER_FORMATTER)
-        .as(COMMITTED_ROWS_COUNT)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the number of committed (i.e. used) rows inside the chunks")
-        .publish(context);
-
-    Copper.measure(COMMITTED_ROWS_COUNT)
-        .divide(chunkSize)
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(COMMITTED_ROWS_RATIO)
-        .withinFolder(CHUNK_FOLDER)
-        .withDescription("the ratio of committed (i.e. used) rows inside the chunks")
-        .publish(context);
-
-    final CopperMeasure directMemory =
-        perChunkAggregation(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
-            .sum()
-            .as(DIRECT_MEMORY_SUM)
             .withFormatter(ByteFormatter.KEY)
             .withinFolder(CHUNK_MEMORY_FOLDER)
-            .withDescription("the off-heap size of the chunks")
-            .publish(context);
+            .withDescription("an estimate of the on-heap size of the chunks"));
 
-    Copper.measure(COMMITTED_ROWS_RATIO)
-        .multiply(directMemory)
-        .mapToLong(a -> (long) a.readDouble(0))
-        .withFormatter(ByteFormatter.KEY)
-        .as(COMMITTED_CHUNK_MEMORY)
-        .withinFolder(CHUNK_MEMORY_FOLDER)
-        .withDescription("the amount of memory in bytes used to store committed rows in chunks")
-        .publish(context);
+    measures.addMeasure(
+        CHUNK_SIZE_SUM,
+        perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+            .sum()
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("a sum aggregation of the chunk sizes"));
 
-    directMemory
-        .divide(directMemory.grandTotal())
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(DIRECT_MEMORY_RATIO)
-        .withinFolder(CHUNK_MEMORY_FOLDER)
-        .withDescription(
-            "the total ratio of off-heap memory consumed by the chunks relative to the total used "
-                + "chunk memory")
-        .publish(context);
+    measures.addMeasure(
+        NON_WRITTEN_ROWS_COUNT,
+        perChunkAggregation(DatastoreConstants.CHUNK__NON_WRITTEN_ROWS)
+            .sum()
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the number of unused rows within the chunks"));
 
-    directMemory
-        .divide(Copper.measure(USED_DIRECT))
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(USED_MEMORY_RATIO)
-        .withinFolder(CHUNK_MEMORY_FOLDER)
-        .withDescription(
-            "the total ratio of off-heap memory consumed by the chunks relative to the total used "
-                + "application committed memory")
-        .publish(context);
+    measures.addMeasure(
+        DELETED_ROWS_COUNT,
+        perChunkAggregation(DatastoreConstants.CHUNK__FREE_ROWS)
+            .sum()
+            .mapToDouble(a -> a.readDouble(0))
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the number of freed rows within the chunks"));
 
-    directMemory
-        .divide(Copper.measure(MAX_DIRECT))
-        .withType(Types.TYPE_DOUBLE)
-        .withFormatter(PERCENT_FORMATTER)
-        .as(MAX_MEMORY_RATIO)
-        .withinFolder(CHUNK_MEMORY_FOLDER)
-        .withDescription(
-            "the total ratio of off-heap memory consumed by the chunks relative to the total "
-                + "application committed memory")
-        .publish(context);
+    measures.addMeasure(
+        DELETED_ROWS_RATIO,
+        Copper.measure(DELETED_ROWS_COUNT)
+            .divide(Copper.measure(CHUNK_SIZE_SUM))
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the ratio of freed rows within the chunks"));
+
+    measures.addMeasure(
+        PHYSICAL_ROW_COUNT,
+        CopperNext.sum(FieldPath.of(DatastoreConstants.CHUNK__SIZE))
+            .withDescription("the total number of rows in chunks")
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER));
+
+    measures.addMeasure(
+        NON_WRITTEN_ROWS_RATIO,
+        Copper.measure(NON_WRITTEN_ROWS_COUNT)
+            .divide(Copper.measure(PHYSICAL_ROW_COUNT))
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the ratio of unused rows within the chunks"));
+
+    measures.addMeasure(
+        COMMITTED_ROWS_COUNT,
+        Copper.measure(CHUNK_SIZE_SUM)
+            .minus(Copper.measure(NON_WRITTEN_ROWS_COUNT))
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the number of committed (i.e. used) rows inside the chunks"));
+
+    measures.addMeasure(
+        COMMITTED_ROWS_RATIO,
+        Copper.measure(COMMITTED_ROWS_COUNT)
+            .divide(Copper.measure(CHUNK_SIZE_SUM))
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_FOLDER)
+            .withDescription("the ratio of committed (i.e. used) rows inside the chunks"));
+
+    measures.addMeasure(
+        DIRECT_MEMORY_SUM,
+        perChunkAggregation(DatastoreConstants.CHUNK__OFF_HEAP_SIZE)
+            .sum()
+            .withFormatter(ByteFormatter.KEY)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription("the off-heap size of the chunks"));
+
+    final CopperMeasure directMemory = Copper.measure(DIRECT_MEMORY_SUM);
+    measures.addMeasure(
+        COMMITTED_CHUNK_MEMORY,
+        Copper.measure(COMMITTED_ROWS_RATIO)
+            .multiply(directMemory)
+            .mapToLong(a -> (long) a.readDouble(0))
+            .withFormatter(ByteFormatter.KEY)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription(
+                "the amount of memory in bytes used to store committed rows in chunks"));
+
+    measures.addMeasure(
+        DIRECT_MEMORY_RATIO,
+        directMemory
+            .divide(directMemory.grandTotal())
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription(
+                "the total ratio of off-heap memory consumed by the chunks relative to the total"
+                    + " used chunk memory"));
+
+    measures.addMeasure(
+        USED_MEMORY_RATIO,
+        directMemory
+            .divide(Copper.measure(USED_DIRECT))
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription(
+                "the total ratio of off-heap memory consumed by the chunks relative to the total"
+                    + " used application committed memory"));
+
+    measures.addMeasure(
+        MAX_MEMORY_RATIO,
+        directMemory
+            .divide(Copper.measure(MAX_DIRECT))
+            .withType(Types.TYPE_DOUBLE)
+            .withFormatter(PERCENT_FORMATTER)
+            .withinFolder(CHUNK_MEMORY_FOLDER)
+            .withDescription(
+                "the total ratio of off-heap memory consumed by the chunks relative to the total"
+                    + " application committed memory"));
   }
 
-  private void dictionaryMeasures(ICopperContext context) {
-    final var chunkToDicoStore =
+  private void dictionaryMeasures(final IMeasuresConfigurator measures) {
+    final CopperStore chunkToDicoStore =
         Copper.store(DatastoreConstants.DICTIONARY_STORE)
             .joinToCube()
+            .withMapping(DatastoreConstants.DICTIONARY_ID, Copper.level(DICO_ID_LEVEL))
+            .withMapping(DatastoreConstants.CHUNK__DUMP_NAME, Copper.level(DUMP_NAME_LEVEL))
             .withMapping(
-                DatastoreConstants.DICTIONARY_ID,
-                Copper.level(
-                    new LevelIdentifier(CHUNK_DIMENSION, CHUNK_DICO_ID_LEVEL, CHUNK_DICO_ID_LEVEL)))
-            .withMapping(
-                DatastoreConstants.CHUNK__DUMP_NAME,
-                Copper.level(
-                    new LevelIdentifier(
-                        CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)))
-            .withMapping(
-                DatastoreConstants.VERSION__EPOCH_ID,
-                Copper.level(
-                    new LevelIdentifier(
-                        VERSION_DIMENSION,
-                        INTERNAL_EPOCH_ID_HIERARCHY,
-                        INTERNAL_EPOCH_ID_HIERARCHY)));
+                DatastoreConstants.VERSION__EPOCH_ID, Copper.level(INTERNAL_EPOCH_ID_LEVEL));
 
-    Copper.agg(
-            chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
-            SingleValueFunction.PLUGIN_KEY)
-        .filter(
-            Copper.level(
-                    new LevelIdentifier(
-                        COMPONENT_DIMENSION, COMPONENT_HIERARCHY, COMPONENT_HIERARCHY))
-                .eq(ParentType.DICTIONARY))
-        .per(
-            Copper.level(
-                new LevelIdentifier(
-                    VERSION_DIMENSION, INTERNAL_EPOCH_ID_HIERARCHY, INTERNAL_EPOCH_ID_HIERARCHY)),
-            Copper.level(
-                new LevelIdentifier(
-                    CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)),
-            Copper.level(
-                new LevelIdentifier(CHUNK_DIMENSION, CHUNK_DICO_ID_LEVEL, CHUNK_DICO_ID_LEVEL)))
-        .sum()
-        .as(DICTIONARY_SIZE)
-        .withFormatter(NUMBER_FORMATTER)
-        .withinFolder(DICTIONARY_FOLDER)
-        .withDescription("the number of entries in the corresponding dictionary, when relevant")
-        .publish(context);
+    measures.addMeasure(
+        DICTIONARY_SIZE,
+        Copper.agg(
+                chunkToDicoStore.field(DatastoreConstants.DICTIONARY_SIZE),
+                SingleValueFunction.PLUGIN_KEY)
+            .filter(Copper.level(COMPONENT_LEVEL).eq(ParentType.DICTIONARY))
+            .per(
+                Copper.level(INTERNAL_EPOCH_ID_LEVEL),
+                Copper.level(DUMP_NAME_LEVEL),
+                Copper.level(DICO_ID_LEVEL))
+            .sum()
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(DICTIONARY_FOLDER)
+            .withDescription(
+                "the number of entries in the corresponding dictionary, when relevant"));
 
-    perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
-        .max()
-        .per(
-            Copper.hierarchy(OWNER_DIMENSION, OWNER_HIERARCHY).level(OWNER_HIERARCHY),
-            Copper.hierarchy(FIELD_DIMENSION, FIELD_HIERARCHY).level(FIELD_HIERARCHY),
-            Copper.hierarchy(PARTITION_DIMENSION, PARTITION_HIERARCHY).level(PARTITION_HIERARCHY),
-            Copper.hierarchy(CHUNK_DIMENSION, CHUNK_CLASS_LEVEL).level(CHUNK_CLASS_LEVEL))
-        .min()
-        .as("Chunk size")
-        .withFormatter(NUMBER_FORMATTER)
-        .withinFolder(STORE_CHUNK_FOLDER)
-        .withDescription("the size of each chunk for the store")
-        .publish(context);
+    measures.addMeasure(
+        STORE_CHUNK_SIZE,
+        perChunkAggregation(DatastoreConstants.CHUNK__SIZE)
+            .max()
+            .per(
+                Copper.level(OWNER_LEVEL),
+                Copper.level(FIELD_LEVEL),
+                Copper.level(PARTITION_LEVEL),
+                Copper.level(CLASS_LEVEL))
+            .min()
+            .withFormatter(NUMBER_FORMATTER)
+            .withinFolder(STORE_CHUNK_FOLDER)
+            .withDescription("the size of each chunk for the store"));
   }
 
-  private void vectorMeasures(ICopperContext context) {
-    perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
-        .sum()
-        .as(VECTOR_BLOCK_REFCOUNT)
-        .withinFolder(VECTOR_FOLDER)
-        .withDescription(
-            "The amount of references held towards the vectors contained in the vector block of the chunks, when relevant")
-        .publish(context);
+  private void vectorMeasures(final IMeasuresConfigurator measures) {
+    measures.addMeasure(
+        VECTOR_BLOCK_REFCOUNT,
+        perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_REF_COUNT)
+            .sum()
+            .withinFolder(VECTOR_FOLDER)
+            .withDescription(
+                "The amount of references held towards the vectors contained in the vector block"
+                    + " of the chunks, when relevant"));
 
-    perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
-        .max()
-        // The underlying vector block length might change from one vector to another depending on
-        // how the Aggregate
-        // Provider computes the vector measure, since this measure does not give as much
-        // information as the others,
-        // we decide to only show the maximum length.
-        .per(Copper.level(new LevelIdentifier(FIELD_DIMENSION, FIELD_HIERARCHY, FIELD_HIERARCHY)))
-        .doNotAggregateAbove()
-        .as(VECTOR_BLOCK_SIZE)
-        .withinFolder(VECTOR_FOLDER)
-        .withDescription("the length of the Block holding the vector data, when relevant")
-        .publish(context);
+    measures.addMeasure(
+        VECTOR_BLOCK_SIZE,
+        perChunkAggregation(DatastoreConstants.CHUNK__VECTOR_BLOCK_LENGTH)
+            .max()
+            // The underlying vector block length might change from one vector to another
+            // depending on how the Aggregate Provider computes the vector measure, since this
+            // measure does not give as much information as the others, we decide to only show the
+            // maximum length.
+            .per(Copper.level(FIELD_LEVEL))
+            .doNotAggregateAbove()
+            .withinFolder(VECTOR_FOLDER)
+            .withDescription("the length of the Block holding the vector data, when relevant"));
   }
 
-  private CopperMeasureToAggregateAbove perChunkAggregation(final String fieldName) {
-    return perChunkAggregation(Copper.agg(fieldName, SingleValueFunction.PLUGIN_KEY));
+  private static CopperMeasureToAggregateAbove perChunkAggregation(final String fieldName) {
+    return perChunkAggregation(
+        CopperNext.agg(SingleValueFunction.PLUGIN_KEY, FieldPath.of(fieldName)));
   }
 
-  private CopperMeasureToAggregateAbove perChunkAggregation(final CopperMeasure measure) {
-    return measure.per(
-        Copper.level(new LevelIdentifier(CHUNK_DIMENSION, CHUNK_ID_HIERARCHY, CHUNK_ID_HIERARCHY)),
-        Copper.level(
-            new LevelIdentifier(
-                CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL, CHUNK_DUMP_NAME_LEVEL)));
+  private static CopperMeasureToAggregateAbove perChunkAggregation(final CopperMeasure measure) {
+    return measure.per(Copper.level(CHUNK_ID_LEVEL), Copper.level(DUMP_NAME_LEVEL));
   }
+
+  // endregion
 }

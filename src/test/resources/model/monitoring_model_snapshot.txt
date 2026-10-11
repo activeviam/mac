@@ -38,6 +38,10 @@ Dimension Components type=REGULAR properties={description=The owning structure a
   Hierarchy Component slicing=false visible=true virtual=false folder=null properties={description=The owning structure associated with the chunk (dictionary, index, ...)}
     Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
     Level Component type=REGULAR dataType=FieldType(dataClass=class java.lang.Object, contentType=OBJECT, nullable=false, supportEmptyString=false, defaultValueHolder=ObjectCell{value=N/A}) formatter=null comparator=LexicographicalOrder properties={description=The owning structure associated with the chunk (dictionary, index, ...)}
+Dimension Epochs type=REGULAR
+  Hierarchy Epoch Id slicing=false visible=true virtual=false folder=null properties={AUTO_CONTRIBUTE_UNKNOWN_MEMBER=ifEmpty, storeName=EpochView}
+    Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
+    Level Epoch Id type=REGULAR dataType=FieldType(dataClass=class java.lang.Object, contentType=OBJECT, nullable=false, supportEmptyString=false, defaultValueHolder=ObjectCell{value=N/A}) formatter=null comparator=DiscriminatorComparator properties={}
 Dimension Fields type=REGULAR properties={description=The field(s) associated with the chunk, if any}
   Hierarchy Field slicing=false visible=true virtual=false folder=null properties={description=The field(s) associated with the chunk, if any}
     Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
@@ -101,9 +105,6 @@ Dimension Versions type=REGULAR properties={description=Holds hierarchies relati
   Hierarchy Branch slicing=false visible=true virtual=false folder=null properties={AUTO_CONTRIBUTE_UNKNOWN_MEMBER=always, description=The branch of the chunk}
     Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
     Level Branch type=REGULAR dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=false, defaultValueHolder=StringCell{value=N/A}) formatter=null comparator=DiscriminatorComparator properties={description=The branch of the chunk}
-  Hierarchy Epoch Id slicing=false visible=true virtual=false folder=null properties={AUTO_CONTRIBUTE_UNKNOWN_MEMBER=ifEmpty, storeName=EpochView}
-    Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
-    Level Epoch Id type=REGULAR dataType=FieldType(dataClass=class java.lang.Object, contentType=OBJECT, nullable=false, supportEmptyString=false, defaultValueHolder=ObjectCell{value=N/A}) formatter=null comparator=DiscriminatorComparator properties={}
   Hierarchy Internal Epoch Id slicing=false visible=false virtual=false folder=null properties={description=The internal epoch ID of the chunk (may be less than the epoch to view)}
     Level ALL type=ALL dataType=FieldType(dataClass=class java.lang.String, contentType=STRING, nullable=false, supportEmptyString=true, defaultValueHolder=StringCell{value=AllMember}) formatter=null comparator=STRING
     Level Internal Epoch Id type=REGULAR dataType=FieldType(dataClass=long, contentType=LONG, nullable=false, supportEmptyString=false, defaultValueHolder=LongCell{value=0}) formatter=null comparator=DiscriminatorComparator properties={description=The internal epoch ID of the chunk (may be less than the epoch to view)}

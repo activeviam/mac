@@ -41,10 +41,8 @@ import org.springframework.core.env.Environment;
 @Configuration
 @Import(
     value = {
-      ManagerDescriptionConfig.class,
-
-      // Pivot
-      ActivePivotWithDatastoreConfig.class,
+      // Data model
+      ModelConfig.class,
 
       // Content server
       ContentServiceConfig.class,

@@ -7,15 +7,14 @@
 
 package com.activeviam.mac.memory;
 
-import com.activeviam.activepivot.core.datastore.api.builder.StartBuilding;
 import com.activeviam.database.api.schema.StoreField;
 import com.activeviam.database.api.types.ILiteralType;
-import com.activeviam.database.datastore.api.description.IDatastoreSchemaDescription;
 import com.activeviam.database.datastore.api.description.IReferenceDescription;
 import com.activeviam.database.datastore.api.description.IStoreDescription;
-import com.activeviam.database.datastore.api.description.impl.DatastoreSchemaDescription;
 import com.activeviam.database.datastore.api.description.impl.DuplicateKeyHandlers;
+import com.activeviam.database.datastore.api.description.impl.ReferenceDescription;
 import com.activeviam.database.datastore.api.description.impl.StoreDescription;
+import com.activeviam.database.datastore.api.foundry.core.configurator.IDatabaseConfigurator;
 import com.activeviam.tech.chunks.internal.IChunk;
 import com.activeviam.tech.chunks.internal.pool.impl.AtotiPools;
 import com.activeviam.tech.core.api.format.IParser;
@@ -23,19 +22,15 @@ import com.activeviam.tech.core.internal.util.ArrayUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Contains all stores used to analyze a memory analysis dump.
  *
  * @author ActiveViam
  */
-@Configuration
 public class MemoryAnalysisDatastoreDescriptionConfig {
 
   /** Constant enabling the creation of Debug tree for each info, stored in the Datastore. */
@@ -70,10 +65,18 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
         .sum();
   }
 
-  @Bean
-  public IDatastoreSchemaDescription datastoreSchemaDescription() {
-    return new DatastoreSchemaDescription(
-        getStoreDescriptions(), getReferenceDescriptions(), getDictionaryGroups());
+  /**
+   * Defines the tables, joins and shared dictionaries of the database.
+   *
+   * @param database the object used to configure the database
+   */
+  public void configureDatabase(final IDatabaseConfigurator database) {
+    getStoreDescriptions().forEach(database::addTable);
+    getReferenceDescriptions().forEach(database::addJoin);
+    for (final List<StoreField> group : getDictionaryGroups()) {
+      final StoreField first = group.getFirst();
+      group.stream().skip(1).forEach(field -> database.useSameDictionary(first, field));
+    }
   }
 
   /**
@@ -146,7 +149,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
    * @return description of {@link DatastoreConstants#EPOCH_VIEW_STORE}
    */
   protected IStoreDescription epochViewStore() {
-    return StartBuilding.store()
+    return StoreDescription.builder()
         .withStoreName(DatastoreConstants.EPOCH_VIEW_STORE)
         .withField(DatastoreConstants.EPOCH_VIEW__OWNER, ILiteralType.OBJECT)
         .asKeyField()
@@ -243,7 +246,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
    * @return description of {@link DatastoreConstants#VERSION_STORE}
    */
   protected IStoreDescription versionStore() {
-    return StartBuilding.store()
+    return StoreDescription.builder()
         .withStoreName(DatastoreConstants.VERSION_STORE)
         .withField(DatastoreConstants.VERSION__DUMP_NAME, ILiteralType.STRING)
         .asKeyField()
@@ -259,7 +262,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
    * @return description of {@link DatastoreConstants#PROVIDER_STORE}
    */
   protected IStoreDescription providerStore() {
-    return StartBuilding.store()
+    return StoreDescription.builder()
         .withStoreName(DatastoreConstants.PROVIDER_STORE)
         .withField(DatastoreConstants.PROVIDER__PROVIDER_ID, ILiteralType.LONG)
         .asKeyField()
@@ -282,7 +285,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
    * @return description of {@link DatastoreConstants#APPLICATION_STORE}
    */
   protected IStoreDescription applicationStore() {
-    return StartBuilding.store()
+    return StoreDescription.builder()
         .withStoreName(DatastoreConstants.APPLICATION_STORE)
         .withField(DatastoreConstants.APPLICATION__DUMP_NAME)
         .asKeyField()
@@ -313,9 +316,9 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
     return getChunkReferences().collect(Collectors.toList());
   }
 
-  public Collection<Set<StoreField>> getDictionaryGroups() {
+  public Collection<List<StoreField>> getDictionaryGroups() {
     return List.of(
-        Set.of(
+        List.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
             new StoreField(
                 DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.CHUNK__DUMP_NAME),
@@ -330,7 +333,7 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
                 DatastoreConstants.PROVIDER_STORE, DatastoreConstants.APPLICATION__DUMP_NAME),
             new StoreField(
                 DatastoreConstants.APPLICATION_STORE, DatastoreConstants.APPLICATION__DUMP_NAME)),
-        Set.of(
+        List.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             new StoreField(
                 DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__BASE_EPOCH_ID),
@@ -340,30 +343,30 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
             new StoreField(
                 DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.VERSION__EPOCH_ID),
             new StoreField(DatastoreConstants.VERSION_STORE, DatastoreConstants.VERSION__EPOCH_ID)),
-        Set.of(
+        List.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.OWNER__OWNER),
             new StoreField(
                 DatastoreConstants.EPOCH_VIEW_STORE, DatastoreConstants.EPOCH_VIEW__OWNER)),
-        Set.of(
+        List.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PROVIDER_ID),
             new StoreField(
                 DatastoreConstants.PROVIDER_STORE, DatastoreConstants.PROVIDER__PROVIDER_ID)),
-        Set.of(
+        List.of(
             new StoreField(
                 DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_DICO_ID),
             new StoreField(DatastoreConstants.DICTIONARY_STORE, DatastoreConstants.DICTIONARY_ID)),
-        Set.of(
+        List.of(
             new StoreField(
                 DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_INDEX_ID),
             new StoreField(DatastoreConstants.INDEX_STORE, DatastoreConstants.INDEX_ID)),
-        Set.of(
+        List.of(
             new StoreField(DatastoreConstants.CHUNK_STORE, DatastoreConstants.CHUNK__PARENT_REF_ID),
             new StoreField(DatastoreConstants.REFERENCE_STORE, DatastoreConstants.REFERENCE_ID)));
   }
 
   private Stream<IReferenceDescription> getChunkReferences() {
     return Stream.of(
-        StartBuilding.reference()
+        ReferenceDescription.builder()
             .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.PROVIDER_STORE)
             .withName(CHUNK_TO_PROVIDER)
@@ -373,14 +376,14 @@ public class MemoryAnalysisDatastoreDescriptionConfig {
                 DatastoreConstants.APPLICATION__DUMP_NAME,
                 DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
-        StartBuilding.reference()
+        ReferenceDescription.builder()
             .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.APPLICATION_STORE)
             .withName(CHUNK_TO_APP)
             .withMapping(
                 DatastoreConstants.CHUNK__DUMP_NAME, DatastoreConstants.APPLICATION__DUMP_NAME)
             .build(),
-        StartBuilding.reference()
+        ReferenceDescription.builder()
             .fromStore(DatastoreConstants.CHUNK_STORE)
             .toStore(DatastoreConstants.VERSION_STORE)
             .withName(CHUNK_TO_VERSION)

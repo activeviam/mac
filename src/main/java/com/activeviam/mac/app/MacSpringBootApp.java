@@ -7,6 +7,7 @@
 
 package com.activeviam.mac.app;
 
+import com.activeviam.mac.cfg.impl.MacModelConfigurer;
 import com.activeviam.mac.cfg.impl.MacServerConfig;
 import jakarta.servlet.MultipartConfigElement;
 import org.springframework.beans.factory.ObjectProvider;
@@ -40,6 +41,7 @@ public class MacSpringBootApp {
    * @param args additional CLI arguments
    */
   public static void main(final String[] args) {
+    MacModelConfigurer.enableFoundry();
     SpringApplication.run(MacSpringBootApp.class, args);
   }
 

@@ -9,6 +9,8 @@ package com.activeviam.mac.app;
 
 import com.activeviam.mac.cfg.impl.MacServerConfig;
 import com.activeviam.tech.core.api.exceptions.ActiveViamRuntimeException;
+import com.activeviam.tech.core.internal.features.FeatureFlagUtils.Features;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanCreationException;
@@ -19,6 +21,15 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @WebAppConfiguration("classpath:application.yml")
 @ContextConfiguration(classes = MacServerConfig.class)
 public class TestAppLoading {
+
+  /**
+   * Disables the Foundry API enabled by the application, as the other tests build their monitored
+   * applications with the legacy API.
+   */
+  @AfterAll
+  public static void disableFoundry() {
+    System.clearProperty(Features.FOUNDRY.toProperty());
+  }
 
   /** Ensures that the default application setup works */
   @Test

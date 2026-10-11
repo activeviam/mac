@@ -1,7 +1,7 @@
 {
   "mode" : "checkbox",
   "levelCoordinates" : {
-    "dimensionName" : "Versions",
+    "dimensionName" : "Epochs",
     "hierarchyName" : "Epoch Id",
     "levelName" : "Epoch Id"
   },
