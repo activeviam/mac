@@ -115,4 +115,20 @@ public class TestReverseEpochViewComparator {
           assertions.assertThat(epoch2).is(lessThan(epoch1A));
         });
   }
+
+  @Test
+  public void testUnknownMemberAfterEpochs() {
+    // The Epoch Id hierarchy is fed by a joined table: its levels can hold the unknown member
+    final Object unknownMember = "N/A";
+    final ReverseEpochViewComparator comparator = new ReverseEpochViewComparator();
+    SoftAssertions.assertSoftly(
+        assertions -> {
+          for (final EpochView epoch :
+              new EpochView[] {new RegularEpochView(1L), new DistributedEpochView("A", 1L)}) {
+            assertions.assertThat(comparator.compare(epoch, unknownMember)).isNegative();
+            assertions.assertThat(comparator.compare(unknownMember, epoch)).isPositive();
+          }
+          assertions.assertThat(comparator.compare(unknownMember, "N/A")).isZero();
+        });
+  }
 }

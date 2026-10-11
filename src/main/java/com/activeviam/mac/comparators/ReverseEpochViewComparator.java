@@ -27,7 +27,7 @@ import java.io.Serial;
  * </ul>
  */
 @AtotiExtendedPluginValue(intf = IComparator.class, key = ReverseEpochViewComparator.PLUGIN_KEY)
-public class ReverseEpochViewComparator implements IComparator<EpochView> {
+public class ReverseEpochViewComparator implements IComparator<Object> {
 
   /** The plugin key of the comparator. */
   public static final String PLUGIN_KEY = "EpochViewComparator";
@@ -43,8 +43,22 @@ public class ReverseEpochViewComparator implements IComparator<EpochView> {
     return PLUGIN_KEY;
   }
 
+  /**
+   * Compares two members of a level of epoch views.
+   *
+   * <p>The level is fed by a joined table, so it can also hold the unknown member, which is not an
+   * {@link EpochView}: it is ordered after all the epoch views.
+   */
   @Override
-  public int compare(final EpochView lhe, final EpochView rhe) {
+  public int compare(final Object lhs, final Object rhs) {
+    if (lhs instanceof EpochView lhe) {
+      return rhs instanceof EpochView rhe ? compareEpochViews(lhe, rhe) : -1;
+    } else {
+      return rhs instanceof EpochView ? 1 : String.valueOf(lhs).compareTo(String.valueOf(rhs));
+    }
+  }
+
+  private static int compareEpochViews(final EpochView lhe, final EpochView rhe) {
     final boolean isLhDistributed = isDistributedEpoch(lhe);
     final boolean isRhDistributed = isDistributedEpoch(rhe);
 

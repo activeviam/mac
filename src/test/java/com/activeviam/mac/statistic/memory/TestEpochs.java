@@ -7,9 +7,12 @@
 
 package com.activeviam.mac.statistic.memory;
 
+import com.activeviam.activepivot.core.api.query.MdxQuery;
 import com.activeviam.activepivot.core.impl.internal.utils.ApplicationInTests;
 import com.activeviam.activepivot.core.intf.api.cube.IMultiVersionActivePivot;
+import com.activeviam.activepivot.server.impl.api.query.MdxQueryUtil;
 import com.activeviam.activepivot.server.impl.private_.observability.memory.MemoryAnalysisService;
+import com.activeviam.activepivot.server.intf.api.dto.CellSetDTO;
 import com.activeviam.database.api.ICondition;
 import com.activeviam.database.api.conditions.BaseConditions;
 import com.activeviam.database.api.query.AliasedField;
@@ -24,6 +27,7 @@ import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.ParentType;
 import com.activeviam.mac.memory.MemoryAnalysisDatastoreDescriptionConfig.UsedByVersion;
 import com.activeviam.tech.core.api.agent.AgentException;
+import com.activeviam.tech.core.api.query.QueryException;
 import com.activeviam.tech.observability.internal.memory.AMemoryStatistic;
 import com.activeviam.tech.records.api.ICursor;
 import com.activeviam.tech.records.api.IRecordReader;
@@ -144,6 +148,21 @@ public class TestEpochs extends ATestMemoryStatistic {
     final Set<Long> epochIds = retrieveEpochIds();
 
     Assertions.assertThat(epochIds).containsExactlyInAnyOrder(1L, 2L, 3L, 4L, 5L);
+  }
+
+  @Test
+  public void testEpochIdHierarchy() throws QueryException {
+    final CellSetDTO result =
+        MdxQueryUtil.execute(
+            this.monitoringApp.getManager(),
+            new MdxQuery(
+                "SELECT NON EMPTY [Epochs].[Epoch Id].[Epoch Id].Members ON COLUMNS"
+                    + " FROM [MemoryCube]"));
+
+    // The epochs are sorted from the most recent one
+    Assertions.assertThat(result.getAxes().get(0).getPositions())
+        .extracting(position -> position.getMembers().get(0).getPath().getPath()[1])
+        .containsExactly("5", "4", "3", "2", "1");
   }
 
   @Test
